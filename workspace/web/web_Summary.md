@@ -42,8 +42,12 @@ glTF/GLB の 3D レビュー画面を提供する。レビュー画面は表示�
 - src/features/annotation/RoomStrokes.tsx: annotation ストアのライブ線を表示順で描画し、2点以上の draft を現在色のプレビュー線として追加する Canvas 内レイヤー
 - src/features/annotation/stroke-build.ts: 法線オフセット、モデルサイズ依存の `simplify`、送信可能性判定、Undo 用の自分の最新線の選択
 - src/features/annotation/AnnotationLayer.tsx: Pen モード時だけ Canvas の DOM ポインターイベントを購読し、モデル表面のヒット点を draft に積み、終了時に `stroke:add` を送信する Canvas 内レイヤー
-- src/features/annotation/AnnotationToolbar.tsx: Orbit / Pen / Comment のモード切替、色選択、自分の線の Undo / Clear を提供するビューア上部のツールバー
+- src/features/annotation/AnnotationToolbar.tsx: ペンモード中の色選択、自分の線の 1本戻す / 自分の線を消すを提供するペン道具
+- src/features/annotation/annotation.css: ペン道具と色ボタンのプレーン CSS
 - src/features/viewer/ViewerCanvas.tsx: Canvas、ライティング、Bounds、モデル、カメラを合成するビューア。`children` は RemoteCameras / StrokeLines / AnnotationLayer など後続機能の差し込み口
+- src/features/viewer/ViewerHud.tsx: 操作モードの segmented control、ペン道具、視点操作、Follow 中バッジ、ビューア操作ヒントを表示し、各ストアを購読する
+- src/features/viewer/hud-labels.ts: モード・色・Follow・視点操作・ヒントの日本語文言と純粋な判定関数
+- src/features/viewer/viewer.css: HUD のモード選択、視点操作、Follow バッジ、操作ヒントのプレーン CSS
 - src/features/viewer/ModelMesh.tsx: `useGLTF` でモデルをロードし、バウンディングボックスからモデルサイズを記録して初回 Fit を要求。ロード中の `scene` を共通モデルターゲットへ登録し、アンマウント時に解除する
 - src/features/viewer/model-target.ts: React や Zustand に依存せず、現在のレイキャスト対象 `Object3D` を保持する `setModelTarget` / `getModelTarget`
 - src/features/viewer/pick.ts: Canvas 座標を NDC に変換し、共通モデルターゲットへ最近傍レイキャストを行う。交点と `matrixWorld` 変換済み法線を返す
@@ -89,6 +93,8 @@ glTF/GLB の 3D レビュー画面を提供する。レビュー画面は表示�
 - store/annotation.ts: `useAnnotationStore`、`AnnotationStoreState`、`AnnotationMode`、`STROKE_COLORS`、`DEFAULT_STROKE_COLOR`、`orderedStrokes`
 - store/comments.ts: `useCommentsStore`、`CommentsStoreState`（`items` / `showOnlyOpen` / `selectedId` / `composerAnchor` / `lastError` と全 action）、`selectVisible`
 - features/viewer/ViewerCanvas.tsx: `ViewerCanvas({ modelSrc, children? })`
+- features/viewer/ViewerHud.tsx: `ViewerHud({ send })`
+- features/viewer/hud-labels.ts: `MODE_LABELS`、`MODE_ORDER`、各種ラベル、`colorName`、`followingLabel`、`hint`
 - features/viewer/ModelMesh.tsx: `ModelMesh({ src })`
 - features/viewer/model-target.ts: `setModelTarget(obj)`、`getModelTarget()`
 - features/viewer/pick.ts: `toNdc(rect, clientX, clientY)`、`pickModel(raycaster, camera, ndc, target)`
@@ -101,7 +107,7 @@ glTF/GLB の 3D レビュー画面を提供する。レビュー画面は表示�
 - features/annotation/RoomStrokes.tsx: `RoomStrokes()`
 - features/annotation/stroke-build.ts: `offsetAlongNormal`、`buildStroke`、`latestOwnStrokeId`
 - features/annotation/AnnotationLayer.tsx: `AnnotationLayer({ send })`
-- features/annotation/AnnotationToolbar.tsx: `AnnotationToolbar({ send })`
+- features/annotation/AnnotationToolbar.tsx: `AnnotationToolbar({ send })`（色選択・1本戻す・自分の線を消すのみ）
 - features/comments/compose.ts: `CLICK_MOVE_THRESHOLD_PX`、`isClick`、`ownStrokesForComment`、`buildCommentInput`
 - features/comments/CommentPickLayer.tsx: `CommentPickLayer()`
 - features/comments/CommentComposer.tsx: `CommentComposer({ projectId, versionId })`

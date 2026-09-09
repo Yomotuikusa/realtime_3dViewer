@@ -1,9 +1,7 @@
 import { useEffect, useState, type ReactElement } from "react";
 import type { Project } from "@shared/types";
 import { ApiClientError, getProject, modelUrl } from "../api/client";
-import { useCameraStore } from "../store/camera";
 import { AnnotationLayer } from "../features/annotation/AnnotationLayer";
-import { AnnotationToolbar } from "../features/annotation/AnnotationToolbar";
 import { RoomStrokes } from "../features/annotation/RoomStrokes";
 import { CommentComposer } from "../features/comments/CommentComposer";
 import { CommentList } from "../features/comments/CommentList";
@@ -14,6 +12,7 @@ import { useCommentReplay } from "../features/comments/useCommentReplay";
 import { PresenceList } from "../features/presence/PresenceList";
 import { RemoteCameras } from "../features/presence/RemoteCameras";
 import { ViewerCanvas } from "../features/viewer/ViewerCanvas";
+import { ViewerHud } from "../features/viewer/ViewerHud";
 import { useCameraBroadcast } from "../features/viewer/useCameraBroadcast";
 import { useSessionStore } from "../store/session";
 import { ErrorBoundary } from "./ErrorBoundary";
@@ -93,8 +92,6 @@ export function ReviewPage({ projectId }: { projectId: string }): ReactElement {
   }
 
   const src = modelUrl(projectId, state.project.latestVersion.id);
-  const requestReset = () => useCameraStore.getState().requestReset();
-  const requestFit = () => useCameraStore.getState().requestFit();
   const handleJoin = (name: string) => {
     useSessionStore.getState().setName(name);
     setJoinName(name);
@@ -107,9 +104,7 @@ export function ReviewPage({ projectId }: { projectId: string }): ReactElement {
       <div className="review-body">
         <section className="review-viewer" aria-label="3D ビューア">
           <div className="review-hud">
-            <button className="btn" type="button" onClick={requestReset}>視点を戻す</button>
-            <button className="btn" type="button" onClick={requestFit}>全体を表示</button>
-            <AnnotationToolbar send={realtime.send} />
+            <ViewerHud send={realtime.send} />
           </div>
           <ErrorBoundary
             key={src}

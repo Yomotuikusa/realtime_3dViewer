@@ -1,0 +1,30 @@
+.annotation-tools {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: 2px var(--space-2);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-overlay);
+}
+
+.annotation-colors {
+  display: inline-flex;
+  gap: var(--space-1);
+}
+
+.annotation-color {
+  width: 1.25rem;
+  height: 1.25rem;
+  padding: 0;
+  border: 2px solid var(--color-surface);
+  border-radius: 50%;
+  background: var(--stroke-color, var(--color-border));
+  cursor: pointer;
+}
+
+.annotation-color[aria-pressed="true"] {
+  outline: 2px solid var(--color-text);
+  outline-offset: 1px;
+}
