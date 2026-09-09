@@ -22,6 +22,8 @@ comments の永続化、ファイル保存、プロジェクト取得 API を提
   不在は `NOT_FOUND`、不正な JSON / 入力は `VALIDATION` を返す。
 - `src/routes/upload-validation.ts`: glTF/GLB の拡張子・マジックバイト/JSON 検査と、
   Content-Length のアップロード上限検査。
+- `src/realtime/hub.ts`: `ws` 非依存のインメモリ RoomHub。接続・join 済み Presence、カメラ、
+  線の状態を project 単位で保持し、接続ごとの配信先を `Outbound` で返す。
 - `src/app.ts`: `createApp(deps)`。共通エラー処理、JSON 404、`/api/projects` と
   `/api/projects/:projectId/comments` のマウントを担う。
 - `tests/helpers/tmp.ts`: `server/.vite/test-tmp` 配下の一時ディレクトリ管理。
@@ -66,6 +68,11 @@ comments の永続化、ファイル保存、プロジェクト取得 API を提
   project に属することを確認して 201 の `Comment` と `comment:created` を返す。PATCH は
   `UpdateCommentStatusInput` を検証して 200 の `Comment` と `comment:updated` を返す。
   いずれも対象 project が無ければ `NOT_FOUND`、入力不正なら `VALIDATION` を返す。
+- `RoomHub`: `connect` / `disconnect` / `handle` で接続とルーム状態を操作し、
+  `connectionsIn` / `projectOf` / `usersIn` / `strokesIn` で結線側やテストから状態を参照する。
+  `Outbound.target` は `self` (送信元のみ)、`others` (送信元以外)、`all` (ルーム全員) を表す。
+  `PRESENCE_PALETTE` は8色で、ルーム内の未使用色をjoin順に割り当て、全色使用時はサイズの剰余で
+  再利用する。線は1ルームあたり `MAX_ROOM_STROKES = 2000` 本まで保持する。
 
 ## 他機能との関係
 `shared/src/api.ts` の `ErrorCode`、`ApiError`、`MAX_UPLOAD_BYTES_DEFAULT` と、
