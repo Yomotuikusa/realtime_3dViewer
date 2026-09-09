@@ -1,5 +1,5 @@
 import { createServer, type Server } from "node:http";
-import { attachRealtime, type Realtime } from "../../src/realtime/ws";
+import { attachRealtime, type Realtime, type RealtimeOptions } from "../../src/realtime/ws";
 import { RoomHub } from "../../src/realtime/hub";
 import type { ServerMessage } from "@shared/protocol";
 import { WebSocket, type RawData } from "ws";
@@ -47,7 +47,7 @@ function closeServer(server: Server): Promise<void> {
   });
 }
 
-export function startRealtime(): Promise<RealtimeFixture> {
+export function startRealtime(options: Partial<RealtimeOptions> = {}): Promise<RealtimeFixture> {
   return new Promise((resolve, reject) => {
     const server = createServer();
     server.once("error", reject);
@@ -59,7 +59,9 @@ export function startRealtime(): Promise<RealtimeFixture> {
       }
 
       const hub = new RoomHub();
-      const realtime = attachRealtime(server, hub);
+      const realtime = attachRealtime(server, hub, {
+        projectExists: options.projectExists ?? (() => true),
+      });
       const clients: WebSocket[] = [];
       const closeCodes = new Map<WebSocket, number>();
       const messageQueues = new Map<WebSocket, RawData[]>();

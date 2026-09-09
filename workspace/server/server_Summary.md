@@ -28,11 +28,16 @@ server の基盤。本番は `npm run build && npm run start` で起動する。
   `index.html` へ SPA フォールバックする。`/api/`、拡張子付きの不在ファイル、GET / HEAD
   以外は後段へ渡し、字句解決と realpath の両方で root 外への traversal / symlink 脱出を拒否する。
 - `src/realtime/hub.ts`: `ws` 非依存のインメモリ RoomHub。接続・join 済み Presence、カメラ、
-  線の状態を project 単位で保持し、接続ごとの配信先を `Outbound` で返す。
+  線の状態を project 単位で保持し、接続ごとの配信先を `Outbound` で返す。接続数は
+  `MAX_CONNECTIONS = 1000`、ルーム数は `MAX_ROOMS = 200`、線は1ルームあたり
+  `MAX_ROOM_STROKES = 2000` に制限し、既存線の更新は所有者だけに許可する。
 - `src/realtime/ws.ts`: `GET /ws?projectId=<id>` を既存の Node HTTP Server に接続する WebSocket
-  アダプタ。`RoomHub` の配信先を実ソケットへ解決し、REST の publish を join 済み全員へ届ける。
-  projectId 不在は `BAD_REQUEST` を送って close `1008`、スキーマ違反は `VALIDATION` を返し、
-  同一接続で20回連続すると close `1008` する。
+  アダプタ。`RealtimeOptions.projectExists` で project の存在を確認してから Hub に接続し、
+  接続時は projectId、Origin (指定時は Host 一致)、project 存在、接続上限の順に検証する。
+  projectId 不在や不許可 Origin は `BAD_REQUEST`、project 不在は `NOT_FOUND` を送って close
+  `1008`、接続上限は `BAD_REQUEST` を送って close `1013` する。`maxPayload` は
+  `MAX_WS_PAYLOAD_BYTES = 256 KiB` とし、スキーマ違反は `VALIDATION` を返して同一接続で
+  20回連続すると close `1008` する。
 - `src/app.ts`: `createApp(deps)`。厳密な `Content-Length` 検証を含むリクエスト本体の
   bodyLimit、共通の `nosniff` ヘッダ、500 時の `request_failed` ログ、JSON 404、
   `/api/projects` と
@@ -64,6 +69,8 @@ server の基盤。本番は `npm run build && npm run start` で起動する。
   project/version スコープ、publish 呼び出しのテスト。
 - `tests/realtime-ws.test.ts`: join、Presence、camera / stroke 配信、切断、入力検証、連続違反 close、
   REST publish 結線の実ソケットテスト。
+- `tests/realtime-guards.test.ts`: project / Origin / 接続数 / ルーム数 / payload の接続ガードと、
+  stroke 所有者検証・上限内の大きな stroke のテスト。
 - `tsconfig.json`: 型検査設定(../tsconfig.base.json を継承。`@shared/*` は shared/src を指す)。
 - `vitest.config.ts`: テスト設定(tests/**/*.test.ts、cacheDir は .vite)。
 
@@ -98,10 +105,12 @@ server の基盤。本番は `npm run build && npm run start` で起動する。
   `connectionsIn` / `projectOf` / `usersIn` / `strokesIn` で結線側やテストから状態を参照する。
   `Outbound.target` は `self` (送信元のみ)、`others` (送信元以外)、`all` (ルーム全員) を表す。
   `PRESENCE_PALETTE` は8色で、ルーム内の未使用色をjoin順に割り当て、全色使用時はサイズの剰余で
-  再利用する。線は1ルームあたり `MAX_ROOM_STROKES = 2000` 本まで保持し、同じIDの追加は
-  既存線を置換するため上限到達後も許可する。
+  再利用する。`MAX_ROOM_STROKES = 2000` 本まで保持し、同じIDの追加は所有者自身による場合だけ
+  既存線を置換するため上限到達後も許可する。`MAX_ROOMS = 200` 到達後も既存ルームへの join は
+  可能で、全員退室した空ルームは削除される。
 - `attachRealtime` / `Realtime`: `GET /ws?projectId=<id>` の接続、送受信、切断通知、REST の
-  `publish`、WebSocketServer の `close` を提供する。`npm run dev:server` または `npm start` で
+  `publish`、WebSocketServer の `close` を提供する。`RealtimeOptions` は project 存在判定を
+  受け取り、`MAX_WS_PAYLOAD_BYTES = 256 * 1024` の受信上限を適用する。`npm run dev:server` または `npm start` で
   HTTP と WS を同時に起動し、`PORT` / `DATA_DIR` / `MAX_UPLOAD_BYTES` を環境変数で設定できる。
 
 ## 他機能との関係
