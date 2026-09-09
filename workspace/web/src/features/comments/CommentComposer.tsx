@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type FormEvent, type ReactElement } from "react";
+import { useEffect, useLayoutEffect, useRef, useState, type FormEvent, type ReactElement } from "react";
 import { ApiClientError, createComment } from "../../api/client";
 import { useAnnotationStore } from "../../store/annotation";
 import { useCameraStore } from "../../store/camera";
@@ -27,7 +27,7 @@ export function CommentComposer({ projectId, versionId }: {
   const [sending, setSending] = useState(false);
   const lifecycleRef = useRef<{ projectId: string; active: boolean } | null>(null);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     const lifecycle = { projectId, active: true };
     lifecycleRef.current = lifecycle;
     return () => {

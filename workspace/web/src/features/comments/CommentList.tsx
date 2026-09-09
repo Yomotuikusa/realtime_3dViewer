@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type ReactElement } from "react";
+import { useEffect, useLayoutEffect, useRef, useState, type ReactElement } from "react";
 import type { CommentStatus } from "@shared/types";
 import { ApiClientError, listComments, updateCommentStatus } from "../../api/client";
 import { selectVisible, useCommentsStore } from "../../store/comments";
@@ -33,7 +33,7 @@ export function CommentList({ projectId }: { projectId: string }): ReactElement 
   const [updatingIds, setUpdatingIds] = useState<Set<string>>(() => new Set());
   const lifecycleRef = useRef<{ projectId: string; active: boolean } | null>(null);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     const lifecycle = { projectId, active: true };
     lifecycleRef.current = lifecycle;
     return () => {
@@ -45,23 +45,23 @@ export function CommentList({ projectId }: { projectId: string }): ReactElement 
   }, [projectId]);
 
   useEffect(() => {
-    let cancelled = false;
+    const lifecycle = lifecycleRef.current;
+    if (lifecycle === null) {
+      return;
+    }
     void listComments(projectId)
       .then((comments) => {
-        if (!cancelled) {
+        if (lifecycleRef.current === lifecycle && lifecycle.active) {
           const store = useCommentsStore.getState();
           store.setAll(comments);
           useCommentsStore.getState().setLastError(null);
         }
       })
       .catch((error: unknown) => {
-        if (!cancelled) {
+        if (lifecycleRef.current === lifecycle && lifecycle.active) {
           useCommentsStore.getState().setLastError(errorMessage(error));
         }
       });
-    return () => {
-      cancelled = true;
-    };
   }, [projectId]);
 
   const changeStatus = async (commentId: string, status: CommentStatus) => {
