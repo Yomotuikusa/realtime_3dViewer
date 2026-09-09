@@ -2,10 +2,12 @@
 
 ## 目的
 環境設定、HTTP エラー応答、SQLite のスキーマ適用と projects / model_versions /
-comments の永続化、ファイル保存、プロジェクト取得 API を提供する server の基盤。
+comments の永続化、ファイル保存、プロジェクト取得 API、web/dist の静的配信を提供する
+server の基盤。本番は `npm run build && npm run start` で起動する。
 
 ## ファイル一覧と役割
-- `src/config.ts`: 環境変数から `Config` を読み込む。
+- `src/config.ts`: 環境変数から `Config` を読み込む。`WEB_DIST_DIR` は web/dist のルートを
+  指定し、既定値は `./web/dist` (相対パスは cwd 基準)。
 - `src/errors.ts`: `HttpError` と未知エラーを API エラー応答へ変換する。
 - `src/db/connection.ts`: `node:sqlite` の接続、PRAGMA、スキーマ適用、トランザクション。
 - `src/db/schema.sql`: projects、model_versions、comments とコメント検索用 index の DDL。
@@ -22,6 +24,10 @@ comments の永続化、ファイル保存、プロジェクト取得 API を提
   不在は `NOT_FOUND`、不正な JSON / 入力は `VALIDATION` を返す。
 - `src/routes/upload-validation.ts`: glTF/GLB の拡張子・マジックバイト/JSON 検査と、
   Content-Length のアップロード上限検査。
+- `src/routes/static.ts`: `WEB_DIST_DIR` 配下の GET / HEAD 静的ファイルを配信する。`/assets/`
+  配下は immutable キャッシュ、それ以外は no-cache とし、拡張子なしの未知パスは
+  `index.html` へ SPA フォールバックする。`/api/`、拡張子付きの不在ファイル、GET / HEAD
+  以外は後段へ渡し、パス解決時は root 外への traversal を拒否する。
 - `src/realtime/hub.ts`: `ws` 非依存のインメモリ RoomHub。接続・join 済み Presence、カメラ、
   線の状態を project 単位で保持し、接続ごとの配信先を `Outbound` で返す。
 - `src/realtime/ws.ts`: `GET /ws?projectId=<id>` を既存の Node HTTP Server に接続する WebSocket
@@ -29,7 +35,7 @@ comments の永続化、ファイル保存、プロジェクト取得 API を提
   projectId 不在は `BAD_REQUEST` を送って close `1008`、スキーマ違反は `VALIDATION` を返し、
   同一接続で20回連続すると close `1008` する。
 - `src/app.ts`: `createApp(deps)`。共通エラー処理、JSON 404、`/api/projects` と
-  `/api/projects/:projectId/comments` のマウントを担う。
+  `/api/projects/:projectId/comments` のマウント、および最後の static route のマウントを担う。
 - `src/index.ts`: `DATA_DIR` を作成して SQLite / ファイルストレージ / Hono HTTP / WebSocket を
   1プロセスで起動するエントリポイント。起動時に `server_started` の JSON 1行をログ出力する。
 - `tests/helpers/tmp.ts`: `server/.vite/test-tmp` 配下の一時ディレクトリ管理。
@@ -37,6 +43,8 @@ comments の永続化、ファイル保存、プロジェクト取得 API を提
 - `tests/helpers/app.ts`: 固定時刻・インメモリ DB・一時ファイルストレージを使う `TestApp` と
   `makeTestApp` / `seedProject` / `seedComment`。
 - `tests/config.test.ts`: 設定値と入力検証のテスト。
+- `tests/routes-static.test.ts`: Content-Type、静的ファイル、キャッシュ、SPA フォールバック、
+  HEAD、API 非横取り、パストラバーサル、未存在 root のテスト。
 - `tests/errors.test.ts`: HTTP / Zod / 未知エラーの応答変換テスト。
 - `tests/db-projects.test.ts`: SQLite 接続、スキーマ、トランザクション、projects 層のテスト。
 - `tests/db-comments.test.ts`: comments 層の JSON 往復、FK、一覧順序・status 絞り込み、
@@ -57,7 +65,7 @@ comments の永続化、ファイル保存、プロジェクト取得 API を提
 - `vitest.config.ts`: テスト設定(tests/**/*.test.ts、cacheDir は .vite)。
 
 ## 公開インターフェイス
-- `loadConfig`: `PORT`、`DATA_DIR`、`MAX_UPLOAD_BYTES` から `Config` を作る。
+- `loadConfig`: `PORT`、`DATA_DIR`、`MAX_UPLOAD_BYTES`、`WEB_DIST_DIR` から `Config` を作る。
 - `HttpError` / `toErrorResponse`: API のエラーコード・HTTP ステータス・メッセージを統一する。
 - `openDb` / `migrate` / `withTransaction`: SQLite 接続とトランザクションを管理する。
 - `insertProject` / `insertModelVersion`: プロジェクトと版を登録する。
@@ -77,6 +85,8 @@ comments の永続化、ファイル保存、プロジェクト取得 API を提
   project に属することを確認して 201 の `Comment` と `comment:created` を返す。PATCH は
   `UpdateCommentStatusInput` を検証して 200 の `Comment` と `comment:updated` を返す。
   いずれも対象 project が無ければ `NOT_FOUND`、入力不正なら `VALIDATION` を返す。
+- `contentTypeFor` / `resolveStaticPath` / `staticRoutes`: 静的ファイルの Content-Type 判定、
+  root 配下の安全なパス解決、`index.html` を使った SPA フォールバック付き配信を提供する。
 - `RoomHub`: `connect` / `disconnect` / `handle` で接続とルーム状態を操作し、
   `connectionsIn` / `projectOf` / `usersIn` / `strokesIn` で結線側やテストから状態を参照する。
   `Outbound.target` は `self` (送信元のみ)、`others` (送信元以外)、`all` (ルーム全員) を表す。
@@ -91,3 +101,5 @@ comments の永続化、ファイル保存、プロジェクト取得 API を提
 `shared/src/api.ts` の `ErrorCode`、`ApiError`、`MAX_UPLOAD_BYTES_DEFAULT` と、
 `shared/src/types.ts` の `Project`、`ModelVersion`、`Comment` 関連型を利用する。後続の
 server ルートと WS 配信は、この接続・トランザクション・projects / comments 層を共有する。
+`createApp` は API ルートを先に、`WEB_DIST_DIR` の static route を最後に登録するため、
+API の 404 は SPA にフォールバックしない。
