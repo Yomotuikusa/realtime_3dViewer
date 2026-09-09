@@ -19,7 +19,7 @@ export function CommentList({ projectId }: { projectId: string }): ReactElement 
   const selectedId = useCommentsStore((state) => state.selectedId);
   const lastError = useCommentsStore((state) => state.lastError);
   const visibleItems = selectVisible(items, showOnlyOpen);
-  const [updatingId, setUpdatingId] = useState<string | null>(null);
+  const [updatingIds, setUpdatingIds] = useState<Set<string>>(() => new Set());
 
   useEffect(() => {
     let cancelled = false;
@@ -40,14 +40,18 @@ export function CommentList({ projectId }: { projectId: string }): ReactElement 
   }, [projectId]);
 
   const changeStatus = async (commentId: string, status: CommentStatus) => {
-    setUpdatingId(commentId);
+    setUpdatingIds((current) => new Set(current).add(commentId));
     try {
       const comment = await updateCommentStatus(projectId, commentId, status);
       useCommentsStore.getState().upsert(comment);
     } catch (error: unknown) {
       useCommentsStore.getState().setLastError(errorMessage(error));
     } finally {
-      setUpdatingId(null);
+      setUpdatingIds((current) => {
+        const next = new Set(current);
+        next.delete(commentId);
+        return next;
+      });
     }
   };
 
@@ -66,7 +70,7 @@ export function CommentList({ projectId }: { projectId: string }): ReactElement 
       <ul style={{ display: "grid", gap: "0.5rem", padding: 0, margin: 0, listStyle: "none" }}>
         {visibleItems.map((comment) => {
           const nextStatus: CommentStatus = comment.status === "open" ? "resolved" : "open";
-          const isUpdating = updatingId === comment.id;
+          const isUpdating = updatingIds.has(comment.id);
           return (
             <li key={comment.id}>
               <div
@@ -101,6 +105,7 @@ export function CommentList({ projectId }: { projectId: string }): ReactElement 
                     event.stopPropagation();
                     void changeStatus(comment.id, nextStatus);
                   }}
+                  onKeyDown={(event) => event.stopPropagation()}
                 >
                   {comment.status === "open" ? "Resolve" : "Reopen"}
                 </button>
