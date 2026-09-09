@@ -36,7 +36,7 @@ export function CommentPickLayer(): null {
       );
     };
     const handlePointerDown = (event: PointerEvent): void => {
-      if (event.button === 0) {
+      if (event.button === 0 && !event.altKey) {
         down.current = { x: event.clientX, y: event.clientY };
       }
     };

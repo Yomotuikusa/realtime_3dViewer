@@ -1,4 +1,4 @@
-import { useEffect, useRef, type ReactElement } from "react";
+import { useCallback, useEffect, useRef, type ReactElement } from "react";
 import { useFrame, useThree } from "@react-three/fiber";
 import { OrbitControls, useBounds } from "@react-three/drei";
 import type { OrbitControls as OrbitControlsImpl } from "three-stdlib";
@@ -7,8 +7,8 @@ import { cameraEquals, DEFAULT_CAMERA, lerpCamera } from "@shared/camera";
 import { useCameraStore } from "../../store/camera";
 import { usePresenceStore } from "../../store/presence";
 import { useSessionStore } from "../../store/session";
-import { useAnnotationStore } from "../../store/annotation";
 import { followStep, followTargetCamera } from "./follow";
+import { attachViewerPointer, type ViewerControlsLike } from "./viewer-pointer";
 import type { Camera } from "three";
 
 function readCamera(camera: Camera, controls: OrbitControlsImpl): CameraState {
@@ -26,20 +26,30 @@ function applyCamera(camera: Camera, controls: OrbitControlsImpl, state: CameraS
 
 export function CameraRig(): ReactElement {
   const camera = useThree((state) => state.camera);
+  const controls = useThree((state) => state.controls);
   const controlsRef = useRef<OrbitControlsImpl | null>(null);
   const pendingTarget = useRef<CameraState | null>(null);
   const fitSeq = useCameraStore((state) => state.fitSeq);
-  const mode = useAnnotationStore((state) => state.mode);
   const bounds = useBounds();
   const lastResetSeq = useRef(useCameraStore.getState().resetSeq);
   const lastFitSeq = useRef(fitSeq);
 
-  const handleChange = (): void => {
+  const handleChange = useCallback((): void => {
     const controls = controlsRef.current;
     if (controls) {
       useCameraStore.getState().setSelfCamera(readCamera(camera, controls));
     }
-  };
+  }, [camera]);
+
+  useEffect(() => {
+    if (controls === null) {
+      return;
+    }
+    return attachViewerPointer(controls as unknown as ViewerControlsLike, {
+      onUserInteract: () => usePresenceStore.getState().unfollow(),
+      onCameraChange: handleChange,
+    });
+  }, [controls, handleChange]);
 
   useEffect(() => {
     if (fitSeq === lastFitSeq.current) {
@@ -119,7 +129,6 @@ export function CameraRig(): ReactElement {
       makeDefault
       onChange={handleChange}
       onStart={handleStart}
-      enabled={mode !== "pen"}
       target={DEFAULT_CAMERA.target}
     />
   );

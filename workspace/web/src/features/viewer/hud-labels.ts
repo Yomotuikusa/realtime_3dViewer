@@ -1,12 +1,14 @@
 import type { AnnotationMode } from "../../store/annotation";
 
-export const MODE_LABELS: Readonly<Record<AnnotationMode, string>> = {
-  orbit: "視点",
+/** HUD のボタンに出すモード。"none" は解除状態でありボタンを持たない。 */
+export type ToolMode = Exclude<AnnotationMode, "none">;
+
+export const MODE_LABELS: Readonly<Record<ToolMode, string>> = {
   pen: "ペン",
   comment: "コメント",
 };
 
-export const MODE_ORDER: readonly AnnotationMode[] = ["orbit", "pen", "comment"];
+export const MODE_ORDER: readonly ToolMode[] = ["pen", "comment"];
 export const RESET_LABEL = "視点を戻す";
 export const FIT_LABEL = "全体を表示";
 export const UNDO_LABEL = "1本戻す";
@@ -41,12 +43,12 @@ export function hint(input: HintInput): string {
   if (input.following) {
     return "操作すると追従が解除されます";
   }
-  if (input.mode === "orbit") {
-    return "ドラッグで回転、ホイールで拡大縮小、右ドラッグで移動";
+  if (input.mode === "none") {
+    return "Alt+左ドラッグで回転、ホイールまたは Alt+右ドラッグで拡大縮小、Alt+中ドラッグで移動";
   }
   if (input.mode === "pen") {
     return input.canEdit
-      ? "モデルの上をドラッグして線を描きます(この間は視点を動かせません)"
+      ? "モデルの上をドラッグして線を描きます(Alt を押している間は視点操作になります)"
       : "接続が切れているため線を描けません";
   }
   return input.hasAnchor

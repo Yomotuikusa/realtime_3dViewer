@@ -1,7 +1,8 @@
 import { create } from "zustand";
 import type { Stroke, Vec3 } from "@shared/types";
 
-export type AnnotationMode = "orbit" | "pen" | "comment";
+/** "none" はツール未選択。左ドラッグで何も起きない状態を指す。 */
+export type AnnotationMode = "none" | "pen" | "comment";
 
 export const STROKE_COLORS: readonly string[] = [
   "#ff0000",
@@ -34,7 +35,7 @@ export interface AnnotationStoreState {
 
 const initialState = {
   strokes: {} as Record<string, Stroke>,
-  mode: "orbit" as AnnotationMode,
+  mode: "none" as AnnotationMode,
   color: DEFAULT_STROKE_COLOR,
   drafting: null as Vec3[] | null,
   replayStrokes: [] as Stroke[],

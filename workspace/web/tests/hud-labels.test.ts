@@ -14,8 +14,8 @@ import {
 
 describe("viewer HUD labels", () => {
   it("defines Japanese mode and action labels", () => {
-    expect(MODE_LABELS).toEqual({ orbit: "視点", pen: "ペン", comment: "コメント" });
-    expect(MODE_ORDER).toEqual(["orbit", "pen", "comment"]);
+    expect(MODE_LABELS).toEqual({ pen: "ペン", comment: "コメント" });
+    expect(MODE_ORDER).toEqual(["pen", "comment"]);
     expect(RESET_LABEL).toBe("視点を戻す");
     expect(FIT_LABEL).toBe("全体を表示");
     expect(UNDO_LABEL).toBe("1本戻す");
@@ -44,14 +44,14 @@ describe("viewer HUD labels", () => {
       .toBe("操作すると追従が解除されます");
   });
 
-  it("describes orbit controls", () => {
-    expect(hint({ mode: "orbit", canEdit: false, hasAnchor: false, following: false }))
-      .toBe("ドラッグで回転、ホイールで拡大縮小、右ドラッグで移動");
+  it("describes idle Maya-style camera controls", () => {
+    expect(hint({ mode: "none", canEdit: false, hasAnchor: false, following: false }))
+      .toBe("Alt+左ドラッグで回転、ホイールまたは Alt+右ドラッグで拡大縮小、Alt+中ドラッグで移動");
   });
 
   it("describes pen editing and disconnected pen state", () => {
     expect(hint({ mode: "pen", canEdit: true, hasAnchor: false, following: false }))
-      .toBe("モデルの上をドラッグして線を描きます(この間は視点を動かせません)");
+      .toBe("モデルの上をドラッグして線を描きます(Alt を押している間は視点操作になります)");
     expect(hint({ mode: "pen", canEdit: false, hasAnchor: false, following: false }))
       .toBe("接続が切れているため線を描けません");
   });

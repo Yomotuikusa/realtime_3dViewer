@@ -34,7 +34,7 @@ describe("resetReviewStores", () => {
     expect(usePresenceStore.getState()).toMatchObject({ users: {}, followingUserId: null });
     expect(useAnnotationStore.getState()).toMatchObject({
       strokes: {},
-      mode: "orbit",
+      mode: "none",
       drafting: null,
       replayStrokes: [],
     });
