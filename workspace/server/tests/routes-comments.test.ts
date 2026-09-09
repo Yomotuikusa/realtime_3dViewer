@@ -185,6 +185,15 @@ describe("comment routes", () => {
     const t = testApp();
     const { version } = seedProject(t);
     seedComment(t, { projectId: "p1", versionId: version.id, id: "c1" });
+    insertProject(t.db, { id: "p2", name: "Other", createdAt: 1 });
+    const otherVersion = insertModelVersion(t.db, {
+      id: "v2",
+      projectId: "p2",
+      fileName: "other.glb",
+      byteSize: 1,
+      createdAt: 1,
+    });
+    seedComment(t, { projectId: "p2", versionId: otherVersion.id, id: "c1" });
     for (const status of ["done", undefined]) {
       const response = await t.app.request("/api/projects/p1/comments/c1", {
         method: "PATCH",
