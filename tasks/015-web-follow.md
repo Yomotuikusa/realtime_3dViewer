@@ -6,7 +6,7 @@ depends_on: [014]
 owns: [web/src/features/viewer/follow.ts, web/src/features/viewer/CameraRig.tsx, web/tests/follow.test.ts, web/web_Summary.md]
 reads: [../docs/3dreviewer-plan-and-architecture.md, ../docs/task-breakdown.md, shared/shared_Summary.md, shared/src/types.ts, shared/src/camera.ts, web/src/store/camera.ts, web/src/store/presence.ts, web/src/store/session.ts, web/src/features/viewer/ViewerCanvas.tsx]
 verify: npm run typecheck && npm run test:web
-status: todo
+status: done
 ---
 
 ## 目的

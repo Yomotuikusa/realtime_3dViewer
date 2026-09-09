@@ -6,7 +6,7 @@ depends_on: [017]
 owns: [web/src/store/comments.ts, web/src/features/comments/CommentList.tsx, web/src/app/realtime-dispatch.ts, web/src/app/ReviewPage.tsx, web/tests/store-comments.test.ts, web/tests/realtime-dispatch.test.ts, web/web_Summary.md]
 reads: [../docs/3dreviewer-plan-and-architecture.md, ../docs/task-breakdown.md, shared/shared_Summary.md, shared/src/types.ts, shared/src/api.ts, shared/src/protocol.ts, server/server_Summary.md, web/src/api/client.ts, web/src/store/session.ts, web/src/app/useRealtime.ts]
 verify: npm run typecheck && npm run test:web
-status: todo
+status: done
 ---
 
 ## 目的

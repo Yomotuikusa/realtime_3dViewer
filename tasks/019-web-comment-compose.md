@@ -6,7 +6,7 @@ depends_on: [018]
 owns: [web/src/features/comments/compose.ts, web/src/features/comments/CommentPickLayer.tsx, web/src/features/comments/CommentComposer.tsx, web/src/features/comments/CommentPins.tsx, web/src/app/ReviewPage.tsx, web/tests/compose.test.ts, web/web_Summary.md]
 reads: [../docs/3dreviewer-plan-and-architecture.md, ../docs/task-breakdown.md, shared/shared_Summary.md, shared/src/types.ts, shared/src/api.ts, web/src/api/client.ts, web/src/store/session.ts, web/src/store/camera.ts, web/src/store/annotation.ts, web/src/store/comments.ts, web/src/features/viewer/pick.ts, web/src/features/viewer/model-target.ts, web/src/features/annotation/stroke-build.ts, web/src/features/annotation/AnnotationLayer.tsx]
 verify: npm run typecheck && npm run test:web
-status: todo
+status: done
 ---
 
 ## 目的

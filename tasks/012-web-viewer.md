@@ -6,7 +6,7 @@ depends_on: [011, 003]
 owns: [web/src/store/camera.ts, web/src/app/ReviewPage.tsx, web/src/app/ErrorBoundary.tsx, web/src/features/viewer/ViewerCanvas.tsx, web/src/features/viewer/ModelMesh.tsx, web/src/features/viewer/CameraRig.tsx, web/tests/store-camera.test.ts, web/web_Summary.md]
 reads: [../docs/3dreviewer-plan-and-architecture.md, ../docs/task-breakdown.md, shared/shared_Summary.md, shared/src/types.ts, shared/src/camera.ts, web/src/api/client.ts, web/src/app/routes.ts, web/src/app/App.tsx]
 verify: npm run typecheck && npm run test:web
-status: todo
+status: done
 ---
 
 ## 目的

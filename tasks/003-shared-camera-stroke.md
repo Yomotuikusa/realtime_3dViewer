@@ -6,7 +6,7 @@ depends_on: [002]
 owns: [shared/src/camera.ts, shared/src/stroke.ts, shared/src/index.ts, shared/tests/camera.test.ts, shared/tests/stroke.test.ts, shared/shared_Summary.md]
 reads: [../docs/3dreviewer-plan-and-architecture.md, ../docs/task-breakdown.md, shared/src/types.ts]
 verify: npm run test:shared
-status: todo
+status: done
 ---
 
 ## 目的

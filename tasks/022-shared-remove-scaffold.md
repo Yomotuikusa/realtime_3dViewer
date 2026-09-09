@@ -6,7 +6,7 @@ depends_on: [021]
 owns: [shared/src/index.ts, shared/tests/index.test.ts, shared/shared_Summary.md]
 reads: [../docs/3dreviewer-plan-and-architecture.md, ../docs/task-breakdown.md, shared/src/types.ts, shared/src/api.ts, shared/src/protocol.ts, shared/src/camera.ts, shared/src/stroke.ts, server/src/index.ts, web/src/main.tsx]
 verify: npm run typecheck && npm run test:shared
-status: todo
+status: done
 ---
 
 ## 目的

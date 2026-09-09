@@ -6,7 +6,7 @@ depends_on: [013]
 owns: [web/src/store/presence.ts, web/src/features/presence/PresenceList.tsx, web/src/features/presence/RemoteCameras.tsx, web/src/features/viewer/useCameraBroadcast.ts, web/src/app/realtime-dispatch.ts, web/src/app/ReviewPage.tsx, web/tests/store-presence.test.ts, web/tests/camera-broadcast.test.ts, web/tests/realtime-dispatch.test.ts, web/web_Summary.md]
 reads: [../docs/3dreviewer-plan-and-architecture.md, ../docs/task-breakdown.md, shared/shared_Summary.md, shared/src/types.ts, shared/src/protocol.ts, shared/src/camera.ts, server/server_Summary.md, web/src/store/session.ts, web/src/store/camera.ts, web/src/api/ws.ts, web/src/app/useRealtime.ts, web/src/features/viewer/ViewerCanvas.tsx]
 verify: npm run typecheck && npm run test:web
-status: todo
+status: done
 ---
 
 ## 目的

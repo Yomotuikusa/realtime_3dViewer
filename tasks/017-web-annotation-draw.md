@@ -6,7 +6,7 @@ depends_on: [016]
 owns: [web/src/features/viewer/model-target.ts, web/src/features/viewer/pick.ts, web/src/features/viewer/ModelMesh.tsx, web/src/features/viewer/CameraRig.tsx, web/src/features/annotation/stroke-build.ts, web/src/features/annotation/AnnotationLayer.tsx, web/src/features/annotation/AnnotationToolbar.tsx, web/src/app/ReviewPage.tsx, web/tests/pick.test.ts, web/tests/stroke-build.test.ts, web/tests/model-target.test.ts, web/web_Summary.md]
 reads: [../docs/3dreviewer-plan-and-architecture.md, ../docs/task-breakdown.md, shared/shared_Summary.md, shared/src/types.ts, shared/src/protocol.ts, shared/src/stroke.ts, web/src/store/annotation.ts, web/src/store/camera.ts, web/src/store/session.ts, web/src/app/useRealtime.ts, web/src/features/viewer/ViewerCanvas.tsx, web/src/features/viewer/follow.ts]
 verify: npm run typecheck && npm run test:web
-status: todo
+status: done
 ---
 
 ## 目的

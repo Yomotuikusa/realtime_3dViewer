@@ -6,7 +6,7 @@ depends_on: [012]
 owns: [web/src/store/session.ts, web/src/app/display-name.ts, web/src/app/JoinDialog.tsx, web/src/api/ws.ts, web/src/app/useRealtime.ts, web/src/app/realtime-dispatch.ts, web/src/app/ReviewPage.tsx, web/tests/ws-client.test.ts, web/tests/realtime-dispatch.test.ts, web/tests/display-name.test.ts, web/web_Summary.md]
 reads: [../docs/3dreviewer-plan-and-architecture.md, ../docs/task-breakdown.md, shared/shared_Summary.md, shared/src/types.ts, shared/src/protocol.ts, server/server_Summary.md, web/src/store/camera.ts, web/src/api/client.ts, web/src/features/viewer/ViewerCanvas.tsx]
 verify: npm run typecheck && npm run test:web
-status: todo
+status: done
 ---
 
 ## 目的

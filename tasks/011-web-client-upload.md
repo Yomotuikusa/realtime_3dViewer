@@ -6,7 +6,7 @@ depends_on: [002]
 owns: [web/src/api/client.ts, web/src/app/routes.ts, web/src/app/App.tsx, web/src/app/UploadPage.tsx, web/src/app/ReviewPage.tsx, web/src/main.tsx, web/tests/api-client.test.ts, web/tests/routes.test.ts, web/web_Summary.md]
 reads: [../docs/3dreviewer-plan-and-architecture.md, ../docs/task-breakdown.md, shared/shared_Summary.md, shared/src/types.ts, shared/src/api.ts, web/index.html, web/tsconfig.json, web/vite.config.ts, web/vitest.config.ts]
 verify: npm run typecheck && npm run test:web
-status: todo
+status: done
 ---
 
 ## 目的

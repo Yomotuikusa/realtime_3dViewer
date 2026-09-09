@@ -6,7 +6,7 @@ depends_on: [008]
 owns: [server/src/realtime/hub.ts, server/tests/realtime-hub.test.ts, server/server_Summary.md]
 reads: [../docs/3dreviewer-plan-and-architecture.md, ../docs/task-breakdown.md, shared/shared_Summary.md, shared/src/types.ts, shared/src/protocol.ts]
 verify: npm run typecheck && npm run test:server
-status: todo
+status: done
 ---
 
 ## 目的

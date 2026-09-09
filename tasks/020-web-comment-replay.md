@@ -6,7 +6,7 @@ depends_on: [019]
 owns: [web/src/features/comments/replay.ts, web/src/features/comments/useCommentReplay.ts, web/src/features/comments/ReplayStrokes.tsx, web/src/app/ReviewPage.tsx, web/tests/comment-replay.test.ts, web/web_Summary.md]
 reads: [../docs/3dreviewer-plan-and-architecture.md, ../docs/task-breakdown.md, shared/shared_Summary.md, shared/src/types.ts, web/src/store/camera.ts, web/src/store/presence.ts, web/src/store/annotation.ts, web/src/store/comments.ts, web/src/features/annotation/StrokeLines.tsx, web/src/features/viewer/CameraRig.tsx]
 verify: npm run typecheck && npm run test:web
-status: todo
+status: done
 ---
 
 ## 目的
