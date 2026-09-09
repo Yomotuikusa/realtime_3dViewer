@@ -47,7 +47,7 @@ function closeServer(server: Server): Promise<void> {
   });
 }
 
-export function startRealtime(options: Partial<RealtimeOptions> = {}): Promise<RealtimeFixture> {
+export function startRealtime(options?: Partial<RealtimeOptions>): Promise<RealtimeFixture> {
   return new Promise((resolve, reject) => {
     const server = createServer();
     server.once("error", reject);
@@ -60,7 +60,7 @@ export function startRealtime(options: Partial<RealtimeOptions> = {}): Promise<R
 
       const hub = new RoomHub();
       const realtime = attachRealtime(server, hub, {
-        projectExists: options.projectExists ?? (() => true),
+        projectExists: options?.projectExists ?? (() => true),
       });
       const clients: WebSocket[] = [];
       const closeCodes = new Map<WebSocket, number>();
