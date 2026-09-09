@@ -34,9 +34,7 @@ export function makeTestApp(overrides: Partial<Config> = {}): TestApp {
     ids: [] as string[],
     cleanup() {
       if (db.isOpen) db.close();
-      if (config.dataDir === dir) {
-        removeTmpDir(dir);
-      }
+      removeTmpDir(dir);
     },
   } satisfies TestApp;
   const deps: AppDeps = {
