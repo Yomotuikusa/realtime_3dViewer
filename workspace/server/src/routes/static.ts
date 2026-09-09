@@ -1,4 +1,5 @@
-import { readFile, realpath, stat } from "node:fs/promises";
+import { constants } from "node:fs";
+import { open, realpath, stat } from "node:fs/promises";
 import { extname, join, relative, resolve, sep } from "node:path";
 import { Hono } from "hono";
 import type { Hono as HonoType } from "hono";
@@ -72,14 +73,18 @@ async function readRegularFile(
   rootPath: string,
   path: string,
 ): Promise<{ path: string; data: Uint8Array } | null> {
+  let file;
   try {
     const filePath = await realpath(path);
     if (!isBelowRoot(rootPath, filePath)) return null;
-    if (!(await stat(filePath)).isFile()) return null;
-    return { path: filePath, data: await readFile(filePath) };
+    file = await open(filePath, constants.O_RDONLY | constants.O_NOFOLLOW);
+    if (!(await file.stat()).isFile()) return null;
+    return { path: filePath, data: await file.readFile() };
   } catch (error) {
     if (isMissing(error)) return null;
     throw error;
+  } finally {
+    await file?.close();
   }
 }
 

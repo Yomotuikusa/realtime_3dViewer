@@ -133,10 +133,15 @@ describe("static routes", () => {
     const { app, root } = makeStaticApp();
     writeFileSync(join(root, "..", "outside.txt"), "outside-secret");
     symlinkSync("../outside.txt", join(root, "link.txt"));
+    symlinkSync("..", join(root, "external"));
 
     const linkedFile = await app.app.request("/link.txt");
     expect(linkedFile.status).toBe(404);
     expect(await linkedFile.text()).not.toContain("outside-secret");
+
+    const linkedDirectory = await app.app.request("/external/outside.txt");
+    expect(linkedDirectory.status).toBe(404);
+    expect(await linkedDirectory.text()).not.toContain("outside-secret");
 
     unlinkSync(join(root, "index.html"));
     symlinkSync("../outside.txt", join(root, "index.html"));
