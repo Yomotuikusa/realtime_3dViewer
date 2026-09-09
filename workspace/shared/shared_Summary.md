@@ -12,7 +12,8 @@
 - src/protocol.ts: WS の ClientMessage/ServerMessage 型、discriminated union スキーマ、JSON フレーム parse 関数
 - src/camera.ts: three.js に依存しない CameraState/Vec3 の比較、補間、複製
 - src/stroke.ts: 反復処理による3D Ramer–Douglas–Peucker の点列間引きと送信可否判定
-- src/index.ts: `SHARED_SCAFFOLD` と shared の全公開面を再エクスポート
+- src/index.ts: shared の全公開面を再エクスポート
+- tests/index.test.ts: shared の公開面とプレースホルダ除去を検証
 - tests/types.test.ts: 各ドメインスキーマの safeParse の受理・拒否テスト
 - tests/api.test.ts: REST スキーマ、定数、trim・境界値のテスト
 - tests/protocol.test.ts: Client/Server の全メッセージ種別と parse 関数のテスト
@@ -26,7 +27,7 @@
 - protocol: `ClientMessage`, `ServerMessage`, `ClientMessageSchema`, `ServerMessageSchema`, `ParseResult`, `parseClientMessage`, `parseServerMessage`, `MAX_NAME_LENGTH`, `CAMERA_SEND_INTERVAL_MS`
 - camera: `DEFAULT_CAMERA`, `vec3Equals`, `vec3Distance`, `lerpVec3`, `cameraEquals`, `lerpCamera`, `cloneCamera`
 - stroke: `simplifyTolerance`, `simplify`, `isSendableStroke`
-- `shared/src/index.ts` は `SHARED_SCAFFOLD` を維持し、types.ts/api.ts/protocol.ts/camera.ts/stroke.ts の公開インターフェイスを再エクスポートする。
+- `shared/src/index.ts` は types.ts/api.ts/protocol.ts/camera.ts/stroke.ts の公開インターフェイスだけを再エクスポートする。
 
 ## 他機能との関係
 server の DB・ルート、web の状態管理・表示が本モジュールの型とスキーマを import する。
