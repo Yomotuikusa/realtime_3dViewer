@@ -7,17 +7,18 @@
 ## ファイル一覧と役割
 - tsconfig.json: 型検査設定(../tsconfig.base.json を継承。`@shared/*` は shared/src を指す)
 - vitest.config.ts: テスト設定(tests/**/*.test.ts、cacheDir は .vite)
-- src/types.ts: Vec3、CameraState、Stroke、Comment、ModelVersion、Project、PresenceUser の型と zod スキーマ
+- src/types.ts: Vec3、CameraState、Stroke、Comment、ModelVersion、Project、PresenceUser の型と、識別子・ファイル名・自由文字列の長さを検証する zod スキーマ
 - src/api.ts: REST のエラー、プロジェクト名、コメント入出力スキーマと upload 定数
 - src/protocol.ts: WS の ClientMessage/ServerMessage 型、discriminated union スキーマ、JSON フレーム parse 関数
-- src/camera.ts: three.js に依存しない CameraState/Vec3 の比較、補間、複製
+- src/camera.ts: three.js に依存しない CameraState/Vec3 の比較、補間、複製(NaN は補間開始点として処理)
 - src/stroke.ts: 反復処理による3D Ramer–Douglas–Peucker の点列間引きと送信可否判定
 - src/index.ts: shared の全公開面を再エクスポート
 - tests/index.test.ts: shared の公開面とプレースホルダ除去を検証
 - tests/types.test.ts: 各ドメインスキーマの safeParse の受理・拒否テスト
+- tests/types-bounds.test.ts: 識別子、ファイル名、プロジェクト名、コメント文字列の長さ・文字種上限テスト
 - tests/api.test.ts: REST スキーマ、定数、trim・境界値のテスト
 - tests/protocol.test.ts: Client/Server の全メッセージ種別と parse 関数のテスト
-- tests/camera.test.ts: カメラの比較、距離、補間、クランプ、複製のテスト
+- tests/camera.test.ts: カメラの比較、補間、クランプ、複製のテスト
 - tests/stroke.test.ts: 点列間引き、許容誤差、送信可能範囲のテスト
 
 ## 公開インターフェイス
@@ -25,7 +26,9 @@
 - スキーマ: `Vec3Schema`, `ColorSchema`, `CameraStateSchema`, `StrokeSchema`, `CommentStatusSchema`, `CommentSchema`, `ModelVersionSchema`, `ProjectSchema`, `PresenceUserSchema`
 - api: `ErrorCode`, `ApiError`, `ApiErrorSchema`, `MAX_UPLOAD_BYTES_DEFAULT`, `ALLOWED_MODEL_EXTENSIONS`, `ProjectNameSchema`, `CreateCommentInput`, `UpdateCommentStatusInput`, `ListCommentsQuery`
 - protocol: `ClientMessage`, `ServerMessage`, `ClientMessageSchema`, `ServerMessageSchema`, `ParseResult`, `parseClientMessage`, `parseServerMessage`, `MAX_NAME_LENGTH`, `CAMERA_SEND_INTERVAL_MS`
-- camera: `DEFAULT_CAMERA`, `vec3Equals`, `vec3Distance`, `lerpVec3`, `cameraEquals`, `lerpCamera`, `cloneCamera`
+- types の定数: `MAX_ID_LENGTH`, `MAX_FILE_NAME_LENGTH`, `MAX_PROJECT_NAME_LENGTH`, `MAX_AUTHOR_NAME_LENGTH`, `MAX_COMMENT_BODY_LENGTH`
+- types の入力スキーマ: `IdSchema`, `FileNameSchema`
+- camera: `DEFAULT_CAMERA`, `vec3Equals`, `lerpVec3`, `cameraEquals`, `lerpCamera`, `cloneCamera`
 - stroke: `simplifyTolerance`, `simplify`, `isSendableStroke`
 - `shared/src/index.ts` は types.ts/api.ts/protocol.ts/camera.ts/stroke.ts の公開インターフェイスだけを再エクスポートする。
 
