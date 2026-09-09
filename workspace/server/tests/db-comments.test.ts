@@ -1,7 +1,6 @@
 import { afterEach, describe, expect, it } from "vitest";
 import { openDb, type Db } from "../src/db/connection";
 import {
-  findComment,
   insertComment,
   listComments,
   updateCommentStatus,
@@ -83,11 +82,6 @@ describe("comments database layer", () => {
       status: "open",
       updatedAt: input.createdAt,
     });
-    expect(findComment(db, "p1", "c1")).toEqual({
-      ...input,
-      status: "open",
-      updatedAt: input.createdAt,
-    });
   });
 
   it("enforces project and version foreign keys", () => {
@@ -130,18 +124,14 @@ describe("comments database layer", () => {
     seedVersion(db, "p2", "v2");
     insertComment(db, newComment());
 
-    expect(findComment(db, "p1", "nope")).toBeNull();
-    expect(findComment(db, "p2", "c1")).toBeNull();
     expect(updateCommentStatus(db, "p2", "c1", "resolved", 50)).toBeNull();
     expect(updateCommentStatus(db, "p1", "nope", "resolved", 50)).toBeNull();
-    expect(findComment(db, "p1", "c1")).toMatchObject({ status: "open", updatedAt: 20 });
 
     expect(updateCommentStatus(db, "p1", "c1", "resolved", 999)).toMatchObject({
       status: "resolved",
       updatedAt: 999,
       createdAt: 20,
     });
-    expect(findComment(db, "p1", "c1")).toMatchObject({ status: "resolved", updatedAt: 999 });
     expect(updateCommentStatus(db, "p1", "c1", "open", 1000)).toMatchObject({
       status: "open",
       updatedAt: 1000,

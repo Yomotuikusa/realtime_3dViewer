@@ -1,5 +1,4 @@
-import { afterEach, describe, expect, it } from "vitest";
-import { createApp, type AppDeps } from "../src/app";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { makeTestApp } from "./helpers/app";
 
 const apps: Array<ReturnType<typeof makeTestApp>> = [];
@@ -16,6 +15,7 @@ describe("createApp", () => {
       const response = await testApp.app.request(path);
       expect(response.status).toBe(404);
       expect(response.headers.get("content-type")).toContain("application/json");
+      expect(response.headers.get("X-Content-Type-Options")).toBe("nosniff");
       expect(await response.json()).toEqual({
         error: { code: "NOT_FOUND", message: "Not Found" },
       });
@@ -25,26 +25,36 @@ describe("createApp", () => {
   it("converts unexpected route errors into a generic 500 response", async () => {
     const testApp = makeTestApp();
     apps.push(testApp);
+    const errorLog = vi.spyOn(console, "error").mockImplementation(() => {});
     testApp.db.close();
     const response = await testApp.app.request("/api/projects/p1");
     expect(response.status).toBe(500);
+    expect(response.headers.get("X-Content-Type-Options")).toBe("nosniff");
     expect(await response.json()).toEqual({
       error: { code: "INTERNAL", message: "Internal Server Error" },
     });
+    expect(errorLog).toHaveBeenCalledTimes(1);
+    const entry = JSON.parse(errorLog.mock.calls[0]?.[0] as string) as Record<string, unknown>;
+    expect(entry).toMatchObject({
+      level: "error",
+      msg: "request_failed",
+      method: "GET",
+      path: "/api/projects/p1",
+    });
+    expect(entry.error).toEqual(expect.any(String));
+    expect(entry.stack).toEqual(expect.any(String));
+    errorLog.mockRestore();
   });
 
-  it("resolves injectable ids and defaults", () => {
-    const ids: string[] = ["p1"];
-    const deps = {
-      db: {} as AppDeps["db"],
-      storage: {} as AppDeps["storage"],
-      config: { port: 3000, dataDir: ".", maxUploadBytes: 1 },
-      publish: () => {},
-      newId: () => ids.shift() ?? `id-${fallback++}`,
-    } satisfies AppDeps;
-    let fallback = 1;
-    expect(deps.newId()).toBe("p1");
-    expect(deps.newId()).toBe("id-1");
-    expect(deps.newId()).toBe("id-2");
+  it("does not log expected HTTP errors", async () => {
+    const testApp = makeTestApp();
+    apps.push(testApp);
+    const errorLog = vi.spyOn(console, "error").mockImplementation(() => {});
+    const response = await testApp.app.request("/api/projects/missing");
+
+    expect(response.status).toBe(404);
+    expect(response.headers.get("X-Content-Type-Options")).toBe("nosniff");
+    expect(errorLog).not.toHaveBeenCalled();
+    errorLog.mockRestore();
   });
 });

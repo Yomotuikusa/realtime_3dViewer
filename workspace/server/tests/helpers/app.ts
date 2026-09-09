@@ -1,4 +1,6 @@
 import { Hono } from "hono";
+import { writeFileSync } from "node:fs";
+import { join } from "node:path";
 import type { ServerMessage } from "@shared/protocol";
 import type { Comment, CommentStatus, ModelVersion, Project, Stroke } from "@shared/types";
 import { createApp, type AppDeps } from "../../src/app";
@@ -21,7 +23,12 @@ export interface TestApp {
 
 export function makeTestApp(overrides: Partial<Config> = {}): TestApp {
   const dir = makeTmpDir("app");
-  const config = { ...loadConfig({}), ...overrides, dataDir: overrides.dataDir ?? dir };
+  const config = {
+    ...loadConfig({}),
+    ...overrides,
+    dataDir: overrides.dataDir ?? dir,
+    webDistDir: overrides.webDistDir ?? join(dir, "dist"),
+  };
   const db = openDb(":memory:");
   const storage = createFileStorage(config.dataDir);
   const published: TestApp["published"] = [];
@@ -65,7 +72,7 @@ export function seedProject(
     byteSize: bytes.length,
     createdAt: 1700000000000,
   });
-  void t.storage.saveModelFile(versionId, bytes);
+  writeFileSync(t.storage.modelFilePath(versionId), bytes);
   const project: Project = {
     id: projectId,
     name: "Project",

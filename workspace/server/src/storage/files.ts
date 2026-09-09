@@ -1,4 +1,5 @@
-import { mkdirSync, renameSync, rmSync, writeFileSync } from "node:fs";
+import { mkdirSync } from "node:fs";
+import { rename, rm, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 
 export interface Storage {
@@ -20,12 +21,18 @@ export function createFileStorage(dataDir: string): Storage {
     modelFilePath,
     async saveModelFile(versionId, data) {
       const filePath = modelFilePath(versionId);
-      writeFileSync(`${filePath}.tmp`, data);
-      renameSync(`${filePath}.tmp`, filePath);
+      const temporaryPath = `${filePath}.tmp`;
+      await writeFile(temporaryPath, data);
+      try {
+        await rename(temporaryPath, filePath);
+      } catch (error) {
+        await rm(temporaryPath, { force: true });
+        throw error;
+      }
       return data.length;
     },
     async deleteModelFile(versionId) {
-      rmSync(modelFilePath(versionId), { force: true });
+      await rm(modelFilePath(versionId), { force: true });
     },
   };
 }
