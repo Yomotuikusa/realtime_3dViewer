@@ -2,6 +2,10 @@ import { z } from "zod";
 import {
   CameraStateSchema,
   CommentStatusSchema,
+  IdSchema,
+  MAX_AUTHOR_NAME_LENGTH,
+  MAX_COMMENT_BODY_LENGTH,
+  MAX_PROJECT_NAME_LENGTH,
   StrokeSchema,
   Vec3Schema,
 } from "./types";
@@ -31,12 +35,12 @@ export const ApiErrorSchema = z.object({
 
 export const MAX_UPLOAD_BYTES_DEFAULT = 100 * 1024 * 1024;
 export const ALLOWED_MODEL_EXTENSIONS = [".glb", ".gltf"] as const;
-export const ProjectNameSchema = z.string().trim().min(1).max(100);
+export const ProjectNameSchema = z.string().trim().min(1).max(MAX_PROJECT_NAME_LENGTH);
 
 export const CreateCommentInput = z.object({
-  versionId: z.string().min(1),
-  authorName: z.string().trim().min(1).max(50),
-  body: z.string().trim().min(1).max(2000),
+  versionId: IdSchema,
+  authorName: z.string().trim().min(1).max(MAX_AUTHOR_NAME_LENGTH),
+  body: z.string().trim().min(1).max(MAX_COMMENT_BODY_LENGTH),
   anchor: Vec3Schema,
   camera: CameraStateSchema,
   strokes: z.array(StrokeSchema).max(200),

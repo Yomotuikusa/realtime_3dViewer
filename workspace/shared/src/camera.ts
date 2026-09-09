@@ -13,10 +13,6 @@ export function vec3Equals(a: Vec3, b: Vec3, eps = DEFAULT_EPSILON): boolean {
   );
 }
 
-export function vec3Distance(a: Vec3, b: Vec3): number {
-  return Math.hypot(a[0] - b[0], a[1] - b[1], a[2] - b[2]);
-}
-
 export function lerpVec3(a: Vec3, b: Vec3, t: number): Vec3 {
   return [
     a[0] + (b[0] - a[0]) * t,
@@ -30,7 +26,7 @@ export function cameraEquals(a: CameraState, b: CameraState, eps = DEFAULT_EPSIL
 }
 
 export function lerpCamera(from: CameraState, to: CameraState, t: number): CameraState {
-  const clampedT = Math.max(0, Math.min(1, t));
+  const clampedT = Number.isNaN(t) ? 0 : Math.max(0, Math.min(1, t));
   return {
     position: lerpVec3(from.position, to.position, clampedT),
     target: lerpVec3(from.target, to.target, clampedT),
