@@ -101,14 +101,6 @@ export function listComments(
   return rows.map(toComment);
 }
 
-export function findComment(
-  db: Db,
-  projectId: string,
-  commentId: string,
-): Comment | null {
-  return selectComment(db, projectId, commentId);
-}
-
 export function updateCommentStatus(
   db: Db,
   projectId: string,

@@ -2,6 +2,7 @@ import {
   ALLOWED_MODEL_EXTENSIONS,
   type ErrorCode,
 } from "@shared/api";
+import { extname } from "node:path";
 import { HttpError } from "../errors";
 
 export type ModelExt = ".glb" | ".gltf";
@@ -14,8 +15,7 @@ function unsupportedFormat(): never {
 
 /** Return the supported final extension after case-insensitive validation. */
 export function modelExtension(fileName: string): ModelExt {
-  const lowerName = fileName.toLowerCase();
-  const extension = lowerName.slice(lowerName.lastIndexOf("."));
+  const extension = extname(fileName).toLowerCase();
   if (!(ALLOWED_MODEL_EXTENSIONS as readonly string[]).includes(extension)) {
     unsupportedFormat();
   }
@@ -55,20 +55,5 @@ export function assertModelBytes(ext: ModelExt, bytes: Uint8Array): void {
     }
   } catch {
     unsupportedFormat();
-  }
-}
-
-/** Reject an advertised body size above the configured upload limit. */
-export function assertUploadSize(
-  contentLength: string | undefined,
-  maxBytes: number,
-): void {
-  if (contentLength === undefined) {
-    return;
-  }
-
-  const size = Number(contentLength);
-  if (!Number.isNaN(size) && size > maxBytes) {
-    throw new HttpError(413, "PAYLOAD_TOO_LARGE", "Upload is too large");
   }
 }

@@ -2,7 +2,6 @@ import { describe, expect, it } from "vitest";
 import { HttpError } from "../src/errors";
 import {
   assertModelBytes,
-  assertUploadSize,
   modelExtension,
 } from "../src/routes/upload-validation";
 
@@ -20,6 +19,7 @@ function expectHttpError(action: () => void, status: number, code: string): void
 describe("upload validation", () => {
   it("accepts supported extensions case-insensitively", () => {
     expect(modelExtension("a.GLB")).toBe(".glb");
+    expect(modelExtension("a.b.GLB")).toBe(".glb");
     expect(modelExtension("b.gltf")).toBe(".gltf");
   });
 
@@ -57,14 +57,4 @@ describe("upload validation", () => {
     }
   });
 
-  it("rejects only numeric content lengths above the limit", () => {
-    expectHttpError(
-      () => assertUploadSize("101", 100),
-      413,
-      "PAYLOAD_TOO_LARGE",
-    );
-    for (const value of ["100", undefined, "abc"]) {
-      expect(() => assertUploadSize(value, 100)).not.toThrow();
-    }
-  });
 });

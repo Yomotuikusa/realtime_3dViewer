@@ -13,7 +13,6 @@ import { withTransaction } from "../db/connection";
 import { HttpError } from "../errors";
 import {
   assertModelBytes,
-  assertUploadSize,
   modelExtension,
 } from "./upload-validation";
 
@@ -36,8 +35,6 @@ export function projectRoutes(deps: Required<AppDeps>): Hono {
   const routes = new HonoApp();
 
   routes.post("/", async (c) => {
-    assertUploadSize(c.req.header("content-length"), deps.config.maxUploadBytes);
-
     const body = await c.req.parseBody();
     const name = ProjectNameSchema.parse(body.name);
     const file = body.file;
