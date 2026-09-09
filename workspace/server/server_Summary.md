@@ -33,8 +33,9 @@ server の基盤。本番は `npm run build && npm run start` で起動する。
   アダプタ。`RoomHub` の配信先を実ソケットへ解決し、REST の publish を join 済み全員へ届ける。
   projectId 不在は `BAD_REQUEST` を送って close `1008`、スキーマ違反は `VALIDATION` を返し、
   同一接続で20回連続すると close `1008` する。
-- `src/app.ts`: `createApp(deps)`。リクエスト本体の bodyLimit、共通の `nosniff` ヘッダ、
-  500 時の `request_failed` ログ、JSON 404、`/api/projects` と
+- `src/app.ts`: `createApp(deps)`。厳密な `Content-Length` 検証を含むリクエスト本体の
+  bodyLimit、共通の `nosniff` ヘッダ、500 時の `request_failed` ログ、JSON 404、
+  `/api/projects` と
   `/api/projects/:projectId/comments` のマウント、および最後の static route のマウントを担う。
 - `src/index.ts`: `DATA_DIR` を作成して SQLite / ファイルストレージ / Hono HTTP / WebSocket を
   1プロセスで起動するエントリポイント。起動時に `server_started` の JSON 1行をログ出力する。

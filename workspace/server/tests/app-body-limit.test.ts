@@ -36,6 +36,24 @@ describe("request body limits", () => {
     await tooLargeResponse(response);
   });
 
+  it.each(["abc", "1e9"])(
+    "rejects an invalid advertised multipart Content-Length: %s",
+    async (contentLength) => {
+      const t = testApp({ maxUploadBytes: 100 });
+      const response = await t.app.request("/api/projects", {
+        method: "POST",
+        headers: {
+          "content-type": "multipart/form-data; boundary=test",
+          "content-length": contentLength,
+        },
+        body: "--test\r\n",
+      });
+
+      expect(response.status).toBe(413);
+      await tooLargeResponse(response);
+    },
+  );
+
   it("rejects an oversized chunked multipart body while reading it", async () => {
     const t = testApp({ maxUploadBytes: 100 });
     const response = await t.app.request("/api/projects", {

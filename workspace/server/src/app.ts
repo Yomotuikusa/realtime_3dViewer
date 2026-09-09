@@ -1,7 +1,7 @@
 import { nanoid } from "nanoid";
 import { Hono } from "hono";
 import { bodyLimit } from "hono/body-limit";
-import type { Hono as HonoType } from "hono";
+import type { Hono as HonoType, MiddlewareHandler } from "hono";
 import type { ServerMessage } from "@shared/protocol";
 import type { Config } from "./config";
 import type { Db } from "./db/connection";
@@ -38,11 +38,24 @@ export function createApp(deps: AppDeps): HonoType {
   const tooLarge = () => {
     throw new HttpError(413, "PAYLOAD_TOO_LARGE", "Request body is too large");
   };
+  const validateContentLength: MiddlewareHandler = async (c, next) => {
+    const contentLength = c.req.header("content-length");
+    const transferEncoding = c.req.header("transfer-encoding");
+    if (
+      transferEncoding === undefined &&
+      contentLength !== undefined &&
+      !/^\d+$/.test(contentLength)
+    ) {
+      tooLarge();
+    }
+    await next();
+  };
 
   app.use("*", async (c, next) => {
     await next();
     c.header("X-Content-Type-Options", "nosniff");
   });
+  app.use("/api/projects", validateContentLength);
   app.use(
     "/api/projects",
     bodyLimit({
@@ -50,10 +63,12 @@ export function createApp(deps: AppDeps): HonoType {
       onError: tooLarge,
     }),
   );
+  app.use("/api/projects/:projectId/comments", validateContentLength);
   app.use(
     "/api/projects/:projectId/comments",
     bodyLimit({ maxSize: MAX_JSON_BODY_BYTES, onError: tooLarge }),
   );
+  app.use("/api/projects/:projectId/comments/*", validateContentLength);
   app.use(
     "/api/projects/:projectId/comments/*",
     bodyLimit({ maxSize: MAX_JSON_BODY_BYTES, onError: tooLarge }),
