@@ -18,6 +18,7 @@ import { useSessionStore } from "../store/session";
 import { ErrorBoundary } from "./ErrorBoundary";
 import { JoinDialog } from "./JoinDialog";
 import { ReviewHeader } from "./ReviewHeader";
+import { resetReviewStores } from "./review-stores";
 import { useRealtime } from "./useRealtime";
 import { LOADING_MESSAGE, MODEL_LOAD_FAILED, PROJECT_LOAD_FAILED, RELOAD_LABEL } from "./review-labels";
 import "./review.css";
@@ -44,6 +45,8 @@ export function ReviewPage({ projectId }: { projectId: string }): ReactElement {
   const realtime = useRealtime(projectId, joinName);
   useCameraBroadcast(realtime.send);
   const lastError = useSessionStore((session) => session.lastError);
+
+  useEffect(() => () => resetReviewStores(), []);
 
   useEffect(() => {
     let cancelled = false;

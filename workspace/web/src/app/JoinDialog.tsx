@@ -1,4 +1,5 @@
 import { useId, useState, type FormEvent, type ReactElement } from "react";
+import { MAX_NAME_LENGTH } from "@shared/protocol";
 import { loadStoredName, resolveDisplayName, saveName } from "./display-name";
 
 export function JoinDialog({ onJoin }: { onJoin: (name: string) => void }): ReactElement {
@@ -28,6 +29,7 @@ export function JoinDialog({ onJoin }: { onJoin: (name: string) => void }): Reac
           <input
             className="input"
             type="text"
+            maxLength={MAX_NAME_LENGTH}
             value={input}
             onChange={(event) => setInput(event.target.value)}
             autoComplete="name"

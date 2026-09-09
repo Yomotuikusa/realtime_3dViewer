@@ -32,14 +32,6 @@
   background: var(--color-surface-subtle);
 }
 
-.btn--danger {
-  color: var(--color-danger);
-}
-
-.btn--danger:hover {
-  background: var(--color-danger-subtle);
-}
-
 .btn[disabled] {
   opacity: 0.5;
   cursor: not-allowed;
@@ -114,16 +106,4 @@
   border-color: var(--color-warning);
   background: var(--color-warning-subtle);
   color: var(--color-warning);
-}
-
-.visually-hidden {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  padding: 0;
-  margin: -1px;
-  overflow: hidden;
-  clip: rect(0, 0, 0, 0);
-  white-space: nowrap;
-  border: 0;
 }

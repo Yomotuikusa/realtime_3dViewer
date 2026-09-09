@@ -11,7 +11,7 @@ export function App(): React.ReactElement {
     return <UploadPage />;
   }
   if (route.name === "review") {
-    return <ReviewPage projectId={route.projectId} />;
+    return <ReviewPage key={route.projectId} projectId={route.projectId} />;
   }
   return (
     <main className="upload upload--message">

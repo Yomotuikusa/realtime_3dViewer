@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   APP_NAME,
+  FILE_TOO_LARGE,
   MODEL_FILE_LABEL,
   NOT_FOUND_HOME,
   NOT_FOUND_TITLE,
@@ -13,6 +14,10 @@ import {
 } from "../src/app/upload-labels";
 
 describe("upload labels", () => {
+  it("exposes the file size error", () => {
+    expect(FILE_TOO_LARGE).toBe("ファイルサイズが上限を超えています。");
+  });
+
   it("exposes the upload and not-found labels", () => {
     expect(APP_NAME).toBe("3D Reviewer");
     expect(UPLOAD_LEAD).toBe("glTF / GLB をアップロードすると、共有用のレビュー URL が発行されます。");
