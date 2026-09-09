@@ -49,10 +49,12 @@ export function simplify(points: Vec3[], tolerance: number): Vec3[] {
     let furthestDistanceSquared = toleranceSquared;
 
     for (let index = startIndex + 1; index < endIndex; index += 1) {
+      const start = points[startIndex]!;
+      const end = points[endIndex]!;
       const distanceSquared = pointToSegmentDistanceSquared(
-        points[index],
-        points[startIndex],
-        points[endIndex],
+        points[index]!,
+        start,
+        end,
       );
       if (distanceSquared > furthestDistanceSquared) {
         furthestDistanceSquared = distanceSquared;

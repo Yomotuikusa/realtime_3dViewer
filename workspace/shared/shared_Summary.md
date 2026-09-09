@@ -11,7 +11,7 @@
 - src/api.ts: REST のエラー、プロジェクト名、コメント入出力スキーマと upload 定数
 - src/protocol.ts: WS の ClientMessage/ServerMessage 型、discriminated union スキーマ、JSON フレーム parse 関数
 - src/camera.ts: three.js に依存しない CameraState/Vec3 の比較、補間、複製
-- src/stroke.ts: 3D Ramer–Douglas–Peucker による点列間引きと送信可否判定
+- src/stroke.ts: 反復処理による3D Ramer–Douglas–Peucker の点列間引きと送信可否判定
 - src/index.ts: `SHARED_SCAFFOLD` と shared の全公開面を再エクスポート
 - tests/types.test.ts: 各ドメインスキーマの safeParse の受理・拒否テスト
 - tests/api.test.ts: REST スキーマ、定数、trim・境界値のテスト
