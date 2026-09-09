@@ -15,6 +15,8 @@ export const PRESENCE_PALETTE: readonly string[] = [
 ];
 
 export const MAX_ROOM_STROKES = 2000;
+export const MAX_ROOMS = 200;
+export const MAX_CONNECTIONS = 1000;
 
 export type OutboundTarget = "self" | "others" | "all";
 export interface Outbound {
@@ -73,7 +75,8 @@ export class RoomHub {
     this.guestDigits = options.guestDigits ?? defaultGuestDigits;
   }
 
-  connect(projectId: string): string {
+  connect(projectId: string): string | null {
+    if (this.connections.size >= MAX_CONNECTIONS) return null;
     const connId = this.newId();
     this.connections.set(connId, { projectId });
     return connId;
@@ -151,7 +154,15 @@ export class RoomHub {
       }];
     }
 
-    const room = this.rooms.get(connection.projectId) ?? {
+    const existingRoom = this.rooms.get(connection.projectId);
+    if (!existingRoom && this.rooms.size >= MAX_ROOMS) {
+      return [{
+        target: "self",
+        msg: { type: "error", code: "BAD_REQUEST", message: "room limit reached" },
+      }];
+    }
+
+    const room = existingRoom ?? {
       users: new Map<string, PresenceUser>(),
       strokes: new Map<string, Stroke>(),
     };
@@ -188,7 +199,14 @@ export class RoomHub {
   }
 
   private addStroke(room: Room, connId: string, incoming: Stroke): Outbound[] {
-    if (!room.strokes.has(incoming.id) && room.strokes.size >= MAX_ROOM_STROKES) {
+    const existingStroke = room.strokes.get(incoming.id);
+    if (existingStroke && existingStroke.userId !== connId) {
+      return [{
+        target: "self",
+        msg: { type: "error", code: "BAD_REQUEST", message: "stroke owned by another user" },
+      }];
+    }
+    if (!existingStroke && room.strokes.size >= MAX_ROOM_STROKES) {
       return [{
         target: "self",
         msg: { type: "error", code: "BAD_REQUEST", message: "room stroke limit reached" },

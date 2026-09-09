@@ -5,6 +5,7 @@ import { join } from "node:path";
 import { createApp } from "./app";
 import { loadConfig } from "./config";
 import { openDb } from "./db/connection";
+import { findProject } from "./db/projects";
 import { attachRealtime, type Realtime } from "./realtime/ws";
 import { RoomHub } from "./realtime/hub";
 import { createFileStorage } from "./storage/files";
@@ -22,7 +23,9 @@ const app = createApp({
   publish: (projectId, msg) => realtime?.publish(projectId, msg),
 });
 const server = serve({ fetch: app.fetch, port: config.port });
-realtime = attachRealtime(server as unknown as Server, hub);
+realtime = attachRealtime(server as unknown as Server, hub, {
+  projectExists: (projectId) => findProject(db, projectId) !== null,
+});
 
 console.log(JSON.stringify({
   level: "info",

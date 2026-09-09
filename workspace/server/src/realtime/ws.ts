@@ -5,6 +5,11 @@ import type { Outbound, RoomHub } from "./hub";
 
 /** Same-connection schema violations before the server closes with 1008. */
 export const MAX_CONSECUTIVE_ERRORS = 20;
+export const MAX_WS_PAYLOAD_BYTES = 256 * 1024;
+
+export interface RealtimeOptions {
+  projectExists: (projectId: string) => boolean;
+}
 
 export interface Realtime {
   /** Broadcast to all joined users in a project. */
@@ -51,9 +56,9 @@ function projectIdFromRequest(request: IncomingMessage): string | null {
   }
 }
 
-export function attachRealtime(server: Server, hub: RoomHub): Realtime {
+export function attachRealtime(server: Server, hub: RoomHub, options: RealtimeOptions): Realtime {
   const sockets = new Map<string, SocketConnection>();
-  const wss = new WebSocketServer({ server, path: "/ws" });
+  const wss = new WebSocketServer({ server, path: "/ws", maxPayload: MAX_WS_PAYLOAD_BYTES });
   let closePromise: Promise<void> | null = null;
 
   const sendOutbound = (sourceId: string, projectId: string, outbound: Outbound): void => {
@@ -84,7 +89,41 @@ export function attachRealtime(server: Server, hub: RoomHub): Realtime {
       return;
     }
 
+    const origin = request.headers.origin;
+    if (origin !== undefined) {
+      let originHost: string | null = null;
+      try {
+        originHost = new URL(origin).host;
+      } catch {
+        // Invalid Origin values are rejected below.
+      }
+      if (originHost === null || originHost !== request.headers.host) {
+        send(socket, {
+          type: "error",
+          code: "BAD_REQUEST",
+          message: "origin not allowed",
+        });
+        socket.close(1008);
+        return;
+      }
+    }
+
+    if (!options.projectExists(projectId)) {
+      send(socket, { type: "error", code: "NOT_FOUND", message: "Project not found" });
+      socket.close(1008);
+      return;
+    }
+
     const connId = hub.connect(projectId);
+    if (connId === null) {
+      send(socket, {
+        type: "error",
+        code: "BAD_REQUEST",
+        message: "connection limit reached",
+      });
+      socket.close(1013);
+      return;
+    }
     sockets.set(connId, { projectId, socket });
     let consecutiveErrors = 0;
     let finalized = false;
