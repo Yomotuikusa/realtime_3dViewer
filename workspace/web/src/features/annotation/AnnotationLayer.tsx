@@ -89,6 +89,9 @@ export function AnnotationLayer({ send }: { send: (msg: ClientMessage) => boolea
       canvas.removeEventListener("pointermove", handlePointerMove);
       canvas.removeEventListener("pointerup", finishDraft);
       canvas.removeEventListener("pointercancel", finishDraft);
+      if (useAnnotationStore.getState().drafting !== null) {
+        useAnnotationStore.getState().endDraft();
+      }
     };
   }, [camera, gl, mode]);
 

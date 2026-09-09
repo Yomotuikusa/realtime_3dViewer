@@ -1,4 +1,4 @@
-import { useEffect, useState, type ReactElement } from "react";
+import { useEffect, useLayoutEffect, useRef, useState, type ReactElement } from "react";
 import type { CommentStatus } from "@shared/types";
 import { ApiClientError, listComments, updateCommentStatus } from "../../api/client";
 import { selectVisible, useCommentsStore } from "../../store/comments";
@@ -31,38 +31,64 @@ export function CommentList({ projectId }: { projectId: string }): ReactElement 
   const lastError = useCommentsStore((state) => state.lastError);
   const visibleItems = selectVisible(items, showOnlyOpen);
   const [updatingIds, setUpdatingIds] = useState<Set<string>>(() => new Set());
+  const lifecycleRef = useRef<{ projectId: string; active: boolean } | null>(null);
 
-  useEffect(() => {
-    let cancelled = false;
-    void listComments(projectId)
-      .then((comments) => {
-        if (!cancelled) {
-          useCommentsStore.getState().setAll(comments);
-        }
-      })
-      .catch((error: unknown) => {
-        if (!cancelled) {
-          useCommentsStore.getState().setLastError(errorMessage(error));
-        }
-      });
+  useLayoutEffect(() => {
+    const lifecycle = { projectId, active: true };
+    lifecycleRef.current = lifecycle;
     return () => {
-      cancelled = true;
+      lifecycle.active = false;
+      if (lifecycleRef.current === lifecycle) {
+        lifecycleRef.current = null;
+      }
     };
   }, [projectId]);
 
+  useEffect(() => {
+    const lifecycle = lifecycleRef.current;
+    if (lifecycle === null) {
+      return;
+    }
+    void listComments(projectId)
+      .then((comments) => {
+        if (lifecycleRef.current === lifecycle && lifecycle.active) {
+          const store = useCommentsStore.getState();
+          store.setAll(comments);
+          useCommentsStore.getState().setLastError(null);
+        }
+      })
+      .catch((error: unknown) => {
+        if (lifecycleRef.current === lifecycle && lifecycle.active) {
+          useCommentsStore.getState().setLastError(errorMessage(error));
+        }
+      });
+  }, [projectId]);
+
   const changeStatus = async (commentId: string, status: CommentStatus) => {
+    const lifecycle = lifecycleRef.current;
+    if (lifecycle === null) {
+      return;
+    }
     setUpdatingIds((current) => new Set(current).add(commentId));
     try {
       const comment = await updateCommentStatus(projectId, commentId, status);
-      useCommentsStore.getState().upsert(comment);
+      if (lifecycleRef.current === lifecycle && lifecycle.active) {
+        const store = useCommentsStore.getState();
+        store.upsert(comment);
+        store.setLastError(null);
+      }
     } catch (error: unknown) {
-      useCommentsStore.getState().setLastError(errorMessage(error));
+      if (lifecycleRef.current === lifecycle && lifecycle.active) {
+        useCommentsStore.getState().setLastError(errorMessage(error));
+      }
     } finally {
-      setUpdatingIds((current) => {
-        const next = new Set(current);
-        next.delete(commentId);
-        return next;
-      });
+      if (lifecycleRef.current === lifecycle && lifecycle.active) {
+        setUpdatingIds((current) => {
+          const next = new Set(current);
+          next.delete(commentId);
+          return next;
+        });
+      }
     }
   };
 

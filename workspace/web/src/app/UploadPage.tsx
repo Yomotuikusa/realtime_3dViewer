@@ -10,6 +10,7 @@ import {
   SUBMIT_LABEL,
   SUBMITTING_LABEL,
   UPLOAD_LEAD,
+  FILE_TOO_LARGE,
   fileHelp,
   fileSummary,
 } from "./upload-labels";
@@ -36,6 +37,10 @@ export function UploadPage(): React.ReactElement {
     const extension = dotIndex >= 0 ? file.name.slice(dotIndex).toLowerCase() : "";
     if (!ALLOWED_MODEL_EXTENSIONS.some((allowed) => allowed === extension)) {
       setError("対応しているモデル形式は .glb と .gltf です。");
+      return;
+    }
+    if (file.size > MAX_UPLOAD_BYTES_DEFAULT) {
+      setError(FILE_TOO_LARGE);
       return;
     }
 

@@ -8,16 +8,17 @@ glTF/GLB の 3D レビュー画面を提供する。レビュー画面は表示�
 ## ファイル一覧と役割
 - tsconfig.json: 型検査設定(../tsconfig.base.json を継承。`@shared/*` は shared/src を指す)
 - vitest.config.ts: Vitest の対象を `tests/**/*.test.{ts,tsx}` に限定する設定(cacheDir は .vite)
-- src/api/client.ts: REST の URL、JSON/FormData リクエスト、レスポンス検証、`ApiClientError`
+- src/api/client.ts: REST の URL（各パスセグメントを URI エンコード）、JSON/FormData リクエスト、レスポンス検証、`ApiClientError`
 - src/api/ws.ts: `WsClient`、WebSocket URL、接続状態通知、指数バックオフによる再接続
 - src/app/routes.ts: `/` と `/p/<projectId>` のルート解析、遷移、popstate フック
 - src/app/App.tsx: 現在のルートに応じた画面分岐。NotFound はパスと `/` へ戻る履歴遷移を表示する
 - src/app/display-name.ts: localStorage による表示名の保存、Guest 名生成、入室名の解決
 - src/app/JoinDialog.tsx: 保存済み表示名を初期値にした入室フォーム
-- src/app/realtime-dispatch.ts: `ServerMessage` を session / presence / annotation / comments ストアへ振り分ける入口。`welcome`、presence 更新、stroke、`comment:created` / `comment:updated`、`error` を扱う
-- src/app/useRealtime.ts: 名前決定後の `WsClient` 接続と、open ごとの `join` 送信
-- src/app/UploadPage.tsx: トークン CSS で構成したプロジェクト名・`.glb`/`.gltf` のアップロード画面。選択ファイルのサイズ helper とボタン直前のエラーを表示する
-- src/app/upload-labels.ts: アップロード画面と NotFound の表示文言、ファイル容量 helper の純粋関数
+- src/app/realtime-dispatch.ts: `ServerMessage` を session / presence / annotation / comments ストアへ振り分ける入口。`welcome`、presence 更新、stroke、`comment:created` / `comment:updated`、`error` を扱い、未知の型はコンパイル時に検出する
+- src/app/useRealtime.ts: 名前決定後の `WsClient` 接続と、open ごとの `join` 送信。`onRealtimeStatus` は session の接続状態を更新し、open 時に lastError を解除する
+- src/app/review-stores.ts: レビュー画面のアンマウント時に session / presence / annotation / comments / camera の5ストアをまとめて初期化する reset 関数
+- src/app/UploadPage.tsx: トークン CSS で構成したプロジェクト名・`.glb`/`.gltf` のアップロード画面。拡張子と容量を送信前に検査し、`FILE_TOO_LARGE` などのエラーを表示する
+- src/app/upload-labels.ts: アップロード画面と NotFound の表示文言、`FILE_TOO_LARGE`、ファイル容量 helper の純粋関数
 - src/app/upload.css: アップロード画面と NotFound の狭い幅のレイアウト CSS
 - src/app/ReviewPage.tsx: プロジェクト取得、レビュー画面の骨格、ロード状態・エラーカード、ビューアとサイドパネルのレイアウトを担当する。Canvas に RemoteCameras / RoomStrokes / ReplayStrokes / AnnotationLayer / CommentPickLayer / CommentPins を配置し、`.review-hud` を 025 の HUD 差し込み口、`.review-panel__comments` を 026 のコメント領域差し込み口として提供する
 - src/app/ReviewHeader.tsx: 接続状態バッジ、入室後の自分の表示名・色、レビュー URL のコピーと失敗時の手動コピー欄を表示する
@@ -34,12 +35,12 @@ glTF/GLB の 3D レビュー画面を提供する。レビュー画面は表示�
 - src/features/presence/RemoteCameras.tsx: 他者のカメラ位置・向きに、その人の色の左線を持つ `presence-tag` 名札を重ねる
 - src/features/presence/presence-labels.ts: 参加者見出し、本人/追従操作の日本語ラベルと件数見出し関数
 - src/features/presence/presence.css: 参加者行、追従中の背景、色ドット、3D カメラ名札のトークン CSS
-- src/features/comments/CommentList.tsx: `CommentList({ projectId })` として REST でコメントを取得し、未解決フィルタ、時刻・状態バッジ付き一覧、選択領域、解決 / 再開操作、API エラーと空状態を提供。選択領域は native button、状態変更ボタンは兄弟要素として分離する
+- src/features/comments/CommentList.tsx: `CommentList({ projectId })` として REST でコメントを取得し、未解決フィルタ、時刻・状態バッジ付き一覧、選択領域、解決 / 再開操作、API エラーと空状態を提供。選択領域は native button、状態変更ボタンは兄弟要素として分離し、layout effect cleanup で無効化したアンマウントまたは projectId 世代変更後の非同期結果はストアへ反映しない
 - src/features/comments/comment-labels.ts: コメント見出し、状態/空状態/Composer/ピンの日本語ラベル、Intl による時刻整形
 - src/features/comments/comments.css: コメント一覧・Composer・3D ピンのトークン CSS。コメント領域を縦グリッド化し、Composer 不在時は親を単独の可変行へ切り替えて一覧が全高を使い、一覧だけをスクロールさせる
 - src/features/comments/compose.ts: クリック移動量の判定、自分の線の時系列順・最新200本への制限、コメント投稿入力の組み立てを提供する
 - src/features/comments/CommentPickLayer.tsx: Comment モード中だけ Canvas の pointerdown / pointerup を購読し、5px 以下のクリックをモデルへレイキャストして投稿アンカーを設定する。ドラッグやモデル外の操作は無視する
-- src/features/comments/CommentComposer.tsx: アンカー選択後に自動フォーカスする本文入力カードと REST コメント投稿を提供し、現在のカメラ・自分の線を入力へ含め、成功時にコメントを upsert・選択する。接続状態に関係なく投稿する
+- src/features/comments/CommentComposer.tsx: アンカー選択後に自動フォーカスする本文入力カードと REST コメント投稿を提供し、現在のカメラ・自分の線を入力へ含め、成功時にコメントを upsert・選択する。layout effect cleanup で無効化したアンマウントまたは projectId 世代変更後の非同期結果はストアへ反映しない。接続状態に関係なく投稿する
 - src/features/comments/CommentPins.tsx: 表示対象コメントを author/status 付きアンカー位置の drei `Html` native button ピンとして描画し、クリック選択、選択強調、resolved の薄表示を提供する。pointerdown/up の伝播停止を維持する
 - src/features/comments/replay.ts: 選択コメントのカメラ要求・Follow 解除・再現線設定を各ストアへ反映する純粋な入口と再現線の透明度を提供
 - src/features/comments/useCommentReplay.ts: selectedId の変化を選択コメントの再現へ接続し、アンマウント時に再現線を消すフック
@@ -64,7 +65,7 @@ glTF/GLB の 3D レビュー画面を提供する。レビュー画面は表示�
 - src/main.tsx: React アプリのエントリーポイント。tokens → base → controls の順で全体スタイルを読み込む
 - src/styles/tokens.css: 色・文字・間隔・角丸・動き・レイアウトのセマンティックトークン。既存 inline 値を引き継ぎ、`:root` に定義する
 - src/styles/base.css: 全画面共通のリセット、既定の本文、可視フォーカスリング、reduced-motion。クラスは定義しない
-- src/styles/controls.css: `.btn` / `.field` / `.input` / `.alert` / `.badge` / `.visually-hidden` の共通コントロール。状態は属性セレクタで表現する
+- src/styles/controls.css: `.btn` / `.field` / `.input` / `.alert` / `.badge` の共通コントロール。状態は属性セレクタで表現する
 - tests/api-client.test.ts: API クライアントの URL、body、エラー、スキーマ検証テスト
 - tests/display-name.test.ts: 表示名の trim、保存、Guest 名、localStorage 例外のテスト
 - tests/ws-client.test.ts: JSON 送受信、入力破棄、再接続バックオフ、明示 close のテスト
@@ -77,22 +78,25 @@ glTF/GLB の 3D レビュー画面を提供する。レビュー画面は表示�
 - tests/routes.test.ts: ルート解析と履歴遷移テスト
 - tests/store-camera.test.ts: カメラストアの初期値、参照を保つ epsilon 判定、複製して保持・消費する再現要求、Reset・Fit・モデルサイズ・全 state 初期化の振る舞いを検証
 - tests/styles-rules.test.ts: `src/**/*.css` を再帰走査し、トークンの `:root` 定義、tokens.css 以外の生色禁止、CSS 変数の宣言/フォールバック、`!important` / `@import` 規約、main.tsx の import 順を検証
-- tests/upload-labels.test.ts: アップロード/NotFound 文言、ファイル helper の単位・丸め結果を検証
+- tests/review-stores.test.ts: 5つのレビュー用ストアをまとめて初期化する reset の検証
+- tests/use-realtime.test.ts: 接続状態、open 時のエラー解除と join、closed 時の非送信を検証
+- tests/upload-labels.test.ts: アップロード/NotFound 文言、容量エラー定数、ファイル helper の単位・丸め結果を検証
 
 スタイル規約(D35)はプレーン CSS とし、全体共通のトークン・ベース・コントロールを `src/styles/` に置く。色は `tokens.css` のセマンティック変数経由、状態はクラスの付け替えではなく `aria-*` / `disabled` / `data-*` で表現し、画面固有の CSS は各機能フォルダ側に置く。
 
 ## 公開インターフェイス
-- api/client.ts: `ApiClientError`、`modelUrl`、`createProject`、`getProject`、`listComments`、`createComment`、`updateCommentStatus`
+- api/client.ts: `ApiClientError`、`RESPONSE_INVALID_MESSAGE`、`modelUrl`、`createProject`、`getProject`、`listComments`、`createComment`、`updateCommentStatus`
 - app/routes.ts: `Route`、`parseRoute`、`projectPath`、`navigate`、`useRoute`
 - app/App.tsx: `App`
 - app/UploadPage.tsx: `UploadPage`
-- app/upload-labels.ts: `APP_NAME` など画面文言、`fileHelp`、`fileSummary`
+- app/upload-labels.ts: `APP_NAME` など画面文言、`FILE_TOO_LARGE`、`fileHelp`、`fileSummary`
 - app/ReviewPage.tsx: `ReviewPage({ projectId })`
 - app/ReviewHeader.tsx: `ReviewHeader({ projectName, joined })`
 - app/review-labels.ts: `connectionLabel`、`connectionTone`、`copyLabel`、`copyText`、ロード/エラー文言定数
 - app/display-name.ts: `loadStoredName`、`saveName`、`guestName`、`resolveDisplayName`
 - app/JoinDialog.tsx: `JoinDialog({ onJoin })`
-- app/useRealtime.ts: `useRealtime(projectId, name)`、`Realtime`
+- app/useRealtime.ts: `useRealtime(projectId, name)`、`onRealtimeStatus`、`Realtime`
+- app/review-stores.ts: `resetReviewStores()`
 - app/realtime-dispatch.ts: `dispatchServerMessage`
 - api/ws.ts: `WsClient`、`wsUrl`、`SocketLike`、再接続定数
 - app/ErrorBoundary.tsx: `ErrorBoundary`
@@ -127,7 +131,7 @@ glTF/GLB の 3D レビュー画面を提供する。レビュー画面は表示�
 - features/comments/useCommentReplay.ts: `useCommentReplay()`
 - features/comments/ReplayStrokes.tsx: `ReplayStrokes()`
 
-API クライアントは同一オリジンの `/api/...` を使い、2xx 応答を共有 zod スキーマで検証する。API エラー本文を解析できる場合は `ApiClientError(status, code, message)`、ネットワーク断や解析不能なエラーは `INTERNAL`、成功本文の不一致は `VALIDATION` とする。
+API クライアントは同一オリジンの `/api/...` を使い、URL の projectId / versionId / commentId を `encodeURIComponent` でエンコードする。2xx 応答を共有 zod スキーマで検証し、成功本文の不一致は `ApiClientError(status, "VALIDATION", RESPONSE_INVALID_MESSAGE)` とする。API エラー本文を解析できる場合は `ApiClientError(status, code, message)`、ネットワーク断や解析不能なエラーは `INTERNAL` とする。
 ルーティングは `/` を upload、正規表現 `^/p/[A-Za-z0-9_-]+$` に一致するパスを review、それ以外を notFound とする。`navigate` は `pushState` 後に `popstate` を通知する。
 
 ## 他機能との関係
@@ -147,9 +151,9 @@ CameraRig の毎フレーム処理は D27 の優先順位に従う。
 | それ以外 | カメラを変更しない。 |
 
 OrbitControls の `start` はユーザー操作として `presence.unfollow()` を呼び、追従によるプログラム更新では解除しない。
-`ReviewPage` は ready/error に取得対象の `projectId` を保持し、現在の URL と一致しない間は
+`App` は projectId を `ReviewPage` の React key に使い、プロジェクト切替時のアンマウントで `resetReviewStores()` を実行して5ストアを初期化する。`ReviewPage` は ready/error に取得対象の `projectId` を保持し、現在の URL と一致しない間は
 旧画面を表示せず loading として扱う。
-入室後は `useRealtime` が同一オリジンの `/ws?projectId=...` へ接続し、`open` ごとに `join` を
+入室後は `useRealtime` が同一オリジンの `/ws?projectId=...` へ接続し、`open` ごとに `lastError` を解除してから `join` を
 送る。`WsClient` は失敗回数に応じて 1000ms から 10000ms まで指数バックオフし、成功接続で
 失敗回数をリセットする。明示的な `close` 後は再接続しない。
 `dispatchServerMessage` は `welcome` で session の self ID/色、presence の参加者一覧、annotation のライブ線を確定し、
@@ -175,6 +179,6 @@ comments ストアは `items`（常に `createdAt` 昇順、同値なら `id` �
 `setAll` / `upsert` / `setFilter` の後は、`selectedId` が `selectVisible(items, showOnlyOpen)` に含まれなければ `null` に正規化する。
 `setAll` は一覧全置換、`upsert` は id 単位の追加・置換、`select` は選択変更、`setFilter` は Open フィルタ変更、
 `setComposerAnchor` は投稿位置変更、`setLastError` は API エラー変更、`reset` は初期値復元を行う。
-`CommentList` はマウント時に全コメントを取得し、選択領域のクリックまたはキーボード操作で選択を切り替え、Open のコメントを Resolve、resolved のコメントを Reopen する。状態変更中のコメント ID は集合で管理し、並行する別行の操作も disabled 状態を保つ。
+`CommentList` はマウント時に全コメントを取得し、成功時に lastError を解除する。選択領域のクリックまたはキーボード操作で選択を切り替え、Open のコメントを Resolve、resolved のコメントを Reopen する。状態変更中のコメント ID は集合で管理し、並行する別行の操作も disabled 状態を保つ。状態変更成功時も lastError を解除する。`CommentComposer` は投稿成功時に lastError を解除する。
 Comment の投稿は Comment モードでモデルをクリックしてアンカーを決め、移動距離が5px以下の pointerdown/pointerup だけを配置クリックとして扱う。Composer は本文を trim し、selfCamera と selfId に紐づく線（createdAt/id 昇順、最新200本）を含めて REST 投稿する。成功時は REST 応答を comments ストアへ upsert してアンカーを閉じ、投稿コメントを選択する。Comment モードは維持するため連続投稿でき、WebSocket 接続が閉じていても REST 投稿は許可する。CommentPins は表示対象のコメントを anchor 上の Html ピンにし、クリックで選択する。
 コメント選択時は `useCommentReplay` が該当 Comment の camera を `requestCamera` に積み、Follow を即時解除し、その Comment の strokes を annotation ストアの `replayStrokes` に設定する。`CameraRig` は要求を次フレームに消費して補間移動し、選択解除・別コメント選択・フックのアンマウント時は再現線だけを消去する。`ReplayStrokes` は `replayStrokes` を透明度 0.6 の `StrokeLines` として描画し、ルームのライブ線を保持する `strokes` / `RoomStrokes` とは別レイヤーかつ WebSocket 非送信である。

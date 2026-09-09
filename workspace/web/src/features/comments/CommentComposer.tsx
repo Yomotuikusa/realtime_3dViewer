@@ -1,4 +1,4 @@
-import { useState, type FormEvent, type ReactElement } from "react";
+import { useEffect, useLayoutEffect, useRef, useState, type FormEvent, type ReactElement } from "react";
 import { ApiClientError, createComment } from "../../api/client";
 import { useAnnotationStore } from "../../store/annotation";
 import { useCameraStore } from "../../store/camera";
@@ -25,6 +25,18 @@ export function CommentComposer({ projectId, versionId }: {
   const anchor = useCommentsStore((state) => state.composerAnchor);
   const [body, setBody] = useState("");
   const [sending, setSending] = useState(false);
+  const lifecycleRef = useRef<{ projectId: string; active: boolean } | null>(null);
+
+  useLayoutEffect(() => {
+    const lifecycle = { projectId, active: true };
+    lifecycleRef.current = lifecycle;
+    return () => {
+      lifecycle.active = false;
+      if (lifecycleRef.current === lifecycle) {
+        lifecycleRef.current = null;
+      }
+    };
+  }, [projectId]);
 
   if (anchor === null) {
     return null;
@@ -49,17 +61,28 @@ export function CommentComposer({ projectId, versionId }: {
       return;
     }
 
+    const lifecycle = lifecycleRef.current;
+    if (lifecycle === null) {
+      return;
+    }
     setSending(true);
     try {
       const comment = await createComment(projectId, input);
-      const comments = useCommentsStore.getState();
-      comments.upsert(comment);
-      comments.setComposerAnchor(null);
-      comments.select(comment.id);
+      if (lifecycleRef.current === lifecycle && lifecycle.active) {
+        const comments = useCommentsStore.getState();
+        comments.upsert(comment);
+        comments.setComposerAnchor(null);
+        comments.select(comment.id);
+        comments.setLastError(null);
+      }
     } catch (error: unknown) {
-      useCommentsStore.getState().setLastError(errorMessage(error));
+      if (lifecycleRef.current === lifecycle && lifecycle.active) {
+        useCommentsStore.getState().setLastError(errorMessage(error));
+      }
     } finally {
-      setSending(false);
+      if (lifecycleRef.current === lifecycle && lifecycle.active) {
+        setSending(false);
+      }
     }
   };
 
