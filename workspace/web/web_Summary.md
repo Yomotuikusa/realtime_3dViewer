@@ -17,7 +17,7 @@ glTF/GLB の 3D レビュー画面を提供する。レビュー画面は表示�
 - src/app/realtime-dispatch.ts: `ServerMessage` を session / presence / annotation ストアへ振り分ける入口。`welcome`、presence 更新、stroke、`error` を扱う
 - src/app/useRealtime.ts: 名前決定後の `WsClient` 接続と、open ごとの `join` 送信
 - src/app/UploadPage.tsx: プロジェクト名・`.glb`/`.gltf` のアップロード画面
-- src/app/ReviewPage.tsx: プロジェクト取得、入室ダイアログ、接続状態、ロード状態・エラーカード、ビューアとサイドパネルのレイアウト。Canvas に RemoteCameras と RoomStrokes を配置する
+- src/app/ReviewPage.tsx: プロジェクト取得、入室ダイアログ、接続状態、ロード状態・エラーカード、ビューアとサイドパネルのレイアウト。Canvas に RemoteCameras / RoomStrokes / AnnotationLayer を配置し、上部に AnnotationToolbar を配置する
 - src/app/ErrorBoundary.tsx: React/three の描画例外を捕捉し、フォールバックを表示
 - src/store/camera.ts: `selfCamera`、`pendingCamera`、`resetSeq`、`fitSeq`、`modelSize` と、カメラ更新・再現消費・Reset・Fit・サイズ更新・初期化の action を管理する zustand ストア
 - src/store/session.ts: 自分の ID・色・表示名・接続状態・直近エラーを保持する zustand ストア
@@ -27,10 +27,15 @@ glTF/GLB の 3D レビュー画面を提供する。レビュー画面は表示�
 - src/features/presence/RemoteCameras.tsx: 他者のカメラ位置・向きと名前ラベルを Canvas 内に表示
 - src/features/annotation/StrokeLines.tsx: 受け取った `Stroke[]` を線ごとに drei `Line` で描画する純粋な表示コンポーネント
 - src/features/annotation/RoomStrokes.tsx: annotation ストアのライブ線を表示順で描画し、2点以上の draft を現在色のプレビュー線として追加する Canvas 内レイヤー
+- src/features/annotation/stroke-build.ts: 法線オフセット、モデルサイズ依存の `simplify`、送信可能性判定、Undo 用の自分の最新線の選択
+- src/features/annotation/AnnotationLayer.tsx: Pen モード時だけ Canvas の DOM ポインターイベントを購読し、モデル表面のヒット点を draft に積み、終了時に `stroke:add` を送信する Canvas 内レイヤー
+- src/features/annotation/AnnotationToolbar.tsx: Orbit / Pen / Comment のモード切替、色選択、自分の線の Undo / Clear を提供するビューア上部のツールバー
 - src/features/viewer/ViewerCanvas.tsx: Canvas、ライティング、Bounds、モデル、カメラを合成するビューア。`children` は RemoteCameras / StrokeLines / AnnotationLayer など後続機能の差し込み口
-- src/features/viewer/ModelMesh.tsx: `useGLTF` でモデルをロードし、バウンディングボックスからモデルサイズを記録して初回 Fit を要求
+- src/features/viewer/ModelMesh.tsx: `useGLTF` でモデルをロードし、バウンディングボックスからモデルサイズを記録して初回 Fit を要求。ロード中の `scene` を共通モデルターゲットへ登録し、アンマウント時に解除する
+- src/features/viewer/model-target.ts: React や Zustand に依存せず、現在のレイキャスト対象 `Object3D` を保持する `setModelTarget` / `getModelTarget`
+- src/features/viewer/pick.ts: Canvas 座標を NDC に変換し、共通モデルターゲットへ最近傍レイキャストを行う。交点と `matrixWorld` 変換済み法線を返す
 - src/features/viewer/follow.ts: Follow 対象カメラの妥当性判定と、共有カメラ関数を使った 1 フレーム分の補間
-- src/features/viewer/CameraRig.tsx: OrbitControls をカメラストアと同期し、Reset・Fit・カメラ再現・Follow を処理
+- src/features/viewer/CameraRig.tsx: OrbitControls をカメラストアと同期し、Reset・Fit・カメラ再現・Follow を処理。Pen モードでは OrbitControls を無効化する
 - src/features/viewer/useCameraBroadcast.ts: `selfCamera` の変更を購読し、共有定数の 50ms 間隔と `cameraEquals` でカメラ送信を throttle
 - src/main.tsx: React アプリのエントリーポイント
 - tests/api-client.test.ts: API クライアントの URL、body、エラー、スキーマ検証テスト
@@ -62,6 +67,8 @@ glTF/GLB の 3D レビュー画面を提供する。レビュー画面は表示�
 - store/annotation.ts: `useAnnotationStore`、`AnnotationStoreState`、`AnnotationMode`、`STROKE_COLORS`、`DEFAULT_STROKE_COLOR`、`orderedStrokes`
 - features/viewer/ViewerCanvas.tsx: `ViewerCanvas({ modelSrc, children? })`
 - features/viewer/ModelMesh.tsx: `ModelMesh({ src })`
+- features/viewer/model-target.ts: `setModelTarget(obj)`、`getModelTarget()`
+- features/viewer/pick.ts: `toNdc(rect, clientX, clientY)`、`pickModel(raycaster, camera, ndc, target)`
 - features/viewer/follow.ts: `FOLLOW_LERP_T`、`followTargetCamera`、`followStep`
 - features/viewer/CameraRig.tsx: `CameraRig()`
 - features/viewer/useCameraBroadcast.ts: `shouldSendCamera`、`useCameraBroadcast(send)`
@@ -69,6 +76,9 @@ glTF/GLB の 3D レビュー画面を提供する。レビュー画面は表示�
 - features/presence/RemoteCameras.tsx: `RemoteCameras()`
 - features/annotation/StrokeLines.tsx: `StrokeLines({ strokes, opacity? })`
 - features/annotation/RoomStrokes.tsx: `RoomStrokes()`
+- features/annotation/stroke-build.ts: `offsetAlongNormal`、`buildStroke`、`latestOwnStrokeId`
+- features/annotation/AnnotationLayer.tsx: `AnnotationLayer({ send })`
+- features/annotation/AnnotationToolbar.tsx: `AnnotationToolbar({ send })`
 
 API クライアントは同一オリジンの `/api/...` を使い、2xx 応答を共有 zod スキーマで検証する。API エラー本文を解析できる場合は `ApiClientError(status, code, message)`、ネットワーク断や解析不能なエラーは `INTERNAL`、成功本文の不一致は `VALIDATION` とする。
 ルーティングは `/` を upload、正規表現 `^/p/[A-Za-z0-9_-]+$` に一致するパスを review、それ以外を notFound とする。`navigate` は `pushState` 後に `popstate` を通知する。
@@ -106,5 +116,11 @@ presence の `applyWelcome` は一覧と Follow 対象を初期化して全置�
 `useCameraBroadcast` は selfCamera の変更を購読し、前回送信から `CAMERA_SEND_INTERVAL_MS` 以上かつ
 `cameraEquals` で異なる場合だけ送信する。送信成功値を `cloneCamera` で保持し、Follow 中も送信を継続する。
 後続の viewer 機能は `ViewerCanvas` の `children` 差し込み口に RemoteCameras / StrokeLines /
-AnnotationLayer などのレイヤーを追加し、
+AnnotationLayer などのレイヤーを追加する。`ModelMesh` が登録する `model-target` を `pickModel` に渡すと、
+Canvas のクライアント座標を NDC 化して再帰的にモデルをレイキャストでき、交点法線はヒットした
+オブジェクトの `matrixWorld` でワールド系へ変換される。`AnnotationLayer` は Pen モード中だけ
+`gl.domElement` の pointerdown / pointermove / pointerup / pointercancel を購読し、ヒット点を
+`offsetAlongNormal` でモデル表面から少し浮かせて draft に追加する。終了時に `buildStroke` で
+間引き、接続が open かつ selfId がある場合だけ `stroke:add` を送信する。draft は終了時に消し、
+送信した線はサーバー配信を待つためローカルへ追加しない。
 コメント機能は `getProject`、`modelUrl`、カメラストアを利用する。
