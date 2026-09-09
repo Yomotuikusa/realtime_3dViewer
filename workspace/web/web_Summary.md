@@ -14,16 +14,18 @@ glTF/GLB の 3D レビュー画面を提供する。レビュー画面は表示�
 - src/app/App.tsx: 現在のルートに応じた画面分岐
 - src/app/display-name.ts: localStorage による表示名の保存、Guest 名生成、入室名の解決
 - src/app/JoinDialog.tsx: 保存済み表示名を初期値にした入室フォーム
-- src/app/realtime-dispatch.ts: `ServerMessage` を session / presence / annotation ストアへ振り分ける入口。`welcome`、presence 更新、stroke、`error` を扱う
+- src/app/realtime-dispatch.ts: `ServerMessage` を session / presence / annotation / comments ストアへ振り分ける入口。`welcome`、presence 更新、stroke、comment、`error` を扱う
 - src/app/useRealtime.ts: 名前決定後の `WsClient` 接続と、open ごとの `join` 送信
 - src/app/UploadPage.tsx: プロジェクト名・`.glb`/`.gltf` のアップロード画面
-- src/app/ReviewPage.tsx: プロジェクト取得、入室ダイアログ、接続状態、ロード状態・エラーカード、ビューアとサイドパネルのレイアウト。Canvas に RemoteCameras / RoomStrokes / AnnotationLayer を配置し、上部に AnnotationToolbar を配置する
+- src/app/ReviewPage.tsx: プロジェクト取得、入室ダイアログ、接続状態、ロード状態・エラーカード、ビューアとサイドパネルのレイアウト。Canvas に RemoteCameras / RoomStrokes / AnnotationLayer を配置し、サイドパネルに PresenceList / CommentList を配置する
 - src/app/ErrorBoundary.tsx: React/three の描画例外を捕捉し、フォールバックを表示
 - src/store/camera.ts: `selfCamera`、`pendingCamera`、`resetSeq`、`fitSeq`、`modelSize` と、カメラ更新・再現消費・Reset・Fit・サイズ更新・初期化の action を管理する zustand ストア
 - src/store/session.ts: 自分の ID・色・表示名・接続状態・直近エラーを保持する zustand ストア
 - src/store/presence.ts: 参加者一覧、各参加者のカメラ、Follow 対象を保持する zustand ストア
 - src/store/annotation.ts: ルーム全員分のライブ線、annotation mode・色・描画中 draft・コメント再現用線を保持し、welcome/線操作・draft・reset を提供する zustand ストア
+- src/store/comments.ts: コメント一覧、Open フィルタ、選択中コメント、投稿アンカー、API エラーを保持し、全置換・upsert・選択・フィルタ・reset を提供する zustand ストア
 - src/features/presence/PresenceList.tsx: 参加者の色・名前と Follow / 解除ボタンを表示
+- src/features/comments/CommentList.tsx: REST でコメントを取得し、Open フィルタ、選択、Resolve / Reopen、API エラー表示を提供
 - src/features/presence/RemoteCameras.tsx: 他者のカメラ位置・向きと名前ラベルを Canvas 内に表示
 - src/features/annotation/StrokeLines.tsx: 受け取った `Stroke[]` を線ごとに drei `Line` で描画する純粋な表示コンポーネント
 - src/features/annotation/RoomStrokes.tsx: annotation ストアのライブ線を表示順で描画し、2点以上の draft を現在色のプレビュー線として追加する Canvas 内レイヤー
@@ -42,6 +44,7 @@ glTF/GLB の 3D レビュー画面を提供する。レビュー画面は表示�
 - tests/display-name.test.ts: 表示名の trim、保存、Guest 名、localStorage 例外のテスト
 - tests/ws-client.test.ts: JSON 送受信、入力破棄、再接続バックオフ、明示 close のテスト
 - tests/realtime-dispatch.test.ts: welcome の session / presence / annotation 反映、presence/stroke イベント、error、未対応イベント、reset のテスト
+- tests/store-comments.test.ts: コメント一覧の順序、upsert、選択・Open フィルタ正規化、投稿アンカー、エラー、reset のテスト
 - tests/store-annotation.test.ts: annotation ストアの初期値、線操作、mode/色、draft、再現線、順序、reset のテスト
 - tests/store-presence.test.ts: presence の全置換、upsert、削除、カメラ更新、Follow、reset のテスト
 - tests/camera-broadcast.test.ts: カメラ送信 throttle の間隔・比較判定テスト
@@ -65,6 +68,7 @@ glTF/GLB の 3D レビュー画面を提供する。レビュー画面は表示�
 - store/session.ts: `useSessionStore`、`SessionStoreState`、`ConnectionStatus`
 - store/presence.ts: `usePresenceStore`、`PresenceStoreState`
 - store/annotation.ts: `useAnnotationStore`、`AnnotationStoreState`、`AnnotationMode`、`STROKE_COLORS`、`DEFAULT_STROKE_COLOR`、`orderedStrokes`
+- store/comments.ts: `useCommentsStore`、`CommentsStoreState`、`selectVisible`
 - features/viewer/ViewerCanvas.tsx: `ViewerCanvas({ modelSrc, children? })`
 - features/viewer/ModelMesh.tsx: `ModelMesh({ src })`
 - features/viewer/model-target.ts: `setModelTarget(obj)`、`getModelTarget()`
@@ -107,7 +111,7 @@ OrbitControls の `start` はユーザー操作として `presence.unfollow()` �
 失敗回数をリセットする。明示的な `close` 後は再接続しない。
 `dispatchServerMessage` は `welcome` で session の self ID/色、presence の参加者一覧、annotation のライブ線を確定し、
 `user:joined` / `user:left` / `camera` を presence ストアへ、`stroke:add` / `stroke:remove` / `stroke:clear` を
-annotation ストアへ、`error` を `CODE: message` として保存する。annotation ストアは `strokes` を id で上書き・削除し、
+annotation ストアへ、`comment:created` / `comment:updated` を comments ストアへ、`error` を `CODE: message` として保存する。annotation ストアは `strokes` を id で上書き・削除し、
 `clearByUser` でユーザー単位に除去する。`mode` は orbit / pen / comment の排他値で、変更時に draft を破棄する。
 `color` は6桁16進色を小文字へ正規化し、`drafting` は描画中の点列、`replayStrokes` は WebSocket のライブ線と分離した
 コメント再現用の点列を保持する。`RoomStrokes` はライブ線を `orderedStrokes` の createdAt/id 順で `StrokeLines` に渡し、
@@ -124,3 +128,6 @@ Canvas のクライアント座標を NDC 化して再帰的にモデルをレ�
 間引き、接続が open かつ selfId がある場合だけ `stroke:add` を送信する。draft は終了時に消し、
 送信した線はサーバー配信を待つためローカルへ追加しない。
 コメント機能は `getProject`、`modelUrl`、カメラストアを利用する。
+comments ストアの `items` は常に `createdAt` 昇順、同値なら `id` 昇順で保持する。`setAll` / `upsert` / `setFilter` の後は、
+`selectedId` が `selectVisible(items, showOnlyOpen)` に含まれなければ `null` に正規化する。`CommentList` はマウント時に
+全コメントを取得し、行クリックで選択を切り替え、Open のコメントを Resolve、resolved のコメントを Reopen する。

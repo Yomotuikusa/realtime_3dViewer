@@ -1,5 +1,6 @@
 import type { ServerMessage } from "@shared/protocol";
 import { useAnnotationStore } from "../store/annotation";
+import { useCommentsStore } from "../store/comments";
 import { usePresenceStore } from "../store/presence";
 import { useSessionStore } from "../store/session";
 
@@ -7,6 +8,7 @@ export function dispatchServerMessage(msg: ServerMessage): void {
   const session = useSessionStore.getState();
   const presence = usePresenceStore.getState();
   const annotation = useAnnotationStore.getState();
+  const comments = useCommentsStore.getState();
 
   switch (msg.type) {
     case "welcome": {
@@ -33,6 +35,10 @@ export function dispatchServerMessage(msg: ServerMessage): void {
       break;
     case "stroke:clear":
       annotation.clearByUser(msg.userId);
+      break;
+    case "comment:created":
+    case "comment:updated":
+      comments.upsert(msg.comment);
       break;
     case "error":
       session.setLastError(`${msg.code}: ${msg.message}`);
