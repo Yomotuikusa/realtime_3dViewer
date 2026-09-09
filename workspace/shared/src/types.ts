@@ -61,7 +61,7 @@ const TimestampSchema = z.number().int().nonnegative();
 export const Vec3Schema = z.tuple([z.number(), z.number(), z.number()]) satisfies z.ZodType<Vec3>;
 
 /** "#rrggbb"。16進数の大文字・小文字を受け付ける。 */
-export const ColorSchema: z.ZodType<string> = z.string().regex(/^#[0-9a-fA-F]{6}$/);
+export const ColorSchema = z.string().regex(/^#[0-9a-fA-F]{6}$/) satisfies z.ZodType<string>;
 
 export const CameraStateSchema = z.object({
   position: Vec3Schema,
