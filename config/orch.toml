@@ -1,0 +1,44 @@
+# orch のプロジェクト設定。変更は再ビルドなしで次の `orch run` から効く。
+# ここに書かれていないキーは既定値が使われる。未知のキーはエラーになる。
+
+[model]
+# 実装・レビュー・修正を担当する codex のモデルと reasoning effort
+codex = "gpt-5.6-luna"
+reasoning_effort = "high"
+
+[loop]
+# (実装 → verify → レビュー → 修正) を繰り返す最大回数
+max_loops = 3
+# 依存が満たされたタスクを同時に走らせる上限
+max_parallel = 3
+# codex 1フェーズのタイムアウト(秒)
+phase_timeout_secs = 3600
+# verifyコマンドのタイムアウト(秒)
+verify_timeout_secs = 600
+
+[validate]
+# 1ファイルの行数上限。生成コードやUIコンポーネントが多いプロジェクトでは緩める
+max_file_lines = 300
+# 各機能フォルダに <名前>_Summary.md を要求するか
+require_summary = true
+# 行数検査を免除するパターン(`*` が使える)。
+# package-lock.json 等のロックファイルと *.min.js は既定で免除済み
+exempt = []
+# 検査対象から丸ごと外すディレクトリ(行数検査・機能フォルダ判定の両方)
+ignore_dirs = []
+
+[sandbox]
+# verifyサンドボックスへ読み取り専用で持ち込む追加パス(絶対パス)。
+# $HOME は tmpfs で覆われるため、リポジトリ外に置いた大きな入力資産
+# (学習済みモデル・データセット等)は既定では verify から一切見えない。
+# 隔離を保つため必要最小のディレクトリだけを書くこと。$HOME 自身やその上位、
+# 存在しないパスは verify 開始前にエラーになる。
+# 例: ro_binds = ["/home/me/projects/foo/models"]
+ro_binds = []
+
+[diagnose]
+# タスクが失敗したとき、その場でclaudeを起こして原因を調査させる。
+# 並列実行中でも他タスクは止まらず、対話は run の最後に1本へ集約される
+enabled = true
+# 診断1件のタイムアウト(秒)
+timeout_secs = 900

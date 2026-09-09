@@ -1,0 +1,12 @@
+# orch のローカル領域 (ルート直下のみ。別PCへは持っていかない)
+/logs/
+/.worktrees/
+/.locks/
+/.env
+/.orch-migration/
+
+# ビルド生成物・キャッシュ (どの階層でも)
+target/
+__pycache__/
+*.pyc
+node_modules/

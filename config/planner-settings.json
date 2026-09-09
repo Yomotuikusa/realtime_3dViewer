@@ -1,0 +1,18 @@
+{
+  "permissions": {
+    "defaultMode": "auto",
+    "allow": [
+      "Read",
+      "Glob",
+      "Grep",
+      "Edit",
+      "Write",
+      "WebFetch",
+      "WebSearch"
+    ],
+    "ask": [
+      "Write(.worktrees/**)",
+      "Edit(.worktrees/**)"
+    ]
+  }
+}
