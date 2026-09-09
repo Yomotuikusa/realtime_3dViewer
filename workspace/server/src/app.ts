@@ -40,12 +40,7 @@ export function createApp(deps: AppDeps): HonoType {
   };
   const validateContentLength: MiddlewareHandler = async (c, next) => {
     const contentLength = c.req.header("content-length");
-    const transferEncoding = c.req.header("transfer-encoding");
-    if (
-      transferEncoding === undefined &&
-      contentLength !== undefined &&
-      !/^\d+$/.test(contentLength)
-    ) {
+    if (contentLength !== undefined && !/^\d+$/.test(contentLength)) {
       tooLarge();
     }
     await next();
