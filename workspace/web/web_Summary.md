@@ -13,14 +13,14 @@ glTF/GLB の 3D レビュー画面を提供する。
 - src/app/UploadPage.tsx: プロジェクト名・`.glb`/`.gltf` のアップロード画面
 - src/app/ReviewPage.tsx: プロジェクト取得、ロード状態・エラーカード、ビューアとサイドパネルのレイアウト
 - src/app/ErrorBoundary.tsx: React/three の描画例外を捕捉し、フォールバックを表示
-- src/store/camera.ts: 自分のカメラ、再現・Reset・Fit のトリガ、モデルサイズを管理する zustand ストア
-- src/features/viewer/ViewerCanvas.tsx: Canvas、ライティング、Bounds、モデル、カメラを合成するビューア。`children` は後続機能の差し込み口
+- src/store/camera.ts: `selfCamera`、`pendingCamera`、`resetSeq`、`fitSeq`、`modelSize` と、カメラ更新・再現消費・Reset・Fit・サイズ更新・初期化の action を管理する zustand ストア
+- src/features/viewer/ViewerCanvas.tsx: Canvas、ライティング、Bounds、モデル、カメラを合成するビューア。`children` は RemoteCameras / StrokeLines / AnnotationLayer など後続機能の差し込み口
 - src/features/viewer/ModelMesh.tsx: `useGLTF` でモデルをロードし、バウンディングボックスからモデルサイズを記録して初回 Fit を要求
 - src/features/viewer/CameraRig.tsx: OrbitControls をカメラストアと同期し、Reset・Fit・カメラ再現を処理
 - src/main.tsx: React アプリのエントリーポイント
 - tests/api-client.test.ts: API クライアントの URL、body、エラー、スキーマ検証テスト
 - tests/routes.test.ts: ルート解析と履歴遷移テスト
-- tests/store-camera.test.ts: カメラストアの初期値、更新、再現要求、Reset・Fit・モデルサイズの振る舞いを検証
+- tests/store-camera.test.ts: カメラストアの初期値、参照を保つ epsilon 判定、複製して保持・消費する再現要求、Reset・Fit・モデルサイズ・全 state 初期化の振る舞いを検証
 
 ## 公開インターフェイス
 - api/client.ts: `ApiClientError`、`modelUrl`、`createProject`、`getProject`、`listComments`、`createComment`、`updateCommentStatus`
@@ -42,5 +42,7 @@ API クライアントは同一オリジンの `/api/...` を使い、2xx 応答
 カメラストアの `selfCamera` は `DEFAULT_CAMERA` を初期値とし、`setSelfCamera` は `cameraEquals` の
 既定 epsilon 内の更新を無視する。`requestCamera`/`consumePendingCamera` は複製した
 `CameraState` を受け渡し、`resetSeq`/`fitSeq` は操作トリガ、`modelSize` はモデルの最大辺長を保持する。
-後続の viewer 機能は `ViewerCanvas` の `children` 差し込み口にレイヤーを追加し、
+`CameraRig` は Reset 発生時に未消費の `pendingCamera` も破棄し、Reset 後の古い再現要求が補間を開始しないようにする。
+後続の viewer 機能は `ViewerCanvas` の `children` 差し込み口に RemoteCameras / StrokeLines /
+AnnotationLayer などのレイヤーを追加し、
 コメント機能は `getProject`、`modelUrl`、カメラストアを利用する。

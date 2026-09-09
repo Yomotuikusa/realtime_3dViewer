@@ -30,6 +30,7 @@ export function CameraRig(): ReactElement {
   const bounds = useBounds();
   const lastResetSeq = useRef(resetSeq);
   const lastFitSeq = useRef(fitSeq);
+  const discardPendingAfterReset = useRef(false);
 
   const handleChange = (): void => {
     const controls = controlsRef.current;
@@ -45,6 +46,7 @@ export function CameraRig(): ReactElement {
     lastResetSeq.current = resetSeq;
     pendingTarget.current = null;
     useCameraStore.getState().consumePendingCamera();
+    discardPendingAfterReset.current = true;
     const controls = controlsRef.current;
     if (controls) {
       applyCamera(camera, controls, DEFAULT_CAMERA);
@@ -61,10 +63,16 @@ export function CameraRig(): ReactElement {
   }, [bounds, fitSeq]);
 
   useEffect(() => {
+    if (discardPendingAfterReset.current) {
+      discardPendingAfterReset.current = false;
+      pendingTarget.current = null;
+      useCameraStore.getState().consumePendingCamera();
+      return;
+    }
     if (pendingCamera !== null) {
       pendingTarget.current = useCameraStore.getState().consumePendingCamera();
     }
-  }, [pendingCamera]);
+  }, [pendingCamera, resetSeq]);
 
   useFrame(() => {
     const controls = controlsRef.current;
