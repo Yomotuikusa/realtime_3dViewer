@@ -1,0 +1,42 @@
+{
+  "name": "3dreviewer",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev:server": "tsx --tsconfig server/tsconfig.json watch server/src/index.ts",
+    "dev:web": "vite --config web/vite.config.ts --configLoader runner",
+    "build": "vite build --config web/vite.config.ts --configLoader runner",
+    "start": "NODE_ENV=production tsx --tsconfig server/tsconfig.json server/src/index.ts",
+    "typecheck": "tsc -p shared/tsconfig.json && tsc -p server/tsconfig.json && tsc -p web/tsconfig.json",
+    "test:shared": "vitest run --config shared/vitest.config.ts --passWithNoTests --configLoader runner",
+    "test:server": "vitest run --config server/vitest.config.ts --passWithNoTests --configLoader runner",
+    "test:web": "vitest run --config web/vitest.config.ts --passWithNoTests --configLoader runner",
+    "test": "npm run test:shared && npm run test:server && npm run test:web"
+  },
+  "dependencies": {
+    "@hono/node-server": "2.1.1",
+    "@react-three/drei": "10.7.8",
+    "@react-three/fiber": "9.7.0",
+    "hono": "4.13.7",
+    "nanoid": "6.0.1",
+    "react": "19.2.8",
+    "react-dom": "19.2.8",
+    "three": "0.186.0",
+    "ws": "8.21.3",
+    "zod": "4.5.4",
+    "zustand": "5.0.15"
+  },
+  "devDependencies": {
+    "@types/node": "24.13.3",
+    "@types/react": "19.2.18",
+    "@types/react-dom": "19.2.7",
+    "@types/three": "0.185.4",
+    "@types/ws": "8.18.1",
+    "@vitejs/plugin-react": "6.1.1",
+    "jsdom": "29.1.1",
+    "tsx": "4.23.13",
+    "typescript": "7.0.2",
+    "vite": "8.2.2",
+    "vitest": "5.0.0"
+  }
+}

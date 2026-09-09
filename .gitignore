@@ -10,3 +10,9 @@ target/
 __pycache__/
 *.pyc
 node_modules/
+
+# 依存の実体 (workspace/node_modules のリンク先。config/sync-deps.sh で生成)
+/.deps/
+
+# sync-deps.sh が生成するマシン固有の symlink
+/workspace/node_modules

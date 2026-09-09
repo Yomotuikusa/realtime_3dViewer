@@ -2,15 +2,22 @@
 # orch run の前に一度だけ、verifyと同じsandbox内で実行される環境確認。
 # exit 0 で合格。非0ならタスクを1件も起動せずに終了し、この出力がそのまま表示される。
 #
-# 実装役のcodexはsudoを持たない。システムパッケージのように人間しか入れられない
-# ものは、長いcodexループの末にverifyで倒れるより、ここで先に検出したほうがよい。
-# 逆に確認することが無ければ、このファイルは削除してよい(無ければ何も実行されない)。
-#
-# 例) verifyが使うコマンドが揃っているか
-# command -v python3 >/dev/null || { echo "python3 がありません: sudo apt install python3"; exit 1; }
-#
-# 例) ビルドに要るシステムライブラリ(codexには導入できない)
-# ls /usr/lib/*/libclang.so* >/dev/null 2>&1 || {
-#   echo "libclang がありません。ホスト側で: sudo apt install libclang-dev"
-#   exit 1
-# }
+# このプロジェクトは verify 内で npm install できない(ネットワーク遮断)ため、
+# 依存の実体は .deps/node_modules に置き、workspace/node_modules のシンボリックリンクと
+# [sandbox] ro_binds で持ち込む。ここではその前提が崩れていないことを検査する。
+# 詳細: docs/3dreviewer-plan-and-architecture.md §23
+
+command -v node >/dev/null || { echo "node がありません(~/.nvm が見えていません)"; exit 1; }
+
+deps=/home/ojin/projects/3dreviewer/.deps
+[ -d "$deps/node_modules" ] || {
+  echo "依存の実体 $deps/node_modules がありません。ホスト側で: sh config/sync-deps.sh"; exit 1
+}
+[ -f "$deps/node_modules/typescript/package.json" ] || {
+  echo "$deps/node_modules が不完全です。ホスト側で: sh config/sync-deps.sh"; exit 1
+}
+if ! cmp -s workspace/package-lock.json "$deps/node_modules/.synced-package-lock.json"; then
+  echo "workspace/package-lock.json と .deps/node_modules/.synced-package-lock.json が一致しません。"
+  echo "依存を変更した後は、ホスト側で: sh config/sync-deps.sh"
+  exit 1
+fi

@@ -25,7 +25,7 @@ require_summary = true
 # package-lock.json 等のロックファイルと *.min.js は既定で免除済み
 exempt = []
 # 検査対象から丸ごと外すディレクトリ(行数検査・機能フォルダ判定の両方)
-ignore_dirs = []
+ignore_dirs = ["node_modules", "dist", ".vite"]
 
 [sandbox]
 # verifyサンドボックスへ読み取り専用で持ち込む追加パス(絶対パス)。
@@ -34,7 +34,8 @@ ignore_dirs = []
 # 隔離を保つため必要最小のディレクトリだけを書くこと。$HOME 自身やその上位、
 # 存在しないパスは verify 開始前にエラーになる。
 # 例: ro_binds = ["/home/me/projects/foo/models"]
-ro_binds = []
+# 依存の実体。workspace/node_modules はここへのシンボリックリンク(docs/…§23)
+ro_binds = ["/home/ojin/projects/3dreviewer/.deps/node_modules"]
 
 [diagnose]
 # タスクが失敗したとき、その場でclaudeを起こして原因を調査させる。
