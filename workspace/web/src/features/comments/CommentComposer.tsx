@@ -56,6 +56,7 @@ export function CommentComposer({ projectId, versionId }: {
       comments.upsert(comment);
       comments.setComposerAnchor(null);
       comments.select(comment.id);
+      useCommentsStore.getState().setLastError(null);
     } catch (error: unknown) {
       useCommentsStore.getState().setLastError(errorMessage(error));
     } finally {

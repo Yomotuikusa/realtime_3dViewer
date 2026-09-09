@@ -7,6 +7,7 @@ import {
   getProject,
   listComments,
   modelUrl,
+  RESPONSE_INVALID_MESSAGE,
   updateCommentStatus,
 } from "../src/api/client";
 
@@ -63,8 +64,8 @@ describe("API client", () => {
     fetchMock.mockReset();
   });
 
-  it("builds the model URL without fetching", () => {
-    expect(modelUrl("p1", "v1")).toBe("/api/projects/p1/versions/v1/model");
+  it("builds an encoded model URL without fetching", () => {
+    expect(modelUrl("p 1", "v/1")).toBe("/api/projects/p%201/versions/v%2F1/model");
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
@@ -73,6 +74,17 @@ describe("API client", () => {
 
     await expect(getProject("p1")).resolves.toEqual(project);
     expect(fetchMock).toHaveBeenCalledWith("/api/projects/p1", { method: "GET" });
+  });
+
+  it("encodes project IDs in API URLs", async () => {
+    fetchMock
+      .mockResolvedValueOnce(response(200, project))
+      .mockResolvedValueOnce(response(200, []));
+
+    await expect(getProject("p/1")).resolves.toEqual(project);
+    await expect(listComments("p 1")).resolves.toEqual([]);
+    expect(fetchMock).toHaveBeenNthCalledWith(1, "/api/projects/p%2F1", { method: "GET" });
+    expect(fetchMock).toHaveBeenNthCalledWith(2, "/api/projects/p%201/comments", { method: "GET" });
   });
 
   it("maps a structured API error to ApiClientError", async () => {
@@ -95,7 +107,11 @@ describe("API client", () => {
   it("reports validation errors for an invalid success body", async () => {
     fetchMock.mockResolvedValue(response(200, {}));
 
-    await expect(getProject("p1")).rejects.toMatchObject({ code: "VALIDATION", status: 200 });
+    await expect(getProject("p1")).rejects.toMatchObject({
+      code: "VALIDATION",
+      status: 200,
+      message: RESPONSE_INVALID_MESSAGE,
+    });
   });
 
   it("maps a rejected fetch to a network ApiClientError", async () => {
@@ -146,12 +162,12 @@ describe("API client", () => {
   it("updates comment status with PATCH and validates the comment", async () => {
     fetchMock.mockResolvedValue(response(200, { ...comment, status: "resolved" }));
 
-    await expect(updateCommentStatus("p1", "c1", "resolved")).resolves.toEqual({
+    await expect(updateCommentStatus("p1", "c/1", "resolved")).resolves.toEqual({
       ...comment,
       status: "resolved",
     });
     expect(fetchMock).toHaveBeenCalledWith(
-      "/api/projects/p1/comments/c1",
+      "/api/projects/p1/comments/c%2F1",
       {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },

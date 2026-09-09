@@ -6,6 +6,7 @@ export const SUBMIT_LABEL = "レビューを開始";
 export const SUBMITTING_LABEL = "アップロード中…";
 export const NOT_FOUND_TITLE = "ページが見つかりません";
 export const NOT_FOUND_HOME = "アップロード画面へ";
+export const FILE_TOO_LARGE = "ファイルサイズが上限を超えています。";
 
 const KIBIBYTE = 1024;
 const MEBIBYTE = KIBIBYTE * KIBIBYTE;

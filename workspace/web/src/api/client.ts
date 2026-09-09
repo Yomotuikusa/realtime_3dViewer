@@ -5,6 +5,7 @@ import type { CreateCommentInput } from "@shared/api";
 import { z } from "zod";
 
 const API_BASE = "";
+export const RESPONSE_INVALID_MESSAGE = "サーバーの応答を解釈できませんでした。";
 
 export class ApiClientError extends Error {
   constructor(readonly status: number, readonly code: string, message: string) {
@@ -15,10 +16,6 @@ export class ApiClientError extends Error {
 
 function statusErrorMessage(status: number): string {
   return `API request failed with status ${status}`;
-}
-
-function validationErrorMessage(error: z.ZodError): string {
-  return error.message || "API response validation failed";
 }
 
 async function requestJson<T>(
@@ -58,14 +55,14 @@ async function requestJson<T>(
 
   const parsed = schema.safeParse(body);
   if (!parsed.success) {
-    throw new ApiClientError(response.status, "VALIDATION", validationErrorMessage(parsed.error));
+    throw new ApiClientError(response.status, "VALIDATION", RESPONSE_INVALID_MESSAGE);
   }
   return parsed.data;
 }
 
 /** モデル本体の URL。fetch はしない(useGLTF に渡す) */
 export function modelUrl(projectId: string, versionId: string): string {
-  return `${API_BASE}/api/projects/${projectId}/versions/${versionId}/model`;
+  return `${API_BASE}/api/projects/${encodeURIComponent(projectId)}/versions/${encodeURIComponent(versionId)}/model`;
 }
 
 export function createProject(name: string, file: File): Promise<Project> {
@@ -76,13 +73,13 @@ export function createProject(name: string, file: File): Promise<Project> {
 }
 
 export function getProject(projectId: string): Promise<Project> {
-  return requestJson(`/api/projects/${projectId}`, { method: "GET" }, ProjectSchema);
+  return requestJson(`/api/projects/${encodeURIComponent(projectId)}`, { method: "GET" }, ProjectSchema);
 }
 
 export function listComments(projectId: string, status?: CommentStatus): Promise<Comment[]> {
   const query = status === undefined ? "" : `?status=${status}`;
   return requestJson(
-    `/api/projects/${projectId}/comments${query}`,
+    `/api/projects/${encodeURIComponent(projectId)}/comments${query}`,
     { method: "GET" },
     z.array(CommentSchema),
   );
@@ -93,7 +90,7 @@ export function createComment(
   input: CreateCommentInput,
 ): Promise<Comment> {
   return requestJson(
-    `/api/projects/${projectId}/comments`,
+    `/api/projects/${encodeURIComponent(projectId)}/comments`,
     {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -109,7 +106,7 @@ export function updateCommentStatus(
   status: CommentStatus,
 ): Promise<Comment> {
   return requestJson(
-    `/api/projects/${projectId}/comments/${commentId}`,
+    `/api/projects/${encodeURIComponent(projectId)}/comments/${encodeURIComponent(commentId)}`,
     {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },

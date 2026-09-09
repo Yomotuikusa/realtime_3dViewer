@@ -2,10 +2,24 @@ import { useCallback, useEffect, useRef } from "react";
 import type { ClientMessage } from "@shared/protocol";
 import { WsClient, wsUrl } from "../api/ws";
 import { dispatchServerMessage } from "./realtime-dispatch";
-import { useSessionStore } from "../store/session";
+import { useSessionStore, type ConnectionStatus } from "../store/session";
 
 export interface Realtime {
   send(msg: ClientMessage): boolean;
+}
+
+/** 接続状態を session に反映し、接続時はエラーを消して入室する。 */
+export function onRealtimeStatus(
+  status: ConnectionStatus,
+  name: string,
+  send: (msg: ClientMessage) => boolean,
+): void {
+  const session = useSessionStore.getState();
+  session.setConnection(status);
+  if (status === "open") {
+    session.setLastError(null);
+    send({ type: "join", name });
+  }
 }
 
 export function useRealtime(projectId: string, name: string | null): Realtime {
@@ -21,12 +35,7 @@ export function useRealtime(projectId: string, name: string | null): Realtime {
     const client = new WsClient({
       url: wsUrl(projectId),
       onMessage: dispatchServerMessage,
-      onStatus: (status) => {
-        useSessionStore.getState().setConnection(status);
-        if (status === "open") {
-          client.send({ type: "join", name });
-        }
-      },
+      onStatus: (status) => onRealtimeStatus(status, name, (msg) => client.send(msg)),
     });
     clientRef.current = client;
     client.connect();

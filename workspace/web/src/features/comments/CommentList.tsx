@@ -37,7 +37,9 @@ export function CommentList({ projectId }: { projectId: string }): ReactElement 
     void listComments(projectId)
       .then((comments) => {
         if (!cancelled) {
-          useCommentsStore.getState().setAll(comments);
+          const store = useCommentsStore.getState();
+          store.setAll(comments);
+          useCommentsStore.getState().setLastError(null);
         }
       })
       .catch((error: unknown) => {
@@ -54,7 +56,9 @@ export function CommentList({ projectId }: { projectId: string }): ReactElement 
     setUpdatingIds((current) => new Set(current).add(commentId));
     try {
       const comment = await updateCommentStatus(projectId, commentId, status);
-      useCommentsStore.getState().upsert(comment);
+      const store = useCommentsStore.getState();
+      store.upsert(comment);
+      useCommentsStore.getState().setLastError(null);
     } catch (error: unknown) {
       useCommentsStore.getState().setLastError(errorMessage(error));
     } finally {

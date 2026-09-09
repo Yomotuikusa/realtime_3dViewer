@@ -44,6 +44,7 @@ export function dispatchServerMessage(msg: ServerMessage): void {
       session.setLastError(`${msg.code}: ${msg.message}`);
       break;
     default:
+      msg satisfies never;
       break;
   }
 }
