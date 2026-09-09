@@ -20,6 +20,7 @@ glTF/GLB の 3D レビュー画面を提供する。
 - src/main.tsx: React アプリのエントリーポイント
 - tests/api-client.test.ts: API クライアントの URL、body、エラー、スキーマ検証テスト
 - tests/routes.test.ts: ルート解析と履歴遷移テスト
+- tests/store-camera.test.ts: カメラストアの初期値、更新、再現要求、Reset・Fit・モデルサイズの振る舞いを検証
 
 ## 公開インターフェイス
 - api/client.ts: `ApiClientError`、`modelUrl`、`createProject`、`getProject`、`listComments`、`createComment`、`updateCommentStatus`

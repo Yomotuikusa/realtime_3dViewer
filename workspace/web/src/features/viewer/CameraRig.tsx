@@ -44,6 +44,7 @@ export function CameraRig(): ReactElement {
     }
     lastResetSeq.current = resetSeq;
     pendingTarget.current = null;
+    useCameraStore.getState().consumePendingCamera();
     const controls = controlsRef.current;
     if (controls) {
       applyCamera(camera, controls, DEFAULT_CAMERA);
