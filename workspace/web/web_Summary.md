@@ -26,7 +26,8 @@ glTF/GLB の 3D レビュー画面を提供する。レビュー画面は表示�
 - src/features/presence/RemoteCameras.tsx: 他者のカメラ位置・向きと名前ラベルを Canvas 内に表示
 - src/features/viewer/ViewerCanvas.tsx: Canvas、ライティング、Bounds、モデル、カメラを合成するビューア。`children` は RemoteCameras / StrokeLines / AnnotationLayer など後続機能の差し込み口
 - src/features/viewer/ModelMesh.tsx: `useGLTF` でモデルをロードし、バウンディングボックスからモデルサイズを記録して初回 Fit を要求
-- src/features/viewer/CameraRig.tsx: OrbitControls をカメラストアと同期し、Reset・Fit・カメラ再現を処理
+- src/features/viewer/follow.ts: Follow 対象カメラの妥当性判定と、共有カメラ関数を使った 1 フレーム分の補間
+- src/features/viewer/CameraRig.tsx: OrbitControls をカメラストアと同期し、Reset・Fit・カメラ再現・Follow を処理
 - src/features/viewer/useCameraBroadcast.ts: `selfCamera` の変更を購読し、共有定数の 50ms 間隔と `cameraEquals` でカメラ送信を throttle
 - src/main.tsx: React アプリのエントリーポイント
 - tests/api-client.test.ts: API クライアントの URL、body、エラー、スキーマ検証テスト
@@ -35,6 +36,7 @@ glTF/GLB の 3D レビュー画面を提供する。レビュー画面は表示�
 - tests/realtime-dispatch.test.ts: welcome の session / presence 反映、presence イベント、error、未対応イベント、reset のテスト
 - tests/store-presence.test.ts: presence の全置換、upsert、削除、カメラ更新、Follow、reset のテスト
 - tests/camera-broadcast.test.ts: カメラ送信 throttle の間隔・比較判定テスト
+- tests/follow.test.ts: Follow 対象カメラの判定、複製、補間、収束テスト
 - tests/routes.test.ts: ルート解析と履歴遷移テスト
 - tests/store-camera.test.ts: カメラストアの初期値、参照を保つ epsilon 判定、複製して保持・消費する再現要求、Reset・Fit・モデルサイズ・全 state 初期化の振る舞いを検証
 
@@ -55,6 +57,7 @@ glTF/GLB の 3D レビュー画面を提供する。レビュー画面は表示�
 - store/presence.ts: `usePresenceStore`、`PresenceStoreState`
 - features/viewer/ViewerCanvas.tsx: `ViewerCanvas({ modelSrc, children? })`
 - features/viewer/ModelMesh.tsx: `ModelMesh({ src })`
+- features/viewer/follow.ts: `FOLLOW_LERP_T`、`followTargetCamera`、`followStep`
 - features/viewer/CameraRig.tsx: `CameraRig()`
 - features/viewer/useCameraBroadcast.ts: `shouldSendCamera`、`useCameraBroadcast(send)`
 - features/presence/PresenceList.tsx: `PresenceList()`
@@ -69,6 +72,17 @@ API クライアントは同一オリジンの `/api/...` を使い、2xx 応答
 既定 epsilon 内の更新を無視する。`requestCamera`/`consumePendingCamera` は複製した
 `CameraState` を受け渡し、`resetSeq`/`fitSeq` は操作トリガ、`modelSize` はモデルの最大辺長を保持する。
 `CameraRig` は Reset 発生時に未消費の `pendingCamera` も破棄し、Reset 後の古い再現要求が補間を開始しないようにする。
+CameraRig の毎フレーム処理は D27 の優先順位に従う。
+
+| 状況 | 動作 |
+| --- | --- |
+| `resetSeq` が増えた | `DEFAULT_CAMERA` へ即座に戻し、追従中なら `presence.unfollow()`。 |
+| `pendingCamera` が非 null | 消費時に `presence.unfollow()` し、既存どおり目標へ補間する。 |
+| 補間目標が残っている | `lerpCamera` で現在から目標へ進み、到達時に目標をクリアする。 |
+| `followTargetCamera(...)` が非 null | `followStep` の結果をカメラと `controls.target` に適用し、到達後も追従を継続する。 |
+| それ以外 | カメラを変更しない。 |
+
+OrbitControls の `start` はユーザー操作として `presence.unfollow()` を呼び、追従によるプログラム更新では解除しない。
 `ReviewPage` は ready/error に取得対象の `projectId` を保持し、現在の URL と一致しない間は
 旧画面を表示せず loading として扱う。
 入室後は `useRealtime` が同一オリジンの `/ws?projectId=...` へ接続し、`open` ごとに `join` を

@@ -5,6 +5,9 @@ import type { OrbitControls as OrbitControlsImpl } from "three-stdlib";
 import type { CameraState } from "@shared/types";
 import { cameraEquals, DEFAULT_CAMERA, lerpCamera } from "@shared/camera";
 import { useCameraStore } from "../../store/camera";
+import { usePresenceStore } from "../../store/presence";
+import { useSessionStore } from "../../store/session";
+import { followStep, followTargetCamera } from "./follow";
 import type { Camera } from "three";
 
 function readCamera(camera: Camera, controls: OrbitControlsImpl): CameraState {
@@ -24,13 +27,10 @@ export function CameraRig(): ReactElement {
   const camera = useThree((state) => state.camera);
   const controlsRef = useRef<OrbitControlsImpl | null>(null);
   const pendingTarget = useRef<CameraState | null>(null);
-  const resetSeq = useCameraStore((state) => state.resetSeq);
   const fitSeq = useCameraStore((state) => state.fitSeq);
-  const pendingCamera = useCameraStore((state) => state.pendingCamera);
   const bounds = useBounds();
-  const lastResetSeq = useRef(resetSeq);
+  const lastResetSeq = useRef(useCameraStore.getState().resetSeq);
   const lastFitSeq = useRef(fitSeq);
-  const discardPendingAfterReset = useRef(false);
 
   const handleChange = (): void => {
     const controls = controlsRef.current;
@@ -40,21 +40,6 @@ export function CameraRig(): ReactElement {
   };
 
   useEffect(() => {
-    if (resetSeq === lastResetSeq.current) {
-      return;
-    }
-    lastResetSeq.current = resetSeq;
-    pendingTarget.current = null;
-    useCameraStore.getState().consumePendingCamera();
-    discardPendingAfterReset.current = true;
-    const controls = controlsRef.current;
-    if (controls) {
-      applyCamera(camera, controls, DEFAULT_CAMERA);
-      useCameraStore.getState().setSelfCamera(DEFAULT_CAMERA);
-    }
-  }, [camera, resetSeq]);
-
-  useEffect(() => {
     if (fitSeq === lastFitSeq.current) {
       return;
     }
@@ -62,42 +47,76 @@ export function CameraRig(): ReactElement {
     bounds.refresh().clip().fit();
   }, [bounds, fitSeq]);
 
-  useEffect(() => {
-    if (discardPendingAfterReset.current) {
-      discardPendingAfterReset.current = false;
+  useFrame(() => {
+    const cameraStore = useCameraStore.getState();
+    if (cameraStore.resetSeq !== lastResetSeq.current) {
+      lastResetSeq.current = cameraStore.resetSeq;
       pendingTarget.current = null;
-      useCameraStore.getState().consumePendingCamera();
+      cameraStore.consumePendingCamera();
+      const presence = usePresenceStore.getState();
+      if (presence.followingUserId !== null) {
+        presence.unfollow();
+      }
+      const controls = controlsRef.current;
+      if (controls) {
+        applyCamera(camera, controls, DEFAULT_CAMERA);
+        cameraStore.setSelfCamera(DEFAULT_CAMERA);
+      }
       return;
     }
-    if (pendingCamera !== null) {
-      pendingTarget.current = useCameraStore.getState().consumePendingCamera();
-    }
-  }, [pendingCamera, resetSeq]);
 
-  useFrame(() => {
+    if (cameraStore.pendingCamera !== null) {
+      const target = cameraStore.consumePendingCamera();
+      if (target !== null) {
+        pendingTarget.current = target;
+        usePresenceStore.getState().unfollow();
+      }
+      return;
+    }
+
     const controls = controlsRef.current;
     const target = pendingTarget.current;
-    if (!controls || target === null) {
+    if (!controls) {
       return;
     }
 
     const current = readCamera(camera, controls);
-    const next = lerpCamera(current, target, 0.2);
-    if (cameraEquals(next, target)) {
-      applyCamera(camera, controls, target);
-      pendingTarget.current = null;
-      useCameraStore.getState().setSelfCamera(target);
+    if (target !== null) {
+      const next = lerpCamera(current, target, 0.2);
+      if (cameraEquals(next, target)) {
+        applyCamera(camera, controls, target);
+        pendingTarget.current = null;
+        cameraStore.setSelfCamera(target);
+        return;
+      }
+      applyCamera(camera, controls, next);
+      cameraStore.setSelfCamera(next);
       return;
     }
-    applyCamera(camera, controls, next);
-    useCameraStore.getState().setSelfCamera(next);
+
+    const presence = usePresenceStore.getState();
+    const followTarget = followTargetCamera(
+      presence.users,
+      presence.followingUserId,
+      useSessionStore.getState().selfId,
+    );
+    if (followTarget !== null) {
+      const next = followStep(current, followTarget);
+      applyCamera(camera, controls, next.camera);
+      cameraStore.setSelfCamera(next.camera);
+    }
   });
+
+  const handleStart = (): void => {
+    usePresenceStore.getState().unfollow();
+  };
 
   return (
     <OrbitControls
       ref={controlsRef}
       makeDefault
       onChange={handleChange}
+      onStart={handleStart}
       target={DEFAULT_CAMERA.target}
     />
   );
