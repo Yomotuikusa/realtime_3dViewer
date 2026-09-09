@@ -72,7 +72,8 @@ comments の永続化、ファイル保存、プロジェクト取得 API を提
   `connectionsIn` / `projectOf` / `usersIn` / `strokesIn` で結線側やテストから状態を参照する。
   `Outbound.target` は `self` (送信元のみ)、`others` (送信元以外)、`all` (ルーム全員) を表す。
   `PRESENCE_PALETTE` は8色で、ルーム内の未使用色をjoin順に割り当て、全色使用時はサイズの剰余で
-  再利用する。線は1ルームあたり `MAX_ROOM_STROKES = 2000` 本まで保持する。
+  再利用する。線は1ルームあたり `MAX_ROOM_STROKES = 2000` 本まで保持し、同じIDの追加は
+  既存線を置換するため上限到達後も許可する。
 
 ## 他機能との関係
 `shared/src/api.ts` の `ErrorCode`、`ApiError`、`MAX_UPLOAD_BYTES_DEFAULT` と、

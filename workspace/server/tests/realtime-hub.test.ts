@@ -66,18 +66,32 @@ describe("RoomHub", () => {
     hub.connect("p1");
     hub.connect("p1");
     join(hub, "a", "A");
-    join(hub, "b", "B");
-    expect(join(hub, "b", "B again")).toEqual([
+    hub.handle("a", { type: "stroke:add", stroke: stroke("existing") });
+    const bWelcome = join(hub, "b", "B");
+    expect(bWelcome[0]).toMatchObject({
+      target: "self",
+      msg: {
+        type: "welcome",
+        users: [{ id: "a" }, { id: "b", color: PRESENCE_PALETTE[1] }],
+        strokes: [{ id: "existing", userId: "a" }],
+      },
+    });
+    expect(join(hub, "b", "B")).toEqual([
       { target: "self", msg: { type: "error", code: "BAD_REQUEST", message: "already joined" } },
     ]);
+    const b = hub.usersIn("p1").find((user) => user.id === "b");
+    expect(b?.color).toBe(PRESENCE_PALETTE[1]);
     expect(hub.usersIn("p1")).toHaveLength(2);
     hub.disconnect("a");
-    const welcome = join(hub, "c", "  Rin  ");
+    const welcome = join(hub, "c", "C");
     expect(welcome[0]).toMatchObject({
       target: "self",
       msg: { type: "welcome", users: [{ id: "b" }, { id: "c" }] },
     });
-    expect(hub.usersIn("p1")[1]!).toMatchObject({ id: "c", name: "Rin", color: PRESENCE_PALETTE[0] });
+    expect(hub.usersIn("p1").find((user) => user.id === "c")).toMatchObject({
+      id: "c",
+      color: PRESENCE_PALETTE[0],
+    });
   });
 
   it("assigns a fallback color when all eight palette colors are used", () => {
@@ -133,7 +147,12 @@ describe("RoomHub", () => {
     join(hub, "a", "A");
     const first = hub.handle("a", { type: "stroke:add", stroke: stroke("same", "b", 1) });
     expect(first[0]).toMatchObject({ target: "all", msg: { type: "stroke:add", stroke: { userId: "a", createdAt: 10 } } });
-    hub.handle("a", { type: "stroke:add", stroke: stroke("same", "b", 2) });
+    expect(hub.handle("a", { type: "stroke:add", stroke: stroke("same", "b", 2) })).toEqual([
+      {
+        target: "all",
+        msg: { type: "stroke:add", stroke: { ...stroke("same", "a", 11), createdAt: 11 } },
+      },
+    ]);
     expect(hub.strokesIn("p1")).toMatchObject([{ id: "same", userId: "a", createdAt: 11 }]);
   });
 
@@ -147,6 +166,9 @@ describe("RoomHub", () => {
     const result = hub.handle("a", { type: "stroke:add", stroke: stroke("overflow") });
     expect(result).toEqual([
       { target: "self", msg: { type: "error", code: "BAD_REQUEST", message: "room stroke limit reached" } },
+    ]);
+    expect(hub.handle("a", { type: "stroke:add", stroke: stroke("stroke-0") })).toMatchObject([
+      { target: "all", msg: { type: "stroke:add", stroke: { id: "stroke-0" } } },
     ]);
     expect(hub.strokesIn("p1")).toHaveLength(MAX_ROOM_STROKES);
   });

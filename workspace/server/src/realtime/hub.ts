@@ -188,7 +188,7 @@ export class RoomHub {
   }
 
   private addStroke(room: Room, connId: string, incoming: Stroke): Outbound[] {
-    if (room.strokes.size >= MAX_ROOM_STROKES) {
+    if (!room.strokes.has(incoming.id) && room.strokes.size >= MAX_ROOM_STROKES) {
       return [{
         target: "self",
         msg: { type: "error", code: "BAD_REQUEST", message: "room stroke limit reached" },
