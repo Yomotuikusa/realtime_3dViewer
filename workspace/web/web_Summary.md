@@ -25,7 +25,7 @@ glTF/GLB の 3D レビュー画面を提供する。レビュー画面は表示�
 - src/store/annotation.ts: ルーム全員分のライブ線、annotation mode・色・描画中 draft・コメント再現用線を保持し、welcome/線操作・draft・reset を提供する zustand ストア
 - src/store/comments.ts: コメント一覧、Open フィルタ、選択中コメント、投稿アンカー、API エラーを保持し、`setAll` / `upsert` / `select` / `setFilter` / `setComposerAnchor` / `setLastError` / `reset` を提供する zustand ストア
 - src/features/presence/PresenceList.tsx: 参加者の色・名前と Follow / 解除ボタンを表示
-- src/features/comments/CommentList.tsx: `CommentList({ projectId })` として REST でコメントを取得し、Open フィルタ、選択、Resolve / Reopen、API エラー表示を提供
+- src/features/comments/CommentList.tsx: `CommentList({ projectId })` として REST でコメントを取得し、Open フィルタ、選択領域、Resolve / Reopen 操作、API エラー表示を提供。選択領域と状態変更ボタンは兄弟要素として分離する
 - src/features/presence/RemoteCameras.tsx: 他者のカメラ位置・向きと名前ラベルを Canvas 内に表示
 - src/features/annotation/StrokeLines.tsx: 受け取った `Stroke[]` を線ごとに drei `Line` で描画する純粋な表示コンポーネント
 - src/features/annotation/RoomStrokes.tsx: annotation ストアのライブ線を表示順で描画し、2点以上の draft を現在色のプレビュー線として追加する Canvas 内レイヤー
@@ -132,4 +132,4 @@ comments ストアは `items`（常に `createdAt` 昇順、同値なら `id` �
 `setAll` / `upsert` / `setFilter` の後は、`selectedId` が `selectVisible(items, showOnlyOpen)` に含まれなければ `null` に正規化する。
 `setAll` は一覧全置換、`upsert` は id 単位の追加・置換、`select` は選択変更、`setFilter` は Open フィルタ変更、
 `setComposerAnchor` は投稿位置変更、`setLastError` は API エラー変更、`reset` は初期値復元を行う。
-`CommentList` はマウント時に全コメントを取得し、行クリックで選択を切り替え、Open のコメントを Resolve、resolved のコメントを Reopen する。
+`CommentList` はマウント時に全コメントを取得し、選択領域のクリックまたはキーボード操作で選択を切り替え、Open のコメントを Resolve、resolved のコメントを Reopen する。状態変更中のコメント ID は集合で管理し、並行する別行の操作も disabled 状態を保つ。

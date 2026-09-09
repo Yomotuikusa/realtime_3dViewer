@@ -74,15 +74,6 @@ export function CommentList({ projectId }: { projectId: string }): ReactElement 
           return (
             <li key={comment.id}>
               <div
-                role="button"
-                tabIndex={0}
-                onClick={() => useCommentsStore.getState().select(selectedId === comment.id ? null : comment.id)}
-                onKeyDown={(event) => {
-                  if (event.key === "Enter" || event.key === " ") {
-                    event.preventDefault();
-                    useCommentsStore.getState().select(selectedId === comment.id ? null : comment.id);
-                  }
-                }}
                 style={{
                   padding: "0.6rem",
                   border: "1px solid #d0d5dd",
@@ -91,13 +82,37 @@ export function CommentList({ projectId }: { projectId: string }): ReactElement 
                   cursor: "pointer",
                 }}
               >
-                <div style={{ display: "flex", justifyContent: "space-between", gap: "0.5rem" }}>
-                  <strong>{comment.authorName}</strong>
-                  <span>{comment.status}</span>
+                <div
+                  role="button"
+                  tabIndex={0}
+                  aria-pressed={selectedId === comment.id}
+                  onClick={() => useCommentsStore.getState().select(selectedId === comment.id ? null : comment.id)}
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter" || event.key === " ") {
+                      event.preventDefault();
+                      useCommentsStore.getState().select(selectedId === comment.id ? null : comment.id);
+                    }
+                  }}
+                  style={{
+                    display: "block",
+                    width: "100%",
+                    padding: 0,
+                    border: 0,
+                    background: "transparent",
+                    color: "inherit",
+                    font: "inherit",
+                    textAlign: "left",
+                    cursor: "pointer",
+                  }}
+                >
+                  <div style={{ display: "flex", justifyContent: "space-between", gap: "0.5rem" }}>
+                    <strong>{comment.authorName}</strong>
+                    <span>{comment.status}</span>
+                  </div>
+                  <p style={{ margin: "0.35rem 0", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
+                    {comment.body}
+                  </p>
                 </div>
-                <p style={{ margin: "0.35rem 0", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
-                  {comment.body}
-                </p>
                 <button
                   type="button"
                   disabled={isUpdating}
@@ -105,7 +120,6 @@ export function CommentList({ projectId }: { projectId: string }): ReactElement 
                     event.stopPropagation();
                     void changeStatus(comment.id, nextStatus);
                   }}
-                  onKeyDown={(event) => event.stopPropagation()}
                 >
                   {comment.status === "open" ? "Resolve" : "Reopen"}
                 </button>
