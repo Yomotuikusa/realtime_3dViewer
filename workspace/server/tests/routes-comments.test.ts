@@ -155,6 +155,18 @@ describe("comment routes", () => {
     expect(await (await t.app.request("/api/projects/p1/comments")).json()).toEqual([]);
   });
 
+  it("rejects creating a comment for a missing project", async () => {
+    const t = testApp();
+    const response = await t.app.request("/api/projects/nope/comments", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify(input()),
+    });
+    expect(response.status).toBe(404);
+    expect((await response.json()).error.code).toBe("NOT_FOUND");
+    expect(t.published).toEqual([]);
+  });
+
   it("updates status, preserves createdAt, and publishes each update", async () => {
     const t = testApp();
     const { version } = seedProject(t);
@@ -205,6 +217,7 @@ describe("comment routes", () => {
     for (const path of [
       "/api/projects/p1/comments/nope",
       "/api/projects/p2/comments/c1",
+      "/api/projects/nope/comments/c1",
     ]) {
       const response = await t.app.request(path, {
         method: "PATCH",
