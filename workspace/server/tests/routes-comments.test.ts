@@ -205,7 +205,7 @@ describe("comment routes", () => {
     }
     for (const path of [
       "/api/projects/p1/comments/nope",
-      "/api/projects/other/comments/c1",
+      "/api/projects/p2/comments/c1",
     ]) {
       const response = await t.app.request(path, {
         method: "PATCH",
