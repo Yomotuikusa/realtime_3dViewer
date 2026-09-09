@@ -1,7 +1,8 @@
-import { useState, type FormEvent, type ReactElement } from "react";
+import { useId, useState, type FormEvent, type ReactElement } from "react";
 import { loadStoredName, resolveDisplayName, saveName } from "./display-name";
 
 export function JoinDialog({ onJoin }: { onJoin: (name: string) => void }): ReactElement {
+  const titleId = useId();
   const [input, setInput] = useState(() => loadStoredName());
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
@@ -12,22 +13,29 @@ export function JoinDialog({ onJoin }: { onJoin: (name: string) => void }): Reac
   };
 
   return (
-    <form
-      aria-label="レビュー空間に入室"
-      onSubmit={handleSubmit}
-      style={{ display: "grid", gap: "0.75rem", maxWidth: "24rem", padding: "1.25rem", background: "#fff", border: "1px solid #d0d5dd", borderRadius: "0.5rem" }}
-    >
-      <h2 style={{ margin: 0, fontSize: "1.1rem" }}>レビュー空間に入室</h2>
-      <label style={{ display: "grid", gap: "0.35rem" }}>
-        表示名
-        <input
-          type="text"
-          value={input}
-          onChange={(event) => setInput(event.target.value)}
-          autoComplete="name"
-        />
-      </label>
-      <button type="submit">入室する</button>
-    </form>
+    <div className="review-backdrop">
+      <form
+        className="review-dialog"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={titleId}
+        onSubmit={handleSubmit}
+      >
+        <h2 id={titleId}>レビュー空間に入室</h2>
+        <p className="review-dialog__help">空欄のまま入室すると Guest 名が付きます。</p>
+        <label className="field">
+          <span className="field__label">表示名</span>
+          <input
+            className="input"
+            type="text"
+            value={input}
+            onChange={(event) => setInput(event.target.value)}
+            autoComplete="name"
+            autoFocus
+          />
+        </label>
+        <button className="btn btn--primary" type="submit">入室する</button>
+      </form>
+    </div>
   );
 }

@@ -17,7 +17,11 @@ glTF/GLB の 3D レビュー画面を提供する。レビュー画面は表示�
 - src/app/realtime-dispatch.ts: `ServerMessage` を session / presence / annotation / comments ストアへ振り分ける入口。`welcome`、presence 更新、stroke、`comment:created` / `comment:updated`、`error` を扱う
 - src/app/useRealtime.ts: 名前決定後の `WsClient` 接続と、open ごとの `join` 送信
 - src/app/UploadPage.tsx: プロジェクト名・`.glb`/`.gltf` のアップロード画面
-- src/app/ReviewPage.tsx: プロジェクト取得、入室ダイアログ、接続状態、ロード状態・エラーカード、ビューアとサイドパネルのレイアウト。Canvas に RemoteCameras / RoomStrokes / ReplayStrokes / AnnotationLayer / CommentPickLayer / CommentPins を配置し、サイドパネルに PresenceList / CommentComposer / CommentList を配置する
+- src/app/ReviewPage.tsx: プロジェクト取得、レビュー画面の骨格、ロード状態・エラーカード、ビューアとサイドパネルのレイアウトを担当する。Canvas に RemoteCameras / RoomStrokes / ReplayStrokes / AnnotationLayer / CommentPickLayer / CommentPins を配置し、`.review-hud` を 025 の HUD 差し込み口、`.review-panel__comments` を 026 のコメント領域差し込み口として提供する
+- src/app/ReviewHeader.tsx: 接続状態バッジ、入室後の自分の表示名・色、レビュー URL のコピーと失敗時の手動コピー欄を表示する
+- src/app/JoinDialog.tsx: 保存済み表示名を初期値にした、入室前にビューアを覆うモーダルフォーム。表示名の解決・保存・入室コールバックは display-name と呼び出し側へ委譲する
+- src/app/review-labels.ts: 接続状態・コピー状態・ロード/エラー文言を定義する JSX 非依存の純粋関数と定数
+- src/app/review.css: レビュー画面のヘッダ、ビューア/HUD、入室 backdrop/dialog、サイドパネル、ロード/エラー状態のプレーン CSS
 - src/app/ErrorBoundary.tsx: React/three の描画例外を捕捉し、フォールバックを表示
 - src/store/camera.ts: `selfCamera`、`pendingCamera`、`resetSeq`、`fitSeq`、`modelSize` と、カメラ更新・再現消費・Reset・Fit・サイズ更新・初期化の action を管理する zustand ストア
 - src/store/session.ts: 自分の ID・色・表示名・接続状態・直近エラーを保持する zustand ストア
@@ -71,6 +75,8 @@ glTF/GLB の 3D レビュー画面を提供する。レビュー画面は表示�
 - app/App.tsx: `App`
 - app/UploadPage.tsx: `UploadPage`
 - app/ReviewPage.tsx: `ReviewPage({ projectId })`
+- app/ReviewHeader.tsx: `ReviewHeader({ projectName, joined })`
+- app/review-labels.ts: `connectionLabel`、`connectionTone`、`copyLabel`、`copyText`、ロード/エラー文言定数
 - app/display-name.ts: `loadStoredName`、`saveName`、`guestName`、`resolveDisplayName`
 - app/JoinDialog.tsx: `JoinDialog({ onJoin })`
 - app/useRealtime.ts: `useRealtime(projectId, name)`、`Realtime`

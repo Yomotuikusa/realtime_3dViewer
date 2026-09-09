@@ -1,24 +1,27 @@
 import { useEffect, useState, type ReactElement } from "react";
 import type { Project } from "@shared/types";
 import { ApiClientError, getProject, modelUrl } from "../api/client";
-import { ErrorBoundary } from "./ErrorBoundary";
-import { JoinDialog } from "./JoinDialog";
-import { useRealtime } from "./useRealtime";
-import { PresenceList } from "../features/presence/PresenceList";
-import { CommentList } from "../features/comments/CommentList";
+import { useCameraStore } from "../store/camera";
+import { AnnotationLayer } from "../features/annotation/AnnotationLayer";
+import { AnnotationToolbar } from "../features/annotation/AnnotationToolbar";
+import { RoomStrokes } from "../features/annotation/RoomStrokes";
 import { CommentComposer } from "../features/comments/CommentComposer";
+import { CommentList } from "../features/comments/CommentList";
 import { CommentPickLayer } from "../features/comments/CommentPickLayer";
 import { CommentPins } from "../features/comments/CommentPins";
 import { ReplayStrokes } from "../features/comments/ReplayStrokes";
 import { useCommentReplay } from "../features/comments/useCommentReplay";
+import { PresenceList } from "../features/presence/PresenceList";
 import { RemoteCameras } from "../features/presence/RemoteCameras";
-import { RoomStrokes } from "../features/annotation/RoomStrokes";
-import { AnnotationLayer } from "../features/annotation/AnnotationLayer";
-import { AnnotationToolbar } from "../features/annotation/AnnotationToolbar";
 import { ViewerCanvas } from "../features/viewer/ViewerCanvas";
 import { useCameraBroadcast } from "../features/viewer/useCameraBroadcast";
-import { useCameraStore } from "../store/camera";
 import { useSessionStore } from "../store/session";
+import { ErrorBoundary } from "./ErrorBoundary";
+import { JoinDialog } from "./JoinDialog";
+import { ReviewHeader } from "./ReviewHeader";
+import { useRealtime } from "./useRealtime";
+import { LOADING_MESSAGE, MODEL_LOAD_FAILED, PROJECT_LOAD_FAILED, RELOAD_LABEL } from "./review-labels";
+import "./review.css";
 
 type ReviewState =
   | { status: "loading"; projectId: string }
@@ -27,23 +30,9 @@ type ReviewState =
 
 function ErrorCard({ message, onRetry }: { message: string; onRetry: () => void }): ReactElement {
   return (
-    <div
-      role="alert"
-      style={{
-        display: "grid",
-        placeItems: "center",
-        gap: "0.8rem",
-        minHeight: "18rem",
-        padding: "2rem",
-        color: "#8a1c1c",
-        background: "#fff5f5",
-        border: "1px solid #f0b8b8",
-        borderRadius: "0.5rem",
-        textAlign: "center",
-      }}
-    >
-      <p style={{ margin: 0 }}>{message}</p>
-      <button type="button" onClick={onRetry}>再読み込み</button>
+    <div className="alert review-error" role="alert">
+      <p>{message}</p>
+      <button className="btn" type="button" onClick={onRetry}>{RELOAD_LABEL}</button>
     </div>
   );
 }
@@ -55,7 +44,6 @@ export function ReviewPage({ projectId }: { projectId: string }): ReactElement {
   useCommentReplay();
   const realtime = useRealtime(projectId, joinName);
   useCameraBroadcast(realtime.send);
-  const connection = useSessionStore((session) => session.connection);
   const lastError = useSessionStore((session) => session.lastError);
 
   useEffect(() => {
@@ -75,11 +63,11 @@ export function ReviewPage({ projectId }: { projectId: string }): ReactElement {
           ? error.message
           : error instanceof Error
             ? error.message
-            : "プロジェクトの取得に失敗しました。";
+            : PROJECT_LOAD_FAILED;
         setState({
           status: "error",
           projectId,
-          message: message || "プロジェクトの取得に失敗しました。",
+          message: message || PROJECT_LOAD_FAILED,
         });
       });
 
@@ -89,12 +77,16 @@ export function ReviewPage({ projectId }: { projectId: string }): ReactElement {
   }, [projectId, reloadSeq]);
 
   if (state.status === "loading" || state.projectId !== projectId) {
-    return <main style={pageStyle}><p>プロジェクトを読み込んでいます…</p></main>;
+    return (
+      <main className="review-page review-page--message">
+        <p role="status">{LOADING_MESSAGE}</p>
+      </main>
+    );
   }
 
   if (state.status === "error") {
     return (
-      <main style={pageStyle}>
+      <main className="review-page review-page--message">
         <ErrorCard message={state.message} onRetry={() => setReloadSeq((seq) => seq + 1)} />
       </main>
     );
@@ -107,35 +99,23 @@ export function ReviewPage({ projectId }: { projectId: string }): ReactElement {
     useSessionStore.getState().setName(name);
     setJoinName(name);
   };
-  const connectionLabel = connection === "connecting"
-    ? "再接続中"
-    : connection === "closed"
-      ? "切断"
-      : null;
 
   return (
-    <main style={pageStyle}>
-      <header style={{ display: "flex", alignItems: "baseline", gap: "1rem", padding: "1rem 1.25rem" }}>
-        <h1 style={{ margin: 0, fontSize: "1.25rem" }}>{state.project.name}</h1>
-        <span style={{ color: "#667085" }}>レビュー</span>
-      </header>
-      <div style={{ display: "grid", gridTemplateColumns: "minmax(0, 1fr) 20rem", minHeight: "calc(100vh - 4.25rem)" }}>
-        <section style={{ position: "relative", minWidth: 0, padding: "0 0 1rem 1rem" }}>
-          {joinName === null && (
-            <div style={{ position: "absolute", zIndex: 2, top: "1rem", left: "2rem" }}>
-              <JoinDialog onJoin={handleJoin} />
-            </div>
-          )}
-          <div style={{ position: "absolute", zIndex: 1, top: "1rem", left: "2rem", display: "flex", gap: "0.5rem" }}>
-            <button type="button" onClick={requestReset}>Reset</button>
-            <button type="button" onClick={requestFit}>全体表示</button>
+    <main className="review-page">
+      <ReviewHeader projectName={state.project.name} joined={joinName !== null} />
+      {lastError && <p className="alert review-page__alert" role="alert">{lastError}</p>}
+      <div className="review-body">
+        <section className="review-viewer" aria-label="3D ビューア">
+          <div className="review-hud">
+            <button className="btn" type="button" onClick={requestReset}>視点を戻す</button>
+            <button className="btn" type="button" onClick={requestFit}>全体を表示</button>
             <AnnotationToolbar send={realtime.send} />
           </div>
           <ErrorBoundary
             key={src}
             fallback={(
               <ErrorCard
-                message="モデルの読み込みに失敗しました。"
+                message={MODEL_LOAD_FAILED}
                 onRetry={() => window.location.reload()}
               />
             )}
@@ -149,23 +129,16 @@ export function ReviewPage({ projectId }: { projectId: string }): ReactElement {
               <CommentPins />
             </ViewerCanvas>
           </ErrorBoundary>
+          {joinName === null && <JoinDialog onJoin={handleJoin} />}
         </section>
-        <aside aria-label="サイドパネル" style={{ margin: "0 1rem 1rem 1rem", padding: "1rem", border: "1px solid #d0d5dd", borderRadius: "0.5rem" }}>
-          {connectionLabel && <p style={{ margin: "0 0 0.5rem" }}>{connectionLabel}</p>}
-          {lastError && <p role="alert" style={{ margin: 0, color: "#b42318" }}>{lastError}</p>}
+        <aside className="review-panel" aria-label="サイドパネル">
           <PresenceList />
-          <CommentComposer projectId={projectId} versionId={state.project.latestVersion.id} />
-          <CommentList projectId={projectId} />
+          <section className="review-panel__comments" aria-label="コメント">
+            <CommentComposer projectId={projectId} versionId={state.project.latestVersion.id} />
+            <CommentList projectId={projectId} />
+          </section>
         </aside>
       </div>
     </main>
   );
 }
-
-const pageStyle = {
-  minHeight: "100vh",
-  margin: 0,
-  fontFamily: "sans-serif",
-  color: "#101828",
-  background: "#ffffff",
-};
