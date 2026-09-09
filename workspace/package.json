@@ -3,7 +3,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev:server": "tsx --tsconfig server/tsconfig.json watch server/src/index.ts",
+    "dev:server": "tsx watch --tsconfig server/tsconfig.json server/src/index.ts",
     "dev:web": "vite --config web/vite.config.ts --configLoader runner",
     "build": "vite build --config web/vite.config.ts --configLoader runner",
     "start": "NODE_ENV=production tsx --tsconfig server/tsconfig.json server/src/index.ts",
