@@ -46,7 +46,10 @@ glTF/GLB の 3D レビュー画面を提供する。レビュー画面は表示�
 - src/features/viewer/follow.ts: Follow 対象カメラの妥当性判定と、共有カメラ関数を使った 1 フレーム分の補間
 - src/features/viewer/CameraRig.tsx: OrbitControls をカメラストアと同期し、Reset・Fit・カメラ再現・Follow を処理。Pen モードでは OrbitControls を無効化する
 - src/features/viewer/useCameraBroadcast.ts: `selfCamera` の変更を購読し、共有定数の 50ms 間隔と `cameraEquals` でカメラ送信を throttle
-- src/main.tsx: React アプリのエントリーポイント
+- src/main.tsx: React アプリのエントリーポイント。tokens → base → controls の順で全体スタイルを読み込む
+- src/styles/tokens.css: 色・文字・間隔・角丸・動き・レイアウトのセマンティックトークン。既存 inline 値を引き継ぎ、`:root` に定義する
+- src/styles/base.css: 全画面共通のリセット、既定の本文、可視フォーカスリング、reduced-motion。クラスは定義しない
+- src/styles/controls.css: `.btn` / `.field` / `.input` / `.alert` / `.badge` / `.visually-hidden` の共通コントロール。状態は属性セレクタで表現する
 - tests/api-client.test.ts: API クライアントの URL、body、エラー、スキーマ検証テスト
 - tests/display-name.test.ts: 表示名の trim、保存、Guest 名、localStorage 例外のテスト
 - tests/ws-client.test.ts: JSON 送受信、入力破棄、再接続バックオフ、明示 close のテスト
@@ -58,6 +61,9 @@ glTF/GLB の 3D レビュー画面を提供する。レビュー画面は表示�
 - tests/follow.test.ts: Follow 対象カメラの判定、複製、補間、収束テスト
 - tests/routes.test.ts: ルート解析と履歴遷移テスト
 - tests/store-camera.test.ts: カメラストアの初期値、参照を保つ epsilon 判定、複製して保持・消費する再現要求、Reset・Fit・モデルサイズ・全 state 初期化の振る舞いを検証
+- tests/styles-rules.test.ts: `src/**/*.css` を再帰走査し、トークンの `:root` 定義、tokens.css 以外の生色禁止、CSS 変数の宣言/フォールバック、`!important` / `@import` 規約、main.tsx の import 順を検証
+
+スタイル規約(D35)はプレーン CSS とし、全体共通のトークン・ベース・コントロールを `src/styles/` に置く。色は `tokens.css` のセマンティック変数経由、状態はクラスの付け替えではなく `aria-*` / `disabled` / `data-*` で表現し、画面固有の CSS は各機能フォルダ側に置く。
 
 ## 公開インターフェイス
 - api/client.ts: `ApiClientError`、`modelUrl`、`createProject`、`getProject`、`listComments`、`createComment`、`updateCommentStatus`

@@ -1,0 +1,45 @@
+:root {
+  --font-ui: system-ui, -apple-system, "Segoe UI", "Hiragino Sans", "Noto Sans JP", sans-serif;
+  --text-xs: 0.75rem;
+  --text-sm: 0.8125rem;
+  --text-md: 0.875rem;
+  --text-lg: 1rem;
+  --text-xl: 1.125rem;
+  --leading: 1.5;
+
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 8px;
+
+  --color-bg: #ffffff;
+  --color-surface: #ffffff;
+  --color-surface-subtle: #f5f7fa;
+  --color-surface-muted: #eaecf0;
+  --color-text: #101828;
+  --color-text-muted: #667085;
+  --color-border: #d0d5dd;
+  --color-border-strong: #98a2b3;
+  --color-accent: #175cd3;
+  --color-accent-subtle: #eaf2ff;
+  --color-on-accent: #ffffff;
+  --color-danger: #b42318;
+  --color-danger-subtle: #fff5f5;
+  --color-danger-border: #f0b8b8;
+  --color-success: #067647;
+  --color-success-subtle: #ecfdf3;
+  --color-warning: #b54708;
+  --color-warning-subtle: #fffaeb;
+
+  --shadow-overlay: 0 4px 16px rgba(16, 24, 40, 0.16);
+  --focus-ring-color: var(--color-accent);
+  --duration-fast: 120ms;
+  --panel-width: 22rem;
+  --header-height: 3rem;
+}
