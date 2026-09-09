@@ -61,19 +61,30 @@ describe("RoomHub", () => {
 
   it("keeps welcome users in join order and reuses colors after departure", () => {
     const ids = ["a", "b", "c"];
-    const hub = new RoomHub({ newId: () => ids.shift()! });
+    const hub = new RoomHub({ newId: () => ids.shift()!, now: () => 10 });
     hub.connect("p1");
     hub.connect("p1");
     hub.connect("p1");
     join(hub, "a", "A");
     hub.handle("a", { type: "stroke:add", stroke: stroke("existing") });
     const bWelcome = join(hub, "b", "B");
-    expect(bWelcome[0]).toMatchObject({
+    expect(bWelcome[0]).toEqual({
       target: "self",
       msg: {
         type: "welcome",
-        users: [{ id: "a" }, { id: "b", color: PRESENCE_PALETTE[1] }],
-        strokes: [{ id: "existing", userId: "a" }],
+        selfId: "b",
+        users: [
+          { id: "a", name: "A", color: PRESENCE_PALETTE[0], camera: null },
+          { id: "b", name: "B", color: PRESENCE_PALETTE[1], camera: null },
+        ],
+        strokes: [stroke("existing", "a", 10)],
+      },
+    });
+    expect(bWelcome[1]).toEqual({
+      target: "others",
+      msg: {
+        type: "user:joined",
+        user: { id: "b", name: "B", color: PRESENCE_PALETTE[1], camera: null },
       },
     });
     expect(join(hub, "b", "B")).toEqual([
@@ -147,7 +158,8 @@ describe("RoomHub", () => {
     join(hub, "a", "A");
     const first = hub.handle("a", { type: "stroke:add", stroke: stroke("same", "b", 1) });
     expect(first[0]).toMatchObject({ target: "all", msg: { type: "stroke:add", stroke: { userId: "a", createdAt: 10 } } });
-    expect(hub.handle("a", { type: "stroke:add", stroke: stroke("same", "b", 2) })).toEqual([
+    const second = hub.handle("a", { type: "stroke:add", stroke: stroke("same", "b", 2) });
+    expect(second).toEqual([
       {
         target: "all",
         msg: { type: "stroke:add", stroke: { ...stroke("same", "a", 11), createdAt: 11 } },
