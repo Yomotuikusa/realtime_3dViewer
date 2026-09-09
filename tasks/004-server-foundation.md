@@ -6,7 +6,7 @@ depends_on: [002]
 owns: [server/src/config.ts, server/src/errors.ts, server/src/db/connection.ts, server/src/db/schema.sql, server/src/db/projects.ts, server/tests/helpers/tmp.ts, server/tests/config.test.ts, server/tests/errors.test.ts, server/tests/db-projects.test.ts, server/server_Summary.md]
 reads: [../docs/3dreviewer-plan-and-architecture.md, ../docs/task-breakdown.md, shared/shared_Summary.md, shared/src/types.ts, shared/src/api.ts, server/tsconfig.json, server/vitest.config.ts]
 verify: npm run typecheck && npm run test:server
-status: todo
+status: done
 ---
 
 ## 目的

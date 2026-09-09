@@ -6,7 +6,7 @@ depends_on: [004]
 owns: [server/src/db/comments.ts, server/tests/db-comments.test.ts, server/server_Summary.md]
 reads: [../docs/3dreviewer-plan-and-architecture.md, ../docs/task-breakdown.md, shared/shared_Summary.md, shared/src/types.ts, server/src/db/connection.ts, server/src/db/projects.ts, server/src/db/schema.sql, server/tests/helpers/tmp.ts]
 verify: npm run typecheck && npm run test:server
-status: todo
+status: done
 ---
 
 ## 目的
