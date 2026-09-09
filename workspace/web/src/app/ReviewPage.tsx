@@ -4,7 +4,10 @@ import { ApiClientError, getProject, modelUrl } from "../api/client";
 import { ErrorBoundary } from "./ErrorBoundary";
 import { JoinDialog } from "./JoinDialog";
 import { useRealtime } from "./useRealtime";
+import { PresenceList } from "../features/presence/PresenceList";
+import { RemoteCameras } from "../features/presence/RemoteCameras";
 import { ViewerCanvas } from "../features/viewer/ViewerCanvas";
+import { useCameraBroadcast } from "../features/viewer/useCameraBroadcast";
 import { useCameraStore } from "../store/camera";
 import { useSessionStore } from "../store/session";
 
@@ -40,7 +43,8 @@ export function ReviewPage({ projectId }: { projectId: string }): ReactElement {
   const [reloadSeq, setReloadSeq] = useState(0);
   const [joinName, setJoinName] = useState<string | null>(null);
   const [state, setState] = useState<ReviewState>({ status: "loading", projectId });
-  useRealtime(projectId, joinName);
+  const realtime = useRealtime(projectId, joinName);
+  useCameraBroadcast(realtime.send);
   const connection = useSessionStore((session) => session.connection);
   const lastError = useSessionStore((session) => session.lastError);
 
@@ -125,12 +129,15 @@ export function ReviewPage({ projectId }: { projectId: string }): ReactElement {
               />
             )}
           >
-            <ViewerCanvas modelSrc={src} />
+            <ViewerCanvas modelSrc={src}>
+              <RemoteCameras />
+            </ViewerCanvas>
           </ErrorBoundary>
         </section>
         <aside aria-label="サイドパネル" style={{ margin: "0 1rem 1rem 1rem", padding: "1rem", border: "1px solid #d0d5dd", borderRadius: "0.5rem" }}>
           {connectionLabel && <p style={{ margin: "0 0 0.5rem" }}>{connectionLabel}</p>}
           {lastError && <p role="alert" style={{ margin: 0, color: "#b42318" }}>{lastError}</p>}
+          <PresenceList />
         </aside>
       </div>
     </main>
