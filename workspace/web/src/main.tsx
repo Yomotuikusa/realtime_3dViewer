@@ -1,5 +1,4 @@
-// 骨組み。アプリ本体はタスク 005〜008 で実装する。
 import { createRoot } from "react-dom/client";
-import { SHARED_SCAFFOLD } from "@shared/index";
+import { App } from "./app/App";
 
-createRoot(document.getElementById("root")!).render(<p>3D Reviewer scaffold ({String(SHARED_SCAFFOLD)})</p>);
+createRoot(document.getElementById("root")!).render(<App />);
