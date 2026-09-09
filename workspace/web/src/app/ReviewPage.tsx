@@ -5,6 +5,7 @@ import { ErrorBoundary } from "./ErrorBoundary";
 import { JoinDialog } from "./JoinDialog";
 import { useRealtime } from "./useRealtime";
 import { PresenceList } from "../features/presence/PresenceList";
+import { CommentList } from "../features/comments/CommentList";
 import { RemoteCameras } from "../features/presence/RemoteCameras";
 import { RoomStrokes } from "../features/annotation/RoomStrokes";
 import { AnnotationLayer } from "../features/annotation/AnnotationLayer";
@@ -144,6 +145,7 @@ export function ReviewPage({ projectId }: { projectId: string }): ReactElement {
           {connectionLabel && <p style={{ margin: "0 0 0.5rem" }}>{connectionLabel}</p>}
           {lastError && <p role="alert" style={{ margin: 0, color: "#b42318" }}>{lastError}</p>}
           <PresenceList />
+          <CommentList projectId={projectId} />
         </aside>
       </div>
     </main>

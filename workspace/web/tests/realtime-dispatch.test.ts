@@ -2,15 +2,30 @@ import { beforeEach, describe, expect, it } from "vitest";
 import type { ServerMessage } from "@shared/protocol";
 import { dispatchServerMessage } from "../src/app/realtime-dispatch";
 import { useAnnotationStore } from "../src/store/annotation";
+import { useCommentsStore } from "../src/store/comments";
 import { usePresenceStore } from "../src/store/presence";
 import { useSessionStore } from "../src/store/session";
 
 const user = { id: "u2", name: "Mio", color: "#112233", camera: null };
 const camera = { position: [1, 2, 3] as [number, number, number], target: [0, 1, 0] as [number, number, number] };
 const stroke = { id: "s1", userId: "u1", color: "#ff0000", points: [[0, 0, 0], [1, 1, 1]] as [[number, number, number], [number, number, number]], createdAt: 1 };
+const comment = {
+  id: "c1",
+  projectId: "p1",
+  versionId: "v1",
+  authorName: "Rin",
+  body: "Check this",
+  anchor: [0, 0, 0] as [number, number, number],
+  camera,
+  strokes: [],
+  status: "open" as const,
+  createdAt: 1,
+  updatedAt: 1,
+};
 
 beforeEach(() => {
   useAnnotationStore.getState().reset();
+  useCommentsStore.getState().reset();
   useSessionStore.getState().reset();
   usePresenceStore.getState().reset();
 });
@@ -66,6 +81,17 @@ describe("realtime dispatch", () => {
     expect(useAnnotationStore.getState().strokes).toEqual({ s2: otherStroke });
     dispatchServerMessage({ type: "stroke:clear", userId: "u2" });
     expect(useAnnotationStore.getState().strokes).toEqual({});
+  });
+
+  it("dispatches comment creation and updates", () => {
+    dispatchServerMessage({ type: "comment:created", comment });
+    expect(useCommentsStore.getState().items).toEqual([comment]);
+    dispatchServerMessage({
+      type: "comment:updated",
+      comment: { ...comment, body: "Updated", status: "resolved", updatedAt: 2 },
+    });
+    expect(useCommentsStore.getState().items).toHaveLength(1);
+    expect(useCommentsStore.getState().items[0]).toMatchObject({ body: "Updated", status: "resolved" });
   });
 
   it("ignores messages not handled by this phase", () => {
