@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from "vitest";
-import { mkdirSync, writeFileSync } from "node:fs";
+import { mkdirSync, symlinkSync, unlinkSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { contentTypeFor, resolveStaticPath } from "../src/routes/static";
 import { makeTestApp } from "./helpers/app";
@@ -127,6 +127,22 @@ describe("static routes", () => {
       const traversal = await app.app.request(path);
       expect(await traversal.text()).not.toContain("outside-secret");
     }
+  });
+
+  it("does not follow symlinks outside the dist root", async () => {
+    const { app, root } = makeStaticApp();
+    writeFileSync(join(root, "..", "outside.txt"), "outside-secret");
+    symlinkSync("../outside.txt", join(root, "link.txt"));
+
+    const linkedFile = await app.app.request("/link.txt");
+    expect(linkedFile.status).toBe(404);
+    expect(await linkedFile.text()).not.toContain("outside-secret");
+
+    unlinkSync(join(root, "index.html"));
+    symlinkSync("../outside.txt", join(root, "index.html"));
+    const linkedFallback = await app.app.request("/p/linked");
+    expect(linkedFallback.status).toBe(404);
+    expect(await linkedFallback.text()).not.toContain("outside-secret");
   });
 
   it("passes through when the dist root does not exist", async () => {

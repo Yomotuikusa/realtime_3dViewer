@@ -27,7 +27,7 @@ server の基盤。本番は `npm run build && npm run start` で起動する。
 - `src/routes/static.ts`: `WEB_DIST_DIR` 配下の GET / HEAD 静的ファイルを配信する。`/assets/`
   配下は immutable キャッシュ、それ以外は no-cache とし、拡張子なしの未知パスは
   `index.html` へ SPA フォールバックする。`/api/`、拡張子付きの不在ファイル、GET / HEAD
-  以外は後段へ渡し、パス解決時は root 外への traversal を拒否する。
+  以外は後段へ渡し、字句解決と realpath の両方で root 外への traversal / symlink 脱出を拒否する。
 - `src/realtime/hub.ts`: `ws` 非依存のインメモリ RoomHub。接続・join 済み Presence、カメラ、
   線の状態を project 単位で保持し、接続ごとの配信先を `Outbound` で返す。
 - `src/realtime/ws.ts`: `GET /ws?projectId=<id>` を既存の Node HTTP Server に接続する WebSocket

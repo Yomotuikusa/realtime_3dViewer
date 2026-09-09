@@ -1,4 +1,4 @@
-import { readFile, stat } from "node:fs/promises";
+import { readFile, realpath, stat } from "node:fs/promises";
 import { extname, join, relative, resolve, sep } from "node:path";
 import { Hono } from "hono";
 import type { Hono as HonoType } from "hono";
@@ -52,19 +52,31 @@ function isMissing(error: unknown): boolean {
   );
 }
 
-async function isDirectory(path: string): Promise<boolean> {
+async function resolveRoot(root: string): Promise<string | null> {
   try {
-    return (await stat(path)).isDirectory();
+    const rootPath = await realpath(root);
+    return (await stat(rootPath)).isDirectory() ? rootPath : null;
   } catch (error) {
-    if (isMissing(error)) return false;
+    if (isMissing(error)) return null;
     throw error;
   }
 }
 
-async function readRegularFile(path: string): Promise<Uint8Array | null> {
+function isBelowRoot(rootPath: string, candidatePath: string): boolean {
+  const outside = relative(rootPath, candidatePath);
+  return outside === "" ||
+    (outside !== ".." && !outside.startsWith(`..${sep}`) && !outside.startsWith(sep));
+}
+
+async function readRegularFile(
+  rootPath: string,
+  path: string,
+): Promise<{ path: string; data: Uint8Array } | null> {
   try {
-    if (!(await stat(path)).isFile()) return null;
-    return await readFile(path);
+    const filePath = await realpath(path);
+    if (!isBelowRoot(rootPath, filePath)) return null;
+    if (!(await stat(filePath)).isFile()) return null;
+    return { path: filePath, data: await readFile(filePath) };
   } catch (error) {
     if (isMissing(error)) return null;
     throw error;
@@ -104,7 +116,8 @@ export function staticRoutes(root: string): HonoType {
       return;
     }
 
-    if (!(await isDirectory(root))) {
+    const rootPath = await resolveRoot(root);
+    if (rootPath === null) {
       await next();
       return;
     }
@@ -115,14 +128,15 @@ export function staticRoutes(root: string): HonoType {
       return;
     }
 
-    const requestedFile = await readRegularFile(requestedPath);
-    let filePath = requestedPath;
-    let data = requestedFile;
+    const requestedFile = await readRegularFile(rootPath, requestedPath);
+    let filePath = requestedFile?.path ?? requestedPath;
+    let data = requestedFile?.data ?? null;
     let immutable = urlPath.startsWith("/assets/");
 
     if (data === null && (urlPath === "/" || extname(urlPath) === "")) {
-      filePath = join(root, "index.html");
-      data = await readRegularFile(filePath);
+      const fallback = await readRegularFile(rootPath, join(rootPath, "index.html"));
+      filePath = fallback?.path ?? join(rootPath, "index.html");
+      data = fallback?.data ?? null;
       immutable = false;
     }
 
