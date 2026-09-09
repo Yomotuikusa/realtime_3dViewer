@@ -46,6 +46,9 @@ export function CommentPickLayer(): null {
       if (event.button !== 0 || start === null || !isClick(start, event)) {
         return;
       }
+      if (useCommentsStore.getState().composerAnchor !== null) {
+        return;
+      }
       const hit = pointerPoint(event);
       if (hit === null) {
         return;

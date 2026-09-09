@@ -1,4 +1,4 @@
-import { Vector2, type Camera, type Object3D, type Raycaster, Vector3 } from "three";
+import { Matrix3, Vector2, type Camera, type Object3D, type Raycaster, Vector3 } from "three";
 import type { Vec3 } from "@shared/types";
 
 export interface Ndc {
@@ -43,6 +43,9 @@ export function pickModel(
     return { point, normal: null };
   }
 
-  const normalVector = intersection.face.normal.clone().transformDirection(intersection.object.matrixWorld);
+  const normalVector = intersection.face.normal
+    .clone()
+    .applyMatrix3(new Matrix3().getNormalMatrix(intersection.object.matrixWorld))
+    .normalize();
   return { point, normal: [normalVector.x, normalVector.y, normalVector.z] };
 }

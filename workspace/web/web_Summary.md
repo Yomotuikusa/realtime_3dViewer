@@ -39,7 +39,7 @@ glTF/GLB の 3D レビュー画面を提供する。レビュー画面は表示�
 - src/features/comments/comment-labels.ts: コメント見出し、状態/空状態/Composer/ピンの日本語ラベル、Intl による時刻整形
 - src/features/comments/comments.css: コメント一覧・Composer・3D ピンのトークン CSS。コメント領域を縦グリッド化し、Composer 不在時は親を単独の可変行へ切り替えて一覧が全高を使い、一覧だけをスクロールさせる
 - src/features/comments/compose.ts: クリック移動量の判定、自分の線の時系列順・最新200本への制限、コメント投稿入力の組み立てを提供する
-- src/features/comments/CommentPickLayer.tsx: Comment モード中だけ Canvas の pointerdown / pointerup を購読し、5px 以下のクリックをモデルへレイキャストして投稿アンカーを設定する。ドラッグやモデル外の操作は無視する
+- src/features/comments/CommentPickLayer.tsx: Comment モード中だけ Canvas の pointerdown / pointerup を購読し、5px 以下のクリックをモデルへレイキャストして投稿アンカーを設定する。ドラッグやモデル外の操作は無視し、Composer 表示中は既存アンカーを保護する
 - src/features/comments/CommentComposer.tsx: アンカー選択後に自動フォーカスする本文入力カードと REST コメント投稿を提供し、現在のカメラ・自分の線を入力へ含め、成功時にコメントを upsert・選択する。layout effect cleanup で無効化したアンマウントまたは projectId 世代変更後の非同期結果はストアへ反映しない。接続状態に関係なく投稿する
 - src/features/comments/CommentPins.tsx: 表示対象コメントを author/status 付きアンカー位置の drei `Html` native button ピンとして描画し、クリック選択、選択強調、resolved の薄表示を提供する。pointerdown/up の伝播停止を維持する
 - src/features/comments/replay.ts: 選択コメントのカメラ要求・Follow 解除・再現線設定を各ストアへ反映する純粋な入口と再現線の透明度を提供
@@ -56,12 +56,14 @@ glTF/GLB の 3D レビュー画面を提供する。レビュー画面は表示�
 - src/features/viewer/ViewerHud.tsx: 操作モードの segmented control、ペン道具、視点操作、Follow 中バッジ、ビューア操作ヒントを表示し、各ストアを購読する
 - src/features/viewer/hud-labels.ts: モード・色・Follow・視点操作・ヒントの日本語文言と純粋な判定関数
 - src/features/viewer/viewer.css: HUD のモード選択、視点操作、Follow バッジ、操作ヒントのプレーン CSS
-- src/features/viewer/ModelMesh.tsx: `useGLTF` でモデルをロードし、バウンディングボックスからモデルサイズを記録して初回 Fit を要求。ロード中の `scene` を共通モデルターゲットへ登録し、アンマウント時に解除する
+- src/features/viewer/ModelMesh.tsx: 同一オリジン用の LoadingManager を指定して `useGLTF` でモデルをロードし、バウンディングボックスからモデルサイズを記録して初回 Fit を要求する。ロード中の `scene` を共通モデルターゲットへ登録し、アンマウント時に解除する。Draco 圧縮時のデコーダ取得（`https://www.gstatic.com/...`）は drei の別 manager による外部依存として残る
+- src/features/viewer/model-loading.ts: glTF の `buffers` / `images` などが参照する data/blob URI と同一オリジン URL だけを許可する LoadingManager を作り、外部 URL を `about:blank` に置換する
 - src/features/viewer/model-target.ts: React や Zustand に依存せず、現在のレイキャスト対象 `Object3D` を保持する `setModelTarget` / `getModelTarget`
-- src/features/viewer/pick.ts: Canvas 座標を NDC に変換し、共通モデルターゲットへ最近傍レイキャストを行う。交点と `matrixWorld` 変換済み法線を返す
+- src/features/viewer/pick.ts: Canvas 座標を NDC に変換し、共通モデルターゲットへ最近傍レイキャストを行う。交点と、逆転置の法線行列で変換して正規化したワールド系法線を返す
 - src/features/viewer/follow.ts: Follow 対象カメラの妥当性判定と、共有カメラ関数を使った 1 フレーム分の補間
 - src/features/viewer/CameraRig.tsx: OrbitControls をカメラストアと同期し、Reset・Fit・カメラ再現・Follow を処理。Pen モードでは OrbitControls を無効化する
-- src/features/viewer/useCameraBroadcast.ts: `selfCamera` の変更を購読し、共有定数の 50ms 間隔と `cameraEquals` でカメラ送信を throttle
+- src/features/viewer/camera-throttle.ts: 最新のカメラだけを保持し、送信成功時刻から 50ms ごとの先頭送信と窓明けトレーリング送信を行う。送信失敗は未送信としてタイマーまたは次の更新で再試行し、破棄時に保留送信をキャンセルする
+- src/features/viewer/useCameraBroadcast.ts: `selfCamera` の変更を `camera-throttle` へ渡し、送信成功時に自分の presence カメラも更新する。`shouldSendCamera` は従来の判定インターフェイスとして公開する
 - src/main.tsx: React アプリのエントリーポイント。tokens → base → controls の順で全体スタイルを読み込む
 - src/styles/tokens.css: 色・文字・間隔・角丸・動き・レイアウトのセマンティックトークン。既存 inline 値を引き継ぎ、`:root` に定義する
 - src/styles/base.css: 全画面共通のリセット、既定の本文、可視フォーカスリング、reduced-motion。クラスは定義しない
@@ -74,6 +76,7 @@ glTF/GLB の 3D レビュー画面を提供する。レビュー画面は表示�
 - tests/store-annotation.test.ts: annotation ストアの初期値、線操作、mode/色、draft、再現線、順序、reset のテスト
 - tests/store-presence.test.ts: presence の全置換、upsert、削除、カメラ更新、Follow、reset のテスト
 - tests/camera-broadcast.test.ts: カメラ送信 throttle の間隔・比較判定テスト
+- tests/camera-throttle.test.ts: 先頭送信、最新値のトレーリング、重複抑止、送信失敗の再試行、破棄時キャンセルのテスト
 - tests/follow.test.ts: Follow 対象カメラの判定、複製、補間、収束テスト
 - tests/routes.test.ts: ルート解析と履歴遷移テスト
 - tests/store-camera.test.ts: カメラストアの初期値、参照を保つ epsilon 判定、複製して保持・消費する再現要求、Reset・Fit・モデルサイズ・全 state 初期化の振る舞いを検証
@@ -81,6 +84,7 @@ glTF/GLB の 3D レビュー画面を提供する。レビュー画面は表示�
 - tests/review-stores.test.ts: 5つのレビュー用ストアをまとめて初期化する reset の検証
 - tests/use-realtime.test.ts: 接続状態、open 時のエラー解除と join、closed 時の非送信を検証
 - tests/upload-labels.test.ts: アップロード/NotFound 文言、容量エラー定数、ファイル helper の単位・丸め結果を検証
+- tests/model-loading.test.ts: 埋め込み・同一オリジン URL の許可、外部 URL の遮断、LoadingManager の URL modifier のテスト
 
 スタイル規約(D35)はプレーン CSS とし、全体共通のトークン・ベース・コントロールを `src/styles/` に置く。色は `tokens.css` のセマンティック変数経由、状態はクラスの付け替えではなく `aria-*` / `disabled` / `data-*` で表現し、画面固有の CSS は各機能フォルダ側に置く。
 
@@ -109,6 +113,8 @@ glTF/GLB の 3D レビュー画面を提供する。レビュー画面は表示�
 - features/viewer/ViewerHud.tsx: `ViewerHud({ send })`
 - features/viewer/hud-labels.ts: `MODE_LABELS`、`MODE_ORDER`、各種ラベル、`colorName`、`followingLabel`、`hint`
 - features/viewer/ModelMesh.tsx: `ModelMesh({ src })`
+- features/viewer/camera-throttle.ts: `CameraThrottleDeps`、`CameraThrottle`、`createCameraThrottle`
+- features/viewer/model-loading.ts: `BLOCKED_RESOURCE_URL`、`resolveModelResourceUrl`、`createModelLoadingManager`
 - features/viewer/model-target.ts: `setModelTarget(obj)`、`getModelTarget()`
 - features/viewer/pick.ts: `toNdc(rect, clientX, clientY)`、`pickModel(raycaster, camera, ndc, target)`
 - features/viewer/follow.ts: `FOLLOW_LERP_T`、`followTargetCamera`、`followStep`
@@ -164,17 +170,20 @@ annotation ストアへ、`comment:created` / `comment:updated` を comments ス
 コメント再現用の点列を保持する。`RoomStrokes` はライブ線を `orderedStrokes` の createdAt/id 順で `StrokeLines` に渡し、
 draft が2点以上ならプレビュー線を1本追加する。
 presence の `applyWelcome` は一覧と Follow 対象を初期化して全置換し、削除されたユーザーを Follow 中なら解除する。
-`useCameraBroadcast` は selfCamera の変更を購読し、前回送信から `CAMERA_SEND_INTERVAL_MS` 以上かつ
-`cameraEquals` で異なる場合だけ送信する。送信成功値を `cloneCamera` で保持し、Follow 中も送信を継続する。
+`useCameraBroadcast` は selfCamera の変更を `createCameraThrottle` へ渡し、前回送信から
+`CAMERA_SEND_INTERVAL_MS` 以上かつ `cameraEquals` で異なる場合だけ送信する。窓内の最新値は
+タイマーで送信し、送信成功値を `cloneCamera` で保持する。送信成功時は自分の presence カメラも更新し、
+Follow 中も送信を継続する。
 後続の viewer 機能は `ViewerCanvas` の `children` 差し込み口に RemoteCameras / StrokeLines /
 AnnotationLayer などのレイヤーを追加する。`ModelMesh` が登録する `model-target` を `pickModel` に渡すと、
 Canvas のクライアント座標を NDC 化して再帰的にモデルをレイキャストでき、交点法線はヒットした
-オブジェクトの `matrixWorld` でワールド系へ変換される。`AnnotationLayer` は Pen モード中だけ
+オブジェクトの `matrixWorld` の逆転置法線行列でワールド系へ変換して正規化される。`AnnotationLayer` は Pen モード中だけ
 `gl.domElement` の pointerdown / pointermove / pointerup / pointercancel を購読し、ヒット点を
 `offsetAlongNormal` でモデル表面から少し浮かせて draft に追加する。終了時に `buildStroke` で
 間引き、接続が open かつ selfId がある場合だけ `stroke:add` を送信する。draft は終了時に消し、
 送信した線はサーバー配信を待つためローカルへ追加しない。
-コメント機能は `getProject`、`modelUrl`、カメラストアを利用する。
+コメント機能は `getProject`、`modelUrl`、カメラストアを利用する。Comment モードのモデルクリックは
+Composer の既存 `composerAnchor` が非 null の間は無視し、入力中のアンカーを置き換えない。
 comments ストアは `items`（常に `createdAt` 昇順、同値なら `id` 昇順）、`showOnlyOpen`、`selectedId`、`composerAnchor`、`lastError` を保持する。
 `setAll` / `upsert` / `setFilter` の後は、`selectedId` が `selectVisible(items, showOnlyOpen)` に含まれなければ `null` に正規化する。
 `setAll` は一覧全置換、`upsert` は id 単位の追加・置換、`select` は選択変更、`setFilter` は Open フィルタ変更、
@@ -182,3 +191,6 @@ comments ストアは `items`（常に `createdAt` 昇順、同値なら `id` �
 `CommentList` はマウント時に全コメントを取得し、成功時に lastError を解除する。選択領域のクリックまたはキーボード操作で選択を切り替え、Open のコメントを Resolve、resolved のコメントを Reopen する。状態変更中のコメント ID は集合で管理し、並行する別行の操作も disabled 状態を保つ。状態変更成功時も lastError を解除する。`CommentComposer` は投稿成功時に lastError を解除する。
 Comment の投稿は Comment モードでモデルをクリックしてアンカーを決め、移動距離が5px以下の pointerdown/pointerup だけを配置クリックとして扱う。Composer は本文を trim し、selfCamera と selfId に紐づく線（createdAt/id 昇順、最新200本）を含めて REST 投稿する。成功時は REST 応答を comments ストアへ upsert してアンカーを閉じ、投稿コメントを選択する。Comment モードは維持するため連続投稿でき、WebSocket 接続が閉じていても REST 投稿は許可する。CommentPins は表示対象のコメントを anchor 上の Html ピンにし、クリックで選択する。
 コメント選択時は `useCommentReplay` が該当 Comment の camera を `requestCamera` に積み、Follow を即時解除し、その Comment の strokes を annotation ストアの `replayStrokes` に設定する。`CameraRig` は要求を次フレームに消費して補間移動し、選択解除・別コメント選択・フックのアンマウント時は再現線だけを消去する。`ReplayStrokes` は `replayStrokes` を透明度 0.6 の `StrokeLines` として描画し、ルームのライブ線を保持する `strokes` / `RoomStrokes` とは別レイヤーかつ WebSocket 非送信である。
+モデルの LoadingManager は glTF 内の data/blob URI と同一オリジンのリソースだけを通し、外部 URI は
+`about:blank` へ置換する。Draco デコーダは drei が別 manager で gstatic から取得する外部依存であり、
+この遮断の対象外である。
