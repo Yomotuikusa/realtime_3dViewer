@@ -12,9 +12,9 @@ server の基盤。本番は `npm run build && npm run start` で起動する。
 - `src/db/connection.ts`: `node:sqlite` の接続、PRAGMA、スキーマ適用、トランザクション。
 - `src/db/schema.sql`: projects、model_versions、comments とコメント検索用 index の DDL。
 - `src/db/projects.ts`: projects / model_versions の登録と検索、および行の型変換。
-- `src/db/comments.ts`: コメントの登録、project 単位の一覧・検索、status 更新。JSON 列と
+- `src/db/comments.ts`: コメントの登録、project 単位の一覧、status 更新。JSON 列と
   shared の `Comment` の相互変換を担う。
-- `src/storage/files.ts`: `dataDir/uploads/<versionId>.glb` への一時ファイル経由の保存・削除。
+- `src/storage/files.ts`: `dataDir/uploads/<versionId>.glb` への一時ファイル経由の非同期保存・削除。
 - `src/routes/projects.ts`: multipart モデルアップロード、project JSON の取得と、モデル本体の
   配信。アップロード成功時はファイル保存と projects / model_versions 登録を同一処理で行い、
   拡張子に応じた Content-Type と immutable キャッシュヘッダを設定する。
@@ -22,8 +22,7 @@ server の基盤。本番は `npm run build && npm run start` で起動する。
   一覧は `status` 絞り込みと `created_at` 昇順に対応し、投稿・更新は保存後にそれぞれ
   `comment:created` / `comment:updated` を `publish` へ渡す。project、version、comment の
   不在は `NOT_FOUND`、不正な JSON / 入力は `VALIDATION` を返す。
-- `src/routes/upload-validation.ts`: glTF/GLB の拡張子・マジックバイト/JSON 検査と、
-  Content-Length のアップロード上限検査。
+- `src/routes/upload-validation.ts`: glTF/GLB の拡張子・マジックバイト/JSON 検査。
 - `src/routes/static.ts`: `WEB_DIST_DIR` 配下の GET / HEAD 静的ファイルを配信する。`/assets/`
   配下は immutable キャッシュ、それ以外は no-cache とし、拡張子なしの未知パスは
   `index.html` へ SPA フォールバックする。`/api/`、拡張子付きの不在ファイル、GET / HEAD
@@ -34,7 +33,9 @@ server の基盤。本番は `npm run build && npm run start` で起動する。
   アダプタ。`RoomHub` の配信先を実ソケットへ解決し、REST の publish を join 済み全員へ届ける。
   projectId 不在は `BAD_REQUEST` を送って close `1008`、スキーマ違反は `VALIDATION` を返し、
   同一接続で20回連続すると close `1008` する。
-- `src/app.ts`: `createApp(deps)`。共通エラー処理、JSON 404、`/api/projects` と
+- `src/app.ts`: `createApp(deps)`。厳密な `Content-Length` 検証を含むリクエスト本体の
+  bodyLimit、共通の `nosniff` ヘッダ、500 時の `request_failed` ログ、JSON 404、
+  `/api/projects` と
   `/api/projects/:projectId/comments` のマウント、および最後の static route のマウントを担う。
 - `src/index.ts`: `DATA_DIR` を作成して SQLite / ファイルストレージ / Hono HTTP / WebSocket を
   1プロセスで起動するエントリポイント。起動時に `server_started` の JSON 1行をログ出力する。
@@ -49,12 +50,14 @@ server の基盤。本番は `npm run build && npm run start` で起動する。
 - `tests/db-projects.test.ts`: SQLite 接続、スキーマ、トランザクション、projects 層のテスト。
 - `tests/db-comments.test.ts`: comments 層の JSON 往復、FK、一覧順序・status 絞り込み、
   project スコープ、status トグルのテスト。
-- `tests/storage-files.test.ts`: ファイル保存、上書き、tmp 残留防止、削除のテスト。
-- `tests/app.test.ts`: createApp の依存値、JSON 404、未知エラーの 500 応答のテスト。
+- `tests/storage-files.test.ts`: ファイル保存、上書き、rename 失敗時の tmp 残留防止、削除のテスト。
+- `tests/app.test.ts`: JSON 404、未知エラーの 500 応答と `request_failed` ログ、
+  期待される HTTP エラーのログ抑制のテスト。
+- `tests/app-body-limit.test.ts`: multipart とコメント JSON の Content-Length / chunked 本体上限、
+  本体なしのコメント一覧のテスト。
 - `tests/routes-projects-read.test.ts`: project 取得、モデル配信、Content-Type、キャッシュ、
   project/version/file の NOT_FOUND のテスト。
-- `tests/upload-validation.test.ts`: モデル拡張子、GLB/glTF の内容検査、アップロード上限検査の
-  テスト。
+- `tests/upload-validation.test.ts`: モデル拡張子、GLB/glTF の内容検査のテスト。
 - `tests/routes-projects-upload.test.ts`: multipart の POST、Project 応答、保存ファイル、入力検証、
   上限超過、DB 失敗時の後始末のテスト。
 - `tests/routes-comments.test.ts`: コメント一覧の順序・絞り込み、投稿・status 更新、入力検証、
@@ -71,10 +74,14 @@ server の基盤。本番は `npm run build && npm run start` で起動する。
 - `insertProject` / `insertModelVersion`: プロジェクトと版を登録する。
 - `findProject` / `findModelVersion`: shared の `Project` / `ModelVersion` へ変換して検索する。
 - `insertComment`: `NewComment` を status `open` として登録し、`Comment` を返す。
-- `listComments` / `findComment`: project 単位でコメントを順序付き一覧または検索する。
+- `listComments`: project 単位でコメントを順序付き一覧する。
 - `updateCommentStatus`: project と comment を指定して status と更新時刻を変更する。
 - `Storage` / `createFileStorage`: モデルファイルを atomic rename で保存し、保存先を返す。
 - `AppDeps` / `createApp`: DB、Storage、Config、publish、時刻、ID 生成を注入して Hono を構築する。
+  multipart とコメント JSON の本体上限を強制し、全レスポンスに `X-Content-Type-Options: nosniff`
+  を付ける。未知の 500 は `request_failed` の JSON 1 行を記録する。
+- `MAX_JSON_BODY_BYTES` / `MULTIPART_OVERHEAD_BYTES`: コメント JSON の 1 MiB 上限と、
+  multipart 本体上限へ加える 64 KiB の余裕を公開する。
 - `projectRoutes`: `GET /api/projects/:projectId` と
   `GET /api/projects/:projectId/versions/:versionId/model`、`POST /api/projects` を提供する。
   POST は multipart の `name` と `file` を受け、201 で `Project` を返す。名前は trim して保存し、

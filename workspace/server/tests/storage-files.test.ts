@@ -1,4 +1,4 @@
-import { existsSync, readdirSync, readFileSync } from "node:fs";
+import { existsSync, mkdirSync, readdirSync, readFileSync } from "node:fs";
 import { afterEach, describe, expect, it } from "vitest";
 import { createFileStorage } from "../src/storage/files";
 import { makeTmpDir, removeTmpDir } from "./helpers/tmp";
@@ -32,5 +32,15 @@ describe("file storage", () => {
     await storage.saveModelFile("v1", new Uint8Array([1]));
     await expect(storage.deleteModelFile("v1")).resolves.toBeUndefined();
     expect(existsSync(storage.modelFilePath("v1"))).toBe(false);
+  });
+
+  it("removes the temporary file when the final rename fails", async () => {
+    const dir = makeTmpDir("storage");
+    directories.push(dir);
+    const storage = createFileStorage(dir);
+    mkdirSync(storage.modelFilePath("v1"));
+
+    await expect(storage.saveModelFile("v1", new Uint8Array([1]))).rejects.toThrow();
+    expect(existsSync(`${storage.modelFilePath("v1")}.tmp`)).toBe(false);
   });
 });

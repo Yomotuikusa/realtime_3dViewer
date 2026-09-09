@@ -1,6 +1,7 @@
 import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { afterEach, describe, expect, it } from "vitest";
 import { ProjectSchema } from "@shared/types";
+import { MULTIPART_OVERHEAD_BYTES } from "../src/app";
 import { makeTestApp, seedProject, type TestApp } from "./helpers/app";
 
 const apps: TestApp[] = [];
@@ -131,7 +132,7 @@ describe("POST /api/projects", () => {
       t,
       "Robot",
       modelFile(glbBytes(), "a.glb"),
-      { "Content-Length": "101" },
+      { "Content-Length": String(100 + MULTIPART_OVERHEAD_BYTES + 1) },
     );
     expect(response.status).toBe(413);
     expect((await response.json()).error.code).toBe("PAYLOAD_TOO_LARGE");
