@@ -24,9 +24,16 @@ comments の永続化、ファイル保存、プロジェクト取得 API を提
   Content-Length のアップロード上限検査。
 - `src/realtime/hub.ts`: `ws` 非依存のインメモリ RoomHub。接続・join 済み Presence、カメラ、
   線の状態を project 単位で保持し、接続ごとの配信先を `Outbound` で返す。
+- `src/realtime/ws.ts`: `GET /ws?projectId=<id>` を既存の Node HTTP Server に接続する WebSocket
+  アダプタ。`RoomHub` の配信先を実ソケットへ解決し、REST の publish を join 済み全員へ届ける。
+  projectId 不在は `BAD_REQUEST` を送って close `1008`、スキーマ違反は `VALIDATION` を返し、
+  同一接続で20回連続すると close `1008` する。
 - `src/app.ts`: `createApp(deps)`。共通エラー処理、JSON 404、`/api/projects` と
   `/api/projects/:projectId/comments` のマウントを担う。
+- `src/index.ts`: `DATA_DIR` を作成して SQLite / ファイルストレージ / Hono HTTP / WebSocket を
+  1プロセスで起動するエントリポイント。起動時に `server_started` の JSON 1行をログ出力する。
 - `tests/helpers/tmp.ts`: `server/.vite/test-tmp` 配下の一時ディレクトリ管理。
+- `tests/helpers/ws.ts`: ephemeral HTTP server と実 WebSocket を使う realtime テスト fixture。
 - `tests/helpers/app.ts`: 固定時刻・インメモリ DB・一時ファイルストレージを使う `TestApp` と
   `makeTestApp` / `seedProject` / `seedComment`。
 - `tests/config.test.ts`: 設定値と入力検証のテスト。
@@ -44,6 +51,8 @@ comments の永続化、ファイル保存、プロジェクト取得 API を提
   上限超過、DB 失敗時の後始末のテスト。
 - `tests/routes-comments.test.ts`: コメント一覧の順序・絞り込み、投稿・status 更新、入力検証、
   project/version スコープ、publish 呼び出しのテスト。
+- `tests/realtime-ws.test.ts`: join、Presence、camera / stroke 配信、切断、入力検証、連続違反 close、
+  REST publish 結線の実ソケットテスト。
 - `tsconfig.json`: 型検査設定(../tsconfig.base.json を継承。`@shared/*` は shared/src を指す)。
 - `vitest.config.ts`: テスト設定(tests/**/*.test.ts、cacheDir は .vite)。
 
@@ -74,6 +83,9 @@ comments の永続化、ファイル保存、プロジェクト取得 API を提
   `PRESENCE_PALETTE` は8色で、ルーム内の未使用色をjoin順に割り当て、全色使用時はサイズの剰余で
   再利用する。線は1ルームあたり `MAX_ROOM_STROKES = 2000` 本まで保持し、同じIDの追加は
   既存線を置換するため上限到達後も許可する。
+- `attachRealtime` / `Realtime`: `GET /ws?projectId=<id>` の接続、送受信、切断通知、REST の
+  `publish`、WebSocketServer の `close` を提供する。`npm run dev:server` または `npm start` で
+  HTTP と WS を同時に起動し、`PORT` / `DATA_DIR` / `MAX_UPLOAD_BYTES` を環境変数で設定できる。
 
 ## 他機能との関係
 `shared/src/api.ts` の `ErrorCode`、`ApiError`、`MAX_UPLOAD_BYTES_DEFAULT` と、
