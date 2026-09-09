@@ -6,6 +6,7 @@ import { JoinDialog } from "./JoinDialog";
 import { useRealtime } from "./useRealtime";
 import { PresenceList } from "../features/presence/PresenceList";
 import { RemoteCameras } from "../features/presence/RemoteCameras";
+import { RoomStrokes } from "../features/annotation/RoomStrokes";
 import { ViewerCanvas } from "../features/viewer/ViewerCanvas";
 import { useCameraBroadcast } from "../features/viewer/useCameraBroadcast";
 import { useCameraStore } from "../store/camera";
@@ -131,6 +132,7 @@ export function ReviewPage({ projectId }: { projectId: string }): ReactElement {
           >
             <ViewerCanvas modelSrc={src}>
               <RemoteCameras />
+              <RoomStrokes />
             </ViewerCanvas>
           </ErrorBoundary>
         </section>
