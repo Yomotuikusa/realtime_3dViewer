@@ -55,6 +55,18 @@ export interface PresenceUser {
   camera: CameraState | null;
 }
 
+export const MAX_ID_LENGTH = 64;
+export const MAX_FILE_NAME_LENGTH = 255;
+export const MAX_PROJECT_NAME_LENGTH = 100;
+export const MAX_AUTHOR_NAME_LENGTH = 50;
+export const MAX_COMMENT_BODY_LENGTH = 2000;
+
+/** サーバ・クライアントが生成する識別子。nanoid の文字種に限定する。 */
+export const IdSchema = z.string().min(1).max(MAX_ID_LENGTH).regex(/^[A-Za-z0-9_-]+$/);
+
+/** アップロード元のファイル名。パス区切りと制御文字を含めない。 */
+export const FileNameSchema = z.string().min(1).max(MAX_FILE_NAME_LENGTH)
+  .refine((value) => !/[\\/\x00-\x1f\x7f]/.test(value));
 const RequiredIdSchema = z.string().min(1);
 const TimestampSchema = z.number().int().nonnegative();
 
@@ -69,8 +81,8 @@ export const CameraStateSchema = z.object({
 }) satisfies z.ZodType<CameraState>;
 
 export const StrokeSchema = z.object({
-  id: RequiredIdSchema,
-  userId: RequiredIdSchema,
+  id: IdSchema,
+  userId: IdSchema,
   color: ColorSchema,
   points: z.array(Vec3Schema).min(2).max(2000),
   createdAt: TimestampSchema,
@@ -79,11 +91,11 @@ export const StrokeSchema = z.object({
 export const CommentStatusSchema = z.enum(["open", "resolved"]) satisfies z.ZodType<CommentStatus>;
 
 export const CommentSchema = z.object({
-  id: RequiredIdSchema,
-  projectId: RequiredIdSchema,
-  versionId: RequiredIdSchema,
-  authorName: RequiredIdSchema,
-  body: RequiredIdSchema,
+  id: IdSchema,
+  projectId: IdSchema,
+  versionId: IdSchema,
+  authorName: z.string().min(1).max(MAX_AUTHOR_NAME_LENGTH),
+  body: z.string().min(1).max(MAX_COMMENT_BODY_LENGTH),
   anchor: Vec3Schema,
   camera: CameraStateSchema,
   strokes: z.array(StrokeSchema),
@@ -93,23 +105,23 @@ export const CommentSchema = z.object({
 }) satisfies z.ZodType<Comment>;
 
 export const ModelVersionSchema = z.object({
-  id: RequiredIdSchema,
-  projectId: RequiredIdSchema,
+  id: IdSchema,
+  projectId: IdSchema,
   number: z.number().int().positive(),
-  fileName: RequiredIdSchema,
+  fileName: FileNameSchema,
   byteSize: z.number().int().nonnegative(),
   createdAt: TimestampSchema,
 }) satisfies z.ZodType<ModelVersion>;
 
 export const ProjectSchema = z.object({
-  id: RequiredIdSchema,
-  name: RequiredIdSchema,
+  id: IdSchema,
+  name: z.string().min(1).max(MAX_PROJECT_NAME_LENGTH),
   createdAt: TimestampSchema,
   latestVersion: ModelVersionSchema,
 }) satisfies z.ZodType<Project>;
 
 export const PresenceUserSchema = z.object({
-  id: RequiredIdSchema,
+  id: IdSchema,
   name: RequiredIdSchema,
   color: ColorSchema,
   camera: CameraStateSchema.nullable(),

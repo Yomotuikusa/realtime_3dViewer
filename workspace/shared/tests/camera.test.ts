@@ -5,7 +5,6 @@ import {
   cloneCamera,
   lerpCamera,
   lerpVec3,
-  vec3Distance,
   vec3Equals,
 } from "../src/camera";
 import type { CameraState } from "../src/types";
@@ -20,8 +19,7 @@ describe("camera helpers", () => {
     expect(vec3Equals([0, 0, 0], [0.2, 0, 0], 0.2)).toBe(true);
   });
 
-  it("calculates vector distance and interpolation", () => {
-    expect(vec3Distance([0, 0, 0], [3, 4, 0])).toBe(5);
+  it("interpolates vectors", () => {
     expect(lerpVec3([0, 0, 0], [10, 10, 10], 0.5)).toEqual([5, 5, 5]);
   });
 
@@ -44,6 +42,8 @@ describe("camera helpers", () => {
     expect(atEnd.target).not.toBe(cameraB.target);
     expect(lerpCamera(cameraA, cameraB, -1)).toEqual(atStart);
     expect(lerpCamera(cameraA, cameraB, 2)).toEqual(atEnd);
+    expect(lerpCamera(cameraA, cameraB, NaN)).toEqual(atStart);
+    expect(lerpCamera(cameraA, cameraB, Infinity)).toEqual(atEnd);
   });
 
   it("clones camera arrays and preserves the default camera", () => {
