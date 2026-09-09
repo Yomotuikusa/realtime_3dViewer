@@ -5,7 +5,7 @@ REST API の fetch クライアント、ブラウザ履歴による入口ルー�
 
 ## ファイル一覧と役割
 - tsconfig.json: 型検査設定(../tsconfig.base.json を継承。`@shared/*` は shared/src を指す)
-- vitest.config.ts: テスト設定(tests/**/*.test.{ts,tsx}、cacheDir は .vite)
+- vitest.config.ts: Vitest の対象を `tests/**/*.test.{ts,tsx}` に限定する設定(cacheDir は .vite)
 - src/api/client.ts: REST の URL、JSON/FormData リクエスト、レスポンス検証、`ApiClientError`
 - src/app/routes.ts: `/` と `/p/<projectId>` のルート解析、遷移、popstate フック
 - src/app/App.tsx: 現在のルートに応じた画面分岐
