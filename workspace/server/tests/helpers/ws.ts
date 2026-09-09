@@ -4,6 +4,11 @@ import { RoomHub } from "../../src/realtime/hub";
 import type { ServerMessage } from "@shared/protocol";
 import { WebSocket, type RawData } from "ws";
 
+interface MessageWaiter {
+  resolve: (message: ServerMessage) => void;
+  timer: ReturnType<typeof setTimeout>;
+}
+
 export interface RealtimeFixture {
   url: string;
   hub: RoomHub;
@@ -57,6 +62,8 @@ export function startRealtime(): Promise<RealtimeFixture> {
       const realtime = attachRealtime(server, hub);
       const clients: WebSocket[] = [];
       const closeCodes = new Map<WebSocket, number>();
+      const messageQueues = new Map<WebSocket, RawData[]>();
+      const messageWaiters = new Map<WebSocket, MessageWaiter>();
       const fixture: RealtimeFixture = {
         url: `ws://127.0.0.1:${address.port}/ws`,
         hub,
@@ -65,21 +72,30 @@ export function startRealtime(): Promise<RealtimeFixture> {
           const query = projectId === undefined ? "" : `?projectId=${encodeURIComponent(projectId)}`;
           const ws = new WebSocket(`${this.url}${query}`);
           clients.push(ws);
+          messageQueues.set(ws, []);
+          ws.on("message", (data: RawData) => {
+            const waiter = messageWaiters.get(ws);
+            if (waiter) {
+              clearTimeout(waiter.timer);
+              messageWaiters.delete(ws);
+              waiter.resolve(JSON.parse(String(data)) as ServerMessage);
+              return;
+            }
+            messageQueues.get(ws)?.push(data);
+          });
           ws.on("close", (code) => closeCodes.set(ws, code));
           await waitForOpen(ws);
           return ws;
         },
         next(ws, timeoutMs = 1000) {
+          const queued = messageQueues.get(ws)?.shift();
+          if (queued !== undefined) return Promise.resolve(JSON.parse(String(queued)) as ServerMessage);
           return new Promise((resolveNext, rejectNext) => {
             const timer = setTimeout(() => {
-              ws.removeListener("message", onMessage);
+              messageWaiters.delete(ws);
               rejectNext(new Error(`WebSocket message timeout after ${timeoutMs}ms`));
             }, timeoutMs);
-            const onMessage = (data: RawData): void => {
-              clearTimeout(timer);
-              resolveNext(JSON.parse(String(data)) as ServerMessage);
-            };
-            ws.once("message", onMessage);
+            messageWaiters.set(ws, { resolve: resolveNext, timer });
           });
         },
         closed(ws, timeoutMs = 1000) {
