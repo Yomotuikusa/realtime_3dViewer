@@ -5,6 +5,7 @@ import type { ServerMessage } from "@shared/protocol";
 import type { Config } from "./config";
 import type { Db } from "./db/connection";
 import { toErrorResponse } from "./errors";
+import { commentRoutes } from "./routes/comments";
 import { projectRoutes } from "./routes/projects";
 import type { Storage } from "./storage/files";
 
@@ -33,6 +34,7 @@ export function createApp(deps: AppDeps): HonoType {
     c.json({ error: { code: "NOT_FOUND", message: "Not Found" } }, 404),
   );
   app.route("/api/projects", projectRoutes(resolved));
+  app.route("/api/projects/:projectId/comments", commentRoutes(resolved));
 
   return app;
 }

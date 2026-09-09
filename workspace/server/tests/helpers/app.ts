@@ -1,9 +1,10 @@
 import { Hono } from "hono";
 import type { ServerMessage } from "@shared/protocol";
-import type { ModelVersion, Project } from "@shared/types";
+import type { Comment, CommentStatus, ModelVersion, Project, Stroke } from "@shared/types";
 import { createApp, type AppDeps } from "../../src/app";
 import { loadConfig, type Config } from "../../src/config";
 import { openDb, type Db } from "../../src/db/connection";
+import { insertComment, listComments, updateCommentStatus } from "../../src/db/comments";
 import { insertModelVersion, insertProject } from "../../src/db/projects";
 import { createFileStorage, type Storage } from "../../src/storage/files";
 import { makeTmpDir, removeTmpDir } from "./tmp";
@@ -72,4 +73,44 @@ export function seedProject(
     latestVersion: version,
   };
   return { project, version };
+}
+
+export function seedComment(
+  t: TestApp,
+  opts: {
+    projectId: string;
+    versionId: string;
+    id?: string;
+    authorName?: string;
+    body?: string;
+    status?: CommentStatus;
+    createdAt?: number;
+    strokes?: Stroke[];
+  },
+): Comment {
+  const createdAt = opts.createdAt ?? 1700000000000;
+  let id = opts.id ?? t.ids.shift();
+  if (!id) {
+    let suffix = listComments(t.db, opts.projectId).length + 1;
+    id = `seed-comment-${opts.projectId}-${suffix}`;
+    while (listComments(t.db, opts.projectId).some((comment) => comment.id === id)) {
+      suffix += 1;
+      id = `seed-comment-${opts.projectId}-${suffix}`;
+    }
+  }
+  const comment = insertComment(t.db, {
+    id,
+    projectId: opts.projectId,
+    versionId: opts.versionId,
+    authorName: opts.authorName ?? "Tester",
+    body: opts.body ?? "seed",
+    anchor: [0, 0, 0],
+    camera: { position: [0, 0, 5], target: [0, 0, 0] },
+    strokes: opts.strokes ?? [],
+    createdAt,
+  });
+  if (opts.status === "resolved") {
+    return updateCommentStatus(t.db, opts.projectId, id, "resolved", createdAt) as Comment;
+  }
+  return comment;
 }
