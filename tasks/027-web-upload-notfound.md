@@ -6,7 +6,7 @@ depends_on: [026]
 owns: [web/src/app/App.tsx, web/src/app/UploadPage.tsx, web/src/app/upload-labels.ts, web/src/app/upload.css, web/tests/upload-labels.test.ts, web/web_Summary.md]
 reads: [../docs/3dreviewer-plan-and-architecture.md, ../docs/task-breakdown.md, ../docs/DESIGN_SKILL.md, web/web_Summary.md, web/src/styles/tokens.css, web/src/styles/controls.css, web/src/app/review.css, web/src/app/routes.ts, web/src/api/client.ts, shared/src/api.ts]
 verify: npm run typecheck && npm run test:web && npm run build
-status: todo
+status: done
 ---
 
 ## 目的

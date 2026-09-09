@@ -6,7 +6,7 @@ depends_on: [024]
 owns: [web/src/app/ReviewPage.tsx, web/src/features/viewer/ViewerHud.tsx, web/src/features/viewer/hud-labels.ts, web/src/features/viewer/viewer.css, web/src/features/annotation/AnnotationToolbar.tsx, web/src/features/annotation/annotation.css, web/tests/hud-labels.test.ts, web/web_Summary.md]
 reads: [../docs/3dreviewer-plan-and-architecture.md, ../docs/task-breakdown.md, ../docs/DESIGN_SKILL.md, web/web_Summary.md, web/src/styles/tokens.css, web/src/styles/controls.css, web/src/app/review.css, web/src/store/annotation.ts, web/src/store/presence.ts, web/src/store/session.ts, web/src/store/comments.ts, web/src/store/camera.ts, web/src/features/annotation/stroke-build.ts, web/src/features/viewer/CameraRig.tsx]
 verify: npm run typecheck && npm run test:web && npm run build
-status: todo
+status: done
 ---
 
 ## 目的

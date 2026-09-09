@@ -6,7 +6,7 @@ depends_on: [025]
 owns: [web/src/features/presence/PresenceList.tsx, web/src/features/presence/RemoteCameras.tsx, web/src/features/presence/presence-labels.ts, web/src/features/presence/presence.css, web/src/features/comments/CommentList.tsx, web/src/features/comments/CommentRow.tsx, web/src/features/comments/CommentComposer.tsx, web/src/features/comments/CommentPins.tsx, web/src/features/comments/comment-labels.ts, web/src/features/comments/comments.css, web/tests/presence-labels.test.ts, web/tests/comment-labels.test.ts, web/web_Summary.md]
 reads: [../docs/3dreviewer-plan-and-architecture.md, ../docs/task-breakdown.md, ../docs/DESIGN_SKILL.md, web/web_Summary.md, web/src/styles/tokens.css, web/src/styles/controls.css, web/src/app/review.css, web/src/app/ReviewPage.tsx, web/src/store/presence.ts, web/src/store/session.ts, web/src/store/comments.ts, web/src/features/comments/compose.ts, web/src/features/viewer/hud-labels.ts, shared/src/types.ts]
 verify: npm run typecheck && npm run test:web && npm run build
-status: todo
+status: done
 ---
 
 ## 目的

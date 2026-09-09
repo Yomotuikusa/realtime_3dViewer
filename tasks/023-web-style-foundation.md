@@ -6,7 +6,7 @@ depends_on: [022]
 owns: [web/src/styles/tokens.css, web/src/styles/base.css, web/src/styles/controls.css, web/src/main.tsx, web/tests/styles-rules.test.ts, web/web_Summary.md]
 reads: [../docs/3dreviewer-plan-and-architecture.md, ../docs/task-breakdown.md, ../docs/DESIGN_SKILL.md, web/index.html, web/vite.config.ts, web/vitest.config.ts, web/src/app/ReviewPage.tsx, web/src/app/UploadPage.tsx, web/src/features/annotation/AnnotationToolbar.tsx, web/src/features/comments/CommentList.tsx, web/src/features/comments/CommentPins.tsx]
 verify: npm run typecheck && npm run test:web && npm run build
-status: todo
+status: done
 ---
 
 ## 目的
