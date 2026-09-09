@@ -31,6 +31,10 @@ comments の永続化、ファイル保存、プロジェクト取得 API を提
 - `tests/app.test.ts`: createApp の依存値、JSON 404、未知エラーの 500 応答のテスト。
 - `tests/routes-projects-read.test.ts`: project 取得、モデル配信、Content-Type、キャッシュ、
   project/version/file の NOT_FOUND のテスト。
+- `tests/upload-validation.test.ts`: モデル拡張子、GLB/glTF の内容検査、アップロード上限検査の
+  テスト。
+- `tests/routes-projects-upload.test.ts`: multipart の POST、Project 応答、保存ファイル、入力検証、
+  上限超過、DB 失敗時の後始末のテスト。
 - `tsconfig.json`: 型検査設定(../tsconfig.base.json を継承。`@shared/*` は shared/src を指す)。
 - `vitest.config.ts`: テスト設定(tests/**/*.test.ts、cacheDir は .vite)。
 
