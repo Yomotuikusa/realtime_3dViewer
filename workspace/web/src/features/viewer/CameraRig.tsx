@@ -7,6 +7,7 @@ import { cameraEquals, DEFAULT_CAMERA, lerpCamera } from "@shared/camera";
 import { useCameraStore } from "../../store/camera";
 import { usePresenceStore } from "../../store/presence";
 import { useSessionStore } from "../../store/session";
+import { useAnnotationStore } from "../../store/annotation";
 import { followStep, followTargetCamera } from "./follow";
 import type { Camera } from "three";
 
@@ -28,6 +29,7 @@ export function CameraRig(): ReactElement {
   const controlsRef = useRef<OrbitControlsImpl | null>(null);
   const pendingTarget = useRef<CameraState | null>(null);
   const fitSeq = useCameraStore((state) => state.fitSeq);
+  const mode = useAnnotationStore((state) => state.mode);
   const bounds = useBounds();
   const lastResetSeq = useRef(useCameraStore.getState().resetSeq);
   const lastFitSeq = useRef(fitSeq);
@@ -117,6 +119,7 @@ export function CameraRig(): ReactElement {
       makeDefault
       onChange={handleChange}
       onStart={handleStart}
+      enabled={mode !== "pen"}
       target={DEFAULT_CAMERA.target}
     />
   );

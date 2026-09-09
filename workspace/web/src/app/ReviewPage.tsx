@@ -7,6 +7,8 @@ import { useRealtime } from "./useRealtime";
 import { PresenceList } from "../features/presence/PresenceList";
 import { RemoteCameras } from "../features/presence/RemoteCameras";
 import { RoomStrokes } from "../features/annotation/RoomStrokes";
+import { AnnotationLayer } from "../features/annotation/AnnotationLayer";
+import { AnnotationToolbar } from "../features/annotation/AnnotationToolbar";
 import { ViewerCanvas } from "../features/viewer/ViewerCanvas";
 import { useCameraBroadcast } from "../features/viewer/useCameraBroadcast";
 import { useCameraStore } from "../store/camera";
@@ -120,6 +122,7 @@ export function ReviewPage({ projectId }: { projectId: string }): ReactElement {
           <div style={{ position: "absolute", zIndex: 1, top: "1rem", left: "2rem", display: "flex", gap: "0.5rem" }}>
             <button type="button" onClick={requestReset}>Reset</button>
             <button type="button" onClick={requestFit}>全体表示</button>
+            <AnnotationToolbar send={realtime.send} />
           </div>
           <ErrorBoundary
             key={src}
@@ -133,6 +136,7 @@ export function ReviewPage({ projectId }: { projectId: string }): ReactElement {
             <ViewerCanvas modelSrc={src}>
               <RemoteCameras />
               <RoomStrokes />
+              <AnnotationLayer send={realtime.send} />
             </ViewerCanvas>
           </ErrorBoundary>
         </section>
