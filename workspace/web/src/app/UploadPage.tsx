@@ -1,8 +1,19 @@
 import { useState, type FormEvent } from "react";
 import type React from "react";
-import { ALLOWED_MODEL_EXTENSIONS } from "@shared/api";
+import { ALLOWED_MODEL_EXTENSIONS, MAX_UPLOAD_BYTES_DEFAULT } from "@shared/api";
 import { ApiClientError, createProject } from "../api/client";
 import { navigate, projectPath } from "./routes";
+import {
+  APP_NAME,
+  MODEL_FILE_LABEL,
+  PROJECT_NAME_LABEL,
+  SUBMIT_LABEL,
+  SUBMITTING_LABEL,
+  UPLOAD_LEAD,
+  fileHelp,
+  fileSummary,
+} from "./upload-labels";
+import "./upload.css";
 
 export function UploadPage(): React.ReactElement {
   const [name, setName] = useState("");
@@ -46,31 +57,39 @@ export function UploadPage(): React.ReactElement {
   };
 
   return (
-    <main style={{ maxWidth: 560, margin: "4rem auto", padding: "0 1rem", fontFamily: "sans-serif" }}>
-      <h1>3D Reviewer</h1>
-      <p>モデルをアップロードしてレビューを開始します。</p>
-      <form onSubmit={handleSubmit} style={{ display: "grid", gap: "1rem" }}>
-        <label style={{ display: "grid", gap: "0.35rem" }}>
-          プロジェクト名
+    <main className="upload">
+      <header className="upload__head">
+        <h1 className="upload__title">{APP_NAME}</h1>
+        <p className="upload__lead">{UPLOAD_LEAD}</p>
+      </header>
+      <form className="upload__form" onSubmit={handleSubmit}>
+        <label className="field">
+          <span className="field__label">{PROJECT_NAME_LABEL}</span>
           <input
+            className="input"
             type="text"
+            maxLength={100}
             value={name}
             onChange={(event) => setName(event.target.value)}
             disabled={submitting}
           />
         </label>
-        <label style={{ display: "grid", gap: "0.35rem" }}>
-          モデルファイル
+        <label className="field">
+          <span className="field__label">{MODEL_FILE_LABEL}</span>
           <input
+            className="input"
             type="file"
             accept=".glb,.gltf"
             onChange={(event) => setFile(event.target.files?.[0] ?? null)}
             disabled={submitting}
           />
+          <span className="upload__help">
+            {file ? fileSummary(file.name, file.size) : fileHelp(ALLOWED_MODEL_EXTENSIONS, MAX_UPLOAD_BYTES_DEFAULT)}
+          </span>
         </label>
-        {error && <p role="alert" style={{ color: "#b42318" }}>{error}</p>}
-        <button type="submit" disabled={submitting}>
-          {submitting ? "アップロード中…" : "レビューを開始"}
+        {error && <p className="alert" role="alert">{error}</p>}
+        <button className="btn btn--primary" type="submit" disabled={submitting}>
+          {submitting ? SUBMITTING_LABEL : SUBMIT_LABEL}
         </button>
       </form>
     </main>

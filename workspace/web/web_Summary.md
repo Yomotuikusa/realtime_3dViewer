@@ -11,12 +11,14 @@ glTF/GLB の 3D レビュー画面を提供する。レビュー画面は表示�
 - src/api/client.ts: REST の URL、JSON/FormData リクエスト、レスポンス検証、`ApiClientError`
 - src/api/ws.ts: `WsClient`、WebSocket URL、接続状態通知、指数バックオフによる再接続
 - src/app/routes.ts: `/` と `/p/<projectId>` のルート解析、遷移、popstate フック
-- src/app/App.tsx: 現在のルートに応じた画面分岐
+- src/app/App.tsx: 現在のルートに応じた画面分岐。NotFound はパスと `/` へ戻る履歴遷移を表示する
 - src/app/display-name.ts: localStorage による表示名の保存、Guest 名生成、入室名の解決
 - src/app/JoinDialog.tsx: 保存済み表示名を初期値にした入室フォーム
 - src/app/realtime-dispatch.ts: `ServerMessage` を session / presence / annotation / comments ストアへ振り分ける入口。`welcome`、presence 更新、stroke、`comment:created` / `comment:updated`、`error` を扱う
 - src/app/useRealtime.ts: 名前決定後の `WsClient` 接続と、open ごとの `join` 送信
-- src/app/UploadPage.tsx: プロジェクト名・`.glb`/`.gltf` のアップロード画面
+- src/app/UploadPage.tsx: トークン CSS で構成したプロジェクト名・`.glb`/`.gltf` のアップロード画面。選択ファイルのサイズ helper とボタン直前のエラーを表示する
+- src/app/upload-labels.ts: アップロード画面と NotFound の表示文言、ファイル容量 helper の純粋関数
+- src/app/upload.css: アップロード画面と NotFound の狭い幅のレイアウト CSS
 - src/app/ReviewPage.tsx: プロジェクト取得、レビュー画面の骨格、ロード状態・エラーカード、ビューアとサイドパネルのレイアウトを担当する。Canvas に RemoteCameras / RoomStrokes / ReplayStrokes / AnnotationLayer / CommentPickLayer / CommentPins を配置し、`.review-hud` を 025 の HUD 差し込み口、`.review-panel__comments` を 026 のコメント領域差し込み口として提供する
 - src/app/ReviewHeader.tsx: 接続状態バッジ、入室後の自分の表示名・色、レビュー URL のコピーと失敗時の手動コピー欄を表示する
 - src/app/JoinDialog.tsx: 保存済み表示名を初期値にした、入室前にビューアを覆うモーダルフォーム。表示名の解決・保存・入室コールバックは display-name と呼び出し側へ委譲する
@@ -75,6 +77,7 @@ glTF/GLB の 3D レビュー画面を提供する。レビュー画面は表示�
 - tests/routes.test.ts: ルート解析と履歴遷移テスト
 - tests/store-camera.test.ts: カメラストアの初期値、参照を保つ epsilon 判定、複製して保持・消費する再現要求、Reset・Fit・モデルサイズ・全 state 初期化の振る舞いを検証
 - tests/styles-rules.test.ts: `src/**/*.css` を再帰走査し、トークンの `:root` 定義、tokens.css 以外の生色禁止、CSS 変数の宣言/フォールバック、`!important` / `@import` 規約、main.tsx の import 順を検証
+- tests/upload-labels.test.ts: アップロード/NotFound 文言、ファイル helper の単位・丸め結果を検証
 
 スタイル規約(D35)はプレーン CSS とし、全体共通のトークン・ベース・コントロールを `src/styles/` に置く。色は `tokens.css` のセマンティック変数経由、状態はクラスの付け替えではなく `aria-*` / `disabled` / `data-*` で表現し、画面固有の CSS は各機能フォルダ側に置く。
 
@@ -83,6 +86,7 @@ glTF/GLB の 3D レビュー画面を提供する。レビュー画面は表示�
 - app/routes.ts: `Route`、`parseRoute`、`projectPath`、`navigate`、`useRoute`
 - app/App.tsx: `App`
 - app/UploadPage.tsx: `UploadPage`
+- app/upload-labels.ts: `APP_NAME` など画面文言、`fileHelp`、`fileSummary`
 - app/ReviewPage.tsx: `ReviewPage({ projectId })`
 - app/ReviewHeader.tsx: `ReviewHeader({ projectName, joined })`
 - app/review-labels.ts: `connectionLabel`、`connectionTone`、`copyLabel`、`copyText`、ロード/エラー文言定数

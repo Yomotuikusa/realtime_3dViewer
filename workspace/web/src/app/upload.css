@@ -1,0 +1,35 @@
+.upload {
+  display: grid;
+  gap: var(--space-5);
+  max-width: 32rem;
+  margin: 0 auto;
+  padding: var(--space-6) var(--space-4);
+}
+
+.upload__head {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.upload__title {
+  font-size: var(--text-xl);
+  font-weight: 600;
+}
+
+.upload__lead,
+.upload__help {
+  color: var(--color-text-muted);
+}
+
+.upload__form {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.upload__help {
+  font-size: var(--text-sm);
+}
+
+.upload--message {
+  text-align: center;
+}
