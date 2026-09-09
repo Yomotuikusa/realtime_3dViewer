@@ -33,7 +33,7 @@ export function AnnotationLayer({ send }: { send: (msg: ClientMessage) => boolea
     };
 
     const handlePointerDown = (event: PointerEvent): void => {
-      if (event.button !== 0) {
+      if (event.button !== 0 || event.altKey) {
         return;
       }
       const hit = pointerPoint(event);

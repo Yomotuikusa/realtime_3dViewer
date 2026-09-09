@@ -21,7 +21,7 @@ describe("annotation store", () => {
   it("starts with the documented initial state", () => {
     expect(useAnnotationStore.getState()).toMatchObject({
       strokes: {},
-      mode: "orbit",
+      mode: "none",
       color: DEFAULT_STROKE_COLOR,
       drafting: null,
       replayStrokes: [],
@@ -121,7 +121,7 @@ describe("annotation store", () => {
     useAnnotationStore.getState().reset();
     expect(useAnnotationStore.getState()).toMatchObject({
       strokes: {},
-      mode: "orbit",
+      mode: "none",
       color: DEFAULT_STROKE_COLOR,
       drafting: null,
       replayStrokes: [],

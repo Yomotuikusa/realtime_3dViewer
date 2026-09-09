@@ -39,7 +39,7 @@ glTF/GLB の 3D レビュー画面を提供する。レビュー画面は表示�
 - src/features/comments/comment-labels.ts: コメント見出し、状態/空状態/Composer/ピンの日本語ラベル、Intl による時刻整形
 - src/features/comments/comments.css: コメント一覧・Composer・3D ピンのトークン CSS。コメント領域を縦グリッド化し、Composer 不在時は親を単独の可変行へ切り替えて一覧が全高を使い、一覧だけをスクロールさせる
 - src/features/comments/compose.ts: クリック移動量の判定、自分の線の時系列順・最新200本への制限、コメント投稿入力の組み立てを提供する
-- src/features/comments/CommentPickLayer.tsx: Comment モード中だけ Canvas の pointerdown / pointerup を購読し、5px 以下のクリックをモデルへレイキャストして投稿アンカーを設定する。ドラッグやモデル外の操作は無視し、Composer 表示中は既存アンカーを保護する
+- src/features/comments/CommentPickLayer.tsx: Comment モード中だけ Canvas の pointerdown / pointerup を購読し、Alt なしの5px 以下のクリックをモデルへレイキャストして投稿アンカーを設定する。ドラッグやモデル外の操作は無視し、Composer 表示中は既存アンカーを保護する
 - src/features/comments/CommentComposer.tsx: アンカー選択後に自動フォーカスする本文入力カードと REST コメント投稿を提供し、現在のカメラ・自分の線を入力へ含め、成功時にコメントを upsert・選択する。layout effect cleanup で無効化したアンマウントまたは projectId 世代変更後の非同期結果はストアへ反映しない。接続状態に関係なく投稿する
 - src/features/comments/CommentPins.tsx: 表示対象コメントを author/status 付きアンカー位置の drei `Html` native button ピンとして描画し、クリック選択、選択強調、resolved の薄表示を提供する。pointerdown/up の伝播停止を維持する
 - src/features/comments/replay.ts: 選択コメントのカメラ要求・Follow 解除・再現線設定を各ストアへ反映する純粋な入口と再現線の透明度を提供
@@ -49,19 +49,21 @@ glTF/GLB の 3D レビュー画面を提供する。レビュー画面は表示�
 - src/features/annotation/StrokeLines.tsx: 受け取った `Stroke[]` を線ごとに drei `Line` で描画する純粋な表示コンポーネント
 - src/features/annotation/RoomStrokes.tsx: annotation ストアのライブ線を表示順で描画し、2点以上の draft を現在色のプレビュー線として追加する Canvas 内レイヤー
 - src/features/annotation/stroke-build.ts: 法線オフセット、モデルサイズ依存の `simplify`、送信可能性判定、Undo 用の自分の最新線の選択
-- src/features/annotation/AnnotationLayer.tsx: Pen モード時だけ Canvas の DOM ポインターイベントを購読し、モデル表面のヒット点を draft に積み、終了時に `stroke:add` を送信する Canvas 内レイヤー
+- src/features/annotation/AnnotationLayer.tsx: Pen モード時だけ Canvas の DOM ポインターイベントを購読し、Alt なしの左ドラッグでモデル表面のヒット点を draft に積み、終了時に `stroke:add` を送信する Canvas 内レイヤー
 - src/features/annotation/AnnotationToolbar.tsx: ペンモード中の色選択、自分の線の 1本戻す / 自分の線を消すを提供するペン道具
 - src/features/annotation/annotation.css: ペン道具と色ボタンのプレーン CSS
 - src/features/viewer/ViewerCanvas.tsx: Canvas、ライティング、Bounds、モデル、カメラを合成するビューア。`children` は RemoteCameras / StrokeLines / AnnotationLayer など後続機能の差し込み口
-- src/features/viewer/ViewerHud.tsx: 操作モードの segmented control、ペン道具、視点操作、Follow 中バッジ、ビューア操作ヒントを表示し、各ストアを購読する
-- src/features/viewer/hud-labels.ts: モード・色・Follow・視点操作・ヒントの日本語文言と純粋な判定関数
+- src/features/viewer/ViewerHud.tsx: ペン／コメントの toggle ボタン、ペン道具、視点リセット・Fit、Follow 中バッジ、ビューア操作ヒントを表示し、各ストアを購読する
+- src/features/viewer/hud-labels.ts: ツールモード・色・Follow・視点操作・ヒントの日本語文言と純粋な判定関数
 - src/features/viewer/viewer.css: HUD のモード選択、視点操作、Follow バッジ、操作ヒントのプレーン CSS
 - src/features/viewer/ModelMesh.tsx: 同一オリジン用の LoadingManager を指定して `useGLTF` でモデルをロードし、バウンディングボックスからモデルサイズを記録して初回 Fit を要求する。ロード中の `scene` を共通モデルターゲットへ登録し、アンマウント時に解除する。Draco 圧縮時のデコーダ取得（`https://www.gstatic.com/...`）は drei の別 manager による外部依存として残る
 - src/features/viewer/model-loading.ts: glTF の `buffers` / `images` などが参照する data/blob URI と同一オリジン URL だけを許可する LoadingManager を作り、外部 URL を `about:blank` に置換する
 - src/features/viewer/model-target.ts: React や Zustand に依存せず、現在のレイキャスト対象 `Object3D` を保持する `setModelTarget` / `getModelTarget`
 - src/features/viewer/pick.ts: Canvas 座標を NDC に変換し、共通モデルターゲットへ最近傍レイキャストを行う。交点と、逆転置の法線行列で変換して正規化したワールド系法線を返す
 - src/features/viewer/follow.ts: Follow 対象カメラの妥当性判定と、共有カメラ関数を使った 1 フレーム分の補間
-- src/features/viewer/CameraRig.tsx: OrbitControls をカメラストアと同期し、Reset・Fit・カメラ再現・Follow を処理。Pen モードでは OrbitControls を無効化する
+- src/features/viewer/CameraRig.tsx: OrbitControls を常時有効にしてカメラストアと同期し、Reset・Fit・カメラ再現・Follow を処理する。controls.domElement に Alt 操作と右ドラッグ dolly の入力を接続する
+- src/features/viewer/camera-input.ts: OrbitControls の Alt／非 Alt 時のマウス割り当てと、target からの距離を指数的に変える右ドラッグ dolly の純粋関数
+- src/features/viewer/viewer-pointer.ts: controls.domElement へ Maya 式の pointer、contextmenu、マウス抑止イベントを接続し、右ドラッグ dolly と後始末を提供する
 - src/features/viewer/camera-throttle.ts: 最新のカメラだけを保持し、送信成功時刻から 50ms ごとの先頭送信と窓明けトレーリング送信を行う。送信失敗は未送信としてタイマーまたは次の更新で再試行し、破棄時に保留送信をキャンセルする
 - src/features/viewer/useCameraBroadcast.ts: `selfCamera` の変更を `camera-throttle` へ渡し、送信成功時に自分の presence カメラも更新する。`shouldSendCamera` は従来の判定インターフェイスとして公開する
 - src/main.tsx: React アプリのエントリーポイント。tokens → base → controls の順で全体スタイルを読み込む
@@ -85,6 +87,8 @@ glTF/GLB の 3D レビュー画面を提供する。レビュー画面は表示�
 - tests/use-realtime.test.ts: 接続状態、open 時のエラー解除と join、closed 時の非送信を検証
 - tests/upload-labels.test.ts: アップロード/NotFound 文言、容量エラー定数、ファイル helper の単位・丸め結果を検証
 - tests/model-loading.test.ts: 埋め込み・同一オリジン URL の許可、外部 URL の遮断、LoadingManager の URL modifier のテスト
+- tests/camera-input.test.ts: Alt／非 Alt のマウス割り当て、指数 dolly、最小距離、入力配列非破壊のテスト
+- tests/viewer-pointer.test.ts: capture phase の割り当て、Alt+右ドラッグ dolly、pointer capture、継続・終了・ブラウザ既定動作抑止、cleanup のテスト
 
 スタイル規約(D35)はプレーン CSS とし、全体共通のトークン・ベース・コントロールを `src/styles/` に置く。色は `tokens.css` のセマンティック変数経由、状態はクラスの付け替えではなく `aria-*` / `disabled` / `data-*` で表現し、画面固有の CSS は各機能フォルダ側に置く。
 
@@ -111,7 +115,7 @@ glTF/GLB の 3D レビュー画面を提供する。レビュー画面は表示�
 - store/comments.ts: `useCommentsStore`、`CommentsStoreState`（`items` / `showOnlyOpen` / `selectedId` / `composerAnchor` / `lastError` と全 action）、`selectVisible`
 - features/viewer/ViewerCanvas.tsx: `ViewerCanvas({ modelSrc, children? })`
 - features/viewer/ViewerHud.tsx: `ViewerHud({ send })`
-- features/viewer/hud-labels.ts: `MODE_LABELS`、`MODE_ORDER`、各種ラベル、`colorName`、`followingLabel`、`hint`
+- features/viewer/hud-labels.ts: `ToolMode`、`MODE_LABELS`、`MODE_ORDER`、各種ラベル、`colorName`、`followingLabel`、`hint`
 - features/viewer/ModelMesh.tsx: `ModelMesh({ src })`
 - features/viewer/camera-throttle.ts: `CameraThrottleDeps`、`CameraThrottle`、`createCameraThrottle`
 - features/viewer/model-loading.ts: `BLOCKED_RESOURCE_URL`、`resolveModelResourceUrl`、`createModelLoadingManager`
@@ -119,6 +123,8 @@ glTF/GLB の 3D レビュー画面を提供する。レビュー画面は表示�
 - features/viewer/pick.ts: `toNdc(rect, clientX, clientY)`、`pickModel(raycaster, camera, ndc, target)`
 - features/viewer/follow.ts: `FOLLOW_LERP_T`、`followTargetCamera`、`followStep`
 - features/viewer/CameraRig.tsx: `CameraRig()`
+- features/viewer/camera-input.ts: `ViewerMouseButtons`、`MOUSE_BUTTONS_ALT`、`MOUSE_BUTTONS_IDLE`、`mouseButtonsFor`、`DOLLY_SPEED`、`MIN_DOLLY_DISTANCE`、`dollyPosition`
+- features/viewer/viewer-pointer.ts: `ViewerControlsLike`、`ViewerPointerDeps`、`attachViewerPointer(controls, deps)`
 - features/viewer/useCameraBroadcast.ts: `shouldSendCamera`、`useCameraBroadcast(send)`
 - features/presence/PresenceList.tsx: `PresenceList()`
 - features/presence/RemoteCameras.tsx: `RemoteCameras()`
@@ -165,7 +171,7 @@ OrbitControls の `start` はユーザー操作として `presence.unfollow()` �
 `dispatchServerMessage` は `welcome` で session の self ID/色、presence の参加者一覧、annotation のライブ線を確定し、
 `user:joined` / `user:left` / `camera` を presence ストアへ、`stroke:add` / `stroke:remove` / `stroke:clear` を
 annotation ストアへ、`comment:created` / `comment:updated` を comments ストアへ、`error` を `CODE: message` として保存する。annotation ストアは `strokes` を id で上書き・削除し、
-`clearByUser` でユーザー単位に除去する。`mode` は orbit / pen / comment の排他値で、変更時に draft を破棄する。
+`clearByUser` でユーザー単位に除去する。`mode` は none / pen / comment の排他値で初期値は none、変更時に draft を破棄する。
 `color` は6桁16進色を小文字へ正規化し、`drafting` は描画中の点列、`replayStrokes` は WebSocket のライブ線と分離した
 コメント再現用の点列を保持する。`RoomStrokes` はライブ線を `orderedStrokes` の createdAt/id 順で `StrokeLines` に渡し、
 draft が2点以上ならプレビュー線を1本追加する。
@@ -182,6 +188,10 @@ Canvas のクライアント座標を NDC 化して再帰的にモデルをレ�
 `offsetAlongNormal` でモデル表面から少し浮かせて draft に追加する。終了時に `buildStroke` で
 間引き、接続が open かつ selfId がある場合だけ `stroke:add` を送信する。draft は終了時に消し、
 送信した線はサーバー配信を待つためローカルへ追加しない。
+カメラ操作は `CameraRig` が `useThree().controls` の `OrbitControls` に `attachViewerPointer` を接続する。
+常時有効な OrbitControls の割り当ては、Alt なしでは全ボタンを無効、Alt 押下中は左回転・中パン・右無効とし、
+ホイールは常に OrbitControls の dolly を使う。右ドラッグだけは `dollyPosition` でカメラ位置を変更し、
+左／中ドラッグは OrbitControls に任せる。入力開始時は Follow を解除し、カメラ更新は既存の epsilon 判定付きストアへ渡す。
 コメント機能は `getProject`、`modelUrl`、カメラストアを利用する。Comment モードのモデルクリックは
 Composer の既存 `composerAnchor` が非 null の間は無視し、入力中のアンカーを置き換えない。
 comments ストアは `items`（常に `createdAt` 昇順、同値なら `id` 昇順）、`showOnlyOpen`、`selectedId`、`composerAnchor`、`lastError` を保持する。

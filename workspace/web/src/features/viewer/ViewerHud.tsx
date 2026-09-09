@@ -39,7 +39,7 @@ export function ViewerHud({ send }: { send: (msg: ClientMessage) => boolean }): 
               className="btn hud-mode"
               type="button"
               aria-pressed={mode === modeValue}
-              onClick={() => setMode(modeValue)}
+              onClick={() => setMode(mode === modeValue ? "none" : modeValue)}
             >
               {MODE_LABELS[modeValue]}
             </button>
