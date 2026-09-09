@@ -1,4 +1,4 @@
-import { useMemo, type ReactElement } from "react";
+import { useMemo, type CSSProperties, type ReactElement } from "react";
 import { Html } from "@react-three/drei";
 import { Quaternion, Vector3 } from "three";
 import type { CameraState, PresenceUser } from "@shared/types";
@@ -24,7 +24,7 @@ function RemoteCamera({ user }: { user: PresenceUser }): ReactElement {
         <meshStandardMaterial color={user.color} />
       </mesh>
       <Html position={[0, 0.28, 0]} center>
-        <span style={{ padding: "0.15rem 0.35rem", color: "#101828", background: "#ffffff", border: "1px solid #d0d5dd", borderRadius: "0.25rem", whiteSpace: "nowrap" }}>
+        <span className="presence-tag" style={{ "--user-color": user.color } as CSSProperties}>
           {user.name}
         </span>
       </Html>
