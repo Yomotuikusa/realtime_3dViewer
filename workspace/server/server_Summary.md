@@ -16,12 +16,17 @@ comments の永続化、ファイル保存、プロジェクト取得 API を提
 - `src/routes/projects.ts`: multipart モデルアップロード、project JSON の取得と、モデル本体の
   配信。アップロード成功時はファイル保存と projects / model_versions 登録を同一処理で行い、
   拡張子に応じた Content-Type と immutable キャッシュヘッダを設定する。
+- `src/routes/comments.ts`: project 配下のコメント一覧、投稿、status 更新を提供する。
+  一覧は `status` 絞り込みと `created_at` 昇順に対応し、投稿・更新は保存後にそれぞれ
+  `comment:created` / `comment:updated` を `publish` へ渡す。project、version、comment の
+  不在は `NOT_FOUND`、不正な JSON / 入力は `VALIDATION` を返す。
 - `src/routes/upload-validation.ts`: glTF/GLB の拡張子・マジックバイト/JSON 検査と、
   Content-Length のアップロード上限検査。
-- `src/app.ts`: `createApp(deps)`。共通エラー処理、JSON 404、`/api/projects` のマウントを担う。
+- `src/app.ts`: `createApp(deps)`。共通エラー処理、JSON 404、`/api/projects` と
+  `/api/projects/:projectId/comments` のマウントを担う。
 - `tests/helpers/tmp.ts`: `server/.vite/test-tmp` 配下の一時ディレクトリ管理。
 - `tests/helpers/app.ts`: 固定時刻・インメモリ DB・一時ファイルストレージを使う `TestApp` と
-  `makeTestApp` / `seedProject`。
+  `makeTestApp` / `seedProject` / `seedComment`。
 - `tests/config.test.ts`: 設定値と入力検証のテスト。
 - `tests/errors.test.ts`: HTTP / Zod / 未知エラーの応答変換テスト。
 - `tests/db-projects.test.ts`: SQLite 接続、スキーマ、トランザクション、projects 層のテスト。
@@ -35,6 +40,8 @@ comments の永続化、ファイル保存、プロジェクト取得 API を提
   テスト。
 - `tests/routes-projects-upload.test.ts`: multipart の POST、Project 応答、保存ファイル、入力検証、
   上限超過、DB 失敗時の後始末のテスト。
+- `tests/routes-comments.test.ts`: コメント一覧の順序・絞り込み、投稿・status 更新、入力検証、
+  project/version スコープ、publish 呼び出しのテスト。
 - `tsconfig.json`: 型検査設定(../tsconfig.base.json を継承。`@shared/*` は shared/src を指す)。
 - `vitest.config.ts`: テスト設定(tests/**/*.test.ts、cacheDir は .vite)。
 
@@ -54,6 +61,11 @@ comments の永続化、ファイル保存、プロジェクト取得 API を提
   POST は multipart の `name` と `file` を受け、201 で `Project` を返す。名前は trim して保存し、
   不正な入力は `VALIDATION`、非 glTF/GLB は `UNSUPPORTED_FORMAT`、上限超過は
   `PAYLOAD_TOO_LARGE`、保存後の DB 失敗など予期しないエラーは `INTERNAL` を返す。
+- `commentRoutes`: `GET /api/projects/:projectId/comments` は `Comment[]` を返し、任意の
+  `status=open|resolved` で絞り込む。POST は `CreateCommentInput` を検証し、対象 version が
+  project に属することを確認して 201 の `Comment` と `comment:created` を返す。PATCH は
+  `UpdateCommentStatusInput` を検証して 200 の `Comment` と `comment:updated` を返す。
+  いずれも対象 project が無ければ `NOT_FOUND`、入力不正なら `VALIDATION` を返す。
 
 ## 他機能との関係
 `shared/src/api.ts` の `ErrorCode`、`ApiError`、`MAX_UPLOAD_BYTES_DEFAULT` と、
