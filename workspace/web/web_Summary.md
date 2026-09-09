@@ -17,7 +17,7 @@ glTF/GLB の 3D レビュー画面を提供する。レビュー画面は表示�
 - src/app/realtime-dispatch.ts: `ServerMessage` を session / presence / annotation / comments ストアへ振り分ける入口。`welcome`、presence 更新、stroke、`comment:created` / `comment:updated`、`error` を扱う
 - src/app/useRealtime.ts: 名前決定後の `WsClient` 接続と、open ごとの `join` 送信
 - src/app/UploadPage.tsx: プロジェクト名・`.glb`/`.gltf` のアップロード画面
-- src/app/ReviewPage.tsx: プロジェクト取得、入室ダイアログ、接続状態、ロード状態・エラーカード、ビューアとサイドパネルのレイアウト。Canvas に RemoteCameras / RoomStrokes / AnnotationLayer を配置し、サイドパネルに PresenceList / CommentList を配置する
+- src/app/ReviewPage.tsx: プロジェクト取得、入室ダイアログ、接続状態、ロード状態・エラーカード、ビューアとサイドパネルのレイアウト。Canvas に RemoteCameras / RoomStrokes / AnnotationLayer / CommentPickLayer / CommentPins を配置し、サイドパネルに PresenceList / CommentComposer / CommentList を配置する
 - src/app/ErrorBoundary.tsx: React/three の描画例外を捕捉し、フォールバックを表示
 - src/store/camera.ts: `selfCamera`、`pendingCamera`、`resetSeq`、`fitSeq`、`modelSize` と、カメラ更新・再現消費・Reset・Fit・サイズ更新・初期化の action を管理する zustand ストア
 - src/store/session.ts: 自分の ID・色・表示名・接続状態・直近エラーを保持する zustand ストア
@@ -26,6 +26,10 @@ glTF/GLB の 3D レビュー画面を提供する。レビュー画面は表示�
 - src/store/comments.ts: コメント一覧、Open フィルタ、選択中コメント、投稿アンカー、API エラーを保持し、`setAll` / `upsert` / `select` / `setFilter` / `setComposerAnchor` / `setLastError` / `reset` を提供する zustand ストア
 - src/features/presence/PresenceList.tsx: 参加者の色・名前と Follow / 解除ボタンを表示
 - src/features/comments/CommentList.tsx: `CommentList({ projectId })` として REST でコメントを取得し、Open フィルタ、選択領域、Resolve / Reopen 操作、API エラー表示を提供。選択領域と状態変更ボタンは兄弟要素として分離する
+- src/features/comments/compose.ts: クリック移動量の判定、自分の線の時系列順・最新200本への制限、コメント投稿入力の組み立てを提供する
+- src/features/comments/CommentPickLayer.tsx: Comment モード中だけ Canvas の pointerdown / pointerup を購読し、5px 以下のクリックをモデルへレイキャストして投稿アンカーを設定する。ドラッグやモデル外の操作は無視する
+- src/features/comments/CommentComposer.tsx: アンカー選択後の本文入力と REST コメント投稿を提供し、現在のカメラ・自分の線を入力へ含め、成功時にコメントを upsert・選択する。接続状態に関係なく投稿する
+- src/features/comments/CommentPins.tsx: 表示対象コメントをアンカー位置の drei `Html` ピンとして描画し、クリック選択、選択強調、resolved の薄表示を提供する
 - src/features/presence/RemoteCameras.tsx: 他者のカメラ位置・向きと名前ラベルを Canvas 内に表示
 - src/features/annotation/StrokeLines.tsx: 受け取った `Stroke[]` を線ごとに drei `Line` で描画する純粋な表示コンポーネント
 - src/features/annotation/RoomStrokes.tsx: annotation ストアのライブ線を表示順で描画し、2点以上の draft を現在色のプレビュー線として追加する Canvas 内レイヤー
@@ -83,6 +87,10 @@ glTF/GLB の 3D レビュー画面を提供する。レビュー画面は表示�
 - features/annotation/stroke-build.ts: `offsetAlongNormal`、`buildStroke`、`latestOwnStrokeId`
 - features/annotation/AnnotationLayer.tsx: `AnnotationLayer({ send })`
 - features/annotation/AnnotationToolbar.tsx: `AnnotationToolbar({ send })`
+- features/comments/compose.ts: `CLICK_MOVE_THRESHOLD_PX`、`isClick`、`ownStrokesForComment`、`buildCommentInput`
+- features/comments/CommentPickLayer.tsx: `CommentPickLayer()`
+- features/comments/CommentComposer.tsx: `CommentComposer({ projectId, versionId })`
+- features/comments/CommentPins.tsx: `CommentPins()`
 
 API クライアントは同一オリジンの `/api/...` を使い、2xx 応答を共有 zod スキーマで検証する。API エラー本文を解析できる場合は `ApiClientError(status, code, message)`、ネットワーク断や解析不能なエラーは `INTERNAL`、成功本文の不一致は `VALIDATION` とする。
 ルーティングは `/` を upload、正規表現 `^/p/[A-Za-z0-9_-]+$` に一致するパスを review、それ以外を notFound とする。`navigate` は `pushState` 後に `popstate` を通知する。
@@ -133,3 +141,4 @@ comments ストアは `items`（常に `createdAt` 昇順、同値なら `id` �
 `setAll` は一覧全置換、`upsert` は id 単位の追加・置換、`select` は選択変更、`setFilter` は Open フィルタ変更、
 `setComposerAnchor` は投稿位置変更、`setLastError` は API エラー変更、`reset` は初期値復元を行う。
 `CommentList` はマウント時に全コメントを取得し、選択領域のクリックまたはキーボード操作で選択を切り替え、Open のコメントを Resolve、resolved のコメントを Reopen する。状態変更中のコメント ID は集合で管理し、並行する別行の操作も disabled 状態を保つ。
+Comment の投稿は Comment モードでモデルをクリックしてアンカーを決め、移動距離が5px以下の pointerdown/pointerup だけを配置クリックとして扱う。Composer は本文を trim し、selfCamera と selfId に紐づく線（createdAt/id 昇順、最新200本）を含めて REST 投稿する。成功時は REST 応答を comments ストアへ upsert してアンカーを閉じ、投稿コメントを選択する。Comment モードは維持するため連続投稿でき、WebSocket 接続が閉じていても REST 投稿は許可する。CommentPins は表示対象のコメントを anchor 上の Html ピンにし、クリックで選択する。

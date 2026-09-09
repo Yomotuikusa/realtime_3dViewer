@@ -6,6 +6,9 @@ import { JoinDialog } from "./JoinDialog";
 import { useRealtime } from "./useRealtime";
 import { PresenceList } from "../features/presence/PresenceList";
 import { CommentList } from "../features/comments/CommentList";
+import { CommentComposer } from "../features/comments/CommentComposer";
+import { CommentPickLayer } from "../features/comments/CommentPickLayer";
+import { CommentPins } from "../features/comments/CommentPins";
 import { RemoteCameras } from "../features/presence/RemoteCameras";
 import { RoomStrokes } from "../features/annotation/RoomStrokes";
 import { AnnotationLayer } from "../features/annotation/AnnotationLayer";
@@ -138,6 +141,8 @@ export function ReviewPage({ projectId }: { projectId: string }): ReactElement {
               <RemoteCameras />
               <RoomStrokes />
               <AnnotationLayer send={realtime.send} />
+              <CommentPickLayer />
+              <CommentPins />
             </ViewerCanvas>
           </ErrorBoundary>
         </section>
@@ -145,6 +150,7 @@ export function ReviewPage({ projectId }: { projectId: string }): ReactElement {
           {connectionLabel && <p style={{ margin: "0 0 0.5rem" }}>{connectionLabel}</p>}
           {lastError && <p role="alert" style={{ margin: 0, color: "#b42318" }}>{lastError}</p>}
           <PresenceList />
+          <CommentComposer projectId={projectId} versionId={state.project.latestVersion.id} />
           <CommentList projectId={projectId} />
         </aside>
       </div>
