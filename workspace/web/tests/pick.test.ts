@@ -34,6 +34,26 @@ describe("viewer picking", () => {
     expect(hit!.normal).toEqual([expect.closeTo(0, 1e-3), expect.closeTo(0, 1e-3), expect.closeTo(1, 1e-3)]);
   });
 
+  it("uses the inverse-transpose normal matrix for non-uniform scale", () => {
+    const camera = new PerspectiveCamera(50, 1, 0.1, 100);
+    camera.position.set(5, 0, 0);
+    camera.lookAt(0, 0, 0);
+    camera.updateMatrixWorld();
+    const box = createBox();
+    box.scale.set(1, 4, 1);
+    box.updateMatrixWorld();
+
+    const hit = pickModel(new Raycaster(), camera, { x: 0, y: 0 }, box);
+
+    expect(hit).not.toBeNull();
+    expect(hit!.normal).toEqual([
+      expect.closeTo(1, 1e-6),
+      expect.closeTo(0, 1e-6),
+      expect.closeTo(0, 1e-6),
+    ]);
+    expect(Math.hypot(...hit!.normal!)).toBeCloseTo(1, 6);
+  });
+
   it("returns null for an outside ray or missing target", () => {
     const camera = createCamera();
     const box = createBox();
