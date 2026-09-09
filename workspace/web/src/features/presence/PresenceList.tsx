@@ -1,6 +1,8 @@
-import type { ReactElement } from "react";
+import type { CSSProperties, ReactElement } from "react";
 import { usePresenceStore } from "../../store/presence";
 import { useSessionStore } from "../../store/session";
+import { FOLLOW_LABEL, PRESENCE_HEADING, SELF_SUFFIX, UNFOLLOW_LABEL, presenceHeading } from "./presence-labels";
+import "./presence.css";
 
 export function PresenceList(): ReactElement {
   const users = usePresenceStore((state) => state.users);
@@ -9,23 +11,39 @@ export function PresenceList(): ReactElement {
   const unfollow = usePresenceStore((state) => state.unfollow);
   const selfId = useSessionStore((state) => state.selfId);
 
+  const orderedUsers = Object.values(users).sort((left, right) => {
+    const leftIsSelf = left.id === selfId;
+    const rightIsSelf = right.id === selfId;
+    if (leftIsSelf !== rightIsSelf) return leftIsSelf ? -1 : 1;
+    return left.name.localeCompare(right.name, "ja");
+  });
+
   return (
-    <section aria-label="参加者" style={{ marginTop: "1rem" }}>
-      <h2 style={{ margin: "0 0 0.5rem", fontSize: "1rem" }}>参加者</h2>
-      <ul style={{ display: "grid", gap: "0.5rem", padding: 0, margin: 0, listStyle: "none" }}>
-        {Object.values(users).map((user) => {
+    <section className="presence" aria-label={PRESENCE_HEADING}>
+      <h2 className="presence__heading">{presenceHeading(orderedUsers.length)}</h2>
+      <ul className="presence__list">
+        {orderedUsers.map((user) => {
           const isSelf = user.id === selfId;
           const isFollowing = user.id === followingUserId;
           return (
-            <li key={user.id} style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-              <span
-                aria-hidden="true"
-                style={{ width: "0.75rem", height: "0.75rem", flex: "0 0 auto", borderRadius: "50%", background: user.color }}
-              />
-              <span style={{ flex: 1 }}>{user.name}{isSelf ? " (あなた)" : ""}</span>
+            <li
+              key={user.id}
+              className="presence__row"
+              data-self={isSelf}
+              data-following={isFollowing}
+              style={{ "--user-color": user.color } as CSSProperties}
+            >
+              <i className="presence__dot" aria-hidden="true" />
+              <span className="presence__name">{user.name}</span>
+              {isSelf && <span className="badge" data-tone="neutral">{SELF_SUFFIX}</span>}
               {!isSelf && (
-                <button type="button" onClick={() => (isFollowing ? unfollow() : follow(user.id))}>
-                  {isFollowing ? "解除" : "Follow"}
+                <button
+                  className="btn btn--quiet presence__follow"
+                  type="button"
+                  aria-pressed={isFollowing}
+                  onClick={() => (isFollowing ? unfollow() : follow(user.id))}
+                >
+                  {isFollowing ? UNFOLLOW_LABEL : FOLLOW_LABEL}
                 </button>
               )}
             </li>

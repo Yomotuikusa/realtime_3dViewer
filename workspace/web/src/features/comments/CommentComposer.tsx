@@ -5,6 +5,8 @@ import { useCameraStore } from "../../store/camera";
 import { useCommentsStore } from "../../store/comments";
 import { useSessionStore } from "../../store/session";
 import { buildCommentInput } from "./compose";
+import { CANCEL_LABEL, COMPOSER_BODY_LABEL, COMPOSER_TITLE, SUBMIT_LABEL } from "./comment-labels";
+import "./comments.css";
 
 function errorMessage(error: unknown): string {
   if (error instanceof ApiClientError) {
@@ -62,26 +64,32 @@ export function CommentComposer({ projectId, versionId }: {
   };
 
   return (
-    <form onSubmit={(event) => void submit(event)} style={{ marginTop: "1rem" }}>
-      <label style={{ display: "grid", gap: "0.35rem" }}>
-        コメント本文
+    <form className="comments-composer" onSubmit={(event) => void submit(event)}>
+      <h3 className="comments-composer__title">{COMPOSER_TITLE}</h3>
+      <label className="field">
+        <span className="field__label">{COMPOSER_BODY_LABEL}</span>
         <textarea
+          className="input"
           value={body}
           onChange={(event) => setBody(event.target.value)}
           maxLength={2000}
           rows={4}
+          autoFocus
           disabled={sending}
           required
         />
       </label>
-      <div style={{ display: "flex", gap: "0.5rem", marginTop: "0.5rem" }}>
-        <button type="submit" disabled={sending}>投稿</button>
+      <div className="comments-composer__actions">
+        <button className="btn btn--primary" type="submit" disabled={sending}>
+          {sending ? "投稿中…" : SUBMIT_LABEL}
+        </button>
         <button
+          className="btn btn--quiet"
           type="button"
           disabled={sending}
           onClick={() => useCommentsStore.getState().setComposerAnchor(null)}
         >
-          キャンセル
+          {CANCEL_LABEL}
         </button>
       </div>
     </form>

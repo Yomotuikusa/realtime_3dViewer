@@ -2,6 +2,17 @@ import { useEffect, useState, type ReactElement } from "react";
 import type { CommentStatus } from "@shared/types";
 import { ApiClientError, listComments, updateCommentStatus } from "../../api/client";
 import { selectVisible, useCommentsStore } from "../../store/comments";
+import {
+  commentsHeading,
+  EMPTY_FILTERED_MESSAGE,
+  EMPTY_MESSAGE,
+  FILTER_OPEN_ONLY,
+  formatCommentTime,
+  statusLabel,
+  statusTone,
+  toggleStatusLabel,
+} from "./comment-labels";
+import "./comments.css";
 
 function errorMessage(error: unknown): string {
   if (error instanceof ApiClientError) {
@@ -56,78 +67,61 @@ export function CommentList({ projectId }: { projectId: string }): ReactElement 
   };
 
   return (
-    <section aria-label="コメント" style={{ marginTop: "1rem" }}>
-      <h2 style={{ margin: "0 0 0.5rem", fontSize: "1rem" }}>コメント</h2>
-      {lastError && <p role="alert" style={{ color: "#b42318" }}>{lastError}</p>}
-      <label style={{ display: "flex", gap: "0.4rem", alignItems: "center", marginBottom: "0.75rem" }}>
+    <div className="comments">
+      <div className="comments__head">
+        <h2 className="comments__heading">{commentsHeading(visibleItems.length)}</h2>
+        <label className="comments__filter">
         <input
           type="checkbox"
           checked={showOnlyOpen}
           onChange={(event) => useCommentsStore.getState().setFilter(event.target.checked)}
         />
-        Open のみ
-      </label>
-      <ul style={{ display: "grid", gap: "0.5rem", padding: 0, margin: 0, listStyle: "none" }}>
+          {FILTER_OPEN_ONLY}
+        </label>
+      </div>
+      {lastError && <p className="alert" role="alert">{lastError}</p>}
+      {visibleItems.length === 0 && (
+        <p className="comments__empty">{items.length === 0 ? EMPTY_MESSAGE : EMPTY_FILTERED_MESSAGE}</p>
+      )}
+      <ul className="comments__list">
         {visibleItems.map((comment) => {
           const nextStatus: CommentStatus = comment.status === "open" ? "resolved" : "open";
           const isUpdating = updatingIds.has(comment.id);
+          const selected = selectedId === comment.id;
           return (
-            <li key={comment.id}>
-              <div
-                style={{
-                  padding: "0.6rem",
-                  border: "1px solid #d0d5dd",
-                  borderRadius: "0.35rem",
-                  background: selectedId === comment.id ? "#eaf2ff" : "#fff",
-                  cursor: "pointer",
-                }}
-              >
-                <div
-                  role="button"
-                  tabIndex={0}
-                  aria-pressed={selectedId === comment.id}
-                  onClick={() => useCommentsStore.getState().select(selectedId === comment.id ? null : comment.id)}
-                  onKeyDown={(event) => {
-                    if (event.key === "Enter" || event.key === " ") {
-                      event.preventDefault();
-                      useCommentsStore.getState().select(selectedId === comment.id ? null : comment.id);
-                    }
-                  }}
-                  style={{
-                    display: "block",
-                    width: "100%",
-                    padding: 0,
-                    border: 0,
-                    background: "transparent",
-                    color: "inherit",
-                    font: "inherit",
-                    textAlign: "left",
-                    cursor: "pointer",
-                  }}
-                >
-                  <div style={{ display: "flex", justifyContent: "space-between", gap: "0.5rem" }}>
-                    <strong>{comment.authorName}</strong>
-                    <span>{comment.status}</span>
-                  </div>
-                  <p style={{ margin: "0.35rem 0", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
-                    {comment.body}
-                  </p>
-                </div>
+            <li
+              key={comment.id}
+              className="comments-row"
+              data-selected={selected}
+              data-status={comment.status}
+            >
                 <button
                   type="button"
-                  disabled={isUpdating}
-                  onClick={(event) => {
-                    event.stopPropagation();
-                    void changeStatus(comment.id, nextStatus);
-                  }}
+                  className="comments-row__select"
+                  aria-pressed={selected}
+                  onClick={() => useCommentsStore.getState().select(selected ? null : comment.id)}
                 >
-                  {comment.status === "open" ? "Resolve" : "Reopen"}
+                  <span className="comments-row__meta">
+                    <strong>{comment.authorName}</strong>
+                    <time dateTime={new Date(comment.createdAt).toISOString()}>
+                      {formatCommentTime(comment.createdAt, Date.now())}
+                    </time>
+                    <span className="badge" data-tone={statusTone(comment.status)}>{statusLabel(comment.status)}</span>
+                  </span>
+                  <p className="comments-row__body">{comment.body}</p>
                 </button>
-              </div>
+                <button
+                  className="btn btn--quiet comments-row__toggle"
+                  type="button"
+                  disabled={isUpdating}
+                  onClick={() => void changeStatus(comment.id, nextStatus)}
+                >
+                  {toggleStatusLabel(comment.status)}
+                </button>
             </li>
           );
         })}
       </ul>
-    </section>
+    </div>
   );
 }

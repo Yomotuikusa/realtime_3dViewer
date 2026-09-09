@@ -28,12 +28,17 @@ glTF/GLB の 3D レビュー画面を提供する。レビュー画面は表示�
 - src/store/presence.ts: 参加者一覧、各参加者のカメラ、Follow 対象を保持する zustand ストア
 - src/store/annotation.ts: ルーム全員分のライブ線、annotation mode・色・描画中 draft・コメント再現用線を保持し、welcome/線操作・draft・reset を提供する zustand ストア
 - src/store/comments.ts: コメント一覧、Open フィルタ、選択中コメント、投稿アンカー、API エラーを保持し、`setAll` / `upsert` / `select` / `setFilter` / `setComposerAnchor` / `setLastError` / `reset` を提供する zustand ストア
-- src/features/presence/PresenceList.tsx: 参加者の色・名前と Follow / 解除ボタンを表示
-- src/features/comments/CommentList.tsx: `CommentList({ projectId })` として REST でコメントを取得し、Open フィルタ、選択領域、Resolve / Reopen 操作、API エラー表示を提供。選択領域と状態変更ボタンは兄弟要素として分離する
+- src/features/presence/PresenceList.tsx: 参加者を自分先頭・名前順で表示し、色ドット、あなたバッジ、視点に入る / 追従を解除ボタンを提供
+- src/features/presence/RemoteCameras.tsx: 他者のカメラ位置・向きに、その人の色の左線を持つ `presence-tag` 名札を重ねる
+- src/features/presence/presence-labels.ts: 参加者見出し、本人/追従操作の日本語ラベルと件数見出し関数
+- src/features/presence/presence.css: 参加者行、追従中の背景、色ドット、3D カメラ名札のトークン CSS
+- src/features/comments/CommentList.tsx: `CommentList({ projectId })` として REST でコメントを取得し、未解決フィルタ、時刻・状態バッジ付き一覧、選択領域、解決 / 再開操作、API エラーと空状態を提供。選択領域は native button、状態変更ボタンは兄弟要素として分離する
+- src/features/comments/comment-labels.ts: コメント見出し、状態/空状態/Composer/ピンの日本語ラベル、Intl による時刻整形
+- src/features/comments/comments.css: コメント一覧・Composer・3D ピンのトークン CSS。コメント領域を縦グリッド化し、一覧だけをスクロールさせる
 - src/features/comments/compose.ts: クリック移動量の判定、自分の線の時系列順・最新200本への制限、コメント投稿入力の組み立てを提供する
 - src/features/comments/CommentPickLayer.tsx: Comment モード中だけ Canvas の pointerdown / pointerup を購読し、5px 以下のクリックをモデルへレイキャストして投稿アンカーを設定する。ドラッグやモデル外の操作は無視する
-- src/features/comments/CommentComposer.tsx: アンカー選択後の本文入力と REST コメント投稿を提供し、現在のカメラ・自分の線を入力へ含め、成功時にコメントを upsert・選択する。接続状態に関係なく投稿する
-- src/features/comments/CommentPins.tsx: 表示対象コメントをアンカー位置の drei `Html` ピンとして描画し、クリック選択、選択強調、resolved の薄表示を提供する
+- src/features/comments/CommentComposer.tsx: アンカー選択後に自動フォーカスする本文入力カードと REST コメント投稿を提供し、現在のカメラ・自分の線を入力へ含め、成功時にコメントを upsert・選択する。接続状態に関係なく投稿する
+- src/features/comments/CommentPins.tsx: 表示対象コメントを author/status 付きアンカー位置の drei `Html` native button ピンとして描画し、クリック選択、選択強調、resolved の薄表示を提供する。pointerdown/up の伝播停止を維持する
 - src/features/comments/replay.ts: 選択コメントのカメラ要求・Follow 解除・再現線設定を各ストアへ反映する純粋な入口と再現線の透明度を提供
 - src/features/comments/useCommentReplay.ts: selectedId の変化を選択コメントの再現へ接続し、アンマウント時に再現線を消すフック
 - src/features/comments/ReplayStrokes.tsx: annotation ストアの再現線だけを `StrokeLines` へ渡す Canvas 内レイヤー
@@ -103,12 +108,14 @@ glTF/GLB の 3D レビュー画面を提供する。レビュー画面は表示�
 - features/viewer/useCameraBroadcast.ts: `shouldSendCamera`、`useCameraBroadcast(send)`
 - features/presence/PresenceList.tsx: `PresenceList()`
 - features/presence/RemoteCameras.tsx: `RemoteCameras()`
+- features/presence/presence-labels.ts: `PRESENCE_HEADING`、`SELF_SUFFIX`、`FOLLOW_LABEL`、`UNFOLLOW_LABEL`、`presenceHeading(count)`
 - features/annotation/StrokeLines.tsx: `StrokeLines({ strokes, opacity? })`
 - features/annotation/RoomStrokes.tsx: `RoomStrokes()`
 - features/annotation/stroke-build.ts: `offsetAlongNormal`、`buildStroke`、`latestOwnStrokeId`
 - features/annotation/AnnotationLayer.tsx: `AnnotationLayer({ send })`
 - features/annotation/AnnotationToolbar.tsx: `AnnotationToolbar({ send })`（色選択・1本戻す・自分の線を消すのみ）
 - features/comments/compose.ts: `CLICK_MOVE_THRESHOLD_PX`、`isClick`、`ownStrokesForComment`、`buildCommentInput`
+- features/comments/comment-labels.ts: コメント表示定数、`commentsHeading`、`statusLabel`、`statusTone`、`toggleStatusLabel`、`pinLabel`、`formatCommentTime`
 - features/comments/CommentPickLayer.tsx: `CommentPickLayer()`
 - features/comments/CommentComposer.tsx: `CommentComposer({ projectId, versionId })`
 - features/comments/CommentPins.tsx: `CommentPins()`
