@@ -1,4 +1,4 @@
-import { useEffect, useState, type ReactElement } from "react";
+import { useEffect, useRef, useState, type ReactElement } from "react";
 import type { CommentStatus } from "@shared/types";
 import { ApiClientError, listComments, updateCommentStatus } from "../../api/client";
 import { selectVisible, useCommentsStore } from "../../store/comments";
@@ -31,6 +31,18 @@ export function CommentList({ projectId }: { projectId: string }): ReactElement 
   const lastError = useCommentsStore((state) => state.lastError);
   const visibleItems = selectVisible(items, showOnlyOpen);
   const [updatingIds, setUpdatingIds] = useState<Set<string>>(() => new Set());
+  const lifecycleRef = useRef<{ projectId: string; active: boolean } | null>(null);
+
+  useEffect(() => {
+    const lifecycle = { projectId, active: true };
+    lifecycleRef.current = lifecycle;
+    return () => {
+      lifecycle.active = false;
+      if (lifecycleRef.current === lifecycle) {
+        lifecycleRef.current = null;
+      }
+    };
+  }, [projectId]);
 
   useEffect(() => {
     let cancelled = false;
@@ -53,20 +65,30 @@ export function CommentList({ projectId }: { projectId: string }): ReactElement 
   }, [projectId]);
 
   const changeStatus = async (commentId: string, status: CommentStatus) => {
+    const lifecycle = lifecycleRef.current;
+    if (lifecycle === null) {
+      return;
+    }
     setUpdatingIds((current) => new Set(current).add(commentId));
     try {
       const comment = await updateCommentStatus(projectId, commentId, status);
-      const store = useCommentsStore.getState();
-      store.upsert(comment);
-      useCommentsStore.getState().setLastError(null);
+      if (lifecycleRef.current === lifecycle && lifecycle.active) {
+        const store = useCommentsStore.getState();
+        store.upsert(comment);
+        store.setLastError(null);
+      }
     } catch (error: unknown) {
-      useCommentsStore.getState().setLastError(errorMessage(error));
+      if (lifecycleRef.current === lifecycle && lifecycle.active) {
+        useCommentsStore.getState().setLastError(errorMessage(error));
+      }
     } finally {
-      setUpdatingIds((current) => {
-        const next = new Set(current);
-        next.delete(commentId);
-        return next;
-      });
+      if (lifecycleRef.current === lifecycle && lifecycle.active) {
+        setUpdatingIds((current) => {
+          const next = new Set(current);
+          next.delete(commentId);
+          return next;
+        });
+      }
     }
   };
 

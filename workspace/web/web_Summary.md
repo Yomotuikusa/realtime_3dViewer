@@ -35,12 +35,12 @@ glTF/GLB の 3D レビュー画面を提供する。レビュー画面は表示�
 - src/features/presence/RemoteCameras.tsx: 他者のカメラ位置・向きに、その人の色の左線を持つ `presence-tag` 名札を重ねる
 - src/features/presence/presence-labels.ts: 参加者見出し、本人/追従操作の日本語ラベルと件数見出し関数
 - src/features/presence/presence.css: 参加者行、追従中の背景、色ドット、3D カメラ名札のトークン CSS
-- src/features/comments/CommentList.tsx: `CommentList({ projectId })` として REST でコメントを取得し、未解決フィルタ、時刻・状態バッジ付き一覧、選択領域、解決 / 再開操作、API エラーと空状態を提供。選択領域は native button、状態変更ボタンは兄弟要素として分離する
+- src/features/comments/CommentList.tsx: `CommentList({ projectId })` として REST でコメントを取得し、未解決フィルタ、時刻・状態バッジ付き一覧、選択領域、解決 / 再開操作、API エラーと空状態を提供。選択領域は native button、状態変更ボタンは兄弟要素として分離し、アンマウントまたは projectId 世代変更後の非同期結果はストアへ反映しない
 - src/features/comments/comment-labels.ts: コメント見出し、状態/空状態/Composer/ピンの日本語ラベル、Intl による時刻整形
 - src/features/comments/comments.css: コメント一覧・Composer・3D ピンのトークン CSS。コメント領域を縦グリッド化し、Composer 不在時は親を単独の可変行へ切り替えて一覧が全高を使い、一覧だけをスクロールさせる
 - src/features/comments/compose.ts: クリック移動量の判定、自分の線の時系列順・最新200本への制限、コメント投稿入力の組み立てを提供する
 - src/features/comments/CommentPickLayer.tsx: Comment モード中だけ Canvas の pointerdown / pointerup を購読し、5px 以下のクリックをモデルへレイキャストして投稿アンカーを設定する。ドラッグやモデル外の操作は無視する
-- src/features/comments/CommentComposer.tsx: アンカー選択後に自動フォーカスする本文入力カードと REST コメント投稿を提供し、現在のカメラ・自分の線を入力へ含め、成功時にコメントを upsert・選択する。接続状態に関係なく投稿する
+- src/features/comments/CommentComposer.tsx: アンカー選択後に自動フォーカスする本文入力カードと REST コメント投稿を提供し、現在のカメラ・自分の線を入力へ含め、成功時にコメントを upsert・選択する。アンマウントまたは projectId 世代変更後の非同期結果はストアへ反映しない。接続状態に関係なく投稿する
 - src/features/comments/CommentPins.tsx: 表示対象コメントを author/status 付きアンカー位置の drei `Html` native button ピンとして描画し、クリック選択、選択強調、resolved の薄表示を提供する。pointerdown/up の伝播停止を維持する
 - src/features/comments/replay.ts: 選択コメントのカメラ要求・Follow 解除・再現線設定を各ストアへ反映する純粋な入口と再現線の透明度を提供
 - src/features/comments/useCommentReplay.ts: selectedId の変化を選択コメントの再現へ接続し、アンマウント時に再現線を消すフック
