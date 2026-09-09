@@ -16,6 +16,10 @@
   gap: var(--space-2);
 }
 
+.comments:only-child {
+  grid-row: 1 / -1;
+}
+
 .comments__head {
   display: flex;
   align-items: baseline;
