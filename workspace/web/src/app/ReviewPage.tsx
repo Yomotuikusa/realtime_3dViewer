@@ -6,8 +6,8 @@ import { ViewerCanvas } from "../features/viewer/ViewerCanvas";
 import { useCameraStore } from "../store/camera";
 
 type ReviewState =
-  | { status: "loading" }
-  | { status: "error"; message: string }
+  | { status: "loading"; projectId: string }
+  | { status: "error"; projectId: string; message: string }
   | { status: "ready"; project: Project };
 
 function ErrorCard({ message, onRetry }: { message: string; onRetry: () => void }): ReactElement {
@@ -35,11 +35,11 @@ function ErrorCard({ message, onRetry }: { message: string; onRetry: () => void 
 
 export function ReviewPage({ projectId }: { projectId: string }): ReactElement {
   const [reloadSeq, setReloadSeq] = useState(0);
-  const [state, setState] = useState<ReviewState>({ status: "loading" });
+  const [state, setState] = useState<ReviewState>({ status: "loading", projectId });
 
   useEffect(() => {
     let cancelled = false;
-    setState({ status: "loading" });
+    setState({ status: "loading", projectId });
     void getProject(projectId)
       .then((project) => {
         if (!cancelled) {
@@ -55,7 +55,11 @@ export function ReviewPage({ projectId }: { projectId: string }): ReactElement {
           : error instanceof Error
             ? error.message
             : "プロジェクトの取得に失敗しました。";
-        setState({ status: "error", message: message || "プロジェクトの取得に失敗しました。" });
+        setState({
+          status: "error",
+          projectId,
+          message: message || "プロジェクトの取得に失敗しました。",
+        });
       });
 
     return () => {
@@ -63,7 +67,11 @@ export function ReviewPage({ projectId }: { projectId: string }): ReactElement {
     };
   }, [projectId, reloadSeq]);
 
-  if (state.status === "loading") {
+  if (
+    state.status === "loading"
+    || (state.status === "ready" && state.project.id !== projectId)
+    || (state.status === "error" && state.projectId !== projectId)
+  ) {
     return <main style={pageStyle}><p>プロジェクトを読み込んでいます…</p></main>;
   }
 
