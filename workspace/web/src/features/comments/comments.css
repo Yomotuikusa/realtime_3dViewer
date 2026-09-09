@@ -8,6 +8,10 @@
   min-height: 0;
 }
 
+.review-panel__comments:has(> .comments:only-child) {
+  grid-template-rows: minmax(0, 1fr);
+}
+
 .comments {
   display: grid;
   grid-template-rows: auto auto auto 1fr;
