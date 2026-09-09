@@ -4,6 +4,8 @@ export interface Config {
   port: number;
   dataDir: string;
   maxUploadBytes: number;
+  /** WEB_DIST_DIR (default "./web/dist"); relative paths are resolved from cwd. */
+  webDistDir: string;
 }
 
 function parseNonNegativeInteger(name: string, value: string): number {
@@ -34,6 +36,7 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
     "MAX_UPLOAD_BYTES",
     env.MAX_UPLOAD_BYTES ?? String(MAX_UPLOAD_BYTES_DEFAULT),
   );
+  const webDistDir = env.WEB_DIST_DIR ?? "./web/dist";
 
-  return { port, dataDir, maxUploadBytes };
+  return { port, dataDir, maxUploadBytes, webDistDir };
 }

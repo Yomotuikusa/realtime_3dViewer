@@ -7,12 +7,14 @@ import type { Db } from "./db/connection";
 import { toErrorResponse } from "./errors";
 import { commentRoutes } from "./routes/comments";
 import { projectRoutes } from "./routes/projects";
+import { staticRoutes } from "./routes/static";
 import type { Storage } from "./storage/files";
 
 export interface AppDeps {
   db: Db;
   storage: Storage;
-  config: Config;
+  // Keep dependency injection compatible with fixtures created before webDistDir existed.
+  config: Omit<Config, "webDistDir"> & Partial<Pick<Config, "webDistDir">>;
   publish: (projectId: string, msg: ServerMessage) => void;
   now?: () => number;
   newId?: () => string;
@@ -35,6 +37,7 @@ export function createApp(deps: AppDeps): HonoType {
   );
   app.route("/api/projects", projectRoutes(resolved));
   app.route("/api/projects/:projectId/comments", commentRoutes(resolved));
+  app.route("/", staticRoutes(deps.config.webDistDir ?? "./web/dist"));
 
   return app;
 }
