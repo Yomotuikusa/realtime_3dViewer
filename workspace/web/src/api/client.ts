@@ -1,7 +1,7 @@
 import type { Comment, CommentStatus, Project } from "@shared/types";
 import { CommentSchema, ProjectSchema } from "@shared/types";
 import { ApiErrorSchema } from "@shared/api";
-import type { CreateCommentInput as CreateCommentInputType } from "@shared/api";
+import type { CreateCommentInput } from "@shared/api";
 import { z } from "zod";
 
 const API_BASE = "";
@@ -90,7 +90,7 @@ export function listComments(projectId: string, status?: CommentStatus): Promise
 
 export function createComment(
   projectId: string,
-  input: CreateCommentInputType,
+  input: CreateCommentInput,
 ): Promise<Comment> {
   return requestJson(
     `/api/projects/${projectId}/comments`,
