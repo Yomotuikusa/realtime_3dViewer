@@ -2,8 +2,11 @@ import { useEffect, useState, type ReactElement } from "react";
 import type { Project } from "@shared/types";
 import { ApiClientError, getProject, modelUrl } from "../api/client";
 import { ErrorBoundary } from "./ErrorBoundary";
+import { JoinDialog } from "./JoinDialog";
+import { useRealtime } from "./useRealtime";
 import { ViewerCanvas } from "../features/viewer/ViewerCanvas";
 import { useCameraStore } from "../store/camera";
+import { useSessionStore } from "../store/session";
 
 type ReviewState =
   | { status: "loading"; projectId: string }
@@ -35,7 +38,11 @@ function ErrorCard({ message, onRetry }: { message: string; onRetry: () => void 
 
 export function ReviewPage({ projectId }: { projectId: string }): ReactElement {
   const [reloadSeq, setReloadSeq] = useState(0);
+  const [joinName, setJoinName] = useState<string | null>(null);
   const [state, setState] = useState<ReviewState>({ status: "loading", projectId });
+  useRealtime(projectId, joinName);
+  const connection = useSessionStore((session) => session.connection);
+  const lastError = useSessionStore((session) => session.lastError);
 
   useEffect(() => {
     let cancelled = false;
@@ -82,6 +89,15 @@ export function ReviewPage({ projectId }: { projectId: string }): ReactElement {
   const src = modelUrl(projectId, state.project.latestVersion.id);
   const requestReset = () => useCameraStore.getState().requestReset();
   const requestFit = () => useCameraStore.getState().requestFit();
+  const handleJoin = (name: string) => {
+    useSessionStore.getState().setName(name);
+    setJoinName(name);
+  };
+  const connectionLabel = connection === "connecting"
+    ? "再接続中"
+    : connection === "closed"
+      ? "切断"
+      : null;
 
   return (
     <main style={pageStyle}>
@@ -91,6 +107,11 @@ export function ReviewPage({ projectId }: { projectId: string }): ReactElement {
       </header>
       <div style={{ display: "grid", gridTemplateColumns: "minmax(0, 1fr) 20rem", minHeight: "calc(100vh - 4.25rem)" }}>
         <section style={{ position: "relative", minWidth: 0, padding: "0 0 1rem 1rem" }}>
+          {joinName === null && (
+            <div style={{ position: "absolute", zIndex: 2, top: "1rem", left: "2rem" }}>
+              <JoinDialog onJoin={handleJoin} />
+            </div>
+          )}
           <div style={{ position: "absolute", zIndex: 1, top: "1rem", left: "2rem", display: "flex", gap: "0.5rem" }}>
             <button type="button" onClick={requestReset}>Reset</button>
             <button type="button" onClick={requestFit}>全体表示</button>
@@ -107,7 +128,10 @@ export function ReviewPage({ projectId }: { projectId: string }): ReactElement {
             <ViewerCanvas modelSrc={src} />
           </ErrorBoundary>
         </section>
-        <aside aria-label="サイドパネル" style={{ margin: "0 1rem 1rem 1rem", padding: "1rem", border: "1px solid #d0d5dd", borderRadius: "0.5rem" }} />
+        <aside aria-label="サイドパネル" style={{ margin: "0 1rem 1rem 1rem", padding: "1rem", border: "1px solid #d0d5dd", borderRadius: "0.5rem" }}>
+          {connectionLabel && <p style={{ margin: "0 0 0.5rem" }}>{connectionLabel}</p>}
+          {lastError && <p role="alert" style={{ margin: 0, color: "#b42318" }}>{lastError}</p>}
+        </aside>
       </div>
     </main>
   );
