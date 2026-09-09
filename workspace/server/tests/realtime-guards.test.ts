@@ -60,14 +60,14 @@ describe("realtime connection and state guards", () => {
   it("allows a same-host Origin and rejects foreign or malformed Origins", async () => {
     const value = await startRealtime();
     fixtures.push(value);
-    const sameHost = await openWithOrigin(value.url, `http://${new URL(value.url).host}`);
+    const sameHost = await openWithOrigin(`${value.url}?projectId=p1`, `http://${new URL(value.url).host}`);
     sameHost.ws.send(JSON.stringify({ type: "join", name: "same-host" }));
     expect((await sameHost.message).type).toBe("welcome");
     sameHost.ws.close();
     await sameHost.closed;
 
     for (const origin of ["http://evil.example", "null", "not a URL"]) {
-      const rejected = await openWithOrigin(value.url, origin);
+      const rejected = await openWithOrigin(`${value.url}?projectId=p1`, origin);
       expect(await rejected.message).toEqual({
         type: "error",
         code: "BAD_REQUEST",
