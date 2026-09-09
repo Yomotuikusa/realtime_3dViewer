@@ -1,10 +1,15 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import type { ServerMessage } from "@shared/protocol";
 import { dispatchServerMessage } from "../src/app/realtime-dispatch";
+import { usePresenceStore } from "../src/store/presence";
 import { useSessionStore } from "../src/store/session";
+
+const user = { id: "u2", name: "Mio", color: "#112233", camera: null };
+const camera = { position: [1, 2, 3] as [number, number, number], target: [0, 1, 0] as [number, number, number] };
 
 beforeEach(() => {
   useSessionStore.getState().reset();
+  usePresenceStore.getState().reset();
 });
 
 describe("realtime dispatch", () => {
@@ -12,18 +17,35 @@ describe("realtime dispatch", () => {
     dispatchServerMessage({
       type: "welcome",
       selfId: "u1",
-      users: [{ id: "u1", name: "Rin", color: "#f00", camera: null }],
+      users: [{ id: "u1", name: "Rin", color: "#f00", camera: null }, user],
       strokes: [],
     });
 
     expect(useSessionStore.getState().selfId).toBe("u1");
     expect(useSessionStore.getState().color).toBe("#f00");
+    expect(usePresenceStore.getState().users).toHaveProperty("u2", user);
   });
 
   it("keeps color null when the self user is absent", () => {
     dispatchServerMessage({ type: "welcome", selfId: "u1", users: [], strokes: [] });
     expect(useSessionStore.getState().selfId).toBe("u1");
     expect(useSessionStore.getState().color).toBeNull();
+  });
+
+  it("dispatches presence join, leave, and camera events", () => {
+    dispatchServerMessage({ type: "user:joined", user });
+    expect(usePresenceStore.getState().users).toHaveProperty("u2", user);
+    dispatchServerMessage({ type: "camera", userId: "u2", camera });
+    expect(usePresenceStore.getState().users.u2?.camera).toEqual(camera);
+    usePresenceStore.getState().follow("u2");
+    dispatchServerMessage({ type: "user:left", userId: "u2" });
+    expect(usePresenceStore.getState().users).not.toHaveProperty("u2");
+    expect(usePresenceStore.getState().followingUserId).toBeNull();
+  });
+
+  it("ignores a camera event for an unknown user", () => {
+    expect(() => dispatchServerMessage({ type: "camera", userId: "nope", camera })).not.toThrow();
+    expect(usePresenceStore.getState().users).toEqual({});
   });
 
   it("formats server errors in the session store", () => {
