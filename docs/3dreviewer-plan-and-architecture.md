@@ -585,7 +585,10 @@ verify は workspace 直下で実行される前提で、shared 系は `npm run 
   `[validate] ignore_dirs = ["node_modules", "dist", ".vite"]`
 - `config/sync-deps.sh`(人間が実行):
   `workspace/package.json` と lockfile を `.deps/` にコピーして `npm ci`
-- `config/preflight.sh`: リンク先が存在すること、`workspace/package-lock.json` と
+- `config/preflight.sh`: 中身が読み込まれて `sh -c` でサンドボックスへ渡される(ファイルとしては実行
+  されないので `$0` からスクリプト位置は取れない)。cwd は `workspace/` で、見えるのは `workspace/` と
+  ro_binds の `.deps/node_modules` だけ(リポジトリのルートも `.deps/` 自身も見えない)。よって
+  リポジトリ内は cwd 相対で参照する。リンク先が存在すること、`workspace/package-lock.json` と
   `.deps/node_modules/.synced-package-lock.json`(sync-deps.sh が写す照合用コピー。サンドボックスからは
   `.deps/node_modules` しか見えないため中に置く)が一致することを検査し、不一致なら `sync-deps.sh` を案内して exit 1
 - lockfile の生成は `cd workspace && npm install --package-lock-only`(node_modules を作らない)

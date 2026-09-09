@@ -6,21 +6,24 @@
 # 依存の実体は .deps/node_modules に置き、workspace/node_modules のシンボリックリンクと
 # [sandbox] ro_binds で持ち込む。ここではその前提が崩れていないことを検査する。
 # 詳細: docs/3dreviewer-plan-and-architecture.md §23
-
-# preflight は verify と同じ cwd (workspace/) で実行されるため、
-# リポジトリ内のパスは cwd ではなくこのスクリプトの位置から解決する。
-root=$(cd "$(dirname "$0")/.." && pwd)
+#
+# このスクリプトはファイルとして実行されるのではなく、中身が読み込まれて
+# `sh -c "<中身>"` としてsandboxへ渡される。したがって $0 は /bin/sh であり、
+# スクリプト位置は参照できない。基準にできるのは cwd (= workspace/) だけである。
+# また sandbox に持ち込まれるのは workspace/ と ro_binds の .deps/node_modules
+# だけで、リポジトリのルートも .deps/ 自身も見えない。よってリポジトリ内の
+# パスは cwd からの相対で、依存は workspace/node_modules 経由で確かめる。
 
 command -v node >/dev/null || { echo "node がありません(~/.nvm が見えていません)"; exit 1; }
 
-deps=$root/.deps
-[ -d "$deps/node_modules" ] || {
-  echo "依存の実体 $deps/node_modules がありません。ホスト側で: sh config/sync-deps.sh"; exit 1
+deps=node_modules   # workspace/node_modules -> ../.deps/node_modules のシンボリックリンク
+[ -d "$deps" ] || {
+  echo "依存 workspace/node_modules がありません。ホスト側で: sh config/sync-deps.sh"; exit 1
 }
-[ -f "$deps/node_modules/typescript/package.json" ] || {
-  echo "$deps/node_modules が不完全です。ホスト側で: sh config/sync-deps.sh"; exit 1
+[ -f "$deps/typescript/package.json" ] || {
+  echo "workspace/node_modules (.deps/node_modules) が不完全です。ホスト側で: sh config/sync-deps.sh"; exit 1
 }
-if ! cmp -s "$root/workspace/package-lock.json" "$deps/node_modules/.synced-package-lock.json"; then
+if ! cmp -s package-lock.json "$deps/.synced-package-lock.json"; then
   echo "workspace/package-lock.json と .deps/node_modules/.synced-package-lock.json が一致しません。"
   echo "依存を変更した後は、ホスト側で: sh config/sync-deps.sh"
   exit 1
