@@ -1,13 +1,16 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import type { ServerMessage } from "@shared/protocol";
 import { dispatchServerMessage } from "../src/app/realtime-dispatch";
+import { useAnnotationStore } from "../src/store/annotation";
 import { usePresenceStore } from "../src/store/presence";
 import { useSessionStore } from "../src/store/session";
 
 const user = { id: "u2", name: "Mio", color: "#112233", camera: null };
 const camera = { position: [1, 2, 3] as [number, number, number], target: [0, 1, 0] as [number, number, number] };
+const stroke = { id: "s1", userId: "u1", color: "#ff0000", points: [[0, 0, 0], [1, 1, 1]] as [[number, number, number], [number, number, number]], createdAt: 1 };
 
 beforeEach(() => {
+  useAnnotationStore.getState().reset();
   useSessionStore.getState().reset();
   usePresenceStore.getState().reset();
 });
@@ -18,12 +21,13 @@ describe("realtime dispatch", () => {
       type: "welcome",
       selfId: "u1",
       users: [{ id: "u1", name: "Rin", color: "#f00", camera: null }, user],
-      strokes: [],
+      strokes: [stroke],
     });
 
     expect(useSessionStore.getState().selfId).toBe("u1");
     expect(useSessionStore.getState().color).toBe("#f00");
     expect(usePresenceStore.getState().users).toHaveProperty("u2", user);
+    expect(useAnnotationStore.getState().strokes).toEqual({ s1: stroke });
   });
 
   it("keeps color null when the self user is absent", () => {
@@ -51,6 +55,17 @@ describe("realtime dispatch", () => {
   it("formats server errors in the session store", () => {
     dispatchServerMessage({ type: "error", code: "BAD_REQUEST", message: "x" });
     expect(useSessionStore.getState().lastError).toBe("BAD_REQUEST: x");
+  });
+
+  it("dispatches stroke add, remove, and clear events", () => {
+    const otherStroke = { ...stroke, id: "s2", userId: "u2" };
+    dispatchServerMessage({ type: "stroke:add", stroke });
+    dispatchServerMessage({ type: "stroke:add", stroke: otherStroke });
+    expect(useAnnotationStore.getState().strokes).toEqual({ s1: stroke, s2: otherStroke });
+    dispatchServerMessage({ type: "stroke:remove", strokeId: "s1" });
+    expect(useAnnotationStore.getState().strokes).toEqual({ s2: otherStroke });
+    dispatchServerMessage({ type: "stroke:clear", userId: "u2" });
+    expect(useAnnotationStore.getState().strokes).toEqual({});
   });
 
   it("ignores messages not handled by this phase", () => {
