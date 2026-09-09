@@ -8,7 +8,7 @@ import { useCameraStore } from "../store/camera";
 type ReviewState =
   | { status: "loading"; projectId: string }
   | { status: "error"; projectId: string; message: string }
-  | { status: "ready"; project: Project };
+  | { status: "ready"; projectId: string; project: Project };
 
 function ErrorCard({ message, onRetry }: { message: string; onRetry: () => void }): ReactElement {
   return (
@@ -43,7 +43,7 @@ export function ReviewPage({ projectId }: { projectId: string }): ReactElement {
     void getProject(projectId)
       .then((project) => {
         if (!cancelled) {
-          setState({ status: "ready", project });
+          setState({ status: "ready", projectId, project });
         }
       })
       .catch((error: unknown) => {
@@ -67,11 +67,7 @@ export function ReviewPage({ projectId }: { projectId: string }): ReactElement {
     };
   }, [projectId, reloadSeq]);
 
-  if (
-    state.status === "loading"
-    || (state.status === "ready" && state.project.id !== projectId)
-    || (state.status === "error" && state.projectId !== projectId)
-  ) {
+  if (state.status === "loading" || state.projectId !== projectId) {
     return <main style={pageStyle}><p>プロジェクトを読み込んでいます…</p></main>;
   }
 

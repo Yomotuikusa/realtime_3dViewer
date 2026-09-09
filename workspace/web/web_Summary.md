@@ -43,7 +43,8 @@ API クライアントは同一オリジンの `/api/...` を使い、2xx 応答
 既定 epsilon 内の更新を無視する。`requestCamera`/`consumePendingCamera` は複製した
 `CameraState` を受け渡し、`resetSeq`/`fitSeq` は操作トリガ、`modelSize` はモデルの最大辺長を保持する。
 `CameraRig` は Reset 発生時に未消費の `pendingCamera` も破棄し、Reset 後の古い再現要求が補間を開始しないようにする。
-`ReviewPage` は取得結果のプロジェクト ID が現在の URL と一致しない間、旧画面を表示せず loading として扱う。
+`ReviewPage` は ready/error に取得対象の `projectId` を保持し、現在の URL と一致しない間は
+旧画面を表示せず loading として扱う。
 後続の viewer 機能は `ViewerCanvas` の `children` 差し込み口に RemoteCameras / StrokeLines /
 AnnotationLayer などのレイヤーを追加し、
 コメント機能は `getProject`、`modelUrl`、カメラストアを利用する。
