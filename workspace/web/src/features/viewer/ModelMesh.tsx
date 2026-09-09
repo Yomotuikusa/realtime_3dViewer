@@ -3,9 +3,12 @@ import { useGLTF } from "@react-three/drei";
 import { Box3, Vector3 } from "three";
 import { useCameraStore } from "../../store/camera";
 import { setModelTarget } from "./model-target";
+import { createModelLoadingManager } from "./model-loading";
 
 export function ModelMesh({ src }: { src: string }): ReactElement {
-  const { scene } = useGLTF(src);
+  const { scene } = useGLTF(src, true, true, (loader) => {
+    loader.manager = createModelLoadingManager(location.origin);
+  });
 
   useEffect(() => {
     setModelTarget(scene);
