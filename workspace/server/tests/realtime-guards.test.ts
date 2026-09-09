@@ -60,7 +60,7 @@ describe("realtime connection and state guards", () => {
   it("allows a same-host Origin and rejects foreign or malformed Origins", async () => {
     const value = await startRealtime();
     fixtures.push(value);
-    const sameHost = await openWithOrigin(value.url, new URL(value.url).origin);
+    const sameHost = await openWithOrigin(value.url, `http://${new URL(value.url).host}`);
     sameHost.ws.send(JSON.stringify({ type: "join", name: "same-host" }));
     expect((await sameHost.message).type).toBe("welcome");
     sameHost.ws.close();
@@ -154,7 +154,7 @@ describe("realtime connection and state guards", () => {
     if (added.type !== "stroke:add") throw new Error("stroke was not broadcast");
     expect(added.stroke.points).toHaveLength(MAX_ROOM_STROKES);
 
-    const oversized = Buffer.alloc(MAX_WS_PAYLOAD_BYTES + 1, 120);
+    const oversized = JSON.stringify("x".repeat(MAX_WS_PAYLOAD_BYTES));
     ws.send(oversized);
     expect(await value.closed(ws, 2000)).toBe(1009);
     expect(value.hub.projectOf(welcome.selfId)).toBeNull();
