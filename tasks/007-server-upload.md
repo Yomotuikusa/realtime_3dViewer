@@ -6,7 +6,7 @@ depends_on: [006]
 owns: [server/src/routes/projects.ts, server/src/routes/upload-validation.ts, server/tests/upload-validation.test.ts, server/tests/routes-projects-upload.test.ts, server/server_Summary.md]
 reads: [../docs/3dreviewer-plan-and-architecture.md, ../docs/task-breakdown.md, shared/shared_Summary.md, shared/src/types.ts, shared/src/api.ts, server/src/app.ts, server/src/errors.ts, server/src/storage/files.ts, server/src/db/connection.ts, server/src/db/projects.ts, server/tests/helpers/app.ts, server/tests/helpers/tmp.ts]
 verify: npm run typecheck && npm run test:server
-status: todo
+status: done
 ---
 
 ## 目的
