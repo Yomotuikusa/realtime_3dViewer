@@ -9,6 +9,8 @@ import { CommentList } from "../features/comments/CommentList";
 import { CommentComposer } from "../features/comments/CommentComposer";
 import { CommentPickLayer } from "../features/comments/CommentPickLayer";
 import { CommentPins } from "../features/comments/CommentPins";
+import { ReplayStrokes } from "../features/comments/ReplayStrokes";
+import { useCommentReplay } from "../features/comments/useCommentReplay";
 import { RemoteCameras } from "../features/presence/RemoteCameras";
 import { RoomStrokes } from "../features/annotation/RoomStrokes";
 import { AnnotationLayer } from "../features/annotation/AnnotationLayer";
@@ -50,6 +52,7 @@ export function ReviewPage({ projectId }: { projectId: string }): ReactElement {
   const [reloadSeq, setReloadSeq] = useState(0);
   const [joinName, setJoinName] = useState<string | null>(null);
   const [state, setState] = useState<ReviewState>({ status: "loading", projectId });
+  useCommentReplay();
   const realtime = useRealtime(projectId, joinName);
   useCameraBroadcast(realtime.send);
   const connection = useSessionStore((session) => session.connection);
@@ -140,6 +143,7 @@ export function ReviewPage({ projectId }: { projectId: string }): ReactElement {
             <ViewerCanvas modelSrc={src}>
               <RemoteCameras />
               <RoomStrokes />
+              <ReplayStrokes />
               <AnnotationLayer send={realtime.send} />
               <CommentPickLayer />
               <CommentPins />
