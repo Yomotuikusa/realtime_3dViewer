@@ -10,6 +10,7 @@ import { useSessionStore } from "../../store/session";
 import { useLightingStore } from "../../store/lighting";
 import { followStep, followTargetCamera } from "./follow";
 import { attachViewerPointer, type ViewerControlsLike } from "./viewer-pointer";
+import { rotationLocked } from "./view-presets";
 import type { Camera } from "three";
 
 function readCamera(camera: Camera, controls: OrbitControlsImpl): CameraState {
@@ -31,6 +32,8 @@ export function CameraRig(): ReactElement {
   const controlsRef = useRef<OrbitControlsImpl | null>(null);
   const pendingTarget = useRef<CameraState | null>(null);
   const fitSeq = useCameraStore((state) => state.fitSeq);
+  const following = usePresenceStore((state) => state.followingUserId !== null);
+  const locked = useCameraStore((state) => rotationLocked(state.selfCamera, following));
   const bounds = useBounds();
   const lastResetSeq = useRef(useCameraStore.getState().resetSeq);
   const lastFitSeq = useRef(fitSeq);
@@ -132,6 +135,8 @@ export function CameraRig(): ReactElement {
     <OrbitControls
       ref={controlsRef}
       makeDefault
+      // 回転を無効にすると start が発火せず、Follow 中に操作で追従を解除できなくなるため、追従中はロックしない。
+      enableRotate={!locked}
       onChange={handleChange}
       onStart={handleStart}
       target={DEFAULT_CAMERA.target}

@@ -34,6 +34,9 @@ export const VIEW_PRESET_DIRECTIONS: Readonly<Record<ViewPreset, Vec3>> = {
   left: [-1, 0, 0],
 };
 
+/** 現在の向きを既定視点と同じとみなす許容誤差。 */
+export const PRESET_MATCH_EPSILON = 1e-6;
+
 /** 注視点とカメラが重なっているときに使う最小距離。 */
 export const MIN_PRESET_DISTANCE = 0.001;
 
@@ -56,4 +59,33 @@ export function presetCamera(preset: ViewPreset, current: CameraState): CameraSt
     ],
     target: [...current.target],
   };
+}
+
+/** 注視点からカメラへ向かう方向が、どの既定視点と一致するかを返す。 */
+export function matchViewPreset(camera: CameraState): ViewPreset | null {
+  const dx = camera.position[0] - camera.target[0];
+  const dy = camera.position[1] - camera.target[1];
+  const dz = camera.position[2] - camera.target[2];
+  const distance = Math.hypot(dx, dy, dz);
+  if (distance < PRESET_MATCH_EPSILON) {
+    return null;
+  }
+
+  const direction: Vec3 = [dx / distance, dy / distance, dz / distance];
+  for (const preset of VIEW_PRESET_ORDER) {
+    const presetDirection = VIEW_PRESET_DIRECTIONS[preset];
+    if (direction.every((component, index) => {
+      const presetComponent = presetDirection[index];
+      return presetComponent !== undefined
+        && Math.abs(component - presetComponent) <= PRESET_MATCH_EPSILON;
+    })) {
+      return preset;
+    }
+  }
+  return null;
+}
+
+/** 既定視点の向きで、追従していないときだけ回転を禁止する。 */
+export function rotationLocked(camera: CameraState, following: boolean): boolean {
+  return !following && matchViewPreset(camera) !== null;
 }

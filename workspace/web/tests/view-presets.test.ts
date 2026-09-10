@@ -3,7 +3,10 @@ import type { CameraState } from "@shared/types";
 import { DEFAULT_CAMERA } from "@shared/camera";
 import {
   MIN_PRESET_DISTANCE,
+  PRESET_MATCH_EPSILON,
+  matchViewPreset,
   presetCamera,
+  rotationLocked,
   VIEW_CROSS_CENTER,
   VIEW_PRESET_CELLS,
   VIEW_PRESET_DIRECTIONS,
@@ -92,5 +95,46 @@ describe("view presets", () => {
       )).toBeCloseTo(distance, 10);
       expect(result.target).toEqual(current.target);
     }
+  });
+
+  it("matches horizontal preset directions from any target", () => {
+    expect(matchViewPreset({ position: [0, 0, 5], target: [0, 0, 0] })).toBe("front");
+    expect(matchViewPreset({ position: [0, 0, -5], target: [0, 0, 0] })).toBe("back");
+    expect(matchViewPreset({ position: [5, 0, 0], target: [0, 0, 0] })).toBe("right");
+    expect(matchViewPreset({ position: [-5, 0, 0], target: [0, 0, 0] })).toBe("left");
+    expect(matchViewPreset({ position: [4, 2, 3], target: [1, 2, 3] })).toBe("right");
+  });
+
+  it("matches every preset camera and does not mutate its argument", () => {
+    const current: CameraState = { position: [4, -1, 2], target: [1, 2, 3] };
+    const before = { position: [...current.position], target: [...current.target] };
+    for (const preset of VIEW_PRESET_ORDER) {
+      const candidate = presetCamera(preset, current);
+      const candidateBefore = { position: [...candidate.position], target: [...candidate.target] };
+      expect(matchViewPreset(candidate)).toBe(preset);
+      expect(candidate).toEqual(candidateBefore);
+    }
+    expect(current).toEqual(before);
+  });
+
+  it("rejects non-horizontal, overlapping, and default camera directions", () => {
+    expect(matchViewPreset(DEFAULT_CAMERA)).toBeNull();
+    expect(matchViewPreset({ position: [0, 5, 0], target: [0, 0, 0] })).toBeNull();
+    expect(matchViewPreset({ position: [0, 0.01, -5], target: [0, 0, 0] })).toBeNull();
+    expect(matchViewPreset({ position: [1, 2, 3], target: [1, 2, 3] })).toBeNull();
+  });
+
+  it("accepts direction component differences within the matching epsilon", () => {
+    const x = PRESET_MATCH_EPSILON / 10;
+    expect(matchViewPreset({ position: [x, 0, 1], target: [0, 0, 0] })).toBe("front");
+  });
+
+  it("locks rotation only for an unfollowed preset direction", () => {
+    const front: CameraState = { position: [0, 0, 5], target: [0, 0, 0] };
+    expect(rotationLocked(front, false)).toBe(true);
+    expect(rotationLocked(front, true)).toBe(false);
+    expect(rotationLocked(DEFAULT_CAMERA, false)).toBe(false);
+    expect(rotationLocked(DEFAULT_CAMERA, true)).toBe(false);
+    expect(rotationLocked({ position: [1, 2, 3], target: [1, 2, 3] }, false)).toBe(false);
   });
 });
