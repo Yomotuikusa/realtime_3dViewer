@@ -145,6 +145,7 @@ describe("camera store", () => {
     useCameraStore.getState().requestFit();
     useCameraStore.getState().setModelSize(12.5);
     useCameraStore.getState().setFocalLength(85);
+    expect(useCameraStore.getState().focalLength).toBe(85);
     useCameraStore.getState().reset();
     const state = useCameraStore.getState();
     expect(cameraEquals(state.selfCamera, DEFAULT_CAMERA)).toBe(true);
