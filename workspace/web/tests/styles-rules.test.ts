@@ -59,6 +59,7 @@ const tokenNames = [
   "--duration-fast",
   "--panel-width",
   "--header-height",
+  "--follow-frame-width",
 ];
 
 function collectVariableDeclarations(text: string): Set<string> {

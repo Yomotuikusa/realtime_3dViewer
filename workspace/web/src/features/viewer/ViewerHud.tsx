@@ -67,14 +67,13 @@ export function ViewerHud({ send }: { send: (msg: ClientMessage) => boolean }): 
       </div>
       <LightGizmo />
       {followingUserId !== null && (
-        <div
-          className="hud-follow"
-          role="status"
-          style={{ "--user-color": followingUser?.color } as CSSProperties}
-        >
-          <i className="hud-follow__dot" aria-hidden="true" />
-          {followingLabel(followingUser?.name ?? "")}
-          <button className="btn btn--quiet" type="button" onClick={unfollow}>{UNFOLLOW_LABEL}</button>
+        <div className="hud-following" style={{ "--user-color": followingUser?.color } as CSSProperties}>
+          <div className="hud-follow-frame" aria-hidden="true" />
+          <div className="hud-follow" role="status">
+            <i className="hud-follow__dot" aria-hidden="true" />
+            {followingLabel(followingUser?.name ?? "")}
+            <button className="btn btn--quiet" type="button" onClick={unfollow}>{UNFOLLOW_LABEL}</button>
+          </div>
         </div>
       )}
       <p className="hud-hint" role="status" aria-live="polite">

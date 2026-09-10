@@ -34,6 +34,54 @@ describe("viewer styles", () => {
     );
   });
 
+  it("defines a positive pixel width for the follow frame", () => {
+    const width = rootBody(tokensText).match(/--follow-frame-width\s*:\s*([\d.]+)px/)?.[1];
+
+    expect(width).toBeDefined();
+    expect(Number(width)).toBeGreaterThan(0);
+  });
+
+  it("renders the follow frame through a contents wrapper", () => {
+    expect(ruleBody(viewerCssText, ".hud-following")).toContain("display: contents");
+  });
+
+  it("draws a non-interactive user-colored frame around the viewer", () => {
+    const body = ruleBody(viewerCssText, ".hud-follow-frame");
+
+    expect(body).toContain("position: absolute");
+    expect(body).toContain("inset: 0");
+    expect(body).toContain("pointer-events: none");
+    expect(body).toMatch(/border\s*:[^;]*var\(--follow-frame-width\)/);
+    expect(body).toContain("var(--user-color");
+  });
+
+  it("docks the follow badge to the frame's top edge", () => {
+    const body = ruleBody(viewerCssText, ".hud-follow");
+
+    expect(body).toContain("top: var(--follow-frame-width)");
+    expect(body).toContain("background: var(--color-surface-translucent)");
+    expect(body).toContain("translate: -50% 0");
+    expect(body).not.toContain("border-left");
+  });
+
+  it("matches the follow badge selector without matching its child blocks", () => {
+    const body = ruleBody(viewerCssText, ".hud-follow");
+
+    expect(body).not.toContain("hud-follow__dot");
+    expect(body).not.toContain("hud-follow-frame");
+    expect(body).not.toContain("hud-following");
+  });
+
+  it("renders the follow frame before the follow badge and provides the color once", () => {
+    const frameIndex = viewerHudText.indexOf('className="hud-follow-frame"');
+    const badgeIndex = viewerHudText.indexOf('className="hud-follow"');
+
+    expect(viewerHudText).toContain('className="hud-following"');
+    expect(frameIndex).toBeGreaterThan(viewerHudText.indexOf('className="hud-following"'));
+    expect(badgeIndex).toBeGreaterThan(frameIndex);
+    expect(viewerHudText.match(/"--user-color"/g)).toHaveLength(1);
+  });
+
   it("sets the docked camera menu width", () => {
     expect(ruleBody(viewerCssText, ".hud-menu")).toContain("width: 13.5rem");
   });
