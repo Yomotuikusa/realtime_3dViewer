@@ -46,7 +46,7 @@ export function CameraMenu({ onClose }: CameraMenuProps): ReactElement {
           return (
             <button
               key={preset}
-              className="btn btn--quiet hud-menu__item hud-view"
+              className="btn hud-menu__item hud-view"
               type="button"
               style={{ gridRow: cell.row, gridColumn: cell.column }}
               onClick={() => {
@@ -59,7 +59,7 @@ export function CameraMenu({ onClose }: CameraMenuProps): ReactElement {
           );
         })}
         <button
-          className="btn btn--quiet hud-menu__item hud-view"
+          className="btn hud-menu__item hud-view"
           type="button"
           style={{ gridRow: VIEW_CROSS_CENTER.row, gridColumn: VIEW_CROSS_CENTER.column }}
           aria-label={withShortcut(FIT_LABEL, keymap.viewFit)}
@@ -74,7 +74,7 @@ export function CameraMenu({ onClose }: CameraMenuProps): ReactElement {
       </div>
       <div className="hud-menu__section">
         <button
-          className="btn btn--quiet hud-menu__item"
+          className="btn hud-menu__item"
           type="button"
           onClick={() => {
             requestReset();
