@@ -14,8 +14,10 @@ import {
   RESET_LABEL,
   UNDO_LABEL,
   UNFOLLOW_LABEL,
+  VIEW_PRESET_LABELS,
   withShortcut,
 } from "../src/features/viewer/hud-labels";
+import { VIEW_PRESET_ORDER } from "../src/features/viewer/view-presets";
 
 describe("viewer HUD labels", () => {
   it("adds a formatted shortcut only when it is assigned", () => {
@@ -34,6 +36,10 @@ describe("viewer HUD labels", () => {
     expect(CLEAR_LABEL).toBe("自分の線を消す");
     expect(OVERLAY_LABEL).toBe("透過表示");
     expect(UNFOLLOW_LABEL).toBe("追従を解除");
+    expect(VIEW_PRESET_LABELS).toEqual({ front: "正面", back: "背面", right: "右", left: "左" });
+    for (const preset of VIEW_PRESET_ORDER) {
+      expect(VIEW_PRESET_LABELS[preset]).not.toBe("");
+    }
     expect(PLACEMENT_LABELS).toEqual({ surface: "表面", space: "空間" });
     expect(PLACEMENT_ORDER).toEqual(["surface", "space"]);
   });
