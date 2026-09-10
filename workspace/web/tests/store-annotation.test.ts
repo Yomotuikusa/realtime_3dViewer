@@ -26,6 +26,7 @@ describe("annotation store", () => {
       drafting: null,
       replayStrokes: [],
       overlay: true,
+      placement: "surface",
     });
   });
 
@@ -123,6 +124,36 @@ describe("annotation store", () => {
     expect(useAnnotationStore.getState()).toBe(before);
   });
 
+  it("changes placement and clears a draft only when placement changes", () => {
+    useAnnotationStore.getState().beginDraft(p1);
+    const before = useAnnotationStore.getState();
+    useAnnotationStore.getState().setPlacement("surface");
+    expect(useAnnotationStore.getState()).toBe(before);
+    expect(useAnnotationStore.getState().drafting).toEqual([p1]);
+
+    useAnnotationStore.getState().setPlacement("space");
+    expect(useAnnotationStore.getState().placement).toBe("space");
+    expect(useAnnotationStore.getState().drafting).toBeNull();
+  });
+
+  it("changes only placement when no draft needs clearing", () => {
+    useAnnotationStore.getState().applyWelcome([strokeA]);
+    useAnnotationStore.getState().setMode("pen");
+    useAnnotationStore.getState().setColor("#ffffff");
+    useAnnotationStore.getState().setOverlay(false);
+    useAnnotationStore.getState().setReplayStrokes([strokeB]);
+    useAnnotationStore.getState().setPlacement("space");
+    expect(useAnnotationStore.getState()).toMatchObject({
+      strokes: { a: strokeA },
+      mode: "pen",
+      color: "#ffffff",
+      drafting: null,
+      replayStrokes: [strokeB],
+      overlay: false,
+      placement: "space",
+    });
+  });
+
   it("builds, appends, and ends drafts", () => {
     useAnnotationStore.getState().appendDraftPoint(p3);
     expect(useAnnotationStore.getState().drafting).toBeNull();
@@ -159,6 +190,7 @@ describe("annotation store", () => {
     useAnnotationStore.getState().beginDraft(p1);
     useAnnotationStore.getState().setReplayStrokes([strokeB]);
     useAnnotationStore.getState().setOverlay(false);
+    useAnnotationStore.getState().setPlacement("space");
     useAnnotationStore.getState().reset();
     expect(useAnnotationStore.getState()).toMatchObject({
       strokes: {},
@@ -167,6 +199,7 @@ describe("annotation store", () => {
       drafting: null,
       replayStrokes: [],
       overlay: true,
+      placement: "surface",
     });
   });
 });

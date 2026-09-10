@@ -3,12 +3,20 @@ import type { ClientMessage } from "@shared/protocol";
 import { STROKE_COLORS, useAnnotationStore } from "../../store/annotation";
 import { useSessionStore } from "../../store/session";
 import { latestOwnStrokeId } from "./stroke-build";
-import { CLEAR_LABEL, colorName, OVERLAY_LABEL, UNDO_LABEL } from "../viewer/hud-labels";
+import {
+  CLEAR_LABEL,
+  colorName,
+  OVERLAY_LABEL,
+  PLACEMENT_LABELS,
+  PLACEMENT_ORDER,
+  UNDO_LABEL,
+} from "../viewer/hud-labels";
 import "./annotation.css";
 
 export function AnnotationToolbar({ send }: { send: (msg: ClientMessage) => boolean }): ReactElement {
   const color = useAnnotationStore((state) => state.color);
   const overlay = useAnnotationStore((state) => state.overlay);
+  const placement = useAnnotationStore((state) => state.placement);
   const strokes = useAnnotationStore((state) => state.strokes);
   const selfId = useSessionStore((state) => state.selfId);
   const connection = useSessionStore((state) => state.connection);
@@ -31,6 +39,19 @@ export function AnnotationToolbar({ send }: { send: (msg: ClientMessage) => bool
             onClick={() => useAnnotationStore.getState().setColor(strokeColor)}
             style={{ "--stroke-color": strokeColor } as CSSProperties}
           />
+        ))}
+      </div>
+      <div role="group" aria-label="描画の基準">
+        {PLACEMENT_ORDER.map((placementValue) => (
+          <button
+            key={placementValue}
+            className="btn btn--quiet"
+            type="button"
+            aria-pressed={placement === placementValue}
+            onClick={() => useAnnotationStore.getState().setPlacement(placementValue)}
+          >
+            {PLACEMENT_LABELS[placementValue]}
+          </button>
         ))}
       </div>
       <button

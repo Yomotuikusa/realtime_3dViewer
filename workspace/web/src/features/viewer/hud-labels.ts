@@ -1,4 +1,4 @@
-import type { AnnotationMode } from "../../store/annotation";
+import type { AnnotationMode, PenPlacement } from "../../store/annotation";
 
 /** HUD のボタンに出すモード。"none" は解除状態でありボタンを持たない。 */
 export type ToolMode = Exclude<AnnotationMode, "none">;
@@ -15,6 +15,11 @@ export const UNDO_LABEL = "1本戻す";
 export const CLEAR_LABEL = "自分の線を消す";
 export const OVERLAY_LABEL = "透過表示";
 export const UNFOLLOW_LABEL = "追従を解除";
+export const PLACEMENT_LABELS: Readonly<Record<PenPlacement, string>> = {
+  surface: "表面",
+  space: "空間",
+};
+export const PLACEMENT_ORDER: readonly PenPlacement[] = ["surface", "space"];
 
 const COLOR_NAMES: Readonly<Record<string, string>> = {
   "#ff0000": "赤",
@@ -38,6 +43,7 @@ export interface HintInput {
   canEdit: boolean;
   hasAnchor: boolean;
   following: boolean;
+  placement: PenPlacement;
 }
 
 export function hint(input: HintInput): string {
@@ -48,9 +54,12 @@ export function hint(input: HintInput): string {
     return "Alt+左ドラッグで回転、ホイールまたは Alt+右ドラッグで拡大縮小、Alt+中ドラッグで移動";
   }
   if (input.mode === "pen") {
-    return input.canEdit
-      ? "モデルの上をドラッグして線を描きます(Alt を押している間は視点操作になります)"
-      : "接続が切れているため線を描けません";
+    if (!input.canEdit) {
+      return "接続が切れているため線を描けません";
+    }
+    return input.placement === "space"
+      ? "ドラッグして注視点の平面に線を描きます。モデルの外へはみ出しても途切れません(Alt を押している間は視点操作になります)"
+      : "モデルの上をドラッグして表面に線を描きます(Alt を押している間は視点操作になります)";
   }
   return input.hasAnchor
     ? "右のパネルで本文を入力してください"

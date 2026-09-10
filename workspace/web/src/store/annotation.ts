@@ -3,6 +3,8 @@ import type { Stroke, Vec3 } from "@shared/types";
 
 /** "none" はツール未選択。左ドラッグで何も起きない状態を指す。 */
 export type AnnotationMode = "none" | "pen" | "comment";
+/** ペンの描画基準。 */
+export type PenPlacement = "surface" | "space";
 
 export const STROKE_COLORS: readonly string[] = [
   "#ff0000",
@@ -22,6 +24,7 @@ export interface AnnotationStoreState {
   replayStrokes: Stroke[];
   /** メッシュに埋もれた線を透過表示するか。初期値 true */
   overlay: boolean;
+  placement: PenPlacement;
   applyWelcome(strokes: Stroke[]): void;
   addStroke(stroke: Stroke): void;
   removeStroke(strokeId: string): void;
@@ -30,6 +33,8 @@ export interface AnnotationStoreState {
   setColor(color: string): void;
   /** 同値なら state を更新しない */
   setOverlay(overlay: boolean): void;
+  /** 同値なら state を更新せず、値が変わるときは draft を破棄する */
+  setPlacement(placement: PenPlacement): void;
   beginDraft(point: Vec3): void;
   appendDraftPoint(point: Vec3): void;
   endDraft(): Vec3[];
@@ -44,6 +49,7 @@ const initialState = {
   drafting: null as Vec3[] | null,
   replayStrokes: [] as Stroke[],
   overlay: true,
+  placement: "surface" as PenPlacement,
 };
 
 export const useAnnotationStore = create<AnnotationStoreState>((set, get) => ({
@@ -102,6 +108,10 @@ export const useAnnotationStore = create<AnnotationStoreState>((set, get) => ({
 
   setOverlay(overlay) {
     set((state) => state.overlay === overlay ? state : { overlay });
+  },
+
+  setPlacement(placement) {
+    set((state) => state.placement === placement ? state : { placement, drafting: null });
   },
 
   beginDraft(point) {
