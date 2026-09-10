@@ -22,13 +22,13 @@ export function shouldSendCamera(
 export function useCameraBroadcast(send: (msg: ClientMessage) => boolean): void {
   useEffect(() => {
     const throttle = createCameraThrottle({
-      send: (camera) => {
-        if (!send({ type: "camera", camera })) {
+      send: (payload) => {
+        if (!send({ type: "camera", camera: payload.camera, focalLength: payload.focalLength })) {
           return false;
         }
         const selfId = useSessionStore.getState().selfId;
         if (selfId !== null) {
-          usePresenceStore.getState().updateCamera(selfId, camera);
+          usePresenceStore.getState().updateCamera(selfId, payload.camera, payload.focalLength);
         }
         return true;
       },
@@ -40,7 +40,7 @@ export function useCameraBroadcast(send: (msg: ClientMessage) => boolean): void 
     });
 
     const unsubscribe = useCameraStore.subscribe((state) => {
-      throttle.update(state.selfCamera);
+      throttle.update({ camera: state.selfCamera, focalLength: state.focalLength });
     });
     return () => {
       throttle.dispose();

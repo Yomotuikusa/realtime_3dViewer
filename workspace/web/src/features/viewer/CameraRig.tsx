@@ -115,7 +115,10 @@ export function CameraRig(): ReactElement {
       useSessionStore.getState().selfId,
     );
     if (followTarget !== null) {
-      const next = followStep(current, followTarget);
+      if (followTarget.focalLength !== null) {
+        cameraStore.setFocalLength(followTarget.focalLength);
+      }
+      const next = followStep(current, followTarget.camera);
       applyCamera(camera, controls, next.camera);
       cameraStore.setSelfCamera(next.camera);
     }

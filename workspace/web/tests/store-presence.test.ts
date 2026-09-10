@@ -29,6 +29,13 @@ describe("presence store", () => {
     expect(usePresenceStore.getState().users).toEqual({ a: { ...userA, name: "Ari" } });
   });
 
+  it("copies focal length through upsert and welcome", () => {
+    usePresenceStore.getState().upsertUser({ ...userA, focalLength: 85 });
+    expect(usePresenceStore.getState().users.a?.focalLength).toBe(85);
+    usePresenceStore.getState().applyWelcome([{ ...userA, focalLength: 135 }]);
+    expect(usePresenceStore.getState().users.a?.focalLength).toBe(135);
+  });
+
   it("removes known users and ignores unknown users", () => {
     usePresenceStore.getState().applyWelcome([userA, userB]);
     usePresenceStore.getState().removeUser("nope");
@@ -50,6 +57,13 @@ describe("presence store", () => {
     usePresenceStore.getState().applyWelcome([userA]);
     usePresenceStore.getState().updateCamera("a", camera);
     expect(usePresenceStore.getState().users.a).toEqual({ ...userA, camera });
+    expect(usePresenceStore.getState().users.a?.camera).not.toBe(camera);
+    usePresenceStore.getState().updateCamera("a", otherCamera, 85);
+    expect(usePresenceStore.getState().users.a?.focalLength).toBe(85);
+    usePresenceStore.getState().updateCamera("a", camera);
+    expect(usePresenceStore.getState().users.a?.focalLength).toBe(85);
+    usePresenceStore.getState().updateCamera("a", camera, 24);
+    expect(usePresenceStore.getState().users.a?.focalLength).toBe(24);
     const before = usePresenceStore.getState().users;
     usePresenceStore.getState().updateCamera("nope", otherCamera);
     expect(usePresenceStore.getState().users).toBe(before);

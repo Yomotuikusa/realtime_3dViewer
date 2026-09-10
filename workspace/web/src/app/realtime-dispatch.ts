@@ -25,7 +25,7 @@ export function dispatchServerMessage(msg: ServerMessage): void {
       presence.removeUser(msg.userId);
       break;
     case "camera":
-      presence.updateCamera(msg.userId, msg.camera);
+      presence.updateCamera(msg.userId, msg.camera, msg.focalLength);
       break;
     case "stroke:add":
       annotation.addStroke(msg.stroke);

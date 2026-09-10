@@ -1,10 +1,15 @@
 import { describe, expect, it } from "vitest";
 import type { CameraState } from "@shared/types";
-import { createCameraThrottle } from "../src/features/viewer/camera-throttle";
+import {
+  createCameraThrottle,
+  payloadEquals,
+  type CameraPayload,
+} from "../src/features/viewer/camera-throttle";
 
 const cameraA: CameraState = { position: [1, 2, 3], target: [0, 1, 0] };
 const cameraB: CameraState = { position: [2, 2, 3], target: [0, 1, 0] };
 const cameraC: CameraState = { position: [3, 2, 3], target: [0, 1, 0] };
+const payloadA: CameraPayload = { camera: cameraA, focalLength: 50 };
 
 interface FakeClock {
   now: () => number;
@@ -50,142 +55,187 @@ function createFakeClock(): FakeClock {
 
 function createTestThrottle(
   clock: FakeClock,
-  send: (camera: CameraState) => boolean = () => true,
+  send: (payload: CameraPayload) => boolean = () => true,
+  intervalMs?: number,
 ) {
-  return createCameraThrottle({ send, now: clock.now, schedule: clock.schedule });
+  return createCameraThrottle({ send, now: clock.now, schedule: clock.schedule, intervalMs });
 }
 
+describe("payloadEquals", () => {
+  it("uses camera epsilon but requires exact focal length equality", () => {
+    expect(payloadEquals(payloadA, { camera: { ...cameraA, position: [1.000001, 2, 3] }, focalLength: 50 })).toBe(true);
+    expect(payloadEquals(payloadA, { camera: { ...cameraA, position: [1.01, 2, 3] }, focalLength: 50 })).toBe(false);
+    expect(payloadEquals(payloadA, { camera: cameraA, focalLength: 85 })).toBe(false);
+    expect(payloadEquals(payloadA, { camera: cameraA, focalLength: 50.0000001 })).toBe(false);
+  });
+});
+
 describe("camera throttle", () => {
-  it("sends the first camera immediately", () => {
+  it("sends the first payload immediately and clones its camera", () => {
     const clock = createFakeClock();
-    const sent: CameraState[] = [];
-    const throttle = createTestThrottle(clock, (camera) => {
-      sent.push(camera);
+    const sent: CameraPayload[] = [];
+    const throttle = createTestThrottle(clock, (payload) => {
+      sent.push(payload);
       return true;
     });
 
-    throttle.update(cameraA);
+    throttle.update(payloadA);
 
-    expect(sent).toEqual([cameraA]);
+    expect(sent).toEqual([payloadA]);
+    expect(sent[0]).not.toBe(payloadA);
+    expect(sent[0]!.camera).not.toBe(payloadA.camera);
   });
 
-  it("sends only the latest camera when the interval opens", () => {
+  it("sends only the latest payload when the interval opens", () => {
     const clock = createFakeClock();
-    const sent: CameraState[] = [];
-    const throttle = createTestThrottle(clock, (camera) => {
-      sent.push(camera);
+    const sent: CameraPayload[] = [];
+    const throttle = createTestThrottle(clock, (payload) => {
+      sent.push(payload);
       return true;
     });
 
-    throttle.update(cameraA);
+    throttle.update(payloadA);
     clock.advance(20);
-    throttle.update(cameraB);
+    throttle.update({ camera: cameraB, focalLength: 85 });
     clock.advance(30);
 
-    expect(sent).toEqual([cameraA, cameraB]);
+    expect(sent).toEqual([payloadA, { camera: cameraB, focalLength: 85 }]);
     expect(clock.scheduleCount()).toBe(1);
   });
 
-  it("replaces an intermediate pending camera", () => {
+  it("replaces an intermediate pending payload", () => {
     const clock = createFakeClock();
-    const sent: CameraState[] = [];
-    const throttle = createTestThrottle(clock, (camera) => {
-      sent.push(camera);
+    const sent: CameraPayload[] = [];
+    const throttle = createTestThrottle(clock, (payload) => {
+      sent.push(payload);
       return true;
     });
 
-    throttle.update(cameraA);
+    throttle.update(payloadA);
     clock.advance(20);
-    throttle.update(cameraB);
+    throttle.update({ camera: cameraB, focalLength: 85 });
     clock.advance(10);
-    throttle.update(cameraC);
+    throttle.update({ camera: cameraC, focalLength: 24 });
     clock.advance(50);
 
-    expect(sent).toEqual([cameraA, cameraC]);
+    expect(sent).toEqual([payloadA, { camera: cameraC, focalLength: 24 }]);
   });
 
-  it("does not resend the last camera after a pending return to it", () => {
+  it("does not resend the last payload after a pending return to it", () => {
     const clock = createFakeClock();
-    const sent: CameraState[] = [];
-    const throttle = createTestThrottle(clock, (camera) => {
-      sent.push(camera);
+    const sent: CameraPayload[] = [];
+    const throttle = createTestThrottle(clock, (payload) => {
+      sent.push(payload);
       return true;
     });
 
-    throttle.update(cameraA);
+    throttle.update(payloadA);
     clock.advance(20);
-    throttle.update(cameraB);
+    throttle.update({ camera: cameraB, focalLength: 85 });
     clock.advance(10);
-    throttle.update(cameraA);
+    throttle.update(payloadA);
     clock.advance(50);
 
-    expect(sent).toEqual([cameraA]);
+    expect(sent).toEqual([payloadA]);
   });
 
-  it("sends immediately after the interval without scheduling a timer", () => {
+  it("sends when only focal length changes after the interval", () => {
     const clock = createFakeClock();
-    const sent: CameraState[] = [];
-    const throttle = createTestThrottle(clock, (camera) => {
-      sent.push(camera);
+    const sent: CameraPayload[] = [];
+    const throttle = createTestThrottle(clock, (payload) => {
+      sent.push(payload);
       return true;
     });
 
-    throttle.update(cameraA);
-    clock.advance(60);
-    throttle.update(cameraB);
+    throttle.update(payloadA);
+    clock.advance(50);
+    throttle.update({ camera: cameraA, focalLength: 85 });
 
-    expect(sent).toEqual([cameraA, cameraB]);
-    expect(clock.scheduleCount()).toBe(0);
+    expect(sent).toEqual([payloadA, { camera: cameraA, focalLength: 85 }]);
+  });
+
+  it("sends when only camera changes after the interval", () => {
+    const clock = createFakeClock();
+    const sent: CameraPayload[] = [];
+    const throttle = createTestThrottle(clock, (payload) => {
+      sent.push(payload);
+      return true;
+    });
+
+    throttle.update(payloadA);
+    clock.advance(50);
+    throttle.update({ camera: cameraB, focalLength: 50 });
+
+    expect(sent).toEqual([payloadA, { camera: cameraB, focalLength: 50 }]);
   });
 
   it("retries a failed send at the next window", () => {
     const clock = createFakeClock();
     let connected = false;
-    const sent: CameraState[] = [];
-    const throttle = createTestThrottle(clock, (camera) => {
-      sent.push(camera);
+    const sent: CameraPayload[] = [];
+    const throttle = createTestThrottle(clock, (payload) => {
+      sent.push(payload);
       return connected;
     });
 
-    throttle.update(cameraA);
+    throttle.update(payloadA);
     connected = true;
     clock.advance(50);
 
-    expect(sent).toEqual([cameraA, cameraA]);
+    expect(sent).toEqual([payloadA, payloadA]);
   });
 
   it("cancels a pending send on dispose", () => {
     const clock = createFakeClock();
-    const sent: CameraState[] = [];
-    const throttle = createTestThrottle(clock, (camera) => {
-      sent.push(camera);
+    const sent: CameraPayload[] = [];
+    const throttle = createTestThrottle(clock, (payload) => {
+      sent.push(payload);
       return true;
     });
 
-    throttle.update(cameraA);
+    throttle.update(payloadA);
     clock.advance(20);
-    throttle.update(cameraB);
+    throttle.update({ camera: cameraB, focalLength: 85 });
     throttle.dispose();
+    throttle.update({ camera: cameraC, focalLength: 24 });
     clock.advance(50);
 
-    expect(sent).toEqual([cameraA]);
+    expect(sent).toEqual([payloadA]);
     expect(clock.cancelledCount()).toBe(1);
   });
 
-  it("does not send the same camera repeatedly", () => {
+  it("does not send the same payload repeatedly", () => {
     const clock = createFakeClock();
-    const sent: CameraState[] = [];
-    const throttle = createTestThrottle(clock, (camera) => {
-      sent.push(camera);
+    const sent: CameraPayload[] = [];
+    const throttle = createTestThrottle(clock, (payload) => {
+      sent.push(payload);
       return true;
     });
 
-    throttle.update(cameraA);
+    throttle.update(payloadA);
     clock.advance(60);
-    throttle.update(cameraA);
-    throttle.update(cameraA);
+    throttle.update(payloadA);
+    throttle.update(payloadA);
 
-    expect(sent).toEqual([cameraA]);
+    expect(sent).toEqual([payloadA]);
     expect(clock.scheduleCount()).toBe(0);
+  });
+
+  it("uses a custom interval", () => {
+    const clock = createFakeClock();
+    const sent: CameraPayload[] = [];
+    const throttle = createTestThrottle(clock, (payload) => {
+      sent.push(payload);
+      return true;
+    }, 100);
+
+    throttle.update(payloadA);
+    clock.advance(20);
+    throttle.update({ camera: cameraB, focalLength: 85 });
+    clock.advance(79);
+    expect(sent).toHaveLength(1);
+    clock.advance(1);
+
+    expect(sent).toEqual([payloadA, { camera: cameraB, focalLength: 85 }]);
   });
 });
