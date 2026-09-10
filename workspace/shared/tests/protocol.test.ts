@@ -52,6 +52,22 @@ describe("ClientMessageSchema", () => {
     expect(ClientMessageSchema.safeParse({ type: "stroke:remove", strokeId: "" }).success).toBe(false);
     expect(ClientMessageSchema.safeParse({ type: "welcome", selfId: "user-1", users: [], strokes: [] }).success).toBe(false);
   });
+
+  it("preserves an optional focal length on camera messages", () => {
+    const withoutFocalLength = ClientMessageSchema.safeParse({ type: "camera", camera });
+    expect(withoutFocalLength.success).toBe(true);
+    if (withoutFocalLength.success) expect("focalLength" in withoutFocalLength.data).toBe(false);
+
+    const withFocalLength = ClientMessageSchema.safeParse({ type: "camera", camera, focalLength: 50 });
+    expect(withFocalLength.success).toBe(true);
+    if (withFocalLength.success && withFocalLength.data.type === "camera") {
+      expect(withFocalLength.data.focalLength).toBe(50);
+    }
+
+    for (const focalLength of [400, "50", null]) {
+      expect(ClientMessageSchema.safeParse({ type: "camera", camera, focalLength }).success).toBe(false);
+    }
+  });
 });
 
 describe("ServerMessageSchema", () => {
@@ -75,6 +91,27 @@ describe("ServerMessageSchema", () => {
 
   it("requires an error message", () => {
     expect(ServerMessageSchema.safeParse({ type: "error", code: "X" }).success).toBe(false);
+  });
+
+  it("preserves an optional focal length on server camera messages", () => {
+    const withoutFocalLength = ServerMessageSchema.safeParse({ type: "camera", userId: "user-1", camera });
+    expect(withoutFocalLength.success).toBe(true);
+    if (withoutFocalLength.success) expect("focalLength" in withoutFocalLength.data).toBe(false);
+
+    const withFocalLength = ServerMessageSchema.safeParse({
+      type: "camera",
+      userId: "user-1",
+      camera,
+      focalLength: 85,
+    });
+    expect(withFocalLength.success).toBe(true);
+    if (withFocalLength.success && withFocalLength.data.type === "camera") {
+      expect(withFocalLength.data.focalLength).toBe(85);
+    }
+
+    for (const focalLength of [400, "50", null]) {
+      expect(ServerMessageSchema.safeParse({ type: "camera", userId: "user-1", camera, focalLength }).success).toBe(false);
+    }
   });
 });
 
@@ -106,6 +143,10 @@ describe("protocol parsers", () => {
     expect(parseServerMessage(JSON.stringify({ type: "error", code: "X", message: "bad" }))).toEqual({
       ok: true,
       msg: { type: "error", code: "X", message: "bad" },
+    });
+    expect(parseClientMessage(JSON.stringify({ type: "camera", camera, focalLength: 85 }))).toEqual({
+      ok: true,
+      msg: { type: "camera", camera, focalLength: 85 },
     });
   });
 
