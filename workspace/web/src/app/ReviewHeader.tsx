@@ -7,8 +7,13 @@ import {
   copyText,
   type CopyState,
 } from "./review-labels";
+import { SETTINGS_OPEN_LABEL } from "../features/shortcuts/shortcut-labels";
 
-export function ReviewHeader({ projectName, joined }: { projectName: string; joined: boolean }): ReactElement {
+export function ReviewHeader({ projectName, joined, onOpenSettings }: {
+  projectName: string;
+  joined: boolean;
+  onOpenSettings: () => void;
+}): ReactElement {
   const connection = useSessionStore((session) => session.connection);
   const color = useSessionStore((session) => session.color);
   const name = useSessionStore((session) => session.name);
@@ -48,6 +53,11 @@ export function ReviewHeader({ projectName, joined }: { projectName: string; joi
         <button className="btn btn--quiet" type="button" onClick={handleCopy}>
           {copyLabel(copyState)}
         </button>
+        {joined && (
+          <button className="btn btn--quiet" type="button" onClick={onOpenSettings}>
+            {SETTINGS_OPEN_LABEL}
+          </button>
+        )}
         {copyState === "failed" && (
           <input
             className="input review-header__url"

@@ -14,6 +14,7 @@ import { RemoteCameras } from "../features/presence/RemoteCameras";
 import { ViewerCanvas } from "../features/viewer/ViewerCanvas";
 import { ViewerHud } from "../features/viewer/ViewerHud";
 import { useCameraBroadcast } from "../features/viewer/useCameraBroadcast";
+import { ShortcutSettings } from "../features/shortcuts/ShortcutSettings";
 import { useShortcuts } from "../features/shortcuts/useShortcuts";
 import { useSessionStore } from "../store/session";
 import { ErrorBoundary } from "./ErrorBoundary";
@@ -41,11 +42,12 @@ function ErrorCard({ message, onRetry }: { message: string; onRetry: () => void 
 export function ReviewPage({ projectId }: { projectId: string }): ReactElement {
   const [reloadSeq, setReloadSeq] = useState(0);
   const [joinName, setJoinName] = useState<string | null>(null);
+  const [settingsOpen, setSettingsOpen] = useState(false);
   const [state, setState] = useState<ReviewState>({ status: "loading", projectId });
   useCommentReplay();
   const realtime = useRealtime(projectId, joinName);
   useCameraBroadcast(realtime.send);
-  useShortcuts(joinName !== null);
+  useShortcuts(joinName !== null && !settingsOpen);
   const lastError = useSessionStore((session) => session.lastError);
 
   useEffect(() => () => resetReviewStores(), []);
@@ -104,7 +106,11 @@ export function ReviewPage({ projectId }: { projectId: string }): ReactElement {
 
   return (
     <main className="review-page">
-      <ReviewHeader projectName={state.project.name} joined={joinName !== null} />
+      <ReviewHeader
+        projectName={state.project.name}
+        joined={joinName !== null}
+        onOpenSettings={() => setSettingsOpen(true)}
+      />
       {lastError && <p className="alert review-page__alert" role="alert">{lastError}</p>}
       <div className="review-body">
         <section className="review-viewer" aria-label="3D ビューア">
@@ -130,6 +136,7 @@ export function ReviewPage({ projectId }: { projectId: string }): ReactElement {
             </ViewerCanvas>
           </ErrorBoundary>
           {joinName === null && <JoinDialog onJoin={handleJoin} />}
+          {settingsOpen && <ShortcutSettings onClose={() => setSettingsOpen(false)} />}
         </section>
         <aside className="review-panel" aria-label="サイドパネル">
           <PresenceList />

@@ -1,0 +1,54 @@
+.review-dialog.shortcut-dialog {
+  width: min(30rem, 92%);
+}
+
+.shortcut-row {
+  display: grid;
+  grid-template-columns: 1fr auto auto auto;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.shortcut-row + .shortcut-row {
+  margin-top: var(--space-2);
+}
+
+.shortcut-row__name {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.shortcut-row__key {
+  min-width: 5.5rem;
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface-subtle);
+  font-size: var(--text-sm);
+  text-align: center;
+  white-space: nowrap;
+}
+
+.shortcut-dialog__footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-2);
+}
+
+@media (max-width: 24rem) {
+  .review-dialog.shortcut-dialog {
+    padding: var(--space-3);
+  }
+
+  .shortcut-row {
+    gap: var(--space-1);
+  }
+
+  .shortcut-row__key {
+    min-width: 4rem;
+  }
+
+  .shortcut-row .btn {
+    padding-inline: var(--space-1);
+  }
+}
