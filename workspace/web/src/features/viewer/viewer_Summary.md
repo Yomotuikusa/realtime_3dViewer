@@ -21,10 +21,11 @@ Canvas、モデル、カメラ、ライティング、焦点距離、HUD、ポ�
 - ModelMesh.tsx: 同一オリジン用の LoadingManager を指定して `useGLTF` でモデルをロードし、バウンディングボックスからモデルサイズを記録して初回 Fit を要求する。ロード中の `scene` を共通モデルターゲットへ登録し、アンマウント時に解除する。Draco 圧縮時のデコーダ取得（`https://www.gstatic.com/...`）は drei の別 manager による外部依存として残る
 - model-loading.ts: glTF の `buffers` / `images` などが参照する data/blob URI と同一オリジン URL だけを許可する LoadingManager を作り、外部 URL を `about:blank` に置換する
 - model-target.ts: React や Zustand に依存せず、現在のレイキャスト対象 `Object3D` を保持する `setModelTarget` / `getModelTarget`
+- fit-camera.ts: 初期視点と同じ斜め方向からモデル全体を見る Fit カメラ目標を純粋関数で作る
 - pick.ts: Canvas 座標を NDC に変換し、共通モデルターゲットへ最近傍レイキャストを行う。交点と、逆転置の法線行列で変換して正規化したワールド系法線を返す
 - follow.ts: Follow 対象のカメラと焦点距離の妥当性判定、共有カメラ関数を使った 1 フレーム分の補間
 - camera-animation.ts: 既定視点・視点再現の300ms時間基準アニメーションと ease-out 補間を提供する
-- CameraRig.tsx: OrbitControls を常時有効にしてカメラストアと同期し、Reset・Fit・時間基準のカメラ再現・Follow を処理する。既定視点ちょうどの向きでは `enableRotate` を false にし、Follow 中は回転ロックしない。OrbitControls の減衰を無効にし操作は即時反映する。補間中のユーザー操作で補間を中断する。Follow 中だけ対象の焦点距離もカメラストアへ反映し、controls.domElement に Alt 操作、右ドラッグ dolly、Shift+右ドラッグのライト回転を接続する
+- CameraRig.tsx: OrbitControls を常時有効にしてカメラストアと同期し、Reset・Fit・時間基準のカメラ再現・Follow を処理する。Fit はモデル本体の箱から `fitCamera` で目標を作り `requestCamera` に積む(`Bounds` 内部補間は使わない)。既定視点ちょうどの向きでは `enableRotate` を false にし、Follow 中は回転ロックしない。OrbitControls の減衰を無効にし操作は即時反映する。補間中のユーザー操作で補間を中断する。Follow 中だけ対象の焦点距離もカメラストアへ反映し、controls.domElement に Alt 操作、右ドラッグ dolly、Shift+右ドラッグのライト回転を接続する
 - camera-input.ts: OrbitControls の Alt／非 Alt 時のマウス割り当てと、target からの距離を指数的に変える右ドラッグ dolly の純粋関数
 - viewer-pointer.ts: controls.domElement へ Maya 式の pointer、contextmenu、マウス抑止イベントを接続し、右ドラッグ dolly／Shift+右ドラッグのライト回転と後始末を提供する
 - camera-throttle.ts: `CameraPayload`（カメラと焦点距離）を最新値だけ保持し、`payloadEquals` で両方を比較しながら送信成功時刻から 50ms ごとの先頭送信と窓明けトレーリング送信を行う。送信失敗は未送信としてタイマーまたは次の更新で再試行し、破棄時に保留送信をキャンセルする
@@ -54,6 +55,7 @@ Canvas、モデル、カメラ、ライティング、焦点距離、HUD、ポ�
 - follow.ts: `FOLLOW_LERP_T`、`FollowTarget`、`followTargetCamera`、`followStep`
 - camera-animation.ts: `CAMERA_ANIMATION_DURATION_MS`、`CameraAnimation`、`easeOutCubic`、`startCameraAnimation`、`stepCameraAnimation`
 - CameraRig.tsx: `CameraRig()`
+- fit-camera.ts: `FIT_DIRECTION`、`fitCamera(center, distance)`
 - camera-input.ts: `ViewerMouseButtons`、`MOUSE_BUTTONS_ALT`、`MOUSE_BUTTONS_IDLE`、`mouseButtonsFor`、`DOLLY_SPEED`、`MIN_DOLLY_DISTANCE`、`dollyPosition`
 - viewer-pointer.ts: `ViewerControlsLike`、`ViewerPointerDeps`、`attachViewerPointer(controls, deps)`
 - useCameraBroadcast.ts: `shouldSendCamera`、`useCameraBroadcast(send)`
@@ -66,8 +68,7 @@ CameraRig の毎フレーム処理は D27 の優先順位に従う。
 3D ビューや他の HUD の pointerdown では閉じず、トグルボタンまたはメニュー内の Escape だけで折りたたむ。Escape はショートカットの
 `clearMode` へ伝播せずメニューだけを閉じる。
 `selfCamera` をクリック時に読み、`presetCamera` で注視点と距離を保った視点を作ってカメラストアの
-`requestCamera` へ積む。要求は `CameraRig` が開始時のカメラを固定し、300ms の
-ease-out 時間基準補間を行う。補間中の Alt 操作・ホイール・右ドラッグ dolly は補間を中断し、消費時と操作時に Follow を解除する。
+`requestCamera` へ積む。全体表示はモデル本体の箱だけを `bounds.refresh(modelTarget)` で計算し、初期視点と同じ斜め方向の目標を `fitCamera` で作って同じ `requestCamera` へ積む。要求は `CameraRig` が開始時のカメラを固定し、既定視点と同じ補間を行う。補間中の Alt 操作・ホイール・右ドラッグ dolly は補間を中断し、消費時と操作時に Follow を解除する。
 到達時は目標をストアへ完全一致で保存する。
 `FocalLengthRig` は焦点距離を固定センサー高から換算した垂直画角として PerspectiveCamera に適用し、
 `FocalLengthSlider` はその値をローカルに変更する。焦点距離は `camera` WebSocket メッセージへ載せるが、コメントや localStorage には保存しない。
@@ -75,6 +76,7 @@ ease-out 時間基準補間を行う。補間中の Alt 操作・ホイール・
 | 状況 | 動作 |
 | --- | --- |
 | `resetSeq` が増えた | `DEFAULT_CAMERA` へ即座に戻し、追従中なら `presence.unfollow()`。 |
+| `fitSeq` が増えた | モデル本体の箱から斜め方向の Fit 目標を作り、`requestCamera` に積む。`Bounds` 内部補間は使わない。 |
 | `pendingCamera` が非 null | controls があるフレームで消費し、開始時のカメラから 300ms 補間する。controls がない場合は持ち越す。 |
 | 補間中 | 経過時間に応じて ease-out で進め、通常フレームは epsilon 更新、到達フレームは exact 更新して補間をクリアする。操作開始時は補間を中断する。 |
 | `followTargetCamera(...)` が非 null | `followStep` の結果をカメラと `controls.target` に適用し、到達後も追従を継続する。 |
@@ -105,6 +107,7 @@ Canvas のクライアント座標を NDC 化して再帰的にモデルをレ�
 - tests/focal-length.test.ts: 焦点距離と垂直画角の換算テスト
 - tests/follow.test.ts: Follow 対象のカメラ・焦点距離の判定、複製、補間、収束テスト
 - tests/camera-animation.test.ts: ease-out補間、独立複製、時間基準の開始前・途中・到達・NaN、CameraRig の減衰無効化のソース検査
+- tests/fit-camera.test.ts: Fit 方向・距離・中心の非破壊性、既定視点非一致、CameraRig の Bounds 内部補間を使わないことのソース検査
 - tests/hud-labels.test.ts: HUD のモード・操作・透過表示・描画基準・Follow・既定視点文言とヒントのテスト
 - tests/hud-menu.test.ts: HUD メニューの初期表示、順序・表示名、トグルの純粋関数テスト
 - tests/light-gizmo.test.ts: ライトギズモの定数、回転、カメラ視野、座標・入力・表示の純粋関数テスト

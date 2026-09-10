@@ -16,6 +16,8 @@ import {
 } from "./camera-animation";
 import { attachViewerPointer, type ViewerControlsLike } from "./viewer-pointer";
 import { rotationLocked } from "./view-presets";
+import { fitCamera } from "./fit-camera";
+import { getModelTarget } from "./model-target";
 import type { Camera } from "three";
 
 function readCamera(camera: Camera, controls: OrbitControlsImpl): CameraState {
@@ -71,7 +73,10 @@ export function CameraRig(): ReactElement {
       return;
     }
     lastFitSeq.current = fitSeq;
-    bounds.refresh().clip().fit();
+    const size = bounds.refresh(getModelTarget() ?? undefined).clip().getSize();
+    useCameraStore.getState().requestCamera(
+      fitCamera([size.center.x, size.center.y, size.center.z], size.distance),
+    );
   }, [bounds, fitSeq]);
 
   useFrame(() => {
