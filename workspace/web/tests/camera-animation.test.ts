@@ -1,14 +1,25 @@
+import { existsSync, readFileSync } from "node:fs";
+import { fileURLToPath } from "node:url";
+import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import type { CameraState } from "@shared/types";
 import { cameraEquals, lerpVec3, vec3Equals } from "@shared/camera";
 import {
   CAMERA_ANIMATION_DURATION_MS,
   easeOutCubic,
-  flushControlsInertia,
   startCameraAnimation,
   stepCameraAnimation,
-  type DampedControlsLike,
 } from "../src/features/viewer/camera-animation";
+
+function readViewerSource(sourceUrl: URL, fileName: string): string {
+  const sourceRoot = existsSync(join(process.cwd(), "web", "src"))
+    ? join(process.cwd(), "web", "src")
+    : join(process.cwd(), "src");
+  const sourcePath = sourceUrl.protocol === "file:"
+    ? fileURLToPath(sourceUrl)
+    : join(sourceRoot, "features/viewer", fileName);
+  return readFileSync(sourcePath, "utf8");
+}
 
 describe("camera animation", () => {
   it("uses the ease-out cubic curve", () => {
@@ -68,36 +79,35 @@ describe("camera animation", () => {
     expect(animation.from.position).toEqual([0, 0, 10]);
   });
 
-  it("flushes damping once and restores its original value", () => {
-    const dampingStates: boolean[] = [];
-    const controls: DampedControlsLike = {
-      enableDamping: true,
-      update() {
-        dampingStates.push(this.enableDamping);
-      },
-    };
-    flushControlsInertia(controls);
-    expect(dampingStates).toEqual([false]);
-    expect(controls.enableDamping).toBe(true);
+  it("disables OrbitControls damping in CameraRig", () => {
+    const source = readViewerSource(
+      new URL("../src/features/viewer/CameraRig.tsx", import.meta.url),
+      "CameraRig.tsx",
+    );
 
-    dampingStates.length = 0;
-    controls.enableDamping = false;
-    flushControlsInertia(controls);
-    expect(dampingStates).toEqual([false]);
-    expect(controls.enableDamping).toBe(false);
+    expect(source).toContain("enableDamping={false}");
   });
 
-  it("restores damping when update throws and propagates the error", () => {
-    const error = new Error("update failed");
-    const controls: DampedControlsLike = {
-      enableDamping: true,
-      update() {
-        expect(this.enableDamping).toBe(false);
-        throw error;
-      },
-    };
-    expect(() => flushControlsInertia(controls)).toThrow(error);
-    expect(controls.enableDamping).toBe(true);
+  it("does not keep an inertia flush in CameraRig", () => {
+    const source = readViewerSource(
+      new URL("../src/features/viewer/CameraRig.tsx", import.meta.url),
+      "CameraRig.tsx",
+    );
+    const inertiaFlush = "flushControls" + "Inertia";
+
+    expect(source).not.toContain(inertiaFlush);
+  });
+
+  it("does not expose damping or inertia flush helpers", () => {
+    const source = readViewerSource(
+      new URL("../src/features/viewer/camera-animation.ts", import.meta.url),
+      "camera-animation.ts",
+    );
+    const inertiaFlush = "flushControls" + "Inertia";
+    const dampedControls = "Damped" + "ControlsLike";
+
+    expect(source).not.toContain(inertiaFlush);
+    expect(source).not.toContain(dampedControls);
   });
 
   it("uses the documented duration", () => {
