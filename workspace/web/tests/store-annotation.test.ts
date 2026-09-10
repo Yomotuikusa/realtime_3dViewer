@@ -25,6 +25,7 @@ describe("annotation store", () => {
       color: DEFAULT_STROKE_COLOR,
       drafting: null,
       replayStrokes: [],
+      overlay: true,
     });
   });
 
@@ -83,6 +84,45 @@ describe("annotation store", () => {
     expect(useAnnotationStore.getState().color).toBe("#00ff00");
   });
 
+  it("toggles overlay without changing other annotation state", () => {
+    useAnnotationStore.getState().applyWelcome([strokeA]);
+    useAnnotationStore.getState().setMode("pen");
+    useAnnotationStore.getState().setColor("#ffffff");
+    useAnnotationStore.getState().beginDraft(p1);
+    useAnnotationStore.getState().setReplayStrokes([strokeB]);
+    const before = useAnnotationStore.getState();
+
+    useAnnotationStore.getState().setOverlay(false);
+    expect(useAnnotationStore.getState()).toMatchObject({
+      strokes: { a: strokeA },
+      mode: "pen",
+      color: "#ffffff",
+      drafting: [p1],
+      replayStrokes: [strokeB],
+      overlay: false,
+    });
+    useAnnotationStore.getState().setOverlay(true);
+    expect(useAnnotationStore.getState()).toMatchObject({
+      strokes: { a: strokeA },
+      mode: "pen",
+      color: "#ffffff",
+      drafting: [p1],
+      replayStrokes: [strokeB],
+      overlay: true,
+    });
+    expect(useAnnotationStore.getState().strokes).toEqual(before.strokes);
+    expect(useAnnotationStore.getState().mode).toBe(before.mode);
+    expect(useAnnotationStore.getState().color).toBe(before.color);
+    expect(useAnnotationStore.getState().drafting).toEqual(before.drafting);
+    expect(useAnnotationStore.getState().replayStrokes).toEqual(before.replayStrokes);
+  });
+
+  it("does not update the state object when overlay keeps the same value", () => {
+    const before = useAnnotationStore.getState();
+    useAnnotationStore.getState().setOverlay(true);
+    expect(useAnnotationStore.getState()).toBe(before);
+  });
+
   it("builds, appends, and ends drafts", () => {
     useAnnotationStore.getState().appendDraftPoint(p3);
     expect(useAnnotationStore.getState().drafting).toBeNull();
@@ -118,6 +158,7 @@ describe("annotation store", () => {
     useAnnotationStore.getState().setColor("#ffffff");
     useAnnotationStore.getState().beginDraft(p1);
     useAnnotationStore.getState().setReplayStrokes([strokeB]);
+    useAnnotationStore.getState().setOverlay(false);
     useAnnotationStore.getState().reset();
     expect(useAnnotationStore.getState()).toMatchObject({
       strokes: {},
@@ -125,6 +166,7 @@ describe("annotation store", () => {
       color: DEFAULT_STROKE_COLOR,
       drafting: null,
       replayStrokes: [],
+      overlay: true,
     });
   });
 });

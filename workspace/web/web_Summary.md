@@ -29,7 +29,7 @@ glTF/GLB の 3D レビュー画面を提供する。レビュー画面は表示�
 - src/store/camera.ts: `selfCamera`、`pendingCamera`、`resetSeq`、`fitSeq`、`modelSize` と、カメラ更新・再現消費・Reset・Fit・サイズ更新・初期化の action を管理する zustand ストア
 - src/store/session.ts: 自分の ID・色・表示名・接続状態・直近エラーを保持する zustand ストア
 - src/store/presence.ts: 参加者一覧、各参加者のカメラ、Follow 対象を保持する zustand ストア
-- src/store/annotation.ts: ルーム全員分のライブ線、annotation mode・色・描画中 draft・コメント再現用線を保持し、welcome/線操作・draft・reset を提供する zustand ストア
+- src/store/annotation.ts: ルーム全員分のライブ線、annotation mode・色・描画中 draft・コメント再現用線・メッシュに埋もれた線の透過表示設定を保持し、welcome/線操作・draft・表示設定・reset を提供する zustand ストア
 - src/store/comments.ts: コメント一覧、Open フィルタ、選択中コメント、投稿アンカー、API エラーを保持し、`setAll` / `upsert` / `select` / `setFilter` / `setComposerAnchor` / `setLastError` / `reset` を提供する zustand ストア
 - src/features/presence/PresenceList.tsx: 参加者を自分先頭・名前順で表示し、色ドット、あなたバッジ、視点に入る / 追従を解除ボタンを提供
 - src/features/presence/RemoteCameras.tsx: 他者のカメラ位置・向きに、その人の色の左線を持つ `presence-tag` 名札を重ねる
@@ -46,15 +46,16 @@ glTF/GLB の 3D レビュー画面を提供する。レビュー画面は表示�
 - src/features/comments/useCommentReplay.ts: selectedId の変化を選択コメントの再現へ接続し、アンマウント時に再現線を消すフック
 - src/features/comments/ReplayStrokes.tsx: annotation ストアの再現線だけを `StrokeLines` へ渡す Canvas 内レイヤー
 - src/features/presence/RemoteCameras.tsx: 他者のカメラ位置・向きと名前ラベルを Canvas 内に表示
-- src/features/annotation/StrokeLines.tsx: 受け取った `Stroke[]` を線ごとに drei `Line` で描画する純粋な表示コンポーネント
+- src/features/annotation/StrokeLines.tsx: annotation ストアの透過表示設定を購読し、受け取った `Stroke[]` を通常線と必要な深度テスト無効の細い透過線として drei `Line` で描画する表示コンポーネント
+- src/features/annotation/stroke-overlay.ts: `Stroke` から通常線・透過線の描画 spec を組み立てる定数・型・純粋関数
 - src/features/annotation/RoomStrokes.tsx: annotation ストアのライブ線を表示順で描画し、2点以上の draft を現在色のプレビュー線として追加する Canvas 内レイヤー
 - src/features/annotation/stroke-build.ts: 法線オフセット、モデルサイズ依存の `simplify`、送信可能性判定、Undo 用の自分の最新線の選択
 - src/features/annotation/AnnotationLayer.tsx: Pen モード時だけ Canvas の DOM ポインターイベントを購読し、Alt なしの左ドラッグでモデル表面のヒット点を draft に積み、終了時に `stroke:add` を送信する Canvas 内レイヤー
-- src/features/annotation/AnnotationToolbar.tsx: ペンモード中の色選択、自分の線の 1本戻す / 自分の線を消すを提供するペン道具
+- src/features/annotation/AnnotationToolbar.tsx: ペンモード中の色選択、自分の線の 1本戻す / 自分の線を消す、メッシュに埋もれた線の透過表示切替を提供するペン道具
 - src/features/annotation/annotation.css: ペン道具と色ボタンのプレーン CSS
 - src/features/viewer/ViewerCanvas.tsx: Canvas、ライティング、Bounds、モデル、カメラを合成するビューア。`children` は RemoteCameras / StrokeLines / AnnotationLayer など後続機能の差し込み口
 - src/features/viewer/ViewerHud.tsx: ペン／コメントの toggle ボタン、ペン道具、視点リセット・Fit、Follow 中バッジ、ビューア操作ヒントを表示し、各ストアを購読する
-- src/features/viewer/hud-labels.ts: ツールモード・色・Follow・視点操作・ヒントの日本語文言と純粋な判定関数
+- src/features/viewer/hud-labels.ts: ツールモード・色・Follow・視点操作・透過表示・ヒントの日本語文言と純粋な判定関数
 - src/features/viewer/viewer.css: HUD のモード選択、視点操作、Follow バッジ、操作ヒントのプレーン CSS
 - src/features/viewer/ModelMesh.tsx: 同一オリジン用の LoadingManager を指定して `useGLTF` でモデルをロードし、バウンディングボックスからモデルサイズを記録して初回 Fit を要求する。ロード中の `scene` を共通モデルターゲットへ登録し、アンマウント時に解除する。Draco 圧縮時のデコーダ取得（`https://www.gstatic.com/...`）は drei の別 manager による外部依存として残る
 - src/features/viewer/model-loading.ts: glTF の `buffers` / `images` などが参照する data/blob URI と同一オリジン URL だけを許可する LoadingManager を作り、外部 URL を `about:blank` に置換する
@@ -75,7 +76,9 @@ glTF/GLB の 3D レビュー画面を提供する。レビュー画面は表示�
 - tests/ws-client.test.ts: JSON 送受信、入力破棄、再接続バックオフ、明示 close のテスト
 - tests/realtime-dispatch.test.ts: welcome の session / presence / annotation 反映、presence/stroke/comment イベント、error、未対応イベント、reset のテスト
 - tests/store-comments.test.ts: コメント一覧の順序、upsert、選択・Open フィルタ正規化、投稿アンカー、エラー、reset のテスト
-- tests/store-annotation.test.ts: annotation ストアの初期値、線操作、mode/色、draft、再現線、順序、reset のテスト
+- tests/store-annotation.test.ts: annotation ストアの初期値、線操作、mode/色、draft、再現線、透過表示設定、順序、reset のテスト
+- tests/stroke-overlay.test.ts: 通常線・深度テスト無効の透過線 spec の順序、props、透明度、非破壊性のテスト
+- tests/hud-labels.test.ts: HUD のモード・操作・透過表示・Follow 文言とヒントのテスト
 - tests/store-presence.test.ts: presence の全置換、upsert、削除、カメラ更新、Follow、reset のテスト
 - tests/camera-broadcast.test.ts: カメラ送信 throttle の間隔・比較判定テスト
 - tests/camera-throttle.test.ts: 先頭送信、最新値のトレーリング、重複抑止、送信失敗の再試行、破棄時キャンセルのテスト
@@ -111,11 +114,11 @@ glTF/GLB の 3D レビュー画面を提供する。レビュー画面は表示�
 - store/camera.ts: `useCameraStore`、`CameraStoreState`
 - store/session.ts: `useSessionStore`、`SessionStoreState`、`ConnectionStatus`
 - store/presence.ts: `usePresenceStore`、`PresenceStoreState`
-- store/annotation.ts: `useAnnotationStore`、`AnnotationStoreState`、`AnnotationMode`、`STROKE_COLORS`、`DEFAULT_STROKE_COLOR`、`orderedStrokes`
+- store/annotation.ts: `useAnnotationStore`、`AnnotationStoreState`、`AnnotationMode`、`STROKE_COLORS`、`DEFAULT_STROKE_COLOR`、`orderedStrokes`（`overlay` / `setOverlay` を含む）
 - store/comments.ts: `useCommentsStore`、`CommentsStoreState`（`items` / `showOnlyOpen` / `selectedId` / `composerAnchor` / `lastError` と全 action）、`selectVisible`
 - features/viewer/ViewerCanvas.tsx: `ViewerCanvas({ modelSrc, children? })`
 - features/viewer/ViewerHud.tsx: `ViewerHud({ send })`
-- features/viewer/hud-labels.ts: `ToolMode`、`MODE_LABELS`、`MODE_ORDER`、各種ラベル、`colorName`、`followingLabel`、`hint`
+- features/viewer/hud-labels.ts: `ToolMode`、`MODE_LABELS`、`MODE_ORDER`、各種ラベル（`OVERLAY_LABEL` を含む）、`colorName`、`followingLabel`、`hint`
 - features/viewer/ModelMesh.tsx: `ModelMesh({ src })`
 - features/viewer/camera-throttle.ts: `CameraThrottleDeps`、`CameraThrottle`、`createCameraThrottle`
 - features/viewer/model-loading.ts: `BLOCKED_RESOURCE_URL`、`resolveModelResourceUrl`、`createModelLoadingManager`
@@ -129,11 +132,12 @@ glTF/GLB の 3D レビュー画面を提供する。レビュー画面は表示�
 - features/presence/PresenceList.tsx: `PresenceList()`
 - features/presence/RemoteCameras.tsx: `RemoteCameras()`
 - features/presence/presence-labels.ts: `PRESENCE_HEADING`、`SELF_SUFFIX`、`FOLLOW_LABEL`、`UNFOLLOW_LABEL`、`presenceHeading(count)`
-- features/annotation/StrokeLines.tsx: `StrokeLines({ strokes, opacity? })`
+- features/annotation/StrokeLines.tsx: `StrokeLines({ strokes, opacity? })`（annotation ストアの `overlay` を購読）
+- features/annotation/stroke-overlay.ts: `BASE_LINE_WIDTH`、`OVERLAY_LINE_WIDTH`、`OVERLAY_OPACITY_RATIO`、`StrokeLineSpec`、`strokeLineSpecs`
 - features/annotation/RoomStrokes.tsx: `RoomStrokes()`
 - features/annotation/stroke-build.ts: `offsetAlongNormal`、`buildStroke`、`latestOwnStrokeId`
 - features/annotation/AnnotationLayer.tsx: `AnnotationLayer({ send })`
-- features/annotation/AnnotationToolbar.tsx: `AnnotationToolbar({ send })`（色選択・1本戻す・自分の線を消すのみ）
+- features/annotation/AnnotationToolbar.tsx: `AnnotationToolbar({ send })`（色選択・1本戻す・自分の線を消す・`overlay` 切替）
 - features/comments/compose.ts: `CLICK_MOVE_THRESHOLD_PX`、`isClick`、`ownStrokesForComment`、`buildCommentInput`
 - features/comments/comment-labels.ts: コメント表示定数、`commentsHeading`、`statusLabel`、`statusTone`、`toggleStatusLabel`、`pinLabel`、`formatCommentTime`
 - features/comments/CommentPickLayer.tsx: `CommentPickLayer()`
@@ -173,8 +177,10 @@ OrbitControls の `start` はユーザー操作として `presence.unfollow()` �
 annotation ストアへ、`comment:created` / `comment:updated` を comments ストアへ、`error` を `CODE: message` として保存する。annotation ストアは `strokes` を id で上書き・削除し、
 `clearByUser` でユーザー単位に除去する。`mode` は none / pen / comment の排他値で初期値は none、変更時に draft を破棄する。
 `color` は6桁16進色を小文字へ正規化し、`drafting` は描画中の点列、`replayStrokes` は WebSocket のライブ線と分離した
-コメント再現用の点列を保持する。`RoomStrokes` はライブ線を `orderedStrokes` の createdAt/id 順で `StrokeLines` に渡し、
-draft が2点以上ならプレビュー線を1本追加する。
+コメント再現用の点列を保持する。`overlay` は各参加者のローカル表示設定で、`setOverlay` で切り替え、
+レビュー画面の reset で初期値の有効状態へ戻す。`RoomStrokes` はライブ線を `orderedStrokes` の createdAt/id 順で
+`StrokeLines` に渡し、draft が2点以上ならプレビュー線を1本追加する。`StrokeLines` はライブ線とコメント再現線の
+双方で同じ `overlay` 設定を購読し、通常線に加えて必要な場合だけ深度テスト無効の細い透過線を重ねる。
 presence の `applyWelcome` は一覧と Follow 対象を初期化して全置換し、削除されたユーザーを Follow 中なら解除する。
 `useCameraBroadcast` は selfCamera の変更を `createCameraThrottle` へ渡し、前回送信から
 `CAMERA_SEND_INTERVAL_MS` 以上かつ `cameraEquals` で異なる場合だけ送信する。窓内の最新値は

@@ -13,6 +13,7 @@ export const RESET_LABEL = "視点を戻す";
 export const FIT_LABEL = "全体を表示";
 export const UNDO_LABEL = "1本戻す";
 export const CLEAR_LABEL = "自分の線を消す";
+export const OVERLAY_LABEL = "透過表示";
 export const UNFOLLOW_LABEL = "追従を解除";
 
 const COLOR_NAMES: Readonly<Record<string, string>> = {

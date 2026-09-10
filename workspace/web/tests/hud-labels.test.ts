@@ -7,6 +7,7 @@ import {
   hint,
   MODE_LABELS,
   MODE_ORDER,
+  OVERLAY_LABEL,
   RESET_LABEL,
   UNDO_LABEL,
   UNFOLLOW_LABEL,
@@ -20,6 +21,7 @@ describe("viewer HUD labels", () => {
     expect(FIT_LABEL).toBe("全体を表示");
     expect(UNDO_LABEL).toBe("1本戻す");
     expect(CLEAR_LABEL).toBe("自分の線を消す");
+    expect(OVERLAY_LABEL).toBe("透過表示");
     expect(UNFOLLOW_LABEL).toBe("追従を解除");
   });
 

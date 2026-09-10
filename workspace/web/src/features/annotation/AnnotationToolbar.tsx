@@ -3,11 +3,12 @@ import type { ClientMessage } from "@shared/protocol";
 import { STROKE_COLORS, useAnnotationStore } from "../../store/annotation";
 import { useSessionStore } from "../../store/session";
 import { latestOwnStrokeId } from "./stroke-build";
-import { CLEAR_LABEL, colorName, UNDO_LABEL } from "../viewer/hud-labels";
+import { CLEAR_LABEL, colorName, OVERLAY_LABEL, UNDO_LABEL } from "../viewer/hud-labels";
 import "./annotation.css";
 
 export function AnnotationToolbar({ send }: { send: (msg: ClientMessage) => boolean }): ReactElement {
   const color = useAnnotationStore((state) => state.color);
+  const overlay = useAnnotationStore((state) => state.overlay);
   const strokes = useAnnotationStore((state) => state.strokes);
   const selfId = useSessionStore((state) => state.selfId);
   const connection = useSessionStore((state) => state.connection);
@@ -55,6 +56,14 @@ export function AnnotationToolbar({ send }: { send: (msg: ClientMessage) => bool
         disabled={!canEdit || ownStrokeCount === 0}
       >
         {CLEAR_LABEL}
+      </button>
+      <button
+        className="btn btn--quiet"
+        type="button"
+        aria-pressed={overlay}
+        onClick={() => useAnnotationStore.getState().setOverlay(!overlay)}
+      >
+        {OVERLAY_LABEL}
       </button>
     </div>
   );
