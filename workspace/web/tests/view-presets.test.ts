@@ -4,6 +4,8 @@ import { DEFAULT_CAMERA } from "@shared/camera";
 import {
   MIN_PRESET_DISTANCE,
   presetCamera,
+  VIEW_CROSS_CENTER,
+  VIEW_PRESET_CELLS,
   VIEW_PRESET_DIRECTIONS,
   VIEW_PRESET_ORDER,
 } from "../src/features/viewer/view-presets";
@@ -48,12 +50,29 @@ describe("view presets", () => {
   });
 
   it("lists four horizontal unit directions in HUD order", () => {
-    expect(VIEW_PRESET_ORDER).toEqual(["front", "back", "right", "left"]);
+    expect(VIEW_PRESET_ORDER).toEqual(["front", "right", "back", "left"]);
     for (const preset of VIEW_PRESET_ORDER) {
       const direction = VIEW_PRESET_DIRECTIONS[preset];
       expect(direction).toBeDefined();
       expect(Math.hypot(...direction)).toBeCloseTo(1, 10);
       expect(direction[1]).toBe(0);
+    }
+  });
+
+  it("places the presets around the cross center", () => {
+    expect(VIEW_CROSS_CENTER).toEqual({ row: 2, column: 2 });
+    expect(VIEW_PRESET_CELLS).toEqual({
+      front: { row: 1, column: 2 },
+      right: { row: 2, column: 3 },
+      back: { row: 3, column: 2 },
+      left: { row: 2, column: 1 },
+    });
+
+    const cells = VIEW_PRESET_ORDER.map((preset) => VIEW_PRESET_CELLS[preset]);
+    expect(new Set(cells.map(({ row, column }) => `${row},${column}`)).size).toBe(4);
+    for (const { row, column } of cells) {
+      expect(row === VIEW_CROSS_CENTER.row || column === VIEW_CROSS_CENTER.column).toBe(true);
+      expect(Math.abs(row - VIEW_CROSS_CENTER.row) + Math.abs(column - VIEW_CROSS_CENTER.column)).toBe(1);
     }
   });
 

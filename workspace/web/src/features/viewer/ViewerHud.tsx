@@ -1,14 +1,13 @@
 import { useEffect, useRef, useState, type CSSProperties, type ReactElement } from "react";
 import type { ClientMessage } from "@shared/protocol";
 import { useAnnotationStore } from "../../store/annotation";
-import { useCameraStore } from "../../store/camera";
 import { useCommentsStore } from "../../store/comments";
 import { useLightingStore } from "../../store/lighting";
 import { usePresenceStore } from "../../store/presence";
 import { useSessionStore } from "../../store/session";
 import { useShortcutsStore } from "../../store/shortcuts";
 import { AnnotationToolbar } from "../annotation/AnnotationToolbar";
-import { FocalLengthSlider } from "./FocalLengthSlider";
+import { CameraMenu } from "./CameraMenu";
 import { HudMenu } from "./HudMenu";
 import {
   menuAfterPointerDown,
@@ -16,18 +15,14 @@ import {
   type HudMenuId,
 } from "./hud-menu";
 import {
-  FIT_LABEL,
   followingLabel,
   hint,
   LIGHT_RESET_LABEL,
   MODE_LABELS,
   MODE_ORDER,
-  RESET_LABEL,
   UNFOLLOW_LABEL,
-  VIEW_PRESET_LABELS,
   withShortcut,
 } from "./hud-labels";
-import { presetCamera, VIEW_PRESET_ORDER } from "./view-presets";
 import "./viewer.css";
 
 export function ViewerHud({ send }: { send: (msg: ClientMessage) => boolean }): ReactElement {
@@ -39,9 +34,6 @@ export function ViewerHud({ send }: { send: (msg: ClientMessage) => boolean }): 
   const unfollow = usePresenceStore((state) => state.unfollow);
   const hasAnchor = useCommentsStore((state) => state.composerAnchor !== null);
   const connection = useSessionStore((state) => state.connection);
-  const requestReset = useCameraStore((state) => state.requestReset);
-  const requestFit = useCameraStore((state) => state.requestFit);
-  const requestCamera = useCameraStore((state) => state.requestCamera);
   const resetLighting = useLightingStore((state) => state.reset);
   const keymap = useShortcutsStore((state) => state.keymap);
   const followingUser = followingUserId === null ? undefined : users[followingUserId];
@@ -84,40 +76,7 @@ export function ViewerHud({ send }: { send: (msg: ClientMessage) => boolean }): 
           onToggle={() => setOpenMenu((open) => toggleHudMenu(open, "camera"))}
           onClose={() => setOpenMenu(null)}
         >
-          <FocalLengthSlider />
-          {VIEW_PRESET_ORDER.map((preset) => (
-            <button
-              key={preset}
-              className="btn btn--quiet hud-menu__item"
-              type="button"
-              onClick={() => {
-                requestCamera(presetCamera(preset, useCameraStore.getState().selfCamera));
-                setOpenMenu(null);
-              }}
-            >
-              {VIEW_PRESET_LABELS[preset]}
-            </button>
-          ))}
-          <button
-            className="btn btn--quiet hud-menu__item"
-            type="button"
-            onClick={() => {
-              requestReset();
-              setOpenMenu(null);
-            }}
-          >
-            {withShortcut(RESET_LABEL, keymap.viewReset)}
-          </button>
-          <button
-            className="btn btn--quiet hud-menu__item"
-            type="button"
-            onClick={() => {
-              requestFit();
-              setOpenMenu(null);
-            }}
-          >
-            {withShortcut(FIT_LABEL, keymap.viewFit)}
-          </button>
+          <CameraMenu onClose={() => setOpenMenu(null)} />
         </HudMenu>
         <HudMenu
           id="light"

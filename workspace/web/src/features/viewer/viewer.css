@@ -57,7 +57,7 @@
   z-index: 1;
   display: grid;
   gap: var(--space-1);
-  min-width: 12rem;
+  min-width: 13.5rem;
   padding: var(--space-2);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
@@ -70,20 +70,33 @@
   text-align: left;
 }
 
+.hud-menu__section {
+  display: grid;
+  gap: var(--space-1);
+}
+
+.hud-menu__section + .hud-menu__section {
+  margin-top: var(--space-1);
+  padding-top: var(--space-2);
+  border-top: 1px solid var(--color-border);
+}
+
 .hud-focal {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-2);
-  padding: var(--space-1) var(--space-3);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
-  background: var(--color-surface);
-  box-shadow: var(--shadow-overlay);
+  display: grid;
+  gap: var(--space-1);
+  padding: var(--space-1) 0;
   font-size: var(--text-sm);
 }
 
+.hud-focal__head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  white-space: nowrap;
+}
+
 .hud-focal__range {
-  width: 8rem;
+  width: 100%;
 }
 
 .hud-focal__value {
@@ -92,10 +105,16 @@
   text-align: right;
 }
 
-.hud-menu__panel .hud-focal {
-  padding: var(--space-1) 0;
-  border: 0;
-  box-shadow: none;
+.hud-views {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-1);
+}
+
+.hud-view {
+  justify-content: center;
+  padding-inline: var(--space-2);
+  text-align: center;
 }
 
 .hud-follow {

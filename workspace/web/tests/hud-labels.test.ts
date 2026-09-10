@@ -3,6 +3,7 @@ import {
   CLEAR_LABEL,
   colorName,
   FIT_LABEL,
+  FIT_SHORT_LABEL,
   FOCAL_LENGTH_LABEL,
   focalLengthText,
   followingLabel,
@@ -17,6 +18,7 @@ import {
   UNDO_LABEL,
   UNFOLLOW_LABEL,
   VIEW_PRESET_LABELS,
+  VIEW_PRESETS_LABEL,
   withShortcut,
 } from "../src/features/viewer/hud-labels";
 import { VIEW_PRESET_ORDER } from "../src/features/viewer/view-presets";
@@ -34,6 +36,8 @@ describe("viewer HUD labels", () => {
     expect(RESET_LABEL).toBe("視点リセット");
     expect(LIGHT_RESET_LABEL).toBe("ライトリセット");
     expect(FIT_LABEL).toBe("全体を表示");
+    expect(FIT_SHORT_LABEL).toBe("全体");
+    expect(VIEW_PRESETS_LABEL).toBe("既定の視点");
     expect(FOCAL_LENGTH_LABEL).toBe("焦点距離");
     expect(UNDO_LABEL).toBe("1本戻す");
     expect(CLEAR_LABEL).toBe("自分の線を消す");

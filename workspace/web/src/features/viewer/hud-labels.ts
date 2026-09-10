@@ -21,6 +21,10 @@ export const RESET_LABEL = "視点リセット";
 export const LIGHT_RESET_LABEL = "ライトリセット";
 export const FIT_LABEL = "全体を表示";
 export const FOCAL_LENGTH_LABEL = "焦点距離";
+/** 十字の中央セルに入れる短い表示名。aria-label / title には FIT_LABEL を使う。 */
+export const FIT_SHORT_LABEL = "全体";
+/** 十字ブロックの role="group" の aria-label。 */
+export const VIEW_PRESETS_LABEL = "既定の視点";
 export const UNDO_LABEL = "1本戻す";
 export const CLEAR_LABEL = "自分の線を消す";
 export const OVERLAY_LABEL = "透過表示";
