@@ -10,7 +10,6 @@ import { useSessionStore } from "../../store/session";
 import { useLightingStore } from "../../store/lighting";
 import { followStep, followTargetCamera } from "./follow";
 import {
-  flushControlsInertia,
   startCameraAnimation,
   stepCameraAnimation,
   type CameraAnimation,
@@ -88,7 +87,6 @@ export function CameraRig(): ReactElement {
       }
       const controls = controlsRef.current;
       if (controls) {
-        flushControlsInertia(controls);
         applyCamera(camera, controls, DEFAULT_CAMERA);
         cameraStore.setSelfCamera(DEFAULT_CAMERA, true);
       }
@@ -103,7 +101,6 @@ export function CameraRig(): ReactElement {
       const target = cameraStore.consumePendingCamera();
       if (target !== null) {
         usePresenceStore.getState().unfollow();
-        flushControlsInertia(controls);
         animation.current = startCameraAnimation(readCamera(camera, controls), target, now);
       }
       return;
@@ -149,6 +146,7 @@ export function CameraRig(): ReactElement {
       makeDefault
       // 回転を無効にすると start が発火せず、Follow 中に操作で追従を解除できなくなるため、追従中はロックしない。
       enableRotate={!locked}
+      enableDamping={false}
       onChange={handleChange}
       onStart={handleUserInteract}
       target={DEFAULT_CAMERA.target}

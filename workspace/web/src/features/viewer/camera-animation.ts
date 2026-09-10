@@ -40,19 +40,3 @@ export function stepCameraAnimation(
     done: false,
   };
 }
-
-/** OrbitControls の減衰の残りを一度に適用して打ち切る。 */
-export interface DampedControlsLike {
-  enableDamping: boolean;
-  update(): boolean | void;
-}
-
-export function flushControlsInertia(controls: DampedControlsLike): void {
-  const originalEnableDamping = controls.enableDamping;
-  try {
-    controls.enableDamping = false;
-    controls.update();
-  } finally {
-    controls.enableDamping = originalEnableDamping;
-  }
-}
