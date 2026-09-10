@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type CSSProperties, type ReactElement } from "react";
+import { useState, type CSSProperties, type ReactElement } from "react";
 import type { ClientMessage } from "@shared/protocol";
 import { useAnnotationStore } from "../../store/annotation";
 import { useCommentsStore } from "../../store/comments";
@@ -10,7 +10,7 @@ import { CameraMenu } from "./CameraMenu";
 import { HudMenu } from "./HudMenu";
 import { LightGizmo } from "./LightGizmo";
 import {
-  menuAfterPointerDown,
+  HUD_MENU_INITIAL,
   toggleHudMenu,
   type HudMenuId,
 } from "./hud-menu";
@@ -35,19 +35,7 @@ export function ViewerHud({ send }: { send: (msg: ClientMessage) => boolean }): 
   const connection = useSessionStore((state) => state.connection);
   const keymap = useShortcutsStore((state) => state.keymap);
   const followingUser = followingUserId === null ? undefined : users[followingUserId];
-  const [openMenu, setOpenMenu] = useState<HudMenuId | null>(null);
-  const menusRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (openMenu === null) {
-      return;
-    }
-    const handlePointerDown = (event: PointerEvent): void => {
-      setOpenMenu((open) => menuAfterPointerDown(open, menusRef.current, event.target));
-    };
-    document.addEventListener("pointerdown", handlePointerDown);
-    return () => document.removeEventListener("pointerdown", handlePointerDown);
-  }, [openMenu]);
+  const [openMenu, setOpenMenu] = useState<HudMenuId | null>(HUD_MENU_INITIAL);
 
   return (
     <div className="hud">
@@ -67,14 +55,14 @@ export function ViewerHud({ send }: { send: (msg: ClientMessage) => boolean }): 
         </div>
         {mode === "pen" && <AnnotationToolbar send={send} />}
       </div>
-      <div className="hud-menus" ref={menusRef}>
+      <div className="hud-menus">
         <HudMenu
           id="camera"
           open={openMenu === "camera"}
           onToggle={() => setOpenMenu((open) => toggleHudMenu(open, "camera"))}
           onClose={() => setOpenMenu(null)}
         >
-          <CameraMenu onClose={() => setOpenMenu(null)} />
+          <CameraMenu />
         </HudMenu>
       </div>
       <LightGizmo />

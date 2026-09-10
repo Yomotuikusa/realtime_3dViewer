@@ -11,6 +11,8 @@ const srcDir = existsSync(urlPath) ? urlPath : join(process.cwd(), "web", "src")
 const tokensText = readFileSync(join(srcDir, "styles/tokens.css"), "utf8");
 const viewerCssText = readFileSync(join(srcDir, "features/viewer/viewer.css"), "utf8");
 const cameraMenuText = readFileSync(join(srcDir, "features/viewer/CameraMenu.tsx"), "utf8");
+const hudMenuText = readFileSync(join(srcDir, "features/viewer/HudMenu.tsx"), "utf8");
+const viewerHudText = readFileSync(join(srcDir, "features/viewer/ViewerHud.tsx"), "utf8");
 
 /** text 中で selector にちょうど一致するルールのブロック本文。無ければ null。 */
 function ruleBody(text: string, selector: string): string | null {
@@ -24,6 +26,58 @@ function rootBody(text: string): string {
 }
 
 describe("viewer styles", () => {
+  it("defines the translucent surface token", () => {
+    const root = rootBody(tokensText);
+
+    expect(root).toMatch(
+      /--color-surface-translucent\s*:\s*color-mix\([^;]*var\(--color-surface\)/,
+    );
+  });
+
+  it("sets the docked camera menu width", () => {
+    expect(ruleBody(viewerCssText, ".hud-menu")).toContain("width: 13.5rem");
+  });
+
+  it("makes the camera toggle fill the translucent menu width", () => {
+    const body = ruleBody(viewerCssText, ".hud-menu__toggle");
+
+    expect(body).toContain("width: 100%");
+    expect(body).toContain("background: var(--color-surface-translucent)");
+  });
+
+  it("joins an expanded camera toggle to its panel", () => {
+    const body = ruleBody(viewerCssText, '.hud-menu__toggle[aria-expanded="true"]');
+
+    expect(body).not.toContain("--color-accent");
+    expect(body).toContain("border-bottom-left-radius: 0");
+    expect(body).toContain("border-bottom-right-radius: 0");
+  });
+
+  it("docks the translucent camera panel below its toggle", () => {
+    const body = ruleBody(viewerCssText, ".hud-menu__panel");
+
+    expect(body).toContain("top: 100%");
+    expect(body).toContain("left: 0");
+    expect(body).toContain("right: 0");
+    expect(body).toContain("border-top: 0");
+    expect(body).toContain("background: var(--color-surface-translucent)");
+    expect(body).not.toContain("min-width");
+  });
+
+  it("starts ViewerHud with the camera menu open without document pointerdown handling", () => {
+    expect(viewerHudText).toContain("useState<HudMenuId | null>(HUD_MENU_INITIAL)");
+    expect(viewerHudText).not.toContain("menuAfterPointerDown");
+    expect(viewerHudText).not.toContain("addEventListener");
+  });
+
+  it("uses a chevron in the HUD menu toggle", () => {
+    expect(hudMenuText).toContain("hud-menu__chevron");
+  });
+
+  it("keeps camera controls independent from menu closing", () => {
+    expect(cameraMenuText).not.toContain("onClose");
+  });
+
   it("defines a control shadow with positive x and y offsets", () => {
     const shadow = rootBody(tokensText).match(/--shadow-control\s*:\s*([^;]+)/)?.[1] ?? "";
     const offsets = shadow.match(/^\s*(\d+(?:\.\d+)?)px\s+(\d+(?:\.\d+)?)px\b/);

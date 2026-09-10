@@ -11,10 +11,10 @@ Canvas、モデル、カメラ、ライティング、焦点距離、HUD、ポ�
 - FocalLengthRig.tsx: camera ストアの焦点距離を PerspectiveCamera の垂直画角へ反映する描画なしの Rig。Bounds の計算対象外
 - FocalLengthSlider.tsx: HUD 内で焦点距離を 14〜300mm の範囲で変更するスライダー。ラベルと値を上段、入力を下段に配置する
 - focal-length.ts: 固定センサー高を使う焦点距離／垂直画角の換算と既定画角
-- CameraMenu.tsx: 焦点距離、枠と影を持つ十字配置の既定視点・全体表示・視点リセットを3ブロックに分けて描画するカメラメニュー本体
-- ViewerHud.tsx: ペン／コメントの toggle ボタンとペン道具を左上に、カメラのドロップダウンを右上に表示し、CameraMenu、LightGizmo、Follow 中バッジ、描画基準、操作ヒントを各ストアと keymap に接続する。メニュー内の Escape はメニューだけを閉じる
-- HudMenu.tsx: カメラのトグルボタンと、開いているときだけ表示する `role="group"` パネルを描画する制御コンポーネント。Escape の閉じ処理を親へ通知する
-- hud-menu.ts: HUD メニューの ID・順序・表示名と、トグル／外側 pointerdown の純粋な状態遷移
+- CameraMenu.tsx: 焦点距離、枠と影を持つ十字配置の既定視点・全体表示・視点リセットを3ブロックに分けて描画するカメラメニュー本体。操作後もメニューを閉じない
+- ViewerHud.tsx: ペン／コメントの toggle ボタンとペン道具を左上に、最初から展開した半透明カメラパネルを右上に表示し、CameraMenu、LightGizmo、Follow 中バッジ、描画基準、操作ヒントを各ストアと keymap に接続する。メニュー内の Escape はメニューだけを閉じる
+- HudMenu.tsx: カメラのトグルボタンと、開いているときだけ表示する `role="group"` パネルを描画する制御コンポーネント。開閉用の chevron を表示し、Escape の閉じ処理を親へ通知する
+- hud-menu.ts: HUD メニューの ID・順序・表示名、初期表示メニューとトグルの純粋な状態遷移
 - hud-labels.ts: ツールモード・色・Follow・視点操作・ライトギズモ・焦点距離・十字中央／視点グループ・透過表示・描画基準・ヒントの日本語文言と純粋な判定関数
 - view-presets.ts: 正面／背面／右／左の向き、十字セルと並び順、距離を保ったプリセットカメラ計算
 - lighting.ts: ワールド固定ライトの角度の正規化・クランプ・ドラッグ回転と主／補助ライト座標を提供する
@@ -37,11 +37,11 @@ Canvas、モデル、カメラ、ライティング、焦点距離、HUD、ポ�
 - light-gizmo.ts: `GIZMO_SIZE_PX` などのギズモ定数、`gizmoMarkerPosition`、`gizmoDragStep`、`gizmoKeyDeltaX`、`yawDegrees`、`yawText`
 - FocalLengthRig.tsx: `FocalLengthRig()`
 - FocalLengthSlider.tsx: `FocalLengthSlider()`。ラベル・値とスライダーを別段に描画する
-- CameraMenu.tsx: `CameraMenu({ onClose })`。焦点距離、十字の既定視点／全体表示、視点リセットを描画し、操作後に親へ閉じ処理を通知する
+- CameraMenu.tsx: `CameraMenu()`。焦点距離、十字の既定視点／全体表示、視点リセットを描画し、操作後もカメラ要求だけを行う
 - focal-length.ts: `SENSOR_HEIGHT_MM`、`FOCAL_LENGTH_STEP_MM`、`fovFromFocalLength`、`focalLengthFromFov`、`DEFAULT_FOV`
 - ViewerHud.tsx: `ViewerHud({ send })`。カメラメニュー本体を `CameraMenu` に、ライト操作ギズモを `LightGizmo` に委譲する
 - HudMenu.tsx: `HudMenu({ id, open, onToggle, onClose, children })`。カメラメニューの開閉 state を持たず、Escape を親へ通知する
-- hud-menu.ts: `HudMenuId`、`HUD_MENU_ORDER`、`HUD_MENU_LABELS`、`toggleHudMenu`、`menuAfterPointerDown`
+- hud-menu.ts: `HudMenuId`、`HUD_MENU_ORDER`、`HUD_MENU_LABELS`、`HUD_MENU_INITIAL`、`toggleHudMenu`
 - hud-labels.ts: `ToolMode`、`MODE_LABELS`、`MODE_ORDER`、`VIEW_PRESET_LABELS`、`FIT_SHORT_LABEL`、`VIEW_PRESETS_LABEL`、`PLACEMENT_LABELS`、`PLACEMENT_ORDER`、各種ラベル（`FOCAL_LENGTH_LABEL` / `OVERLAY_LABEL` / `LIGHT_DIRECTION_LABEL` / `LIGHT_RESET_LABEL` を含む）、`focalLengthText`、`colorName`、`followingLabel`、`HintInput`（`placement` を含む）、`hint`、`withShortcut`
 - view-presets.ts: `ViewPreset`、`VIEW_PRESET_ORDER`、`GridCell`、`VIEW_CROSS_CENTER`、`VIEW_PRESET_CELLS`、`VIEW_PRESET_DIRECTIONS`、`MIN_PRESET_DISTANCE`、`presetCamera`
 - lighting.ts: `LightAngles`、ライト定数、`normalizeYaw`、`clampPitch`、`rotateLight`、`lightPosition`、`fillLightPosition`
@@ -60,8 +60,9 @@ Canvas、モデル、カメラ、ライティング、焦点距離、HUD、ポ�
 `CameraRig` は Reset 発生時に未消費の `pendingCamera` も破棄し、Reset 後の古い再現要求が補間を開始しないようにする。
 CameraRig の毎フレーム処理は D27 の優先順位に従う。
 
-`ViewerHud` は右上のカメラメニューをローカル state だけで管理し、右下へ `LightGizmo` を常設する。開いているメニューの外側で
-pointerdown すると閉じ、メニュー内の Escape はショートカットの `clearMode` へ伝播せずメニューだけを閉じる。
+`ViewerHud` は右上のカメラメニューをローカル state だけで管理し、初期状態では半透明パネルを展開して右下へ `LightGizmo` を常設する。
+3D ビューや他の HUD の pointerdown では閉じず、トグルボタンまたはメニュー内の Escape だけで折りたたむ。Escape はショートカットの
+`clearMode` へ伝播せずメニューだけを閉じる。
 `selfCamera` をクリック時に読み、`presetCamera` で注視点と距離を保った視点を作ってカメラストアの
 `requestCamera` へ積む。要求は既存の `CameraRig` が補間し、消費時に Follow を解除する。
 `FocalLengthRig` は焦点距離を固定センサー高から換算した垂直画角として PerspectiveCamera に適用し、
@@ -100,7 +101,7 @@ Canvas のクライアント座標を NDC 化して再帰的にモデルをレ�
 - tests/focal-length.test.ts: 焦点距離と垂直画角の換算テスト
 - tests/follow.test.ts: Follow 対象のカメラ・焦点距離の判定、複製、補間、収束テスト
 - tests/hud-labels.test.ts: HUD のモード・操作・透過表示・描画基準・Follow・既定視点文言とヒントのテスト
-- tests/hud-menu.test.ts: HUD メニューの順序・表示名、トグル、内外 pointerdown の純粋関数テスト
+- tests/hud-menu.test.ts: HUD メニューの初期表示、順序・表示名、トグルの純粋関数テスト
 - tests/light-gizmo.test.ts: ライトギズモの座標・入力・表示の純粋関数テスト
 - tests/lighting.test.ts: ライト角度の正規化・クランプ・ドラッグ回転・主／補助ライト座標を検証
 - tests/model-loading.test.ts: 埋め込み・同一オリジン URL の許可、外部 URL の遮断、LoadingManager の URL modifier のテスト
@@ -108,4 +109,4 @@ Canvas のクライアント座標を NDC 化して再帰的にモデルをレ�
 - tests/pick.test.ts: NDC 変換、モデルの再帰レイキャスト、ワールド法線変換テスト
 - tests/view-presets.test.ts: 既定視点の方向・順序・単位ベクトル・距離維持・最小距離・非破壊性のテスト
 - tests/viewer-pointer.test.ts: capture phase の割り当て、Alt+右ドラッグ dolly、pointer capture、継続・終了・ブラウザ既定動作抑止、cleanup のテスト
-- tests/viewer-styles.test.ts: カメラメニューのボタン影、ライトギズモの枠廃止、シャドウトークン、CSS セレクタ完全一致のテキスト検査
+- tests/viewer-styles.test.ts: 半透明で上下に結合したカメラメニュー、初期展開と操作後の非クローズ、カメラメニューのボタン影、ライトギズモの枠廃止、シャドウトークン、CSS セレクタ完全一致のテキスト検査
