@@ -1,6 +1,6 @@
 import { create } from "zustand";
-import type { CameraState } from "@shared/types";
-import { cameraEquals, cloneCamera, DEFAULT_CAMERA } from "@shared/camera";
+import { DEFAULT_FOCAL_LENGTH_MM, type CameraState } from "@shared/types";
+import { cameraEquals, clampFocalLength, cloneCamera, DEFAULT_CAMERA } from "@shared/camera";
 
 export interface CameraStoreState {
   /** 最後に確定した自分の視点。初期値は DEFAULT_CAMERA */
@@ -13,6 +13,8 @@ export interface CameraStoreState {
   fitSeq: number;
   /** モデルのバウンディングボックスの最大辺長。初期値 1。017 の simplifyTolerance でも使う */
   modelSize: number;
+  /** 焦点距離(mm)。初期値は DEFAULT_FOCAL_LENGTH_MM */
+  focalLength: number;
 
   /** cameraEquals(既定 eps)で現在値と同じなら state を更新しない */
   setSelfCamera(camera: CameraState): void;
@@ -20,9 +22,12 @@ export interface CameraStoreState {
   requestCamera(camera: CameraState): void;
   /** pendingCamera を返して null に戻す */
   consumePendingCamera(): CameraState | null;
+  /** resetSeq を増やし、焦点距離を既定値へ戻す */
   requestReset(): void;
   requestFit(): void;
   setModelSize(size: number): void;
+  /** clampFocalLength した焦点距離を設定する */
+  setFocalLength(focalLengthMm: number): void;
   /** テスト用。全 state を初期値へ戻す */
   reset(): void;
 }
@@ -37,6 +42,7 @@ export const useCameraStore = create<CameraStoreState>((set, get) => ({
   resetSeq: 0,
   fitSeq: 0,
   modelSize: 1,
+  focalLength: DEFAULT_FOCAL_LENGTH_MM,
 
   setSelfCamera(camera) {
     if (cameraEquals(get().selfCamera, camera)) {
@@ -59,7 +65,7 @@ export const useCameraStore = create<CameraStoreState>((set, get) => ({
   },
 
   requestReset() {
-    set((state) => ({ resetSeq: state.resetSeq + 1 }));
+    set((state) => ({ resetSeq: state.resetSeq + 1, focalLength: DEFAULT_FOCAL_LENGTH_MM }));
   },
 
   requestFit() {
@@ -73,6 +79,14 @@ export const useCameraStore = create<CameraStoreState>((set, get) => ({
     set({ modelSize: size });
   },
 
+  setFocalLength(focalLengthMm) {
+    const next = clampFocalLength(focalLengthMm);
+    if (next === get().focalLength) {
+      return;
+    }
+    set({ focalLength: next });
+  },
+
   reset() {
     set({
       selfCamera: initialCameraState(),
@@ -80,6 +94,7 @@ export const useCameraStore = create<CameraStoreState>((set, get) => ({
       resetSeq: 0,
       fitSeq: 0,
       modelSize: 1,
+      focalLength: DEFAULT_FOCAL_LENGTH_MM,
     });
   },
 }));
