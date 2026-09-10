@@ -14,6 +14,7 @@ import { RemoteCameras } from "../features/presence/RemoteCameras";
 import { ViewerCanvas } from "../features/viewer/ViewerCanvas";
 import { ViewerHud } from "../features/viewer/ViewerHud";
 import { useCameraBroadcast } from "../features/viewer/useCameraBroadcast";
+import { useShortcuts } from "../features/shortcuts/useShortcuts";
 import { useSessionStore } from "../store/session";
 import { ErrorBoundary } from "./ErrorBoundary";
 import { JoinDialog } from "./JoinDialog";
@@ -44,6 +45,7 @@ export function ReviewPage({ projectId }: { projectId: string }): ReactElement {
   useCommentReplay();
   const realtime = useRealtime(projectId, joinName);
   useCameraBroadcast(realtime.send);
+  useShortcuts(joinName !== null);
   const lastError = useSessionStore((session) => session.lastError);
 
   useEffect(() => () => resetReviewStores(), []);

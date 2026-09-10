@@ -16,11 +16,11 @@ glTF/GLB の 3D レビュー画面を提供する。レビュー画面は表示�
 - src/app/JoinDialog.tsx: 保存済み表示名を初期値にした入室フォーム
 - src/app/realtime-dispatch.ts: `ServerMessage` を session / presence / annotation / comments ストアへ振り分ける入口。`welcome`、presence 更新、stroke、`comment:created` / `comment:updated`、`error` を扱い、未知の型はコンパイル時に検出する
 - src/app/useRealtime.ts: 名前決定後の `WsClient` 接続と、open ごとの `join` 送信。`onRealtimeStatus` は session の接続状態を更新し、open 時に lastError を解除する
-- src/app/review-stores.ts: レビュー画面のアンマウント時に session / presence / annotation / comments / camera の5ストアをまとめて初期化する reset 関数
+- src/app/review-stores.ts: レビュー画面のアンマウント時に session / presence / annotation / comments / camera の5ストアをまとめて初期化する reset 関数（shortcuts ストアは対象外）
 - src/app/UploadPage.tsx: トークン CSS で構成したプロジェクト名・`.glb`/`.gltf` のアップロード画面。拡張子と容量を送信前に検査し、`FILE_TOO_LARGE` などのエラーを表示する
 - src/app/upload-labels.ts: アップロード画面と NotFound の表示文言、`FILE_TOO_LARGE`、ファイル容量 helper の純粋関数
 - src/app/upload.css: アップロード画面と NotFound の狭い幅のレイアウト CSS
-- src/app/ReviewPage.tsx: プロジェクト取得、レビュー画面の骨格、ロード状態・エラーカード、ビューアとサイドパネルのレイアウトを担当する。Canvas に RemoteCameras / RoomStrokes / ReplayStrokes / AnnotationLayer / CommentPickLayer / CommentPins を配置し、`.review-hud` を 025 の HUD 差し込み口、`.review-panel__comments` を 026 のコメント領域差し込み口として提供する
+- src/app/ReviewPage.tsx: プロジェクト取得、レビュー画面の骨格、ロード状態・エラーカード、ビューアとサイドパネルのレイアウトを担当する。Canvas に RemoteCameras / RoomStrokes / ReplayStrokes / AnnotationLayer / CommentPickLayer / CommentPins を配置し、`.review-hud` を 025 の HUD 差し込み口、`.review-panel__comments` を 026 のコメント領域差し込み口として提供し、入室後だけショートカットを有効にする
 - src/app/ReviewHeader.tsx: 接続状態バッジ、入室後の自分の表示名・色、レビュー URL のコピーと失敗時の手動コピー欄を表示する
 - src/app/JoinDialog.tsx: 保存済み表示名を初期値にした、入室前にビューアを覆うモーダルフォーム。表示名の解決・保存・入室コールバックは display-name と呼び出し側へ委譲する
 - src/app/review-labels.ts: 接続状態・コピー状態・ロード/エラー文言を定義する JSX 非依存の純粋関数と定数
@@ -31,6 +31,7 @@ glTF/GLB の 3D レビュー画面を提供する。レビュー画面は表示�
 - src/store/presence.ts: 参加者一覧、各参加者のカメラ、Follow 対象を保持する zustand ストア
 - src/store/annotation.ts: ルーム全員分のライブ線、annotation mode・色・描画中 draft・コメント再現用線・メッシュに埋もれた線の透過表示設定・ペンの描画基準を保持し、welcome/線操作・draft・表示設定・reset を提供する zustand ストア
 - src/store/comments.ts: コメント一覧、Open フィルタ、選択中コメント、投稿アンカー、API エラーを保持し、`setAll` / `upsert` / `select` / `setFilter` / `setComposerAnchor` / `setLastError` / `reset` を提供する zustand ストア
+- src/store/shortcuts.ts: `useShortcutsStore` として永続化された `keymap` を保持し、`setBinding` / `resetKeymap` を提供する。`resetReviewStores()` の対象外
 - src/features/presence/PresenceList.tsx: 参加者を自分先頭・名前順で表示し、色ドット、あなたバッジ、視点に入る / 追従を解除ボタンを提供
 - src/features/presence/RemoteCameras.tsx: 他者のカメラ位置・向きに、その人の色の左線を持つ `presence-tag` 名札を重ねる
 - src/features/presence/presence-labels.ts: 参加者見出し、本人/追従操作の日本語ラベルと件数見出し関数
@@ -55,8 +56,11 @@ glTF/GLB の 3D レビュー画面を提供する。レビュー画面は表示�
 - src/features/annotation/AnnotationToolbar.tsx: ペンモード中の色・表面/空間の描画基準選択、自分の線の 1本戻す / 自分の線を消す、メッシュに埋もれた線の透過表示切替を提供するペン道具
 - src/features/annotation/annotation.css: ペン道具と色ボタンのプレーン CSS
 - src/features/viewer/ViewerCanvas.tsx: Canvas、ライティング、Bounds、モデル、カメラを合成するビューア。`children` は RemoteCameras / StrokeLines / AnnotationLayer など後続機能の差し込み口
-- src/features/viewer/ViewerHud.tsx: ペン／コメントの toggle ボタン、ペン道具、視点リセット・Fit、Follow 中バッジ、描画基準を含むビューア操作ヒントを表示し、各ストアを購読する
+- src/features/viewer/ViewerHud.tsx: ペン／コメントの toggle ボタン、ペン道具、視点リセット・Fit、Follow 中バッジ、描画基準を含むビューア操作ヒントを表示し、各ストアと keymap を購読する
 - src/features/viewer/hud-labels.ts: ツールモード・色・Follow・視点操作・透過表示・描画基準・ヒントの日本語文言と純粋な判定関数
+- src/features/shortcuts/keymap.ts: `ShortcutAction` / `Binding` / `Keymap` / `DEFAULT_KEYMAP` / `ACTION_ORDER` とキーコードの正規化、割り当て、表示、入力対象判定
+- src/features/shortcuts/keymap-storage.ts: `KEYMAP_STORAGE_KEY` による keymap の localStorage 読み書きと不正値の既定値補完
+- src/features/shortcuts/useShortcuts.ts: 入室中だけ keydown を購読し、ショートカットを annotation / camera ストアの action へ接続するフック
 - src/features/viewer/viewer.css: HUD のモード選択、視点操作、Follow バッジ、操作ヒントのプレーン CSS
 - src/features/viewer/ModelMesh.tsx: 同一オリジン用の LoadingManager を指定して `useGLTF` でモデルをロードし、バウンディングボックスからモデルサイズを記録して初回 Fit を要求する。ロード中の `scene` を共通モデルターゲットへ登録し、アンマウント時に解除する。Draco 圧縮時のデコーダ取得（`https://www.gstatic.com/...`）は drei の別 manager による外部依存として残る
 - src/features/viewer/model-loading.ts: glTF の `buffers` / `images` などが参照する data/blob URI と同一オリジン URL だけを許可する LoadingManager を作り、外部 URL を `about:blank` に置換する
@@ -80,6 +84,9 @@ glTF/GLB の 3D レビュー画面を提供する。レビュー画面は表示�
 - tests/store-annotation.test.ts: annotation ストアの初期値、線操作、mode/色、draft、再現線、透過表示・描画基準設定、順序、reset のテスト
 - tests/stroke-overlay.test.ts: 通常線・深度テスト無効の透過線 spec の順序、props、透明度、非破壊性のテスト
 - tests/hud-labels.test.ts: HUD のモード・操作・透過表示・描画基準・Follow 文言とヒントのテスト
+- tests/keymap.test.ts: キーコード、binding、アクション解決、割り当て、表示、入力対象判定のテスト
+- tests/keymap-storage.test.ts: keymap の localStorage 読み書き、不正値補完、例外耐性のテスト
+- tests/store-shortcuts.test.ts: shortcuts ストアの割り当て・永続化・既定値復元とレビュー reset 非対象のテスト
 - tests/draw-plane.test.ts: 視線垂直な描画平面の生成、レイとの交差、平行/後方/始点交差の除外、非破壊性のテスト
 - tests/store-presence.test.ts: presence の全置換、upsert、削除、カメラ更新、Follow、reset のテスト
 - tests/camera-broadcast.test.ts: カメラ送信 throttle の間隔・比較判定テスト
@@ -118,9 +125,13 @@ glTF/GLB の 3D レビュー画面を提供する。レビュー画面は表示�
 - store/presence.ts: `usePresenceStore`、`PresenceStoreState`
 - store/annotation.ts: `useAnnotationStore`、`AnnotationStoreState`、`AnnotationMode`、`PenPlacement`、`STROKE_COLORS`、`DEFAULT_STROKE_COLOR`、`orderedStrokes`（`overlay` / `setOverlay` / `placement` / `setPlacement` を含む）
 - store/comments.ts: `useCommentsStore`、`CommentsStoreState`（`items` / `showOnlyOpen` / `selectedId` / `composerAnchor` / `lastError` と全 action）、`selectVisible`
+- store/shortcuts.ts: `useShortcutsStore`、`ShortcutsStoreState`
 - features/viewer/ViewerCanvas.tsx: `ViewerCanvas({ modelSrc, children? })`
 - features/viewer/ViewerHud.tsx: `ViewerHud({ send })`
-- features/viewer/hud-labels.ts: `ToolMode`、`MODE_LABELS`、`MODE_ORDER`、`PLACEMENT_LABELS`、`PLACEMENT_ORDER`、各種ラベル（`OVERLAY_LABEL` を含む）、`colorName`、`followingLabel`、`HintInput`（`placement` を含む）、`hint`
+- features/viewer/hud-labels.ts: `ToolMode`、`MODE_LABELS`、`MODE_ORDER`、`PLACEMENT_LABELS`、`PLACEMENT_ORDER`、各種ラベル（`OVERLAY_LABEL` を含む）、`colorName`、`followingLabel`、`HintInput`（`placement` を含む）、`hint`、`withShortcut`
+- features/shortcuts/keymap.ts: `ShortcutAction`、`Binding`、`Keymap`、`ACTION_ORDER`、`DEFAULT_KEYMAP`、`KeyChord`、`ShortcutEventLike`、`isModifierCode`、`isAssignableCode`、`bindingFromChord`、`isValidBinding`、`resolveAction`、`applyBinding`、`formatBinding`、`isTypingTarget`
+- features/shortcuts/keymap-storage.ts: `KEYMAP_STORAGE_KEY`、`loadKeymap`、`saveKeymap`
+- features/shortcuts/useShortcuts.ts: `useShortcuts(enabled)`
 - features/viewer/ModelMesh.tsx: `ModelMesh({ src })`
 - features/viewer/camera-throttle.ts: `CameraThrottleDeps`、`CameraThrottle`、`createCameraThrottle`
 - features/viewer/model-loading.ts: `BLOCKED_RESOURCE_URL`、`resolveModelResourceUrl`、`createModelLoadingManager`
@@ -199,6 +210,7 @@ Canvas のクライアント座標を NDC 化して再帰的にモデルをレ�
 ストローク中固定するためモデルの外でも線が続き、法線オフセットは適用しない。終了時に `buildStroke` で
 間引き、接続が open かつ selfId がある場合だけ `stroke:add` を送信する。draft は終了時に消し、
 送信した線はサーバー配信を待つためローカルへ追加しない。
+ショートカットは入室後の `ReviewPage` で有効になり、HUD のモード／視点ボタンにも現在の keymap を表示する。キー設定は `resetReviewStores()` の5ストア初期化から独立して localStorage に保持する。
 カメラ操作は `CameraRig` が `useThree().controls` の `OrbitControls` に `attachViewerPointer` を接続する。
 常時有効な OrbitControls の割り当ては、Alt なしでは全ボタンを無効、Alt 押下中は左回転・中パン・右無効とし、
 ホイールは常に OrbitControls の dolly を使う。右ドラッグだけは `dollyPosition` でカメラ位置を変更し、

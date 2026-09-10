@@ -13,9 +13,16 @@ import {
   RESET_LABEL,
   UNDO_LABEL,
   UNFOLLOW_LABEL,
+  withShortcut,
 } from "../src/features/viewer/hud-labels";
 
 describe("viewer HUD labels", () => {
+  it("adds a formatted shortcut only when it is assigned", () => {
+    expect(withShortcut("ペン", "KeyP")).toBe("ペン (P)");
+    expect(withShortcut("視点を戻す", "Shift+KeyR")).toBe("視点を戻す (Shift+R)");
+    expect(withShortcut("コメント", null)).toBe("コメント");
+  });
+
   it("defines Japanese mode and action labels", () => {
     expect(MODE_LABELS).toEqual({ pen: "ペン", comment: "コメント" });
     expect(MODE_ORDER).toEqual(["pen", "comment"]);

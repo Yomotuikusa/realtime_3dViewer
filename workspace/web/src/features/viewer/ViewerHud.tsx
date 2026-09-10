@@ -5,6 +5,7 @@ import { useCameraStore } from "../../store/camera";
 import { useCommentsStore } from "../../store/comments";
 import { usePresenceStore } from "../../store/presence";
 import { useSessionStore } from "../../store/session";
+import { useShortcutsStore } from "../../store/shortcuts";
 import { AnnotationToolbar } from "../annotation/AnnotationToolbar";
 import {
   FIT_LABEL,
@@ -14,6 +15,7 @@ import {
   MODE_ORDER,
   RESET_LABEL,
   UNFOLLOW_LABEL,
+  withShortcut,
 } from "./hud-labels";
 import "./viewer.css";
 
@@ -28,6 +30,7 @@ export function ViewerHud({ send }: { send: (msg: ClientMessage) => boolean }): 
   const connection = useSessionStore((state) => state.connection);
   const requestReset = useCameraStore((state) => state.requestReset);
   const requestFit = useCameraStore((state) => state.requestFit);
+  const keymap = useShortcutsStore((state) => state.keymap);
   const followingUser = followingUserId === null ? undefined : users[followingUserId];
 
   return (
@@ -42,14 +45,14 @@ export function ViewerHud({ send }: { send: (msg: ClientMessage) => boolean }): 
               aria-pressed={mode === modeValue}
               onClick={() => setMode(mode === modeValue ? "none" : modeValue)}
             >
-              {MODE_LABELS[modeValue]}
+              {withShortcut(MODE_LABELS[modeValue], keymap[modeValue])}
             </button>
           ))}
         </div>
         {mode === "pen" && <AnnotationToolbar send={send} />}
         <div className="hud-view" role="group" aria-label="視点">
-          <button className="btn btn--quiet" type="button" onClick={requestReset}>{RESET_LABEL}</button>
-          <button className="btn btn--quiet" type="button" onClick={requestFit}>{FIT_LABEL}</button>
+          <button className="btn btn--quiet" type="button" onClick={requestReset}>{withShortcut(RESET_LABEL, keymap.viewReset)}</button>
+          <button className="btn btn--quiet" type="button" onClick={requestFit}>{withShortcut(FIT_LABEL, keymap.viewFit)}</button>
         </div>
       </div>
       {followingUserId !== null && (

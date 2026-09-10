@@ -1,4 +1,5 @@
 import type { AnnotationMode, PenPlacement } from "../../store/annotation";
+import { formatBinding, type Binding } from "../shortcuts/keymap";
 
 /** HUD のボタンに出すモード。"none" は解除状態でありボタンを持たない。 */
 export type ToolMode = Exclude<AnnotationMode, "none">;
@@ -20,6 +21,11 @@ export const PLACEMENT_LABELS: Readonly<Record<PenPlacement, string>> = {
   space: "空間",
 };
 export const PLACEMENT_ORDER: readonly PenPlacement[] = ["surface", "space"];
+
+/** ボタン名にショートカットキーを併記する。未割り当てなら name をそのまま返す。 */
+export function withShortcut(name: string, binding: Binding | null): string {
+  return binding === null ? name : `${name} (${formatBinding(binding)})`;
+}
 
 const COLOR_NAMES: Readonly<Record<string, string>> = {
   "#ff0000": "赤",
