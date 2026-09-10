@@ -6,6 +6,7 @@
 ## ファイル一覧と役割
 - PresenceList.tsx: 参加者を自分先頭・名前順で表示し、色ドット、あなたバッジ、視点に入る / 追従を解除ボタンを提供
 - RemoteCameras.tsx: 他者のカメラ位置・向きに、その人の色の左線を持つ `presence-tag` 名札を重ねる
+- RemoteCameras.tsx: 他者のカメラ位置・向きと名前ラベルを Canvas 内に表示
 - presence-labels.ts: 参加者見出し、本人/追従操作の日本語ラベルと件数見出し関数
 - presence.css: 参加者行、追従中の背景、色ドット、3D カメラ名札のトークン CSS
 
