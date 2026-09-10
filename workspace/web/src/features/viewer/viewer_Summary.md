@@ -6,12 +6,12 @@ Canvas、モデル、カメラ、ライティング、焦点距離、HUD、ポ�
 ## ファイル一覧と役割
 - ViewerCanvas.tsx: Canvas、ライティング、焦点距離、Bounds、モデル、カメラを合成するビューア。`children` は RemoteCameras / StrokeLines / AnnotationLayer など後続機能の差し込み口
 - SceneLights.tsx: lighting ストアの角度から環境光・主ライト・反転した補助ライトを Bounds 外へ描画する
-- LightGizmo.tsx: 右下の立方体ギズモを描画し、水平ドラッグ・矢印キー・リセットをライトストアへ接続する
+- LightGizmo.tsx: 枠なしで3Dビュー右下へ重ねる立方体ギズモを描画し、水平ドラッグ・矢印キー・リセットをライトストアへ接続する
 - light-gizmo.ts: ギズモの寸法・カメラ定数、マーカー座標、ドラッグ／キー入力、yaw 表示の純粋関数
 - FocalLengthRig.tsx: camera ストアの焦点距離を PerspectiveCamera の垂直画角へ反映する描画なしの Rig。Bounds の計算対象外
 - FocalLengthSlider.tsx: HUD 内で焦点距離を 14〜300mm の範囲で変更するスライダー。ラベルと値を上段、入力を下段に配置する
 - focal-length.ts: 固定センサー高を使う焦点距離／垂直画角の換算と既定画角
-- CameraMenu.tsx: 焦点距離、十字配置の既定視点、全体表示、視点リセットを3ブロックに分けて描画するカメラメニュー本体
+- CameraMenu.tsx: 焦点距離、枠と影を持つ十字配置の既定視点・全体表示・視点リセットを3ブロックに分けて描画するカメラメニュー本体
 - ViewerHud.tsx: ペン／コメントの toggle ボタンとペン道具を左上に、カメラのドロップダウンを右上に表示し、CameraMenu、LightGizmo、Follow 中バッジ、描画基準、操作ヒントを各ストアと keymap に接続する。メニュー内の Escape はメニューだけを閉じる
 - HudMenu.tsx: カメラのトグルボタンと、開いているときだけ表示する `role="group"` パネルを描画する制御コンポーネント。Escape の閉じ処理を親へ通知する
 - hud-menu.ts: HUD メニューの ID・順序・表示名と、トグル／外側 pointerdown の純粋な状態遷移
@@ -28,7 +28,7 @@ Canvas、モデル、カメラ、ライティング、焦点距離、HUD、ポ�
 - viewer-pointer.ts: controls.domElement へ Maya 式の pointer、contextmenu、マウス抑止イベントを接続し、右ドラッグ dolly／Shift+右ドラッグのライト回転と後始末を提供する
 - camera-throttle.ts: `CameraPayload`（カメラと焦点距離）を最新値だけ保持し、`payloadEquals` で両方を比較しながら送信成功時刻から 50ms ごとの先頭送信と窓明けトレーリング送信を行う。送信失敗は未送信としてタイマーまたは次の更新で再試行し、破棄時に保留送信をキャンセルする
 - useCameraBroadcast.ts: `selfCamera` または焦点距離の変更を `camera-throttle` へ渡し、`camera` メッセージへ焦点距離を載せる。送信成功時に自分の presence カメラと焦点距離も更新する。`shouldSendCamera` は従来の判定インターフェイスとして公開する
-- viewer.css: HUD のモード選択、右上カメラメニュー、焦点距離スライダー、カメラメニューのブロック区切りと十字配置、Follow バッジ、操作ヒント、ライトギズモのプレーン CSS
+- viewer.css: HUD のモード選択、枠線と影付きの右上カメラメニュー、焦点距離スライダー、カメラメニューのブロック区切りと十字配置、Follow バッジ、操作ヒント、枠を持たないライトギズモのプレーン CSS
 
 ## 公開インターフェイス
 - ViewerCanvas.tsx: `ViewerCanvas({ modelSrc, children? })`
@@ -108,3 +108,4 @@ Canvas のクライアント座標を NDC 化して再帰的にモデルをレ�
 - tests/pick.test.ts: NDC 変換、モデルの再帰レイキャスト、ワールド法線変換テスト
 - tests/view-presets.test.ts: 既定視点の方向・順序・単位ベクトル・距離維持・最小距離・非破壊性のテスト
 - tests/viewer-pointer.test.ts: capture phase の割り当て、Alt+右ドラッグ dolly、pointer capture、継続・終了・ブラウザ既定動作抑止、cleanup のテスト
+- tests/viewer-styles.test.ts: カメラメニューのボタン影、ライトギズモの枠廃止、シャドウトークン、CSS セレクタ完全一致のテキスト検査

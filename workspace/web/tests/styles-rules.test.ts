@@ -53,6 +53,7 @@ const tokenNames = [
   "--color-warning",
   "--color-warning-subtle",
   "--shadow-overlay",
+  "--shadow-control",
   "--focus-ring-color",
   "--duration-fast",
   "--panel-width",
