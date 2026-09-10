@@ -16,8 +16,8 @@ export interface CameraStoreState {
   /** 焦点距離(mm)。初期値は DEFAULT_FOCAL_LENGTH_MM */
   focalLength: number;
 
-  /** cameraEquals(既定 eps)で現在値と同じなら state を更新しない */
-  setSelfCamera(camera: CameraState): void;
+  /** exact が true のときだけ完全一致を使い、それ以外は既定 eps 内の更新を無視する */
+  setSelfCamera(camera: CameraState, exact?: boolean): void;
   /** pendingCamera に cloneCamera した値を積む */
   requestCamera(camera: CameraState): void;
   /** pendingCamera を返して null に戻す */
@@ -44,8 +44,8 @@ export const useCameraStore = create<CameraStoreState>((set, get) => ({
   modelSize: 1,
   focalLength: DEFAULT_FOCAL_LENGTH_MM,
 
-  setSelfCamera(camera) {
-    if (cameraEquals(get().selfCamera, camera)) {
+  setSelfCamera(camera, exact = false) {
+    if (exact ? cameraEquals(get().selfCamera, camera, 0) : cameraEquals(get().selfCamera, camera)) {
       return;
     }
     set({ selfCamera: cloneCamera(camera) });

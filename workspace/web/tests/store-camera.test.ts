@@ -48,6 +48,36 @@ describe("camera store", () => {
     expect(useCameraStore.getState().selfCamera).toBe(firstReference);
   });
 
+  it("replaces a slightly different self camera when exact is requested", () => {
+    useCameraStore.getState().setSelfCamera(camera);
+    const slightlyDifferent: CameraState = {
+      position: [camera.position[0] + 1e-6, camera.position[1], camera.position[2]],
+      target: [...camera.target],
+    };
+    useCameraStore.getState().setSelfCamera(slightlyDifferent, true);
+    const stateCamera = useCameraStore.getState().selfCamera;
+    expect(stateCamera).not.toBe(camera);
+    expect(stateCamera).not.toBe(slightlyDifferent);
+    expect(cameraEquals(stateCamera, slightlyDifferent, 0)).toBe(true);
+  });
+
+  it("keeps the reference for an exact self camera match", () => {
+    useCameraStore.getState().setSelfCamera(camera);
+    const firstReference = useCameraStore.getState().selfCamera;
+    useCameraStore.getState().setSelfCamera({ position: [...camera.position], target: [...camera.target] }, true);
+    expect(useCameraStore.getState().selfCamera).toBe(firstReference);
+  });
+
+  it("treats exact false like the omitted argument", () => {
+    useCameraStore.getState().setSelfCamera(camera);
+    const firstReference = useCameraStore.getState().selfCamera;
+    useCameraStore.getState().setSelfCamera({
+      position: [camera.position[0] + 1e-6, camera.position[1], camera.position[2]],
+      target: [...camera.target],
+    }, false);
+    expect(useCameraStore.getState().selfCamera).toBe(firstReference);
+  });
+
   it("updates for a meaningful camera difference", () => {
     useCameraStore.getState().setSelfCamera(camera);
     const firstReference = useCameraStore.getState().selfCamera;

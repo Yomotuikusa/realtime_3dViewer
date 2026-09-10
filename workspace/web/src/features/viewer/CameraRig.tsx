@@ -3,12 +3,18 @@ import { useFrame, useThree } from "@react-three/fiber";
 import { OrbitControls, useBounds } from "@react-three/drei";
 import type { OrbitControls as OrbitControlsImpl } from "three-stdlib";
 import type { CameraState } from "@shared/types";
-import { cameraEquals, DEFAULT_CAMERA, lerpCamera } from "@shared/camera";
+import { DEFAULT_CAMERA } from "@shared/camera";
 import { useCameraStore } from "../../store/camera";
 import { usePresenceStore } from "../../store/presence";
 import { useSessionStore } from "../../store/session";
 import { useLightingStore } from "../../store/lighting";
 import { followStep, followTargetCamera } from "./follow";
+import {
+  flushControlsInertia,
+  startCameraAnimation,
+  stepCameraAnimation,
+  type CameraAnimation,
+} from "./camera-animation";
 import { attachViewerPointer, type ViewerControlsLike } from "./viewer-pointer";
 import { rotationLocked } from "./view-presets";
 import type { Camera } from "three";
@@ -30,7 +36,7 @@ export function CameraRig(): ReactElement {
   const camera = useThree((state) => state.camera);
   const controls = useThree((state) => state.controls);
   const controlsRef = useRef<OrbitControlsImpl | null>(null);
-  const pendingTarget = useRef<CameraState | null>(null);
+  const animation = useRef<CameraAnimation | null>(null);
   const fitSeq = useCameraStore((state) => state.fitSeq);
   const following = usePresenceStore((state) => state.followingUserId !== null);
   const locked = useCameraStore((state) => rotationLocked(state.selfCamera, following));
@@ -45,16 +51,21 @@ export function CameraRig(): ReactElement {
     }
   }, [camera]);
 
+  const handleUserInteract = useCallback((): void => {
+    animation.current = null;
+    usePresenceStore.getState().unfollow();
+  }, []);
+
   useEffect(() => {
     if (controls === null) {
       return;
     }
     return attachViewerPointer(controls as unknown as ViewerControlsLike, {
-      onUserInteract: () => usePresenceStore.getState().unfollow(),
+      onUserInteract: handleUserInteract,
       onCameraChange: handleChange,
       onLightRotate: (deltaX, deltaY) => useLightingStore.getState().rotate(deltaX, deltaY),
     });
-  }, [controls, handleChange]);
+  }, [controls, handleChange, handleUserInteract]);
 
   useEffect(() => {
     if (fitSeq === lastFitSeq.current) {
@@ -65,10 +76,11 @@ export function CameraRig(): ReactElement {
   }, [bounds, fitSeq]);
 
   useFrame(() => {
+    const now = performance.now();
     const cameraStore = useCameraStore.getState();
     if (cameraStore.resetSeq !== lastResetSeq.current) {
       lastResetSeq.current = cameraStore.resetSeq;
-      pendingTarget.current = null;
+      animation.current = null;
       cameraStore.consumePendingCamera();
       const presence = usePresenceStore.getState();
       if (presence.followingUserId !== null) {
@@ -76,38 +88,42 @@ export function CameraRig(): ReactElement {
       }
       const controls = controlsRef.current;
       if (controls) {
+        flushControlsInertia(controls);
         applyCamera(camera, controls, DEFAULT_CAMERA);
-        cameraStore.setSelfCamera(DEFAULT_CAMERA);
-      }
-      return;
-    }
-
-    if (cameraStore.pendingCamera !== null) {
-      const target = cameraStore.consumePendingCamera();
-      if (target !== null) {
-        pendingTarget.current = target;
-        usePresenceStore.getState().unfollow();
+        cameraStore.setSelfCamera(DEFAULT_CAMERA, true);
       }
       return;
     }
 
     const controls = controlsRef.current;
-    const target = pendingTarget.current;
+    if (cameraStore.pendingCamera !== null) {
+      if (!controls) {
+        return;
+      }
+      const target = cameraStore.consumePendingCamera();
+      if (target !== null) {
+        usePresenceStore.getState().unfollow();
+        flushControlsInertia(controls);
+        animation.current = startCameraAnimation(readCamera(camera, controls), target, now);
+      }
+      return;
+    }
+
     if (!controls) {
       return;
     }
 
     const current = readCamera(camera, controls);
-    if (target !== null) {
-      const next = lerpCamera(current, target, 0.2);
-      if (cameraEquals(next, target)) {
-        applyCamera(camera, controls, target);
-        pendingTarget.current = null;
-        cameraStore.setSelfCamera(target);
-        return;
+    const currentAnimation = animation.current;
+    if (currentAnimation !== null) {
+      const step = stepCameraAnimation(currentAnimation, now);
+      applyCamera(camera, controls, step.camera);
+      if (step.done) {
+        animation.current = null;
+        cameraStore.setSelfCamera(step.camera, true);
+      } else {
+        cameraStore.setSelfCamera(step.camera);
       }
-      applyCamera(camera, controls, next);
-      cameraStore.setSelfCamera(next);
       return;
     }
 
@@ -127,10 +143,6 @@ export function CameraRig(): ReactElement {
     }
   });
 
-  const handleStart = (): void => {
-    usePresenceStore.getState().unfollow();
-  };
-
   return (
     <OrbitControls
       ref={controlsRef}
@@ -138,7 +150,7 @@ export function CameraRig(): ReactElement {
       // 回転を無効にすると start が発火せず、Follow 中に操作で追従を解除できなくなるため、追従中はロックしない。
       enableRotate={!locked}
       onChange={handleChange}
-      onStart={handleStart}
+      onStart={handleUserInteract}
       target={DEFAULT_CAMERA.target}
     />
   );
