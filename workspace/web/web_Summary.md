@@ -16,7 +16,7 @@ glTF/GLB の 3D レビュー画面を提供する。レビュー画面は表示�
 - src/app/JoinDialog.tsx: 保存済み表示名を初期値にした入室フォーム
 - src/app/realtime-dispatch.ts: `ServerMessage` を session / presence / annotation / comments ストアへ振り分ける入口。`welcome`、presence 更新、stroke、`comment:created` / `comment:updated`、`error` を扱い、未知の型はコンパイル時に検出する
 - src/app/useRealtime.ts: 名前決定後の `WsClient` 接続と、open ごとの `join` 送信。`onRealtimeStatus` は session の接続状態を更新し、open 時に lastError を解除する
-- src/app/review-stores.ts: レビュー画面のアンマウント時に session / presence / annotation / comments / camera の5ストアをまとめて初期化する reset 関数（shortcuts ストアは対象外）
+- src/app/review-stores.ts: レビュー画面のアンマウント時に session / presence / annotation / comments / camera / lighting の6ストアをまとめて初期化する reset 関数（shortcuts ストアは対象外）
 - src/app/UploadPage.tsx: トークン CSS で構成したプロジェクト名・`.glb`/`.gltf` のアップロード画面。拡張子と容量を送信前に検査し、`FILE_TOO_LARGE` などのエラーを表示する
 - src/app/upload-labels.ts: アップロード画面と NotFound の表示文言、`FILE_TOO_LARGE`、ファイル容量 helper の純粋関数
 - src/app/upload.css: アップロード画面と NotFound の狭い幅のレイアウト CSS
@@ -27,6 +27,7 @@ glTF/GLB の 3D レビュー画面を提供する。レビュー画面は表示�
 - src/app/review.css: レビュー画面のヘッダ、ビューア/HUD、入室 backdrop/dialog、サイドパネル、ロード/エラー状態のプレーン CSS
 - src/app/ErrorBoundary.tsx: React/three の描画例外を捕捉し、フォールバックを表示
 - src/store/camera.ts: `selfCamera`、`pendingCamera`、`resetSeq`、`fitSeq`、`modelSize` と、カメラ更新・再現消費・Reset・Fit・サイズ更新・初期化の action を管理する zustand ストア
+- src/store/lighting.ts: `LightAngles` を `rotateLight` の規則で更新し、既定方向への reset を提供するローカル zustand ストア
 - src/store/session.ts: 自分の ID・色・表示名・接続状態・直近エラーを保持する zustand ストア
 - src/store/presence.ts: 参加者一覧、各参加者のカメラ、Follow 対象を保持する zustand ストア
 - src/store/annotation.ts: ルーム全員分のライブ線、annotation mode・色・描画中 draft・コメント再現用線・メッシュに埋もれた線の透過表示設定・ペンの描画基準を保持し、welcome/線操作・draft・表示設定・reset を提供する zustand ストア
@@ -56,8 +57,10 @@ glTF/GLB の 3D レビュー画面を提供する。レビュー画面は表示�
 - src/features/annotation/AnnotationToolbar.tsx: ペンモード中の色・表面/空間の描画基準選択、自分の線の 1本戻す / 自分の線を消す、メッシュに埋もれた線の透過表示切替を提供するペン道具
 - src/features/annotation/annotation.css: ペン道具と色ボタンのプレーン CSS
 - src/features/viewer/ViewerCanvas.tsx: Canvas、ライティング、Bounds、モデル、カメラを合成するビューア。`children` は RemoteCameras / StrokeLines / AnnotationLayer など後続機能の差し込み口
-- src/features/viewer/ViewerHud.tsx: ペン／コメントの toggle ボタン、ペン道具、視点リセット・Fit、Follow 中バッジ、描画基準を含むビューア操作ヒントを表示し、各ストアと keymap を購読する
-- src/features/viewer/hud-labels.ts: ツールモード・色・Follow・視点操作・透過表示・描画基準・ヒントの日本語文言と純粋な判定関数
+- src/features/viewer/SceneLights.tsx: lighting ストアの角度から環境光・主ライト・反転した補助ライトを Bounds 外へ描画する
+- src/features/viewer/ViewerHud.tsx: ペン／コメントの toggle ボタン、ペン道具、視点・ライトのリセット、Follow 中バッジ、描画基準を含むビューア操作ヒントを表示し、各ストアと keymap を購読する
+- src/features/viewer/hud-labels.ts: ツールモード・色・Follow・視点／ライト操作・透過表示・描画基準・ヒントの日本語文言と純粋な判定関数
+- src/features/viewer/lighting.ts: ワールド固定ライトの角度の正規化・クランプ・ドラッグ回転と主／補助ライト座標を提供する
 - src/features/shortcuts/keymap.ts: `ShortcutAction` / `Binding` / `Keymap` / `DEFAULT_KEYMAP` / `ACTION_ORDER` とキーコードの正規化、割り当て、表示、入力対象判定
 - src/features/shortcuts/keymap-storage.ts: `KEYMAP_STORAGE_KEY` による keymap の localStorage 読み書きと不正値の既定値補完
 - src/features/shortcuts/useShortcuts.ts: 入室中だけ keydown を購読し、ショートカットを annotation / camera ストアの action へ接続するフック
@@ -71,9 +74,9 @@ glTF/GLB の 3D レビュー画面を提供する。レビュー画面は表示�
 - src/features/viewer/model-target.ts: React や Zustand に依存せず、現在のレイキャスト対象 `Object3D` を保持する `setModelTarget` / `getModelTarget`
 - src/features/viewer/pick.ts: Canvas 座標を NDC に変換し、共通モデルターゲットへ最近傍レイキャストを行う。交点と、逆転置の法線行列で変換して正規化したワールド系法線を返す
 - src/features/viewer/follow.ts: Follow 対象カメラの妥当性判定と、共有カメラ関数を使った 1 フレーム分の補間
-- src/features/viewer/CameraRig.tsx: OrbitControls を常時有効にしてカメラストアと同期し、Reset・Fit・カメラ再現・Follow を処理する。controls.domElement に Alt 操作と右ドラッグ dolly の入力を接続する
+- src/features/viewer/CameraRig.tsx: OrbitControls を常時有効にしてカメラストアと同期し、Reset・Fit・カメラ再現・Follow を処理する。controls.domElement に Alt 操作、右ドラッグ dolly、Shift+右ドラッグのライト回転を接続する
 - src/features/viewer/camera-input.ts: OrbitControls の Alt／非 Alt 時のマウス割り当てと、target からの距離を指数的に変える右ドラッグ dolly の純粋関数
-- src/features/viewer/viewer-pointer.ts: controls.domElement へ Maya 式の pointer、contextmenu、マウス抑止イベントを接続し、右ドラッグ dolly と後始末を提供する
+- src/features/viewer/viewer-pointer.ts: controls.domElement へ Maya 式の pointer、contextmenu、マウス抑止イベントを接続し、右ドラッグ dolly／Shift+右ドラッグのライト回転と後始末を提供する
 - src/features/viewer/camera-throttle.ts: 最新のカメラだけを保持し、送信成功時刻から 50ms ごとの先頭送信と窓明けトレーリング送信を行う。送信失敗は未送信としてタイマーまたは次の更新で再試行し、破棄時に保留送信をキャンセルする
 - src/features/viewer/useCameraBroadcast.ts: `selfCamera` の変更を `camera-throttle` へ渡し、送信成功時に自分の presence カメラも更新する。`shouldSendCamera` は従来の判定インターフェイスとして公開する
 - src/main.tsx: React アプリのエントリーポイント。tokens → base → controls の順で全体スタイルを読み込む
@@ -100,8 +103,10 @@ glTF/GLB の 3D レビュー画面を提供する。レビュー画面は表示�
 - tests/follow.test.ts: Follow 対象カメラの判定、複製、補間、収束テスト
 - tests/routes.test.ts: ルート解析と履歴遷移テスト
 - tests/store-camera.test.ts: カメラストアの初期値、参照を保つ epsilon 判定、複製して保持・消費する再現要求、Reset・Fit・モデルサイズ・全 state 初期化の振る舞いを検証
+- tests/lighting.test.ts: ライト角度の正規化・クランプ・ドラッグ回転・主／補助ライト座標を検証
+- tests/store-lighting.test.ts: lighting ストアの既定値、累積回転、値の複製、reset を検証
 - tests/styles-rules.test.ts: `src/**/*.css` を再帰走査し、トークンの `:root` 定義、tokens.css 以外の生色禁止、CSS 変数の宣言/フォールバック、`!important` / `@import` 規約、main.tsx の import 順を検証
-- tests/review-stores.test.ts: 5つのレビュー用ストアをまとめて初期化する reset の検証
+- tests/review-stores.test.ts: 6つのレビュー用ストアをまとめて初期化する reset の検証
 - tests/use-realtime.test.ts: 接続状態、open 時のエラー解除と join、closed 時の非送信を検証
 - tests/upload-labels.test.ts: アップロード/NotFound 文言、容量エラー定数、ファイル helper の単位・丸め結果を検証
 - tests/model-loading.test.ts: 埋め込み・同一オリジン URL の許可、外部 URL の遮断、LoadingManager の URL modifier のテスト
@@ -132,9 +137,12 @@ glTF/GLB の 3D レビュー画面を提供する。レビュー画面は表示�
 - store/annotation.ts: `useAnnotationStore`、`AnnotationStoreState`、`AnnotationMode`、`PenPlacement`、`STROKE_COLORS`、`DEFAULT_STROKE_COLOR`、`orderedStrokes`（`overlay` / `setOverlay` / `placement` / `setPlacement` を含む）
 - store/comments.ts: `useCommentsStore`、`CommentsStoreState`（`items` / `showOnlyOpen` / `selectedId` / `composerAnchor` / `lastError` と全 action）、`selectVisible`
 - store/shortcuts.ts: `useShortcutsStore`、`ShortcutsStoreState`
+- store/lighting.ts: `useLightingStore`、`LightingStoreState`
 - features/viewer/ViewerCanvas.tsx: `ViewerCanvas({ modelSrc, children? })`
+- features/viewer/SceneLights.tsx: `SceneLights()`
 - features/viewer/ViewerHud.tsx: `ViewerHud({ send })`
-- features/viewer/hud-labels.ts: `ToolMode`、`MODE_LABELS`、`MODE_ORDER`、`PLACEMENT_LABELS`、`PLACEMENT_ORDER`、各種ラベル（`OVERLAY_LABEL` を含む）、`colorName`、`followingLabel`、`HintInput`（`placement` を含む）、`hint`、`withShortcut`
+- features/viewer/hud-labels.ts: `ToolMode`、`MODE_LABELS`、`MODE_ORDER`、`PLACEMENT_LABELS`、`PLACEMENT_ORDER`、各種ラベル（`OVERLAY_LABEL` / `LIGHT_RESET_LABEL` を含む）、`colorName`、`followingLabel`、`HintInput`（`placement` を含む）、`hint`、`withShortcut`
+- features/viewer/lighting.ts: `LightAngles`、ライト定数、`normalizeYaw`、`clampPitch`、`rotateLight`、`lightPosition`、`fillLightPosition`
 - features/shortcuts/keymap.ts: `ShortcutAction`、`Binding`、`Keymap`、`ACTION_ORDER`、`DEFAULT_KEYMAP`、`KeyChord`、`ShortcutEventLike`、`isModifierCode`、`isAssignableCode`、`bindingFromChord`、`isValidBinding`、`resolveAction`、`applyBinding`、`formatBinding`、`isTypingTarget`
 - features/shortcuts/keymap-storage.ts: `KEYMAP_STORAGE_KEY`、`loadKeymap`、`saveKeymap`
 - features/shortcuts/useShortcuts.ts: `useShortcuts(enabled)`
@@ -190,7 +198,7 @@ CameraRig の毎フレーム処理は D27 の優先順位に従う。
 | それ以外 | カメラを変更しない。 |
 
 OrbitControls の `start` はユーザー操作として `presence.unfollow()` を呼び、追従によるプログラム更新では解除しない。
-`App` は projectId を `ReviewPage` の React key に使い、プロジェクト切替時のアンマウントで `resetReviewStores()` を実行して5ストアを初期化する。`ReviewPage` は ready/error に取得対象の `projectId` を保持し、現在の URL と一致しない間は
+`App` は projectId を `ReviewPage` の React key に使い、プロジェクト切替時のアンマウントで `resetReviewStores()` を実行して6ストアを初期化する。`ReviewPage` は ready/error に取得対象の `projectId` を保持し、現在の URL と一致しない間は
 旧画面を表示せず loading として扱う。
 入室後は `useRealtime` が同一オリジンの `/ws?projectId=...` へ接続し、`open` ごとに `lastError` を解除してから `join` を
 送る。`WsClient` は失敗回数に応じて 1000ms から 10000ms まで指数バックオフし、成功接続で
@@ -219,8 +227,8 @@ Canvas のクライアント座標を NDC 化して再帰的にモデルをレ�
 ストローク中固定するためモデルの外でも線が続き、法線オフセットは適用しない。終了時に `buildStroke` で
 間引き、接続が open かつ selfId がある場合だけ `stroke:add` を送信する。draft は終了時に消し、
 送信した線はサーバー配信を待つためローカルへ追加しない。
-ショートカットは入室後の `ReviewPage` で有効になり、HUD のモード／視点ボタンにも現在の keymap を表示する。キー設定は `resetReviewStores()` の5ストア初期化から独立して localStorage に保持する。
-カメラ操作は `CameraRig` が `useThree().controls` の `OrbitControls` に `attachViewerPointer` を接続する。
+ショートカットは入室後の `ReviewPage` で有効になり、HUD のモード／視点ボタンにも現在の keymap を表示する。キー設定は `resetReviewStores()` の6ストア初期化から独立して localStorage に保持する。
+カメラ操作とライト回転は `CameraRig` が `useThree().controls` の `OrbitControls` に `attachViewerPointer` を接続する。Shift+右ドラッグはカメラを動かさず、lighting ストアだけを更新する。
 常時有効な OrbitControls の割り当ては、Alt なしでは全ボタンを無効、Alt 押下中は左回転・中パン・右無効とし、
 ホイールは常に OrbitControls の dolly を使う。右ドラッグだけは `dollyPosition` でカメラ位置を変更し、
 左／中ドラッグは OrbitControls に任せる。入力開始時は Follow を解除し、カメラ更新は既存の epsilon 判定付きストアへ渡す。

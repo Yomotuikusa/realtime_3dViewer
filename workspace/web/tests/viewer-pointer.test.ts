@@ -8,14 +8,16 @@ import {
 
 function pointerEvent(
   type: string,
-  init: { altKey?: boolean; button?: number; clientX?: number; pointerId?: number } = {},
+  init: { altKey?: boolean; button?: number; clientX?: number; clientY?: number; pointerId?: number; shiftKey?: boolean } = {},
 ): PointerEvent {
   const event = new Event(type, { bubbles: true, cancelable: true }) as PointerEvent;
   Object.defineProperties(event, {
     altKey: { value: init.altKey ?? false },
     button: { value: init.button ?? 0 },
     clientX: { value: init.clientX ?? 0 },
+    clientY: { value: init.clientY ?? 0 },
     pointerId: { value: init.pointerId ?? 1 },
+    shiftKey: { value: init.shiftKey ?? false },
   });
   return event;
 }
@@ -58,6 +60,7 @@ describe("viewer pointer input", () => {
     const cleanup = attachViewerPointer(controls, {
       onUserInteract: vi.fn(),
       onCameraChange: vi.fn(),
+      onLightRotate: vi.fn(),
     });
 
     controls.domElement.dispatchEvent(pointerEvent("pointerdown", { altKey: true, pointerId: 2 }));
@@ -71,7 +74,7 @@ describe("viewer pointer input", () => {
     controls.update = vi.fn(() => calls.push("update"));
     const onUserInteract = vi.fn(() => calls.push("interact"));
     const onCameraChange = vi.fn(() => calls.push("change"));
-    const cleanup = attachViewerPointer(controls, { onUserInteract, onCameraChange });
+    const cleanup = attachViewerPointer(controls, { onUserInteract, onCameraChange, onLightRotate: vi.fn() });
 
     controls.domElement.dispatchEvent(pointerEvent("pointerdown", {
       altKey: true,
@@ -98,7 +101,7 @@ describe("viewer pointer input", () => {
   it("does not start a dolly for an unmodified right press", () => {
     const onUserInteract = vi.fn();
     const onCameraChange = vi.fn();
-    const cleanup = attachViewerPointer(controls, { onUserInteract, onCameraChange });
+    const cleanup = attachViewerPointer(controls, { onUserInteract, onCameraChange, onLightRotate: vi.fn() });
 
     controls.domElement.dispatchEvent(pointerEvent("pointerdown", { button: 2, clientX: 10 }));
     controls.domElement.dispatchEvent(pointerEvent("pointermove", { clientX: 110 }));
@@ -115,6 +118,7 @@ describe("viewer pointer input", () => {
     const cleanup = attachViewerPointer(controls, {
       onUserInteract: vi.fn(),
       onCameraChange,
+      onLightRotate: vi.fn(),
     });
 
     controls.domElement.dispatchEvent(pointerEvent("pointermove", { clientX: 20 }));
@@ -131,10 +135,96 @@ describe("viewer pointer input", () => {
     cleanup();
   });
 
+  it("rotates the light with Shift-right drag without moving the camera", () => {
+    const onUserInteract = vi.fn();
+    const onCameraChange = vi.fn();
+    const onLightRotate = vi.fn();
+    const cleanup = attachViewerPointer(controls, { onUserInteract, onCameraChange, onLightRotate });
+
+    controls.domElement.dispatchEvent(pointerEvent("pointerdown", {
+      button: 2,
+      clientX: 0,
+      clientY: 0,
+      pointerId: 7,
+      shiftKey: true,
+    }));
+    expect(captured.has(7)).toBe(true);
+    expect(controls.mouseButtons).toBe(MOUSE_BUTTONS_IDLE);
+    expect(onUserInteract).not.toHaveBeenCalled();
+
+    controls.domElement.dispatchEvent(pointerEvent("pointermove", {
+      clientX: 10,
+      clientY: -4,
+      pointerId: 7,
+    }));
+    controls.domElement.dispatchEvent(pointerEvent("pointermove", {
+      clientX: 25,
+      clientY: -4,
+      pointerId: 7,
+    }));
+    expect(onLightRotate).toHaveBeenNthCalledWith(1, 10, -4);
+    expect(onLightRotate).toHaveBeenNthCalledWith(2, 15, 0);
+    expect(controls.update).not.toHaveBeenCalled();
+    expect(onCameraChange).not.toHaveBeenCalled();
+
+    controls.domElement.dispatchEvent(pointerEvent("pointerup", { pointerId: 7 }));
+    controls.domElement.dispatchEvent(pointerEvent("pointermove", { clientX: 30, pointerId: 7 }));
+    expect(captured.has(7)).toBe(false);
+    expect(onLightRotate).toHaveBeenCalledTimes(2);
+    cleanup();
+  });
+
+  it("keeps light rotation exclusive to Shift-right and cleans up every pointer", () => {
+    const onUserInteract = vi.fn();
+    const onCameraChange = vi.fn();
+    const onLightRotate = vi.fn();
+    const cleanup = attachViewerPointer(controls, { onUserInteract, onCameraChange, onLightRotate });
+
+    controls.domElement.dispatchEvent(pointerEvent("pointerdown", {
+      button: 2,
+      clientX: 1,
+      clientY: 1,
+      pointerId: 8,
+      shiftKey: true,
+    }));
+    controls.domElement.dispatchEvent(pointerEvent("pointermove", { clientX: 4, clientY: 4, pointerId: 9 }));
+    expect(onLightRotate).not.toHaveBeenCalled();
+    controls.domElement.dispatchEvent(pointerEvent("pointercancel", { pointerId: 8 }));
+    expect(captured.has(8)).toBe(false);
+
+    controls.domElement.dispatchEvent(pointerEvent("pointerdown", { button: 0, shiftKey: true, pointerId: 10 }));
+    controls.domElement.dispatchEvent(pointerEvent("pointerdown", { button: 1, shiftKey: true, pointerId: 11 }));
+    controls.domElement.dispatchEvent(pointerEvent("pointermove", { clientX: 20, clientY: 20, pointerId: 10 }));
+    expect(onLightRotate).not.toHaveBeenCalled();
+
+    controls.domElement.dispatchEvent(pointerEvent("pointerdown", {
+      altKey: true,
+      button: 2,
+      clientX: 0,
+      pointerId: 12,
+      shiftKey: true,
+    }));
+    controls.domElement.dispatchEvent(pointerEvent("pointermove", { clientX: 10, pointerId: 12 }));
+    expect(onUserInteract).toHaveBeenCalledTimes(1);
+    expect(onLightRotate).not.toHaveBeenCalled();
+    controls.domElement.dispatchEvent(pointerEvent("pointerup", { pointerId: 12 }));
+
+    controls.domElement.dispatchEvent(pointerEvent("pointerdown", {
+      button: 2,
+      pointerId: 13,
+      shiftKey: true,
+    }));
+    cleanup();
+    expect(captured.has(13)).toBe(false);
+    controls.domElement.dispatchEvent(pointerEvent("pointermove", { clientX: 10, pointerId: 13 }));
+    expect(onLightRotate).not.toHaveBeenCalled();
+  });
+
   it("prevents browser context-menu, middle-button autoscroll, and auxclick defaults", () => {
     const cleanup = attachViewerPointer(controls, {
       onUserInteract: vi.fn(),
       onCameraChange: vi.fn(),
+      onLightRotate: vi.fn(),
     });
 
     const contextMenu = new Event("contextmenu", { cancelable: true });
@@ -156,7 +246,7 @@ describe("viewer pointer input", () => {
   it("removes every listener and discards an active dolly on cleanup", () => {
     const onUserInteract = vi.fn();
     const onCameraChange = vi.fn();
-    const cleanup = attachViewerPointer(controls, { onUserInteract, onCameraChange });
+    const cleanup = attachViewerPointer(controls, { onUserInteract, onCameraChange, onLightRotate: vi.fn() });
     controls.domElement.dispatchEvent(pointerEvent("pointerdown", {
       altKey: true,
       button: 2,
