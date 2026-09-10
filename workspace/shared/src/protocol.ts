@@ -2,6 +2,7 @@ import { z } from "zod";
 import {
   CameraStateSchema,
   CommentSchema,
+  FocalLengthSchema,
   PresenceUserSchema,
   StrokeSchema,
   type CameraState,
@@ -15,7 +16,7 @@ export const CAMERA_SEND_INTERVAL_MS = 50;
 
 export type ClientMessage =
   | { type: "join"; name: string }
-  | { type: "camera"; camera: CameraState }
+  | { type: "camera"; camera: CameraState; focalLength?: number }
   | { type: "stroke:add"; stroke: Stroke }
   | { type: "stroke:remove"; strokeId: string }
   | { type: "stroke:clear" };
@@ -24,7 +25,7 @@ export type ServerMessage =
   | { type: "welcome"; selfId: string; users: PresenceUser[]; strokes: Stroke[] }
   | { type: "user:joined"; user: PresenceUser }
   | { type: "user:left"; userId: string }
-  | { type: "camera"; userId: string; camera: CameraState }
+  | { type: "camera"; userId: string; camera: CameraState; focalLength?: number }
   | { type: "stroke:add"; stroke: Stroke }
   | { type: "stroke:remove"; strokeId: string }
   | { type: "stroke:clear"; userId: string }
@@ -36,7 +37,7 @@ const IdSchema = z.string().min(1);
 
 export const ClientMessageSchema = z.discriminatedUnion("type", [
   z.object({ type: z.literal("join"), name: z.string().max(MAX_NAME_LENGTH) }),
-  z.object({ type: z.literal("camera"), camera: CameraStateSchema }),
+  z.object({ type: z.literal("camera"), camera: CameraStateSchema, focalLength: FocalLengthSchema.optional() }),
   z.object({ type: z.literal("stroke:add"), stroke: StrokeSchema }),
   z.object({ type: z.literal("stroke:remove"), strokeId: IdSchema }),
   z.object({ type: z.literal("stroke:clear") }),
@@ -51,7 +52,12 @@ export const ServerMessageSchema = z.discriminatedUnion("type", [
   }),
   z.object({ type: z.literal("user:joined"), user: PresenceUserSchema }),
   z.object({ type: z.literal("user:left"), userId: IdSchema }),
-  z.object({ type: z.literal("camera"), userId: IdSchema, camera: CameraStateSchema }),
+  z.object({
+    type: z.literal("camera"),
+    userId: IdSchema,
+    camera: CameraStateSchema,
+    focalLength: FocalLengthSchema.optional(),
+  }),
   z.object({ type: z.literal("stroke:add"), stroke: StrokeSchema }),
   z.object({ type: z.literal("stroke:remove"), strokeId: IdSchema }),
   z.object({ type: z.literal("stroke:clear"), userId: IdSchema }),

@@ -53,6 +53,8 @@ export interface PresenceUser {
   name: string;
   color: string;
   camera: CameraState | null;
+  /** 焦点距離(mm)。まだ一度も送られていなければ undefined */
+  focalLength?: number;
 }
 
 export const MAX_ID_LENGTH = 64;
@@ -60,6 +62,13 @@ export const MAX_FILE_NAME_LENGTH = 255;
 export const MAX_PROJECT_NAME_LENGTH = 100;
 export const MAX_AUTHOR_NAME_LENGTH = 50;
 export const MAX_COMMENT_BODY_LENGTH = 2000;
+
+/** 焦点距離(mm)の下限。これより広角にはしない */
+export const MIN_FOCAL_LENGTH_MM = 14;
+/** 焦点距離(mm)の上限 */
+export const MAX_FOCAL_LENGTH_MM = 300;
+/** 既定の焦点距離(mm) */
+export const DEFAULT_FOCAL_LENGTH_MM = 50;
 
 /** サーバ・クライアントが生成する識別子。nanoid の文字種に限定する。 */
 export const IdSchema = z.string().min(1).max(MAX_ID_LENGTH).regex(/^[A-Za-z0-9_-]+$/);
@@ -79,6 +88,9 @@ export const CameraStateSchema = z.object({
   position: Vec3Schema,
   target: Vec3Schema,
 }) satisfies z.ZodType<CameraState>;
+
+/** 焦点距離(mm)。MIN_FOCAL_LENGTH_MM 以上 MAX_FOCAL_LENGTH_MM 以下の有限数 */
+export const FocalLengthSchema = z.number().min(MIN_FOCAL_LENGTH_MM).max(MAX_FOCAL_LENGTH_MM);
 
 export const StrokeSchema = z.object({
   id: IdSchema,
@@ -125,4 +137,5 @@ export const PresenceUserSchema = z.object({
   name: RequiredIdSchema,
   color: ColorSchema,
   camera: CameraStateSchema.nullable(),
+  focalLength: FocalLengthSchema.optional(),
 }) satisfies z.ZodType<PresenceUser>;

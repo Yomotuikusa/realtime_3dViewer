@@ -1,4 +1,10 @@
-import type { CameraState, Vec3 } from "./types";
+import {
+  DEFAULT_FOCAL_LENGTH_MM,
+  MAX_FOCAL_LENGTH_MM,
+  MIN_FOCAL_LENGTH_MM,
+  type CameraState,
+  type Vec3,
+} from "./types";
 
 /** モデルロード前の初期視点 */
 export const DEFAULT_CAMERA: CameraState = { position: [3, 3, 3], target: [0, 0, 0] };
@@ -35,4 +41,13 @@ export function lerpCamera(from: CameraState, to: CameraState, t: number): Camer
 
 export function cloneCamera(c: CameraState): CameraState {
   return { position: [...c.position], target: [...c.target] };
+}
+
+/**
+ * 焦点距離(mm)を [MIN_FOCAL_LENGTH_MM, MAX_FOCAL_LENGTH_MM] に丸める。
+ * 有限数でない値は DEFAULT_FOCAL_LENGTH_MM を返す。
+ */
+export function clampFocalLength(focalLengthMm: number): number {
+  if (!Number.isFinite(focalLengthMm)) return DEFAULT_FOCAL_LENGTH_MM;
+  return Math.max(MIN_FOCAL_LENGTH_MM, Math.min(MAX_FOCAL_LENGTH_MM, focalLengthMm));
 }
