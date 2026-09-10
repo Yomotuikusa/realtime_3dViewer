@@ -3,6 +3,8 @@ import {
   CLEAR_LABEL,
   colorName,
   FIT_LABEL,
+  FOCAL_LENGTH_LABEL,
+  focalLengthText,
   followingLabel,
   hint,
   LIGHT_RESET_LABEL,
@@ -32,6 +34,7 @@ describe("viewer HUD labels", () => {
     expect(RESET_LABEL).toBe("視点を戻す");
     expect(LIGHT_RESET_LABEL).toBe("ライトを戻す");
     expect(FIT_LABEL).toBe("全体を表示");
+    expect(FOCAL_LENGTH_LABEL).toBe("焦点距離");
     expect(UNDO_LABEL).toBe("1本戻す");
     expect(CLEAR_LABEL).toBe("自分の線を消す");
     expect(OVERLAY_LABEL).toBe("透過表示");
@@ -42,6 +45,15 @@ describe("viewer HUD labels", () => {
     }
     expect(PLACEMENT_LABELS).toEqual({ surface: "表面", space: "空間" });
     expect(PLACEMENT_ORDER).toEqual(["surface", "space"]);
+  });
+
+  it("formats focal length in whole millimeters", () => {
+    expect(focalLengthText(50)).toBe("50mm");
+    expect(focalLengthText(14)).toBe("14mm");
+    expect(focalLengthText(300)).toBe("300mm");
+    expect(focalLengthText(50.4)).toBe("50mm");
+    expect(focalLengthText(84.6)).toBe("85mm");
+    expect(focalLengthText(26.991)).toBe("27mm");
   });
 
   it("names the six stroke colors and preserves unknown colors", () => {

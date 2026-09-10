@@ -8,6 +8,7 @@ import { usePresenceStore } from "../../store/presence";
 import { useSessionStore } from "../../store/session";
 import { useShortcutsStore } from "../../store/shortcuts";
 import { AnnotationToolbar } from "../annotation/AnnotationToolbar";
+import { FocalLengthSlider } from "./FocalLengthSlider";
 import {
   FIT_LABEL,
   followingLabel,
@@ -75,6 +76,7 @@ export function ViewerHud({ send }: { send: (msg: ClientMessage) => boolean }): 
         <div className="hud-light" role="group" aria-label="ライト">
           <button className="btn btn--quiet" type="button" onClick={resetLighting}>{LIGHT_RESET_LABEL}</button>
         </div>
+        <FocalLengthSlider />
       </div>
       {followingUserId !== null && (
         <div

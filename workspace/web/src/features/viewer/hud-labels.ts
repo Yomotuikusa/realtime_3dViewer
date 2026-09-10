@@ -20,6 +20,7 @@ export const VIEW_PRESET_LABELS: Readonly<Record<ViewPreset, string>> = {
 export const RESET_LABEL = "視点を戻す";
 export const LIGHT_RESET_LABEL = "ライトを戻す";
 export const FIT_LABEL = "全体を表示";
+export const FOCAL_LENGTH_LABEL = "焦点距離";
 export const UNDO_LABEL = "1本戻す";
 export const CLEAR_LABEL = "自分の線を消す";
 export const OVERLAY_LABEL = "透過表示";
@@ -29,6 +30,11 @@ export const PLACEMENT_LABELS: Readonly<Record<PenPlacement, string>> = {
   space: "空間",
 };
 export const PLACEMENT_ORDER: readonly PenPlacement[] = ["surface", "space"];
+
+/** スライダー横の現在値表示。 */
+export function focalLengthText(focalLengthMm: number): string {
+  return `${Math.round(focalLengthMm)}mm`;
+}
 
 /** ボタン名にショートカットキーを併記する。未割り当てなら name をそのまま返す。 */
 export function withShortcut(name: string, binding: Binding | null): string {

@@ -17,6 +17,7 @@ describe("camera store", () => {
     expect(state.resetSeq).toBe(0);
     expect(state.fitSeq).toBe(0);
     expect(state.modelSize).toBe(1);
+    expect(state.focalLength).toBe(50);
   });
 
   it("clones a changed self camera", () => {
@@ -91,6 +92,45 @@ describe("camera store", () => {
     expect(useCameraStore.getState().fitSeq).toBe(2);
   });
 
+  it("sets and clamps focal length without changing camera state", () => {
+    const initial = useCameraStore.getState();
+    useCameraStore.getState().setFocalLength(85);
+    expect(useCameraStore.getState().focalLength).toBe(85);
+    useCameraStore.getState().setFocalLength(14);
+    expect(useCameraStore.getState().focalLength).toBe(14);
+    useCameraStore.getState().setFocalLength(300);
+    expect(useCameraStore.getState().focalLength).toBe(300);
+    useCameraStore.getState().setFocalLength(5);
+    expect(useCameraStore.getState().focalLength).toBe(14);
+    useCameraStore.getState().setFocalLength(1000);
+    expect(useCameraStore.getState().focalLength).toBe(300);
+    useCameraStore.getState().setFocalLength(Number.NaN);
+    expect(useCameraStore.getState().focalLength).toBe(50);
+    expect(useCameraStore.getState().selfCamera).toBe(initial.selfCamera);
+    expect(useCameraStore.getState().pendingCamera).toBe(initial.pendingCamera);
+    expect(useCameraStore.getState().modelSize).toBe(initial.modelSize);
+  });
+
+  it("does not replace state for an equal focal length", () => {
+    useCameraStore.getState().setFocalLength(85);
+    const firstReference = useCameraStore.getState();
+    useCameraStore.getState().setFocalLength(85);
+    expect(useCameraStore.getState()).toBe(firstReference);
+  });
+
+  it("resets focal length and preserves fit behavior", () => {
+    useCameraStore.getState().setFocalLength(85);
+    useCameraStore.getState().requestReset();
+    expect(useCameraStore.getState().focalLength).toBe(50);
+    expect(useCameraStore.getState().resetSeq).toBe(1);
+    useCameraStore.getState().requestReset();
+    expect(useCameraStore.getState().resetSeq).toBe(2);
+    useCameraStore.getState().setFocalLength(85);
+    useCameraStore.getState().requestFit();
+    expect(useCameraStore.getState().focalLength).toBe(85);
+    expect(useCameraStore.getState().fitSeq).toBe(1);
+  });
+
   it("only accepts positive model sizes", () => {
     useCameraStore.getState().setModelSize(12.5);
     useCameraStore.getState().setModelSize(0);
@@ -104,6 +144,8 @@ describe("camera store", () => {
     useCameraStore.getState().requestReset();
     useCameraStore.getState().requestFit();
     useCameraStore.getState().setModelSize(12.5);
+    useCameraStore.getState().setFocalLength(85);
+    expect(useCameraStore.getState().focalLength).toBe(85);
     useCameraStore.getState().reset();
     const state = useCameraStore.getState();
     expect(cameraEquals(state.selfCamera, DEFAULT_CAMERA)).toBe(true);
@@ -111,5 +153,6 @@ describe("camera store", () => {
     expect(state.resetSeq).toBe(0);
     expect(state.fitSeq).toBe(0);
     expect(state.modelSize).toBe(1);
+    expect(state.focalLength).toBe(50);
   });
 });
