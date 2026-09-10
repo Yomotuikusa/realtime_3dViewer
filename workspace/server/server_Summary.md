@@ -28,7 +28,9 @@ server の基盤。本番は `npm run build && npm run start` で起動する。
   `index.html` へ SPA フォールバックする。`/api/`、拡張子付きの不在ファイル、GET / HEAD
   以外は後段へ渡し、字句解決と realpath の両方で root 外への traversal / symlink 脱出を拒否する。
 - `src/realtime/hub.ts`: `ws` 非依存のインメモリ RoomHub。接続・join 済み Presence、カメラ、
-  線の状態を project 単位で保持し、接続ごとの配信先を `Outbound` で返す。接続数は
+  線の状態を project 単位で保持し、camera メッセージの `focalLength` は参加者ごとに保持する。
+  未指定の camera でも直前の値を保って中継し、`welcome` / `user:joined` / `usersIn` にも載せる。
+  接続ごとの配信先を `Outbound` で返す。接続数は
   `MAX_CONNECTIONS = 1000`、ルーム数は `MAX_ROOMS = 200`、線は1ルームあたり
   `MAX_ROOM_STROKES = 2000` に制限し、既存線の更新は所有者だけに許可する。
 - `src/realtime/ws.ts`: `GET /ws?projectId=<id>` を既存の Node HTTP Server に接続する WebSocket
@@ -69,6 +71,8 @@ server の基盤。本番は `npm run build && npm run start` で起動する。
   project/version スコープ、publish 呼び出しのテスト。
 - `tests/realtime-ws.test.ts`: join、Presence、camera / stroke 配信、切断、入力検証、連続違反 close、
   REST publish 結線の実ソケットテスト。
+- `tests/realtime-hub-focal.test.ts`: RoomHub の camera `focalLength` の保持・中継、Presence への
+  反映、未指定時のキー省略、切断・再join、stroke との独立性を検証する。
 - `tests/realtime-guards.test.ts`: project / Origin / 接続数 / ルーム数 / payload の接続ガードと、
   stroke 所有者検証・上限内の大きな stroke のテスト。
 - `tsconfig.json`: 型検査設定(../tsconfig.base.json を継承。`@shared/*` は shared/src を指す)。
@@ -103,6 +107,9 @@ server の基盤。本番は `npm run build && npm run start` で起動する。
   root 配下の安全なパス解決、`index.html` を使った SPA フォールバック付き配信を提供する。
 - `RoomHub`: `connect` / `disconnect` / `handle` で接続とルーム状態を操作し、
   `connectionsIn` / `projectOf` / `usersIn` / `strokesIn` で結線側やテストから状態を参照する。
+  camera の `focalLength` は参加者単位で最後に指定された値を保持し、未指定の camera 中継でも
+  その値を維持する。未指定の参加者はキーを持たず、保持値は `welcome` / `user:joined` /
+  `usersIn` の Presence に反映される。
   `Outbound.target` は `self` (送信元のみ)、`others` (送信元以外)、`all` (ルーム全員) を表す。
   `PRESENCE_PALETTE` は8色で、ルーム内の未使用色をjoin順に割り当て、全色使用時はサイズの剰余で
   再利用する。`MAX_ROOM_STROKES = 2000` 本まで保持し、同じIDの追加は所有者自身による場合だけ
