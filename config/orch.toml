@@ -35,7 +35,7 @@ ignore_dirs = ["node_modules", "dist", ".vite"]
 # 存在しないパスは verify 開始前にエラーになる。
 # 例: ro_binds = ["/home/me/projects/foo/models"]
 # 依存の実体。workspace/node_modules はここへのシンボリックリンク(docs/…§23)
-ro_binds = ["/home/tom/projects/realtime_3dViewer/.deps/node_modules"]
+ro_binds = ["/home/ojin/projects/3dreviewer/.deps/node_modules"]
 
 [diagnose]
 # タスクが失敗したとき、その場でclaudeを起こして原因を調査させる。
