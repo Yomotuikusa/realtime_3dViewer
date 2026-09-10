@@ -12,6 +12,7 @@ const webPath = webUrl.protocol === "file:"
 const webDir = existsSync(webPath) ? webPath : join(process.cwd(), "web");
 const srcDir = join(webDir, "src");
 const testsDir = join(webDir, "tests");
+const ignoredDirectories = new Set(["node_modules", "dist", ".vite"]);
 
 function recursiveEntries(dir: string): string[] {
   return readdirSync(dir, { recursive: true })
@@ -19,8 +20,15 @@ function recursiveEntries(dir: string): string[] {
     .map((entry) => join(dir, entry));
 }
 
-const sourcePaths = recursiveEntries(srcDir).filter((path) => /\.(?:ts|tsx|css)$/.test(path));
-const summaryPaths = recursiveEntries(webDir).filter((path) => path.endsWith("_Summary.md"));
+function isIgnoredPath(path: string): boolean {
+  const pathSegments = relative(webDir, path).replaceAll("\\", "/").split("/");
+  return pathSegments.some((segment) => ignoredDirectories.has(segment));
+}
+
+const sourcePaths = recursiveEntries(srcDir)
+  .filter((path) => !isIgnoredPath(path) && /\.(?:ts|tsx|css)$/.test(path));
+const summaryPaths = recursiveEntries(webDir)
+  .filter((path) => !isIgnoredPath(path) && path.endsWith("_Summary.md"));
 const sourceSummaryPaths = summaryPaths.filter((path) => {
   const pathFromSrc = relative(srcDir, path);
   return pathFromSrc !== "" && !pathFromSrc.startsWith("..") && !pathFromSrc.startsWith("../");

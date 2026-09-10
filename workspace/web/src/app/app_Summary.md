@@ -8,6 +8,7 @@
 - routes.ts: `/` と `/p/<projectId>` のルート解析、遷移、popstate フック
 - display-name.ts: localStorage による表示名の保存、Guest 名生成、入室名の解決
 - JoinDialog.tsx: 保存済み表示名を初期値にした入室フォーム
+- JoinDialog.tsx: 保存済み表示名を初期値にした、入室前にビューアを覆うモーダルフォーム。表示名の解決・保存・入室コールバックは display-name と呼び出し側へ委譲する
 - realtime-dispatch.ts: `ServerMessage` を session / presence / annotation / comments ストアへ振り分ける入口。`welcome`、presence 更新（camera の焦点距離を含む）、stroke、`comment:created` / `comment:updated`、`error` を扱い、未知の型はコンパイル時に検出する
 - useRealtime.ts: 名前決定後の `WsClient` 接続と、open ごとの `join` 送信。`onRealtimeStatus` は session の接続状態を更新し、open 時に lastError を解除する
 - review-stores.ts: レビュー画面のアンマウント時に session / presence / annotation / comments / camera / lighting の6ストアをまとめて初期化する reset 関数（shortcuts ストアは対象外）
@@ -36,6 +37,8 @@
 - ErrorBoundary.tsx: `ErrorBoundary`
 
 ## 他フォルダとの関係
+ルーティングは `/` を upload、正規表現 `^/p/[A-Za-z0-9_-]+$` に一致するパスを review、それ以外を notFound とする。`navigate` は `pushState` 後に `popstate` を通知する。
+
 `App` は projectId を `ReviewPage` の React key に使い、プロジェクト切替時のアンマウントで `resetReviewStores()` を実行して6ストアを初期化する。`ReviewPage` は ready/error に取得対象の `projectId` を保持し、現在の URL と一致しない間は
 旧画面を表示せず loading として扱う。
 入室後は `useRealtime` が同一オリジンの `/ws?projectId=...` へ接続し、`open` ごとに `lastError` を解除してから `join` を

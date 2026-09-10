@@ -75,6 +75,11 @@ pointerdown すると閉じ、メニュー内の Escape はショートカット
 | `followTargetCamera(...)` が非 null | `followStep` の結果をカメラと `controls.target` に適用し、到達後も追従を継続する。 |
 | それ以外 | カメラを変更しない。 |
 
+カメラ操作とライト回転は `CameraRig` が `useThree().controls` の `OrbitControls` に `attachViewerPointer` を接続する。Shift+右ドラッグはカメラを動かさず、lighting ストアだけを更新する。
+常時有効な OrbitControls の割り当ては、Alt なしでは全ボタンを無効、Alt 押下中は左回転・中パン・右無効とし、
+ホイールは常に OrbitControls の dolly を使う。右ドラッグだけは `dollyPosition` でカメラ位置を変更し、
+左／中ドラッグは OrbitControls に任せる。入力開始時は Follow を解除し、カメラ更新は既存の epsilon 判定付きストアへ渡す。
+
 OrbitControls の `start` はユーザー操作として `presence.unfollow()` を呼び、追従によるプログラム更新では解除しない。
 `useCameraBroadcast` は selfCamera または焦点距離の変更を `createCameraThrottle` へ渡し、前回送信から
 `CAMERA_SEND_INTERVAL_MS` 以上かつ `payloadEquals` で異なる場合だけ、camera と焦点距離を送信する。
