@@ -1,4 +1,4 @@
-import type { CSSProperties, ReactElement } from "react";
+import { useEffect, useRef, useState, type CSSProperties, type ReactElement } from "react";
 import type { ClientMessage } from "@shared/protocol";
 import { useAnnotationStore } from "../../store/annotation";
 import { useCameraStore } from "../../store/camera";
@@ -9,6 +9,12 @@ import { useSessionStore } from "../../store/session";
 import { useShortcutsStore } from "../../store/shortcuts";
 import { AnnotationToolbar } from "../annotation/AnnotationToolbar";
 import { FocalLengthSlider } from "./FocalLengthSlider";
+import { HudMenu } from "./HudMenu";
+import {
+  menuAfterPointerDown,
+  toggleHudMenu,
+  type HudMenuId,
+} from "./hud-menu";
 import {
   FIT_LABEL,
   followingLabel,
@@ -39,6 +45,19 @@ export function ViewerHud({ send }: { send: (msg: ClientMessage) => boolean }): 
   const resetLighting = useLightingStore((state) => state.reset);
   const keymap = useShortcutsStore((state) => state.keymap);
   const followingUser = followingUserId === null ? undefined : users[followingUserId];
+  const [openMenu, setOpenMenu] = useState<HudMenuId | null>(null);
+  const menusRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (openMenu === null) {
+      return;
+    }
+    const handlePointerDown = (event: PointerEvent): void => {
+      setOpenMenu((open) => menuAfterPointerDown(open, menusRef.current, event.target));
+    };
+    document.addEventListener("pointerdown", handlePointerDown);
+    return () => document.removeEventListener("pointerdown", handlePointerDown);
+  }, [openMenu]);
 
   return (
     <div className="hud">
@@ -57,26 +76,66 @@ export function ViewerHud({ send }: { send: (msg: ClientMessage) => boolean }): 
           ))}
         </div>
         {mode === "pen" && <AnnotationToolbar send={send} />}
-        <div className="hud-view" role="group" aria-label="視点">
-          <button className="btn btn--quiet" type="button" onClick={requestReset}>{withShortcut(RESET_LABEL, keymap.viewReset)}</button>
-          <button className="btn btn--quiet" type="button" onClick={requestFit}>{withShortcut(FIT_LABEL, keymap.viewFit)}</button>
-        </div>
-        <div className="hud-view" role="group" aria-label="既定の視点">
+      </div>
+      <div className="hud-menus" ref={menusRef}>
+        <HudMenu
+          id="camera"
+          open={openMenu === "camera"}
+          onToggle={() => setOpenMenu((open) => toggleHudMenu(open, "camera"))}
+          onClose={() => setOpenMenu(null)}
+        >
+          <FocalLengthSlider />
           {VIEW_PRESET_ORDER.map((preset) => (
             <button
               key={preset}
-              className="btn btn--quiet"
+              className="btn btn--quiet hud-menu__item"
               type="button"
-              onClick={() => requestCamera(presetCamera(preset, useCameraStore.getState().selfCamera))}
+              onClick={() => {
+                requestCamera(presetCamera(preset, useCameraStore.getState().selfCamera));
+                setOpenMenu(null);
+              }}
             >
               {VIEW_PRESET_LABELS[preset]}
             </button>
           ))}
-        </div>
-        <div className="hud-light" role="group" aria-label="ライト">
-          <button className="btn btn--quiet" type="button" onClick={resetLighting}>{LIGHT_RESET_LABEL}</button>
-        </div>
-        <FocalLengthSlider />
+          <button
+            className="btn btn--quiet hud-menu__item"
+            type="button"
+            onClick={() => {
+              requestReset();
+              setOpenMenu(null);
+            }}
+          >
+            {withShortcut(RESET_LABEL, keymap.viewReset)}
+          </button>
+          <button
+            className="btn btn--quiet hud-menu__item"
+            type="button"
+            onClick={() => {
+              requestFit();
+              setOpenMenu(null);
+            }}
+          >
+            {withShortcut(FIT_LABEL, keymap.viewFit)}
+          </button>
+        </HudMenu>
+        <HudMenu
+          id="light"
+          open={openMenu === "light"}
+          onToggle={() => setOpenMenu((open) => toggleHudMenu(open, "light"))}
+          onClose={() => setOpenMenu(null)}
+        >
+          <button
+            className="btn btn--quiet hud-menu__item"
+            type="button"
+            onClick={() => {
+              resetLighting();
+              setOpenMenu(null);
+            }}
+          >
+            {LIGHT_RESET_LABEL}
+          </button>
+        </HudMenu>
       </div>
       {followingUserId !== null && (
         <div
