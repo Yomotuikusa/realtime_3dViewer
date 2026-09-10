@@ -15,11 +15,19 @@ export interface ViewerPointerDeps {
   onUserInteract(): void;
   /** 自前 dolly でカメラを動かした直後。 */
   onCameraChange(): void;
+  /** Shift+右ドラッグの移動量(px)。ライトの向きを回す。 */
+  onLightRotate(deltaX: number, deltaY: number): void;
 }
 
 interface DollyState {
   pointerId: number;
   clientX: number;
+}
+
+interface LightState {
+  pointerId: number;
+  clientX: number;
+  clientY: number;
 }
 
 /** controls.domElement に Maya 式の入力を取り付け、後始末をする関数を返す。 */
@@ -29,18 +37,33 @@ export function attachViewerPointer(
 ): () => void {
   const { domElement } = controls;
   let dolly: DollyState | null = null;
+  let light: LightState | null = null;
 
   const handlePointerDown = (event: PointerEvent): void => {
     controls.mouseButtons = mouseButtonsFor(event.altKey);
-    if (!event.altKey || event.button !== 2) {
+    if (event.button !== 2) {
       return;
     }
-    dolly = { pointerId: event.pointerId, clientX: event.clientX };
+    if (event.altKey) {
+      dolly = { pointerId: event.pointerId, clientX: event.clientX };
+      domElement.setPointerCapture(event.pointerId);
+      deps.onUserInteract();
+      return;
+    }
+    if (!event.shiftKey) {
+      return;
+    }
+    light = { pointerId: event.pointerId, clientX: event.clientX, clientY: event.clientY };
     domElement.setPointerCapture(event.pointerId);
-    deps.onUserInteract();
   };
 
   const handlePointerMove = (event: PointerEvent): void => {
+    if (light !== null && event.pointerId === light.pointerId) {
+      deps.onLightRotate(event.clientX - light.clientX, event.clientY - light.clientY);
+      light.clientX = event.clientX;
+      light.clientY = event.clientY;
+      return;
+    }
     if (dolly === null || event.pointerId !== dolly.pointerId) {
       return;
     }
@@ -65,6 +88,16 @@ export function attachViewerPointer(
     dolly = null;
   };
 
+  const finishLight = (event: PointerEvent): void => {
+    if (light === null || event.pointerId !== light.pointerId) {
+      return;
+    }
+    if (domElement.hasPointerCapture(event.pointerId)) {
+      domElement.releasePointerCapture(event.pointerId);
+    }
+    light = null;
+  };
+
   const preventDefault = (event: Event): void => {
     event.preventDefault();
   };
@@ -77,7 +110,9 @@ export function attachViewerPointer(
   domElement.addEventListener("pointerdown", handlePointerDown, true);
   domElement.addEventListener("pointermove", handlePointerMove);
   domElement.addEventListener("pointerup", finishDolly);
+  domElement.addEventListener("pointerup", finishLight);
   domElement.addEventListener("pointercancel", finishDolly);
+  domElement.addEventListener("pointercancel", finishLight);
   domElement.addEventListener("contextmenu", preventDefault);
   domElement.addEventListener("mousedown", preventMiddleMouseDown);
   domElement.addEventListener("auxclick", preventDefault);
@@ -86,13 +121,19 @@ export function attachViewerPointer(
     domElement.removeEventListener("pointerdown", handlePointerDown, true);
     domElement.removeEventListener("pointermove", handlePointerMove);
     domElement.removeEventListener("pointerup", finishDolly);
+    domElement.removeEventListener("pointerup", finishLight);
     domElement.removeEventListener("pointercancel", finishDolly);
+    domElement.removeEventListener("pointercancel", finishLight);
     domElement.removeEventListener("contextmenu", preventDefault);
     domElement.removeEventListener("mousedown", preventMiddleMouseDown);
     domElement.removeEventListener("auxclick", preventDefault);
     if (dolly !== null && domElement.hasPointerCapture(dolly.pointerId)) {
       domElement.releasePointerCapture(dolly.pointerId);
     }
+    if (light !== null && domElement.hasPointerCapture(light.pointerId)) {
+      domElement.releasePointerCapture(light.pointerId);
+    }
     dolly = null;
+    light = null;
   };
 }

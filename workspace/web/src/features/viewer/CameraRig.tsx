@@ -7,6 +7,7 @@ import { cameraEquals, DEFAULT_CAMERA, lerpCamera } from "@shared/camera";
 import { useCameraStore } from "../../store/camera";
 import { usePresenceStore } from "../../store/presence";
 import { useSessionStore } from "../../store/session";
+import { useLightingStore } from "../../store/lighting";
 import { followStep, followTargetCamera } from "./follow";
 import { attachViewerPointer, type ViewerControlsLike } from "./viewer-pointer";
 import type { Camera } from "three";
@@ -48,6 +49,7 @@ export function CameraRig(): ReactElement {
     return attachViewerPointer(controls as unknown as ViewerControlsLike, {
       onUserInteract: () => usePresenceStore.getState().unfollow(),
       onCameraChange: handleChange,
+      onLightRotate: (deltaX, deltaY) => useLightingStore.getState().rotate(deltaX, deltaY),
     });
   }, [controls, handleChange]);
 

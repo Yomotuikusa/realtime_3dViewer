@@ -5,6 +5,7 @@ import {
   FIT_LABEL,
   followingLabel,
   hint,
+  LIGHT_RESET_LABEL,
   MODE_LABELS,
   MODE_ORDER,
   OVERLAY_LABEL,
@@ -27,6 +28,7 @@ describe("viewer HUD labels", () => {
     expect(MODE_LABELS).toEqual({ pen: "ペン", comment: "コメント" });
     expect(MODE_ORDER).toEqual(["pen", "comment"]);
     expect(RESET_LABEL).toBe("視点を戻す");
+    expect(LIGHT_RESET_LABEL).toBe("ライトを戻す");
     expect(FIT_LABEL).toBe("全体を表示");
     expect(UNDO_LABEL).toBe("1本戻す");
     expect(CLEAR_LABEL).toBe("自分の線を消す");
@@ -61,7 +63,7 @@ describe("viewer HUD labels", () => {
 
   it("describes idle Maya-style camera controls", () => {
     expect(hint({ mode: "none", canEdit: false, hasAnchor: false, following: false, placement: "surface" }))
-      .toBe("Alt+左ドラッグで回転、ホイールまたは Alt+右ドラッグで拡大縮小、Alt+中ドラッグで移動");
+      .toBe("Alt+左ドラッグで回転、ホイールまたは Alt+右ドラッグで拡大縮小、Alt+中ドラッグで移動、Shift+右ドラッグでライトの向き");
   });
 
   it("describes pen editing and disconnected pen state", () => {

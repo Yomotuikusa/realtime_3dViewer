@@ -3,6 +3,7 @@ import type { ClientMessage } from "@shared/protocol";
 import { useAnnotationStore } from "../../store/annotation";
 import { useCameraStore } from "../../store/camera";
 import { useCommentsStore } from "../../store/comments";
+import { useLightingStore } from "../../store/lighting";
 import { usePresenceStore } from "../../store/presence";
 import { useSessionStore } from "../../store/session";
 import { useShortcutsStore } from "../../store/shortcuts";
@@ -11,6 +12,7 @@ import {
   FIT_LABEL,
   followingLabel,
   hint,
+  LIGHT_RESET_LABEL,
   MODE_LABELS,
   MODE_ORDER,
   RESET_LABEL,
@@ -30,6 +32,7 @@ export function ViewerHud({ send }: { send: (msg: ClientMessage) => boolean }): 
   const connection = useSessionStore((state) => state.connection);
   const requestReset = useCameraStore((state) => state.requestReset);
   const requestFit = useCameraStore((state) => state.requestFit);
+  const resetLighting = useLightingStore((state) => state.reset);
   const keymap = useShortcutsStore((state) => state.keymap);
   const followingUser = followingUserId === null ? undefined : users[followingUserId];
 
@@ -53,6 +56,9 @@ export function ViewerHud({ send }: { send: (msg: ClientMessage) => boolean }): 
         <div className="hud-view" role="group" aria-label="視点">
           <button className="btn btn--quiet" type="button" onClick={requestReset}>{withShortcut(RESET_LABEL, keymap.viewReset)}</button>
           <button className="btn btn--quiet" type="button" onClick={requestFit}>{withShortcut(FIT_LABEL, keymap.viewFit)}</button>
+        </div>
+        <div className="hud-light" role="group" aria-label="ライト">
+          <button className="btn btn--quiet" type="button" onClick={resetLighting}>{LIGHT_RESET_LABEL}</button>
         </div>
       </div>
       {followingUserId !== null && (

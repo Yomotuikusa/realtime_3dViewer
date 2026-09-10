@@ -11,6 +11,7 @@ export const MODE_LABELS: Readonly<Record<ToolMode, string>> = {
 
 export const MODE_ORDER: readonly ToolMode[] = ["pen", "comment"];
 export const RESET_LABEL = "視点を戻す";
+export const LIGHT_RESET_LABEL = "ライトを戻す";
 export const FIT_LABEL = "全体を表示";
 export const UNDO_LABEL = "1本戻す";
 export const CLEAR_LABEL = "自分の線を消す";
@@ -57,7 +58,7 @@ export function hint(input: HintInput): string {
     return "操作すると追従が解除されます";
   }
   if (input.mode === "none") {
-    return "Alt+左ドラッグで回転、ホイールまたは Alt+右ドラッグで拡大縮小、Alt+中ドラッグで移動";
+    return "Alt+左ドラッグで回転、ホイールまたは Alt+右ドラッグで拡大縮小、Alt+中ドラッグで移動、Shift+右ドラッグでライトの向き";
   }
   if (input.mode === "pen") {
     if (!input.canEdit) {

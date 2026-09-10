@@ -3,6 +3,7 @@ import { resetReviewStores } from "../src/app/review-stores";
 import { useAnnotationStore } from "../src/store/annotation";
 import { useCameraStore } from "../src/store/camera";
 import { useCommentsStore } from "../src/store/comments";
+import { useLightingStore } from "../src/store/lighting";
 import { usePresenceStore } from "../src/store/presence";
 import { useSessionStore } from "../src/store/session";
 
@@ -27,6 +28,7 @@ describe("resetReviewStores", () => {
     useCommentsStore.getState().setLastError("failed");
     useCommentsStore.getState().setComposerAnchor([1, 2, 3]);
     useCameraStore.getState().requestCamera({ position: [1, 2, 3], target: [0, 0, 0] });
+    useLightingStore.getState().rotate(100, 0);
 
     resetReviewStores();
 
@@ -45,5 +47,6 @@ describe("resetReviewStores", () => {
       lastError: null,
     });
     expect(useCameraStore.getState()).toMatchObject({ pendingCamera: null, modelSize: 1 });
+    expect(useLightingStore.getState().angles).toEqual({ yaw: Math.PI / 4, pitch: Math.PI / 4 });
   });
 });
