@@ -6,7 +6,7 @@ depends_on: []
 owns: [server/src/app.ts, server/src/routes/projects.ts, server/src/routes/upload-validation.ts, server/src/storage/files.ts, server/src/db/comments.ts, server/tests/app.test.ts, server/tests/app-body-limit.test.ts, server/tests/helpers/app.ts, server/tests/upload-validation.test.ts, server/tests/storage-files.test.ts, server/tests/routes-projects-upload.test.ts, server/tests/db-comments.test.ts, server/server_Summary.md]
 reads: [server/src/errors.ts, server/src/config.ts, server/src/routes/comments.ts, server/src/routes/static.ts, server/src/index.ts, shared/shared_Summary.md, shared/src/api.ts]
 verify: npm run typecheck && npm run test:server
-status: todo
+status: done
 ---
 
 ## 目的

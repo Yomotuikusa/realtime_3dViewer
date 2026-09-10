@@ -6,7 +6,7 @@ depends_on: [031]
 owns: [web/src/features/viewer/useCameraBroadcast.ts, web/src/features/viewer/camera-throttle.ts, web/src/features/viewer/pick.ts, web/src/features/viewer/ModelMesh.tsx, web/src/features/viewer/model-loading.ts, web/src/features/comments/CommentPickLayer.tsx, web/tests/camera-broadcast.test.ts, web/tests/camera-throttle.test.ts, web/tests/pick.test.ts, web/tests/model-loading.test.ts, web/web_Summary.md]
 reads: [web/src/store/camera.ts, web/src/store/presence.ts, web/src/store/session.ts, web/src/store/comments.ts, web/src/features/annotation/stroke-build.ts, web/src/features/viewer/ViewerCanvas.tsx, shared/shared_Summary.md, shared/src/camera.ts, shared/src/protocol.ts]
 verify: npm run typecheck && npm run test:web
-status: todo
+status: done
 ---
 
 ## 目的

@@ -6,7 +6,7 @@ depends_on: []
 owns: [shared/src/types.ts, shared/src/api.ts, shared/src/camera.ts, shared/tests/types.test.ts, shared/tests/types-bounds.test.ts, shared/tests/api.test.ts, shared/tests/camera.test.ts, shared/shared_Summary.md]
 reads: [shared/src/protocol.ts, shared/src/index.ts, server/server_Summary.md, server/src/routes/projects.ts, web/web_Summary.md]
 verify: npm run typecheck && npm test
-status: todo
+status: done
 ---
 
 ## 目的

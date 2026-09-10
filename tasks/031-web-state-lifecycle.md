@@ -6,7 +6,7 @@ depends_on: []
 owns: [web/src/app/App.tsx, web/src/app/ReviewPage.tsx, web/src/app/review-stores.ts, web/src/app/useRealtime.ts, web/src/app/realtime-dispatch.ts, web/src/app/UploadPage.tsx, web/src/app/upload-labels.ts, web/src/app/JoinDialog.tsx, web/src/api/client.ts, web/src/features/annotation/AnnotationLayer.tsx, web/src/features/comments/CommentList.tsx, web/src/features/comments/CommentComposer.tsx, web/src/styles/controls.css, web/tests/api-client.test.ts, web/tests/realtime-dispatch.test.ts, web/tests/review-stores.test.ts, web/tests/upload-labels.test.ts, web/tests/use-realtime.test.ts, web/web_Summary.md]
 reads: [web/src/store/session.ts, web/src/store/comments.ts, web/src/store/presence.ts, web/src/store/annotation.ts, web/src/store/camera.ts, web/src/api/ws.ts, web/src/app/routes.ts, web/src/app/display-name.ts, shared/shared_Summary.md, shared/src/protocol.ts, shared/src/api.ts]
 verify: npm run typecheck && npm run test:web
-status: todo
+status: done
 ---
 
 ## 目的

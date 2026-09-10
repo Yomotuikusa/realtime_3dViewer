@@ -6,7 +6,7 @@ depends_on: [028]
 owns: [server/src/realtime/ws.ts, server/src/realtime/hub.ts, server/src/index.ts, server/tests/helpers/ws.ts, server/tests/realtime-ws.test.ts, server/tests/realtime-hub.test.ts, server/tests/realtime-guards.test.ts, server/server_Summary.md]
 reads: [server/src/db/projects.ts, server/src/db/connection.ts, server/src/app.ts, shared/shared_Summary.md, shared/src/protocol.ts, shared/src/types.ts]
 verify: npm run typecheck && npm run test:server
-status: todo
+status: done
 ---
 
 ## 目的
@@ -33,6 +33,12 @@ ws 既定の 100MiB フレームを受けて `JSON.parse` する、(3) `stroke:a
   ときだけ許可する。Origin ヘッダが**無い**接続(非ブラウザ)は許可する。許可オリジンの環境変数は設けない
 - ルームの線は全員退室で消える現状を**維持する**(猶予期間は設けない)
 - 依存の追加・package.json の変更は禁止
+- **実装・レビューの sandbox は 127.0.0.1 へ listen できない**(`listen EPERM`)。実ソケットを張る
+  テストは verify サンドボックスでしか実行されない。手元で再現できない前提でテストを書くこと
+- `startRealtime()` が返す `url` は `ws://127.0.0.1:<port>/ws` で**クエリを含まない**
+  (server/tests/helpers/ws.ts)。`fixture.open(projectId)` を経由せず `new WebSocket(url)` で
+  直接つなぐケース(Origin 検査など)では `?projectId=p1` を自分で付けること。付け忘れると
+  下の判定順 1 で弾かれ、Origin 判定まで到達しない
 
 ## インターフェイス契約
 
