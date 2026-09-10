@@ -38,30 +38,44 @@
 
 .hud-menu {
   position: relative;
+  width: 13.5rem;
 }
 
 .hud-menu__toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  background: var(--color-surface-translucent);
+  backdrop-filter: blur(6px);
   box-shadow: var(--shadow-overlay);
 }
 
 .hud-menu__toggle[aria-expanded="true"] {
-  border-color: var(--color-accent);
-  background: var(--color-accent);
-  color: var(--color-on-accent);
+  border-bottom-left-radius: 0;
+  border-bottom-right-radius: 0;
+  box-shadow: none;
+}
+
+.hud-menu__chevron {
+  color: var(--color-text-muted);
+  font-size: var(--text-xs);
 }
 
 .hud-menu__panel {
   position: absolute;
-  top: calc(100% + var(--space-1));
+  top: 100%;
   right: 0;
+  left: 0;
   z-index: 1;
   display: grid;
   gap: var(--space-1);
-  min-width: 13.5rem;
   padding: var(--space-2);
   border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
-  background: var(--color-surface);
+  border-top: 0;
+  border-radius: 0 0 var(--radius-md) var(--radius-md);
+  background: var(--color-surface-translucent);
+  backdrop-filter: blur(6px);
   box-shadow: var(--shadow-overlay);
 }
 

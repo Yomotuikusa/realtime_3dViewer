@@ -17,11 +17,6 @@ import {
   VIEW_PRESET_ORDER,
 } from "./view-presets";
 
-export interface CameraMenuProps {
-  /** ボタン操作後にメニューを閉じる。 */
-  onClose: () => void;
-}
-
 /**
  * カメラメニューの中身。3つの .hud-menu__section を上から
  * 1. <FocalLengthSlider />
@@ -29,7 +24,7 @@ export interface CameraMenuProps {
  * 3. 視点リセット
  * の順に描き、各 section の境界を区切り線で示す。
  */
-export function CameraMenu({ onClose }: CameraMenuProps): ReactElement {
+export function CameraMenu(): ReactElement {
   const requestReset = useCameraStore((state) => state.requestReset);
   const requestFit = useCameraStore((state) => state.requestFit);
   const requestCamera = useCameraStore((state) => state.requestCamera);
@@ -49,10 +44,7 @@ export function CameraMenu({ onClose }: CameraMenuProps): ReactElement {
               className="btn hud-menu__item hud-view"
               type="button"
               style={{ gridRow: cell.row, gridColumn: cell.column }}
-              onClick={() => {
-                requestCamera(presetCamera(preset, useCameraStore.getState().selfCamera));
-                onClose();
-              }}
+              onClick={() => requestCamera(presetCamera(preset, useCameraStore.getState().selfCamera))}
             >
               {VIEW_PRESET_LABELS[preset]}
             </button>
@@ -64,10 +56,7 @@ export function CameraMenu({ onClose }: CameraMenuProps): ReactElement {
           style={{ gridRow: VIEW_CROSS_CENTER.row, gridColumn: VIEW_CROSS_CENTER.column }}
           aria-label={withShortcut(FIT_LABEL, keymap.viewFit)}
           title={withShortcut(FIT_LABEL, keymap.viewFit)}
-          onClick={() => {
-            requestFit();
-            onClose();
-          }}
+          onClick={() => requestFit()}
         >
           {FIT_SHORT_LABEL}
         </button>
@@ -76,10 +65,7 @@ export function CameraMenu({ onClose }: CameraMenuProps): ReactElement {
         <button
           className="btn hud-menu__item"
           type="button"
-          onClick={() => {
-            requestReset();
-            onClose();
-          }}
+          onClick={() => requestReset()}
         >
           {withShortcut(RESET_LABEL, keymap.viewReset)}
         </button>

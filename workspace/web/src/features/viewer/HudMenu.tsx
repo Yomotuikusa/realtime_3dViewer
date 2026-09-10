@@ -31,7 +31,8 @@ export function HudMenu({ id, open, onToggle, onClose, children }: HudMenuProps)
         aria-controls={panelId}
         onClick={onToggle}
       >
-        {HUD_MENU_LABELS[id]}
+        <span>{HUD_MENU_LABELS[id]}</span>
+        <span className="hud-menu__chevron" aria-hidden="true">{open ? "▴" : "▾"}</span>
       </button>
       {open && (
         <div id={panelId} className="hud-menu__panel" role="group" aria-label={HUD_MENU_LABELS[id]}>
