@@ -4,7 +4,7 @@
 レビュー画面のカメラ、照明、セッション、presence、annotation、comments、ショートカットの状態を zustand ストアで保持する。
 
 ## ファイル一覧と役割
-- camera.ts: `selfCamera`、`pendingCamera`、`resetSeq`、`fitSeq`、`modelSize`、`focalLength` と、カメラ更新・再現消費・Reset・Fit・サイズ更新・初期化の action を管理する zustand ストア
+- camera.ts: `selfCamera`、`pendingCamera`、`resetSeq`、`fitSeq`、`modelSize`、`focalLength` と、カメラ更新・再現消費・Reset・Fit・サイズ更新・初期化の action を管理する zustand ストア。`setSelfCamera(camera, exact?)` は exact 指定時だけ完全一致で更新を判定する
 - lighting.ts: `LightAngles` を `rotateLight` の規則で更新し、既定方向への reset を提供するローカル zustand ストア
 - session.ts: 自分の ID・色・表示名・接続状態・直近エラーを保持する zustand ストア
 - presence.ts: 参加者一覧、各参加者のカメラと任意の焦点距離、Follow 対象を保持する zustand ストア
@@ -22,8 +22,9 @@
 - lighting.ts: `useLightingStore`、`LightingStoreState`
 
 ## 他フォルダとの関係
-カメラストアの `selfCamera` は `DEFAULT_CAMERA`、`focalLength` は 50mm を初期値とし、`setSelfCamera` は `cameraEquals` の
-既定 epsilon 内の更新を無視する。`requestCamera`/`consumePendingCamera` は複製した
+カメラストアの `selfCamera` は `DEFAULT_CAMERA`、`focalLength` は 50mm を初期値とし、`setSelfCamera(camera, exact?)` は
+既定では `cameraEquals` の epsilon 内の更新を無視する。`exact: true` の場合は epsilon 0 の完全一致でない限り複製して更新する。
+`requestCamera`/`consumePendingCamera` は複製した
 `CameraState` を受け渡し、`resetSeq`/`fitSeq` は操作トリガ、`modelSize` はモデルの最大辺長を保持する。
 `setFocalLength` は 14〜300mm に丸め、同値なら state を更新しない。`requestReset` と `reset` は焦点距離も 50mm に戻す。
 
@@ -42,7 +43,7 @@ comments ストアは `items`（常に `createdAt` 昇順、同値なら `id` �
 ## テスト
 - tests/store-comments.test.ts: コメント一覧の順序、upsert、選択・Open フィルタ正規化、投稿アンカー、エラー、reset のテスト
 - tests/store-annotation.test.ts: annotation ストアの初期値、線操作、mode/色、draft、再現線、透過表示・描画基準設定、順序、reset のテスト
-- tests/store-camera.test.ts: カメラストアの初期値、参照を保つ epsilon 判定、複製して保持・消費する再現要求、Reset・Fit・モデルサイズ・全 state 初期化の振る舞いを検証
+- tests/store-camera.test.ts: カメラストアの初期値、参照を保つ epsilon／exact 判定、複製して保持・消費する再現要求、Reset・Fit・モデルサイズ・全 state 初期化の振る舞いを検証
 - tests/store-lighting.test.ts: lighting ストアの既定値、累積回転、値の複製、reset を検証
 - tests/store-presence.test.ts: presence の全置換、焦点距離を含む upsert・削除・カメラ更新、Follow、reset のテスト
 - tests/store-shortcuts.test.ts: shortcuts ストアの割り当て・永続化・既定値復元とレビュー reset 非対象のテスト
