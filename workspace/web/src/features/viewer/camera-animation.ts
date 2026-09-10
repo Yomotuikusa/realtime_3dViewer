@@ -2,7 +2,7 @@ import type { CameraState } from "@shared/types";
 import { cloneCamera, lerpCamera } from "@shared/camera";
 
 /** 既定視点・視点再現の補間にかける時間(ms)。 */
-export const CAMERA_ANIMATION_DURATION_MS = 300;
+export const CAMERA_ANIMATION_DURATION_MS = 400;
 
 /** 進行中の補間。from / to は開始時に複製した独立の値。 */
 export interface CameraAnimation {

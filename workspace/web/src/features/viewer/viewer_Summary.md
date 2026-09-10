@@ -24,7 +24,7 @@ Canvas、モデル、カメラ、ライティング、焦点距離、HUD、ポ�
 - fit-camera.ts: 初期視点と同じ斜め方向からモデル全体を見る Fit カメラ目標を純粋関数で作る
 - pick.ts: Canvas 座標を NDC に変換し、共通モデルターゲットへ最近傍レイキャストを行う。交点と、逆転置の法線行列で変換して正規化したワールド系法線を返す
 - follow.ts: Follow 対象のカメラと焦点距離の妥当性判定、共有カメラ関数を使った 1 フレーム分の補間
-- camera-animation.ts: 既定視点・視点再現の300ms時間基準アニメーションと ease-out 補間を提供する
+- camera-animation.ts: 既定視点・視点再現の400ms時間基準アニメーションと ease-out 補間を提供する
 - CameraRig.tsx: OrbitControls を常時有効にしてカメラストアと同期し、Reset・Fit・時間基準のカメラ再現・Follow を処理する。Fit はモデル本体の箱から `fitCamera` で目標を作り `requestCamera` に積む(`Bounds` 内部補間は使わない)。既定視点ちょうどの向きでは `enableRotate` を false にし、Follow 中は回転ロックしない。OrbitControls の減衰を無効にし操作は即時反映する。補間中のユーザー操作で補間を中断する。Follow 中だけ対象の焦点距離もカメラストアへ反映し、controls.domElement に Alt 操作、右ドラッグ dolly、Shift+右ドラッグのライト回転を接続する
 - camera-input.ts: OrbitControls の Alt／非 Alt 時のマウス割り当てと、target からの距離を指数的に変える右ドラッグ dolly の純粋関数
 - viewer-pointer.ts: controls.domElement へ Maya 式の pointer、contextmenu、マウス抑止イベントを接続し、右ドラッグ dolly／Shift+右ドラッグのライト回転と後始末を提供する
@@ -77,7 +77,7 @@ CameraRig の毎フレーム処理は D27 の優先順位に従う。
 | --- | --- |
 | `resetSeq` が増えた | `DEFAULT_CAMERA` へ即座に戻し、追従中なら `presence.unfollow()`。 |
 | `fitSeq` が増えた | モデル本体の箱から斜め方向の Fit 目標を作り、`requestCamera` に積む。`Bounds` 内部補間は使わない。 |
-| `pendingCamera` が非 null | controls があるフレームで消費し、開始時のカメラから 300ms 補間する。controls がない場合は持ち越す。 |
+| `pendingCamera` が非 null | controls があるフレームで消費し、開始時のカメラから 400ms 補間する。controls がない場合は持ち越す。 |
 | 補間中 | 経過時間に応じて ease-out で進め、通常フレームは epsilon 更新、到達フレームは exact 更新して補間をクリアする。操作開始時は補間を中断する。 |
 | `followTargetCamera(...)` が非 null | `followStep` の結果をカメラと `controls.target` に適用し、到達後も追従を継続する。 |
 | それ以外 | カメラを変更しない。 |

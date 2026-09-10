@@ -56,8 +56,18 @@ describe("camera animation", () => {
     );
     const atStart = stepCameraAnimation(animation, 1000);
     const beforeStart = stepCameraAnimation(animation, 900);
-    const halfway = stepCameraAnimation(animation, 1150);
-    const atEnd = stepCameraAnimation(animation, 1300);
+    const halfway = stepCameraAnimation(
+      animation,
+      1000 + CAMERA_ANIMATION_DURATION_MS / 2,
+    );
+    const beforeEnd = stepCameraAnimation(
+      animation,
+      1000 + CAMERA_ANIMATION_DURATION_MS - 1,
+    );
+    const atEnd = stepCameraAnimation(
+      animation,
+      1000 + CAMERA_ANIMATION_DURATION_MS,
+    );
     const afterEnd = stepCameraAnimation(animation, 5000);
     const invalidTime = stepCameraAnimation(animation, Number.NaN);
 
@@ -67,6 +77,7 @@ describe("camera animation", () => {
     expect(beforeStart.done).toBe(false);
     expect(vec3Equals(halfway.camera.position, lerpVec3([0, 0, 10], [10, 0, 0], 0.875), 1e-9)).toBe(true);
     expect(halfway.done).toBe(false);
+    expect(beforeEnd.done).toBe(false);
     expect(cameraEquals(atEnd.camera, animation.to, 0)).toBe(true);
     expect(atEnd.done).toBe(true);
     expect(cameraEquals(afterEnd.camera, animation.to, 0)).toBe(true);
@@ -111,6 +122,6 @@ describe("camera animation", () => {
   });
 
   it("uses the documented duration", () => {
-    expect(CAMERA_ANIMATION_DURATION_MS).toBe(300);
+    expect(CAMERA_ANIMATION_DURATION_MS).toBe(400);
   });
 });
