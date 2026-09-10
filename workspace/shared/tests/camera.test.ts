@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  clampFocalLength,
   DEFAULT_CAMERA,
   cameraEquals,
   cloneCamera,
@@ -52,5 +53,22 @@ describe("camera helpers", () => {
     expect(clone.position).not.toBe(cameraA.position);
     expect(clone.target).not.toBe(cameraA.target);
     expect(DEFAULT_CAMERA).toEqual({ position: [3, 3, 3], target: [0, 0, 0] });
+  });
+
+  it("clamps finite focal lengths without rounding", () => {
+    expect(clampFocalLength(50)).toBe(50);
+    expect(clampFocalLength(14)).toBe(14);
+    expect(clampFocalLength(300)).toBe(300);
+    expect(clampFocalLength(27.5)).toBe(27.5);
+    expect(clampFocalLength(5)).toBe(14);
+    expect(clampFocalLength(1000)).toBe(300);
+    expect(clampFocalLength(0)).toBe(14);
+    expect(clampFocalLength(-100)).toBe(14);
+  });
+
+  it("uses the default focal length for non-finite values", () => {
+    expect(clampFocalLength(Number.NaN)).toBe(50);
+    expect(clampFocalLength(Number.POSITIVE_INFINITY)).toBe(50);
+    expect(clampFocalLength(Number.NEGATIVE_INFINITY)).toBe(50);
   });
 });

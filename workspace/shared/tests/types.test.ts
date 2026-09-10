@@ -4,6 +4,7 @@ import {
   ColorSchema,
   CommentSchema,
   CommentStatusSchema,
+  FocalLengthSchema,
   ModelVersionSchema,
   PresenceUserSchema,
   ProjectSchema,
@@ -162,6 +163,22 @@ describe("ProjectSchema", () => {
   });
 });
 
+describe("FocalLengthSchema", () => {
+  it("accepts bounded finite numbers, including decimals", () => {
+    for (const value of [14, 27.5, 50, 300]) {
+      const result = FocalLengthSchema.safeParse(value);
+      expect(result.success).toBe(true);
+      if (result.success) expect(result.data).toBe(value);
+    }
+  });
+
+  it("rejects values outside the range and non-numbers", () => {
+    for (const value of [13.9, 300.1, 0, -1, Number.NaN, Number.POSITIVE_INFINITY, Number.NEGATIVE_INFINITY, "50", null]) {
+      expect(FocalLengthSchema.safeParse(value).success).toBe(false);
+    }
+  });
+});
+
 describe("PresenceUserSchema", () => {
   const presenceUser = {
     id: "presence-1",
@@ -179,5 +196,43 @@ describe("PresenceUserSchema", () => {
   it("requires non-empty id and name", () => {
     expect(PresenceUserSchema.safeParse({ ...presenceUser, id: "" }).success).toBe(false);
     expect(PresenceUserSchema.safeParse({ ...presenceUser, name: "" }).success).toBe(false);
+  });
+
+  it("accepts an omitted, valid, or explicitly undefined focal length", () => {
+    const withoutFocalLength = PresenceUserSchema.safeParse({ ...presenceUser, camera: null });
+    expect(withoutFocalLength.success).toBe(true);
+    if (withoutFocalLength.success) {
+      expect("focalLength" in withoutFocalLength.data).toBe(false);
+    }
+
+    const withFocalLength = PresenceUserSchema.safeParse({ ...presenceUser, focalLength: 50 });
+    expect(withFocalLength.success).toBe(true);
+    if (withFocalLength.success) expect(withFocalLength.data.focalLength).toBe(50);
+
+    const withUndefined = PresenceUserSchema.safeParse({ ...presenceUser, focalLength: undefined });
+    expect(withUndefined.success).toBe(true);
+    if (withUndefined.success) expect(withUndefined.data.focalLength).toBeUndefined();
+  });
+
+  it("validates focal length bounds and types", () => {
+    for (const value of [14, 300]) {
+      expect(PresenceUserSchema.safeParse({ ...presenceUser, focalLength: value }).success).toBe(true);
+    }
+    for (const value of [5, 400, null, "50"]) {
+      expect(PresenceUserSchema.safeParse({ ...presenceUser, focalLength: value }).success).toBe(false);
+    }
+  });
+
+  it("keeps focal length out of the nested camera state", () => {
+    const result = PresenceUserSchema.safeParse({
+      ...presenceUser,
+      camera: { ...camera, focalLength: 85 },
+      focalLength: 50,
+    });
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.camera).toEqual(camera);
+      expect(result.data.focalLength).toBe(50);
+    }
   });
 });
