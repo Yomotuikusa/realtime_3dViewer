@@ -6,8 +6,8 @@ Canvas、モデル、カメラ、ライティング、焦点距離、HUD、ポ�
 ## ファイル一覧と役割
 - ViewerCanvas.tsx: Canvas、ライティング、焦点距離、Bounds、モデル、カメラを合成するビューア。`children` は RemoteCameras / StrokeLines / AnnotationLayer など後続機能の差し込み口
 - SceneLights.tsx: lighting ストアの角度から環境光・主ライト・反転した補助ライトを Bounds 外へ描画する
-- LightGizmo.tsx: 枠なしで3Dビュー右下へ重ねる立方体ギズモを描画し、水平ドラッグ・矢印キー・リセットをライトストアへ接続する
-- light-gizmo.ts: ギズモの寸法・カメラ定数、マーカー座標、ドラッグ／キー入力、yaw 表示の純粋関数
+- LightGizmo.tsx: 枠なしで3Dビュー右下へ重ねる、Y軸まわりに45°回転した立方体ギズモを描画し、水平ドラッグ・矢印キー・リセットをライトストアへ接続する
+- light-gizmo.ts: ギズモの寸法・回転・カメラ定数、マーカー座標、ドラッグ／キー入力、yaw 表示の純粋関数
 - FocalLengthRig.tsx: camera ストアの焦点距離を PerspectiveCamera の垂直画角へ反映する描画なしの Rig。Bounds の計算対象外
 - FocalLengthSlider.tsx: HUD 内で焦点距離を 14〜300mm の範囲で変更するスライダー。ラベルと値を上段、入力を下段に配置する
 - focal-length.ts: 固定センサー高を使う焦点距離／垂直画角の換算と既定画角
@@ -28,13 +28,13 @@ Canvas、モデル、カメラ、ライティング、焦点距離、HUD、ポ�
 - viewer-pointer.ts: controls.domElement へ Maya 式の pointer、contextmenu、マウス抑止イベントを接続し、右ドラッグ dolly／Shift+右ドラッグのライト回転と後始末を提供する
 - camera-throttle.ts: `CameraPayload`（カメラと焦点距離）を最新値だけ保持し、`payloadEquals` で両方を比較しながら送信成功時刻から 50ms ごとの先頭送信と窓明けトレーリング送信を行う。送信失敗は未送信としてタイマーまたは次の更新で再試行し、破棄時に保留送信をキャンセルする
 - useCameraBroadcast.ts: `selfCamera` または焦点距離の変更を `camera-throttle` へ渡し、`camera` メッセージへ焦点距離を載せる。送信成功時に自分の presence カメラと焦点距離も更新する。`shouldSendCamera` は従来の判定インターフェイスとして公開する
-- viewer.css: HUD のモード選択、枠線と影付きの右上カメラメニュー、焦点距離スライダー、カメラメニューのブロック区切りと十字配置、Follow 中の参加者色フレームと上辺タブ、操作ヒント、枠を持たないライトギズモのプレーン CSS
+- viewer.css: HUD のモード選択、枠線と影付きの右上カメラメニュー、焦点距離スライダー、カメラメニューのブロック区切りと十字配置、Follow 中の参加者色フレームと上辺タブ、操作ヒント、160px の枠を持たないライトギズモのプレーン CSS
 
 ## 公開インターフェイス
 - ViewerCanvas.tsx: `ViewerCanvas({ modelSrc, children? })`
 - SceneLights.tsx: `SceneLights()`
-- LightGizmo.tsx: `LightGizmo()`。固定カメラの立方体とライトマーカー、水平入力、リセットボタンを描画する
-- light-gizmo.ts: `GIZMO_SIZE_PX` などのギズモ定数、`gizmoMarkerPosition`、`gizmoDragStep`、`gizmoKeyDeltaX`、`yawDegrees`、`yawText`
+- LightGizmo.tsx: `LightGizmo()`。回転した立方体、固定カメラに収まるライトマーカー、水平入力、リセットボタンを描画する
+- light-gizmo.ts: `GIZMO_SIZE_PX`、`GIZMO_BOX_ROTATION_Y` などのギズモ定数、`gizmoMarkerPosition`、`gizmoDragStep`、`gizmoKeyDeltaX`、`yawDegrees`、`yawText`
 - FocalLengthRig.tsx: `FocalLengthRig()`
 - FocalLengthSlider.tsx: `FocalLengthSlider()`。ラベル・値とスライダーを別段に描画する
 - CameraMenu.tsx: `CameraMenu()`。焦点距離、十字の既定視点／全体表示、視点リセットを描画し、操作後もカメラ要求だけを行う
@@ -102,11 +102,11 @@ Canvas のクライアント座標を NDC 化して再帰的にモデルをレ�
 - tests/follow.test.ts: Follow 対象のカメラ・焦点距離の判定、複製、補間、収束テスト
 - tests/hud-labels.test.ts: HUD のモード・操作・透過表示・描画基準・Follow・既定視点文言とヒントのテスト
 - tests/hud-menu.test.ts: HUD メニューの初期表示、順序・表示名、トグルの純粋関数テスト
-- tests/light-gizmo.test.ts: ライトギズモの座標・入力・表示の純粋関数テスト
+- tests/light-gizmo.test.ts: ライトギズモの定数、回転、カメラ視野、座標・入力・表示の純粋関数テスト
 - tests/lighting.test.ts: ライト角度の正規化・クランプ・ドラッグ回転・主／補助ライト座標を検証
 - tests/model-loading.test.ts: 埋め込み・同一オリジン URL の許可、外部 URL の遮断、LoadingManager の URL modifier のテスト
 - tests/model-target.test.ts: モデルターゲットの登録・取得テスト
 - tests/pick.test.ts: NDC 変換、モデルの再帰レイキャスト、ワールド法線変換テスト
 - tests/view-presets.test.ts: 既定視点の方向・順序・単位ベクトル・距離維持・最小距離・非破壊性のテスト
 - tests/viewer-pointer.test.ts: capture phase の割り当て、Alt+右ドラッグ dolly、pointer capture、継続・終了・ブラウザ既定動作抑止、cleanup のテスト
-- tests/viewer-styles.test.ts: 半透明で上下に結合したカメラメニュー、初期展開と操作後の非クローズ、カメラメニューのボタン影、ライトギズモの枠廃止、シャドウトークン、Follow フレームと上辺タブ、CSS セレクタ完全一致のテキスト検査
+- tests/viewer-styles.test.ts: 半透明で上下に結合したカメラメニュー、初期展開と操作後の非クローズ、カメラメニューのボタン影、160px のライトギズモとヒントの退避幅、ライトギズモの枠廃止、シャドウトークン、Follow フレームと上辺タブ、CSS セレクタ完全一致のテキスト検査
