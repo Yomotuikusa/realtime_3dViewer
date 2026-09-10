@@ -11,7 +11,10 @@ export function FocalLengthSlider(): ReactElement {
 
   return (
     <div className="hud-focal" role="group" aria-label={FOCAL_LENGTH_LABEL}>
-      <label className="hud-focal__label" htmlFor="hud-focal-length">{FOCAL_LENGTH_LABEL}</label>
+      <div className="hud-focal__head">
+        <label className="hud-focal__label" htmlFor="hud-focal-length">{FOCAL_LENGTH_LABEL}</label>
+        <output className="hud-focal__value" htmlFor="hud-focal-length">{focalLengthText(focalLength)}</output>
+      </div>
       <input
         id="hud-focal-length"
         className="hud-focal__range"
@@ -22,7 +25,6 @@ export function FocalLengthSlider(): ReactElement {
         value={focalLength}
         onChange={(event) => setFocalLength(Number(event.target.value))}
       />
-      <output className="hud-focal__value" htmlFor="hud-focal-length">{focalLengthText(focalLength)}</output>
     </div>
   );
 }

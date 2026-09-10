@@ -59,13 +59,14 @@ glTF/GLB の 3D レビュー画面を提供する。レビュー画面は表示�
 - src/features/viewer/ViewerCanvas.tsx: Canvas、ライティング、焦点距離、Bounds、モデル、カメラを合成するビューア。`children` は RemoteCameras / StrokeLines / AnnotationLayer など後続機能の差し込み口
 - src/features/viewer/SceneLights.tsx: lighting ストアの角度から環境光・主ライト・反転した補助ライトを Bounds 外へ描画する
 - src/features/viewer/FocalLengthRig.tsx: camera ストアの焦点距離を PerspectiveCamera の垂直画角へ反映する描画なしの Rig。Bounds の計算対象外
-- src/features/viewer/FocalLengthSlider.tsx: HUD 内で焦点距離を 14〜300mm の範囲で変更するスライダー
+- src/features/viewer/FocalLengthSlider.tsx: HUD 内で焦点距離を 14〜300mm の範囲で変更するスライダー。ラベルと値を上段、入力を下段に配置する
 - src/features/viewer/focal-length.ts: 固定センサー高を使う焦点距離／垂直画角の換算と既定画角
-- src/features/viewer/ViewerHud.tsx: ペン／コメントの toggle ボタンとペン道具を左上に、カメラ／ライトのドロップダウンを右上に表示し、視点・ライト操作、Follow 中バッジ、描画基準を含むビューア操作ヒントを各ストアと keymap に接続する。メニュー内の Escape はメニューだけを閉じる
+- src/features/viewer/CameraMenu.tsx: 焦点距離、十字配置の既定視点、全体表示、視点リセットを3ブロックに分けて描画するカメラメニュー本体
+- src/features/viewer/ViewerHud.tsx: ペン／コメントの toggle ボタンとペン道具を左上に、カメラ／ライトのドロップダウンを右上に表示し、カメラ操作は CameraMenu、ライト操作、Follow 中バッジ、描画基準を含むビューア操作ヒントを各ストアと keymap に接続する。メニュー内の Escape はメニューだけを閉じる
 - src/features/viewer/HudMenu.tsx: カメラ／ライトのトグルボタンと、開いているときだけ表示する `role="group"` パネルを描画する制御コンポーネント。Escape の閉じ処理を親へ通知する
 - src/features/viewer/hud-menu.ts: HUD メニューの ID・順序・表示名と、トグル／外側 pointerdown の純粋な状態遷移
-- src/features/viewer/hud-labels.ts: ツールモード・色・Follow・視点／ライト操作（視点リセット／ライトリセット）・焦点距離・透過表示・描画基準・ヒントの日本語文言と純粋な判定関数
-- src/features/viewer/view-presets.ts: 正面／背面／右／左の向き、並び順、距離を保ったプリセットカメラ計算
+- src/features/viewer/hud-labels.ts: ツールモード・色・Follow・視点／ライト操作（視点リセット／ライトリセット）・焦点距離・十字中央／視点グループ・透過表示・描画基準・ヒントの日本語文言と純粋な判定関数
+- src/features/viewer/view-presets.ts: 正面／背面／右／左の向き、十字セルと並び順、距離を保ったプリセットカメラ計算
 - src/features/viewer/lighting.ts: ワールド固定ライトの角度の正規化・クランプ・ドラッグ回転と主／補助ライト座標を提供する
 - src/features/shortcuts/keymap.ts: `ShortcutAction` / `Binding` / `Keymap` / `DEFAULT_KEYMAP` / `ACTION_ORDER` とキーコードの正規化、割り当て、表示、入力対象判定
 - src/features/shortcuts/keymap-storage.ts: `KEYMAP_STORAGE_KEY` による keymap の localStorage 読み書きと不正値の既定値補完
@@ -74,7 +75,7 @@ glTF/GLB の 3D レビュー画面を提供する。レビュー画面は表示�
 - src/features/shortcuts/shortcut-labels.ts: 設定ダイアログのアクション名・操作文言と拒否メッセージ。`ACTION_LABELS`、各ラベル定数、`rejectionMessage` を公開する
 - src/features/shortcuts/ShortcutSettings.tsx: keymap の再割り当て・解除・既定値復元を行う設定ダイアログ。待機中は capture-phase のキー入力を処理し、変更を shortcuts ストア経由で即時保存する
 - src/features/shortcuts/shortcuts.css: ショートカット設定ダイアログの幅、4列の行、キーキャップ、フッタ、狭い画面向け調整
-- src/features/viewer/viewer.css: HUD のモード選択、右上カメラ／ライトメニュー、焦点距離スライダー、Follow バッジ、操作ヒントのプレーン CSS
+- src/features/viewer/viewer.css: HUD のモード選択、右上カメラ／ライトメニュー、焦点距離スライダー、カメラメニューのブロック区切りと十字配置、Follow バッジ、操作ヒントのプレーン CSS
 - src/features/viewer/ModelMesh.tsx: 同一オリジン用の LoadingManager を指定して `useGLTF` でモデルをロードし、バウンディングボックスからモデルサイズを記録して初回 Fit を要求する。ロード中の `scene` を共通モデルターゲットへ登録し、アンマウント時に解除する。Draco 圧縮時のデコーダ取得（`https://www.gstatic.com/...`）は drei の別 manager による外部依存として残る
 - src/features/viewer/model-loading.ts: glTF の `buffers` / `images` などが参照する data/blob URI と同一オリジン URL だけを許可する LoadingManager を作り、外部 URL を `about:blank` に置換する
 - src/features/viewer/model-target.ts: React や Zustand に依存せず、現在のレイキャスト対象 `Object3D` を保持する `setModelTarget` / `getModelTarget`
@@ -149,13 +150,14 @@ glTF/GLB の 3D レビュー画面を提供する。レビュー画面は表示�
 - features/viewer/ViewerCanvas.tsx: `ViewerCanvas({ modelSrc, children? })`
 - features/viewer/SceneLights.tsx: `SceneLights()`
 - features/viewer/FocalLengthRig.tsx: `FocalLengthRig()`
-- features/viewer/FocalLengthSlider.tsx: `FocalLengthSlider()`
+- features/viewer/FocalLengthSlider.tsx: `FocalLengthSlider()`。ラベル・値とスライダーを別段に描画する
+- features/viewer/CameraMenu.tsx: `CameraMenu({ onClose })`。焦点距離、十字の既定視点／全体表示、視点リセットを描画し、操作後に親へ閉じ処理を通知する
 - features/viewer/focal-length.ts: `SENSOR_HEIGHT_MM`、`FOCAL_LENGTH_STEP_MM`、`fovFromFocalLength`、`focalLengthFromFov`、`DEFAULT_FOV`
-- features/viewer/ViewerHud.tsx: `ViewerHud({ send })`。カメラメニューの既定視点ボタンは `presetCamera` の結果を `requestCamera` へ積む
+- features/viewer/ViewerHud.tsx: `ViewerHud({ send })`。カメラメニュー本体を `CameraMenu` に委譲する
 - features/viewer/HudMenu.tsx: `HudMenu({ id, open, onToggle, onClose, children })`。開閉 state を持たず、Escape を親へ通知する
 - features/viewer/hud-menu.ts: `HudMenuId`、`HUD_MENU_ORDER`、`HUD_MENU_LABELS`、`toggleHudMenu`、`menuAfterPointerDown`
-- features/viewer/hud-labels.ts: `ToolMode`、`MODE_LABELS`、`MODE_ORDER`、`VIEW_PRESET_LABELS`、`PLACEMENT_LABELS`、`PLACEMENT_ORDER`、各種ラベル（`FOCAL_LENGTH_LABEL` / `OVERLAY_LABEL` / `LIGHT_RESET_LABEL` を含む）、`focalLengthText`、`colorName`、`followingLabel`、`HintInput`（`placement` を含む）、`hint`、`withShortcut`
-- features/viewer/view-presets.ts: `ViewPreset`、`VIEW_PRESET_ORDER`、`VIEW_PRESET_DIRECTIONS`、`MIN_PRESET_DISTANCE`、`presetCamera`
+- features/viewer/hud-labels.ts: `ToolMode`、`MODE_LABELS`、`MODE_ORDER`、`VIEW_PRESET_LABELS`、`FIT_SHORT_LABEL`、`VIEW_PRESETS_LABEL`、`PLACEMENT_LABELS`、`PLACEMENT_ORDER`、各種ラベル（`FOCAL_LENGTH_LABEL` / `OVERLAY_LABEL` / `LIGHT_RESET_LABEL` を含む）、`focalLengthText`、`colorName`、`followingLabel`、`HintInput`（`placement` を含む）、`hint`、`withShortcut`
+- features/viewer/view-presets.ts: `ViewPreset`、`VIEW_PRESET_ORDER`、`GridCell`、`VIEW_CROSS_CENTER`、`VIEW_PRESET_CELLS`、`VIEW_PRESET_DIRECTIONS`、`MIN_PRESET_DISTANCE`、`presetCamera`
 - features/viewer/lighting.ts: `LightAngles`、ライト定数、`normalizeYaw`、`clampPitch`、`rotateLight`、`lightPosition`、`fillLightPosition`
 - features/shortcuts/keymap.ts: `ShortcutAction`、`Binding`、`Keymap`、`ACTION_ORDER`、`DEFAULT_KEYMAP`、`KeyChord`、`ShortcutEventLike`、`isModifierCode`、`isAssignableCode`、`bindingFromChord`、`isValidBinding`、`resolveAction`、`applyBinding`、`formatBinding`、`isTypingTarget`
 - features/shortcuts/keymap-storage.ts: `KEYMAP_STORAGE_KEY`、`loadKeymap`、`saveKeymap`
