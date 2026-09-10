@@ -19,6 +19,8 @@ export const VIEW_PRESET_LABELS: Readonly<Record<ViewPreset, string>> = {
 };
 export const RESET_LABEL = "視点リセット";
 export const LIGHT_RESET_LABEL = "ライトリセット";
+/** ギズモの role="slider" の aria-label */
+export const LIGHT_DIRECTION_LABEL = "ライトの向き";
 export const FIT_LABEL = "全体を表示";
 export const FOCAL_LENGTH_LABEL = "焦点距離";
 /** 十字の中央セルに入れる短い表示名。aria-label / title には FIT_LABEL を使う。 */

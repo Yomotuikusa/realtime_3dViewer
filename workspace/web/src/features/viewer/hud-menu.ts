@@ -1,13 +1,10 @@
-export type HudMenuId = "camera" | "light";
+export type HudMenuId = "camera";
 
 /** 右上に並べる順。 */
-export const HUD_MENU_ORDER: readonly HudMenuId[] = ["camera", "light"];
+export const HUD_MENU_ORDER: readonly HudMenuId[] = ["camera"];
 
 /** トグルボタンの表示名。 */
-export const HUD_MENU_LABELS: Readonly<Record<HudMenuId, string>> = {
-  camera: "カメラ",
-  light: "ライト",
-};
+export const HUD_MENU_LABELS: Readonly<Record<HudMenuId, string>> = { camera: "カメラ" };
 
 /** トグルボタン押下後に開いているメニューを返す。 */
 export function toggleHudMenu(open: HudMenuId | null, clicked: HudMenuId): HudMenuId | null {

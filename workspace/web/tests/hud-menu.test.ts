@@ -8,17 +8,13 @@ import {
 
 describe("viewer HUD menus", () => {
   it("defines the menu order and labels", () => {
-    expect(HUD_MENU_ORDER).toEqual(["camera", "light"]);
-    expect(HUD_MENU_LABELS).toEqual({ camera: "カメラ", light: "ライト" });
+    expect(HUD_MENU_ORDER).toEqual(["camera"]);
+    expect(HUD_MENU_LABELS).toEqual({ camera: "カメラ" });
   });
 
   it.each([
     [null, "camera", "camera"],
-    [null, "light", "light"],
     ["camera", "camera", null],
-    ["light", "light", null],
-    ["camera", "light", "light"],
-    ["light", "camera", "camera"],
   ] as const)("toggles %s with %s to %s", (open, clicked, expected) => {
     expect(toggleHudMenu(open, clicked)).toBe(expected);
   });
@@ -37,7 +33,6 @@ describe("viewer HUD menus", () => {
     const outside = document.createElement("div");
 
     expect(menuAfterPointerDown(null, root, outside)).toBeNull();
-    expect(menuAfterPointerDown("light", root, outside)).toBeNull();
     expect(menuAfterPointerDown("camera", null, outside)).toBeNull();
     expect(menuAfterPointerDown("camera", root, null)).toBeNull();
     expect(menuAfterPointerDown("camera", root, {} as EventTarget)).toBeNull();
