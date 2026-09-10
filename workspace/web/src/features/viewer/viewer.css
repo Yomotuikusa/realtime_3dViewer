@@ -171,7 +171,7 @@
   position: absolute;
   bottom: var(--space-3);
   left: var(--space-3);
-  right: calc(112px + var(--space-3) * 2);
+  right: calc(160px + var(--space-3) * 2);
   max-width: 40rem;
   padding: var(--space-1) var(--space-2);
   border-radius: var(--radius-sm);
@@ -184,8 +184,8 @@
   position: absolute;
   right: var(--space-3);
   bottom: var(--space-3);
-  width: 112px;
-  height: 112px;
+  width: 160px;
+  height: 160px;
   border-radius: var(--radius-md);
 }
 

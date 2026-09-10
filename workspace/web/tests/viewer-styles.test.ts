@@ -4,6 +4,7 @@ import { existsSync, readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
+import { GIZMO_SIZE_PX } from "../src/features/viewer/light-gizmo";
 
 const srcUrl = new URL("../src", import.meta.url);
 const urlPath = srcUrl.protocol === "file:" ? fileURLToPath(srcUrl) : join(process.cwd(), srcUrl.pathname.slice(1));
@@ -163,6 +164,14 @@ describe("viewer styles", () => {
     expect(body).toMatch(/(?:^|;)\s*bottom\s*:/);
     expect(body).toMatch(/(?:^|;)\s*width\s*:/);
     expect(body).toMatch(/(?:^|;)\s*height\s*:/);
+    expect(body).toContain(`width: ${GIZMO_SIZE_PX}px`);
+    expect(body).toContain(`height: ${GIZMO_SIZE_PX}px`);
+  });
+
+  it("leaves enough room for the light gizmo beside the hint", () => {
+    const body = ruleBody(viewerCssText, ".hud-hint");
+
+    expect(body).toContain(`right: calc(${GIZMO_SIZE_PX}px + var(--space-3) * 2)`);
   });
 
   it("does not confuse light gizmo child selectors with the parent rule", () => {

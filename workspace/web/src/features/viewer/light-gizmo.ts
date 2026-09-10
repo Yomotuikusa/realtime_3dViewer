@@ -2,14 +2,16 @@ import type { Vec3 } from "@shared/types";
 import { lightPosition, type LightAngles } from "./lighting";
 
 /** ギズモ Canvas の一辺(px)。CSS の幅と合わせる */
-export const GIZMO_SIZE_PX = 112;
+export const GIZMO_SIZE_PX = 160;
 /** 立方体の一辺 */
 export const GIZMO_BOX_SIZE = 1.4;
+/** 立方体の Y 軸まわりの回転(ラジアン)。辺を手前に向けて上面と2側面を見せる */
+export const GIZMO_BOX_ROTATION_Y = Math.PI / 4;
 /** ライトマーカーが回る軌道半径と、マーカー球の半径 */
 export const GIZMO_ORBIT_RADIUS = 2.2;
 export const GIZMO_MARKER_RADIUS = 0.16;
 /** ギズモを見る固定カメラの位置と画角(度)。メインカメラには連動しない */
-export const GIZMO_CAMERA_POSITION: Vec3 = [0, 2.4, 4.6];
+export const GIZMO_CAMERA_POSITION: Vec3 = [0, 3.5, 6.7];
 export const GIZMO_CAMERA_FOV = 40;
 /** 矢印キー1回ぶんの水平移動量(px 相当)。rotate(deltaX, 0) に渡す */
 export const GIZMO_KEY_STEP_PX = 20;

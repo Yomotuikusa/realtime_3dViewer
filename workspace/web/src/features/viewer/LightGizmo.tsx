@@ -4,6 +4,7 @@ import { useLightingStore } from "../../store/lighting";
 import { LIGHT_DIRECTION_LABEL, LIGHT_RESET_LABEL } from "./hud-labels";
 import {
   GIZMO_BOX_SIZE,
+  GIZMO_BOX_ROTATION_Y,
   GIZMO_CAMERA_FOV,
   GIZMO_CAMERA_POSITION,
   GIZMO_MARKER_RADIUS,
@@ -35,7 +36,7 @@ function GizmoScene(): ReactElement {
       <GizmoCamera />
       <ambientLight intensity={0.35} />
       <directionalLight position={markerPosition} intensity={2.0} />
-      <mesh>
+      <mesh rotation={[0, GIZMO_BOX_ROTATION_Y, 0]}>
         <boxGeometry args={[GIZMO_BOX_SIZE, GIZMO_BOX_SIZE, GIZMO_BOX_SIZE]} />
         <meshStandardMaterial color="#d0d5dd" />
       </mesh>
