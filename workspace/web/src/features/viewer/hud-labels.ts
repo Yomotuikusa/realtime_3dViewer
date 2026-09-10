@@ -17,8 +17,8 @@ export const VIEW_PRESET_LABELS: Readonly<Record<ViewPreset, string>> = {
   right: "右",
   left: "左",
 };
-export const RESET_LABEL = "視点を戻す";
-export const LIGHT_RESET_LABEL = "ライトを戻す";
+export const RESET_LABEL = "視点リセット";
+export const LIGHT_RESET_LABEL = "ライトリセット";
 export const FIT_LABEL = "全体を表示";
 export const FOCAL_LENGTH_LABEL = "焦点距離";
 export const UNDO_LABEL = "1本戻す";

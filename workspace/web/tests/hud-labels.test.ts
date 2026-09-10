@@ -24,15 +24,15 @@ import { VIEW_PRESET_ORDER } from "../src/features/viewer/view-presets";
 describe("viewer HUD labels", () => {
   it("adds a formatted shortcut only when it is assigned", () => {
     expect(withShortcut("ペン", "KeyP")).toBe("ペン (P)");
-    expect(withShortcut("視点を戻す", "Shift+KeyR")).toBe("視点を戻す (Shift+R)");
+    expect(withShortcut("視点リセット", "Shift+KeyR")).toBe("視点リセット (Shift+R)");
     expect(withShortcut("コメント", null)).toBe("コメント");
   });
 
   it("defines Japanese mode and action labels", () => {
     expect(MODE_LABELS).toEqual({ pen: "ペン", comment: "コメント" });
     expect(MODE_ORDER).toEqual(["pen", "comment"]);
-    expect(RESET_LABEL).toBe("視点を戻す");
-    expect(LIGHT_RESET_LABEL).toBe("ライトを戻す");
+    expect(RESET_LABEL).toBe("視点リセット");
+    expect(LIGHT_RESET_LABEL).toBe("ライトリセット");
     expect(FIT_LABEL).toBe("全体を表示");
     expect(FOCAL_LENGTH_LABEL).toBe("焦点距離");
     expect(UNDO_LABEL).toBe("1本戻す");

@@ -61,8 +61,10 @@ glTF/GLB の 3D レビュー画面を提供する。レビュー画面は表示�
 - src/features/viewer/FocalLengthRig.tsx: camera ストアの焦点距離を PerspectiveCamera の垂直画角へ反映する描画なしの Rig。Bounds の計算対象外
 - src/features/viewer/FocalLengthSlider.tsx: HUD 内で焦点距離を 14〜300mm の範囲で変更するスライダー
 - src/features/viewer/focal-length.ts: 固定センサー高を使う焦点距離／垂直画角の換算と既定画角
-- src/features/viewer/ViewerHud.tsx: ペン／コメントの toggle ボタン、ペン道具、視点・ライトのリセット、焦点距離スライダー、Follow 中バッジ、描画基準を含むビューア操作ヒントを表示し、各ストアと keymap を購読する
-- src/features/viewer/hud-labels.ts: ツールモード・色・Follow・視点／ライト操作・焦点距離・透過表示・描画基準・ヒントの日本語文言と純粋な判定関数
+- src/features/viewer/ViewerHud.tsx: ペン／コメントの toggle ボタンとペン道具を左上に、カメラ／ライトのドロップダウンを右上に表示し、視点・ライト操作、Follow 中バッジ、描画基準を含むビューア操作ヒントを各ストアと keymap に接続する。メニュー内の Escape はメニューだけを閉じる
+- src/features/viewer/HudMenu.tsx: カメラ／ライトのトグルボタンと、開いているときだけ表示する `role="group"` パネルを描画する制御コンポーネント。Escape の閉じ処理を親へ通知する
+- src/features/viewer/hud-menu.ts: HUD メニューの ID・順序・表示名と、トグル／外側 pointerdown の純粋な状態遷移
+- src/features/viewer/hud-labels.ts: ツールモード・色・Follow・視点／ライト操作（視点リセット／ライトリセット）・焦点距離・透過表示・描画基準・ヒントの日本語文言と純粋な判定関数
 - src/features/viewer/view-presets.ts: 正面／背面／右／左の向き、並び順、距離を保ったプリセットカメラ計算
 - src/features/viewer/lighting.ts: ワールド固定ライトの角度の正規化・クランプ・ドラッグ回転と主／補助ライト座標を提供する
 - src/features/shortcuts/keymap.ts: `ShortcutAction` / `Binding` / `Keymap` / `DEFAULT_KEYMAP` / `ACTION_ORDER` とキーコードの正規化、割り当て、表示、入力対象判定
@@ -72,7 +74,7 @@ glTF/GLB の 3D レビュー画面を提供する。レビュー画面は表示�
 - src/features/shortcuts/shortcut-labels.ts: 設定ダイアログのアクション名・操作文言と拒否メッセージ。`ACTION_LABELS`、各ラベル定数、`rejectionMessage` を公開する
 - src/features/shortcuts/ShortcutSettings.tsx: keymap の再割り当て・解除・既定値復元を行う設定ダイアログ。待機中は capture-phase のキー入力を処理し、変更を shortcuts ストア経由で即時保存する
 - src/features/shortcuts/shortcuts.css: ショートカット設定ダイアログの幅、4列の行、キーキャップ、フッタ、狭い画面向け調整
-- src/features/viewer/viewer.css: HUD のモード選択、視点操作、焦点距離スライダー、Follow バッジ、操作ヒントのプレーン CSS
+- src/features/viewer/viewer.css: HUD のモード選択、右上カメラ／ライトメニュー、焦点距離スライダー、Follow バッジ、操作ヒントのプレーン CSS
 - src/features/viewer/ModelMesh.tsx: 同一オリジン用の LoadingManager を指定して `useGLTF` でモデルをロードし、バウンディングボックスからモデルサイズを記録して初回 Fit を要求する。ロード中の `scene` を共通モデルターゲットへ登録し、アンマウント時に解除する。Draco 圧縮時のデコーダ取得（`https://www.gstatic.com/...`）は drei の別 manager による外部依存として残る
 - src/features/viewer/model-loading.ts: glTF の `buffers` / `images` などが参照する data/blob URI と同一オリジン URL だけを許可する LoadingManager を作り、外部 URL を `about:blank` に置換する
 - src/features/viewer/model-target.ts: React や Zustand に依存せず、現在のレイキャスト対象 `Object3D` を保持する `setModelTarget` / `getModelTarget`
@@ -95,6 +97,7 @@ glTF/GLB の 3D レビュー画面を提供する。レビュー画面は表示�
 - tests/store-annotation.test.ts: annotation ストアの初期値、線操作、mode/色、draft、再現線、透過表示・描画基準設定、順序、reset のテスト
 - tests/stroke-overlay.test.ts: 通常線・深度テスト無効の透過線 spec の順序、props、透明度、非破壊性のテスト
 - tests/hud-labels.test.ts: HUD のモード・操作・透過表示・描画基準・Follow・既定視点文言とヒントのテスト
+- tests/hud-menu.test.ts: HUD メニューの順序・表示名、トグル、内外 pointerdown の純粋関数テスト
 - tests/view-presets.test.ts: 既定視点の方向・順序・単位ベクトル・距離維持・最小距離・非破壊性のテスト
 - tests/keymap.test.ts: キーコード、binding、アクション解決、割り当て、表示、入力対象判定のテスト
 - tests/keymap-storage.test.ts: keymap の localStorage 読み書き、不正値補完、例外耐性のテスト
@@ -148,7 +151,9 @@ glTF/GLB の 3D レビュー画面を提供する。レビュー画面は表示�
 - features/viewer/FocalLengthRig.tsx: `FocalLengthRig()`
 - features/viewer/FocalLengthSlider.tsx: `FocalLengthSlider()`
 - features/viewer/focal-length.ts: `SENSOR_HEIGHT_MM`、`FOCAL_LENGTH_STEP_MM`、`fovFromFocalLength`、`focalLengthFromFov`、`DEFAULT_FOV`
-- features/viewer/ViewerHud.tsx: `ViewerHud({ send })`。既定視点ボタンは `presetCamera` の結果を `requestCamera` へ積む
+- features/viewer/ViewerHud.tsx: `ViewerHud({ send })`。カメラメニューの既定視点ボタンは `presetCamera` の結果を `requestCamera` へ積む
+- features/viewer/HudMenu.tsx: `HudMenu({ id, open, onToggle, onClose, children })`。開閉 state を持たず、Escape を親へ通知する
+- features/viewer/hud-menu.ts: `HudMenuId`、`HUD_MENU_ORDER`、`HUD_MENU_LABELS`、`toggleHudMenu`、`menuAfterPointerDown`
 - features/viewer/hud-labels.ts: `ToolMode`、`MODE_LABELS`、`MODE_ORDER`、`VIEW_PRESET_LABELS`、`PLACEMENT_LABELS`、`PLACEMENT_ORDER`、各種ラベル（`FOCAL_LENGTH_LABEL` / `OVERLAY_LABEL` / `LIGHT_RESET_LABEL` を含む）、`focalLengthText`、`colorName`、`followingLabel`、`HintInput`（`placement` を含む）、`hint`、`withShortcut`
 - features/viewer/view-presets.ts: `ViewPreset`、`VIEW_PRESET_ORDER`、`VIEW_PRESET_DIRECTIONS`、`MIN_PRESET_DISTANCE`、`presetCamera`
 - features/viewer/lighting.ts: `LightAngles`、ライト定数、`normalizeYaw`、`clampPitch`、`rotateLight`、`lightPosition`、`fillLightPosition`
@@ -198,8 +203,10 @@ API クライアントは同一オリジンの `/api/...` を使い、URL の pr
 `setFocalLength` は 14〜300mm に丸め、同値なら state を更新しない。`requestReset` と `reset` は焦点距離も 50mm に戻す。
 `CameraRig` は Reset 発生時に未消費の `pendingCamera` も破棄し、Reset 後の古い再現要求が補間を開始しないようにする。
 CameraRig の毎フレーム処理は D27 の優先順位に従う。
-`ViewerHud` は `selfCamera` をクリック時に読み、`presetCamera` で注視点と距離を保った視点を作って
-カメラストアの `requestCamera` へ積む。要求は既存の `CameraRig` が補間し、消費時に Follow を解除する。
+`ViewerHud` は右上のカメラ／ライトメニューをローカル state だけで管理する。開いているメニューの外側で
+pointerdown すると閉じ、メニュー内の Escape はショートカットの `clearMode` へ伝播せずメニューだけを閉じる。
+`selfCamera` をクリック時に読み、`presetCamera` で注視点と距離を保った視点を作ってカメラストアの
+`requestCamera` へ積む。要求は既存の `CameraRig` が補間し、消費時に Follow を解除する。
 `FocalLengthRig` は焦点距離を固定センサー高から換算した垂直画角として PerspectiveCamera に適用し、
 `FocalLengthSlider` はその値をローカルに変更する。焦点距離は `camera` WebSocket メッセージへ載せるが、コメントや localStorage には保存しない。
 
