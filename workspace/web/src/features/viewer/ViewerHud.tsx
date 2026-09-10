@@ -19,6 +19,7 @@ import "./viewer.css";
 
 export function ViewerHud({ send }: { send: (msg: ClientMessage) => boolean }): ReactElement {
   const mode = useAnnotationStore((state) => state.mode);
+  const placement = useAnnotationStore((state) => state.placement);
   const setMode = useAnnotationStore((state) => state.setMode);
   const users = usePresenceStore((state) => state.users);
   const followingUserId = usePresenceStore((state) => state.followingUserId);
@@ -63,7 +64,7 @@ export function ViewerHud({ send }: { send: (msg: ClientMessage) => boolean }): 
         </div>
       )}
       <p className="hud-hint" role="status" aria-live="polite">
-        {hint({ mode, canEdit: connection === "open", hasAnchor, following: followingUserId !== null })}
+        {hint({ mode, canEdit: connection === "open", hasAnchor, following: followingUserId !== null, placement })}
       </p>
     </div>
   );
