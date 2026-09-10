@@ -7,7 +7,6 @@
 - App.tsx: 現在のルートに応じた画面分岐。NotFound はパスと `/` へ戻る履歴遷移を表示する
 - routes.ts: `/` と `/p/<projectId>` のルート解析、遷移、popstate フック
 - display-name.ts: localStorage による表示名の保存、Guest 名生成、入室名の解決
-- JoinDialog.tsx: 保存済み表示名を初期値にした入室フォーム
 - JoinDialog.tsx: 保存済み表示名を初期値にした、入室前にビューアを覆うモーダルフォーム。表示名の解決・保存・入室コールバックは display-name と呼び出し側へ委譲する
 - realtime-dispatch.ts: `ServerMessage` を session / presence / annotation / comments ストアへ振り分ける入口。`welcome`、presence 更新（camera の焦点距離を含む）、stroke、`comment:created` / `comment:updated`、`error` を扱い、未知の型はコンパイル時に検出する
 - useRealtime.ts: 名前決定後の `WsClient` 接続と、open ごとの `join` 送信。`onRealtimeStatus` は session の接続状態を更新し、open 時に lastError を解除する
