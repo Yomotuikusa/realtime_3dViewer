@@ -8,6 +8,7 @@ import {
   focalLengthText,
   followingLabel,
   hint,
+  LIGHT_DIRECTION_LABEL,
   LIGHT_RESET_LABEL,
   MODE_LABELS,
   MODE_ORDER,
@@ -35,6 +36,7 @@ describe("viewer HUD labels", () => {
     expect(MODE_ORDER).toEqual(["pen", "comment"]);
     expect(RESET_LABEL).toBe("視点リセット");
     expect(LIGHT_RESET_LABEL).toBe("ライトリセット");
+    expect(LIGHT_DIRECTION_LABEL).toBe("ライトの向き");
     expect(FIT_LABEL).toBe("全体を表示");
     expect(FIT_SHORT_LABEL).toBe("全体");
     expect(VIEW_PRESETS_LABEL).toBe("既定の視点");

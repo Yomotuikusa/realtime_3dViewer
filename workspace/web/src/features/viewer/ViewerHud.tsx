@@ -2,13 +2,13 @@ import { useEffect, useRef, useState, type CSSProperties, type ReactElement } fr
 import type { ClientMessage } from "@shared/protocol";
 import { useAnnotationStore } from "../../store/annotation";
 import { useCommentsStore } from "../../store/comments";
-import { useLightingStore } from "../../store/lighting";
 import { usePresenceStore } from "../../store/presence";
 import { useSessionStore } from "../../store/session";
 import { useShortcutsStore } from "../../store/shortcuts";
 import { AnnotationToolbar } from "../annotation/AnnotationToolbar";
 import { CameraMenu } from "./CameraMenu";
 import { HudMenu } from "./HudMenu";
+import { LightGizmo } from "./LightGizmo";
 import {
   menuAfterPointerDown,
   toggleHudMenu,
@@ -17,7 +17,6 @@ import {
 import {
   followingLabel,
   hint,
-  LIGHT_RESET_LABEL,
   MODE_LABELS,
   MODE_ORDER,
   UNFOLLOW_LABEL,
@@ -34,7 +33,6 @@ export function ViewerHud({ send }: { send: (msg: ClientMessage) => boolean }): 
   const unfollow = usePresenceStore((state) => state.unfollow);
   const hasAnchor = useCommentsStore((state) => state.composerAnchor !== null);
   const connection = useSessionStore((state) => state.connection);
-  const resetLighting = useLightingStore((state) => state.reset);
   const keymap = useShortcutsStore((state) => state.keymap);
   const followingUser = followingUserId === null ? undefined : users[followingUserId];
   const [openMenu, setOpenMenu] = useState<HudMenuId | null>(null);
@@ -78,24 +76,8 @@ export function ViewerHud({ send }: { send: (msg: ClientMessage) => boolean }): 
         >
           <CameraMenu onClose={() => setOpenMenu(null)} />
         </HudMenu>
-        <HudMenu
-          id="light"
-          open={openMenu === "light"}
-          onToggle={() => setOpenMenu((open) => toggleHudMenu(open, "light"))}
-          onClose={() => setOpenMenu(null)}
-        >
-          <button
-            className="btn btn--quiet hud-menu__item"
-            type="button"
-            onClick={() => {
-              resetLighting();
-              setOpenMenu(null);
-            }}
-          >
-            {LIGHT_RESET_LABEL}
-          </button>
-        </HudMenu>
       </div>
+      <LightGizmo />
       {followingUserId !== null && (
         <div
           className="hud-follow"
