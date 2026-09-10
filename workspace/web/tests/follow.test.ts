@@ -28,15 +28,23 @@ describe("followTargetCamera", () => {
   it("returns a cloned target camera", () => {
     const result = followTargetCamera(users, "a", "me");
     expect(result).not.toBeNull();
-    expect(cameraEquals(result!, cameraA)).toBe(true);
-    expect(result).not.toBe(users.a.camera);
-    expect(result!.position).not.toBe(users.a.camera!.position);
+    expect(cameraEquals(result!.camera, cameraA)).toBe(true);
+    expect(result!.focalLength).toBeNull();
+    expect(result!.camera).not.toBe(users.a.camera);
+    expect(result!.camera.position).not.toBe(users.a.camera!.position);
+  });
+
+  it("returns the target focal length when it has been sent", () => {
+    const target = { ...user("a", cameraA), focalLength: 85 };
+    const result = followTargetCamera({ a: target }, "a", "me");
+
+    expect(result).toMatchObject({ focalLength: 85, camera: cameraA });
   });
 
   it("does not reject the target when selfId is not known", () => {
     const result = followTargetCamera(users, "a", null);
     expect(result).not.toBeNull();
-    expect(cameraEquals(result!, cameraA)).toBe(true);
+    expect(cameraEquals(result!.camera, cameraA)).toBe(true);
   });
 });
 

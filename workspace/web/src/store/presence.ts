@@ -8,7 +8,8 @@ export interface PresenceStoreState {
   applyWelcome(users: PresenceUser[]): void;
   upsertUser(user: PresenceUser): void;
   removeUser(userId: string): void;
-  updateCamera(userId: string, camera: CameraState): void;
+  /** focalLength が指定されたときだけ追従表示用の値も更新する */
+  updateCamera(userId: string, camera: CameraState, focalLength?: number): void;
   follow(userId: string): void;
   unfollow(): void;
   reset(): void;
@@ -51,14 +52,18 @@ export const usePresenceStore = create<PresenceStoreState>((set, get) => ({
     });
   },
 
-  updateCamera(userId, camera) {
+  updateCamera(userId, camera, focalLength) {
     if (!Object.hasOwn(get().users, userId)) {
       return;
     }
     set((state) => ({
       users: {
         ...state.users,
-        [userId]: { ...state.users[userId]!, camera: cloneCamera(camera) },
+        [userId]: {
+          ...state.users[userId]!,
+          camera: cloneCamera(camera),
+          ...(focalLength === undefined ? {} : { focalLength }),
+        },
       },
     }));
   },

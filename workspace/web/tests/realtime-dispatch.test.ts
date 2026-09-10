@@ -54,8 +54,11 @@ describe("realtime dispatch", () => {
   it("dispatches presence join, leave, and camera events", () => {
     dispatchServerMessage({ type: "user:joined", user });
     expect(usePresenceStore.getState().users).toHaveProperty("u2", user);
-    dispatchServerMessage({ type: "camera", userId: "u2", camera });
+    dispatchServerMessage({ type: "camera", userId: "u2", camera, focalLength: 85 });
     expect(usePresenceStore.getState().users.u2?.camera).toEqual(camera);
+    expect(usePresenceStore.getState().users.u2?.focalLength).toBe(85);
+    dispatchServerMessage({ type: "camera", userId: "u2", camera: { ...camera, position: [2, 2, 3] } });
+    expect(usePresenceStore.getState().users.u2?.focalLength).toBe(85);
     usePresenceStore.getState().follow("u2");
     dispatchServerMessage({ type: "user:left", userId: "u2" });
     expect(usePresenceStore.getState().users).not.toHaveProperty("u2");

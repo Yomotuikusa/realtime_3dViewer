@@ -14,7 +14,7 @@ glTF/GLB の 3D レビュー画面を提供する。レビュー画面は表示�
 - src/app/App.tsx: 現在のルートに応じた画面分岐。NotFound はパスと `/` へ戻る履歴遷移を表示する
 - src/app/display-name.ts: localStorage による表示名の保存、Guest 名生成、入室名の解決
 - src/app/JoinDialog.tsx: 保存済み表示名を初期値にした入室フォーム
-- src/app/realtime-dispatch.ts: `ServerMessage` を session / presence / annotation / comments ストアへ振り分ける入口。`welcome`、presence 更新、stroke、`comment:created` / `comment:updated`、`error` を扱い、未知の型はコンパイル時に検出する
+- src/app/realtime-dispatch.ts: `ServerMessage` を session / presence / annotation / comments ストアへ振り分ける入口。`welcome`、presence 更新（camera の焦点距離を含む）、stroke、`comment:created` / `comment:updated`、`error` を扱い、未知の型はコンパイル時に検出する
 - src/app/useRealtime.ts: 名前決定後の `WsClient` 接続と、open ごとの `join` 送信。`onRealtimeStatus` は session の接続状態を更新し、open 時に lastError を解除する
 - src/app/review-stores.ts: レビュー画面のアンマウント時に session / presence / annotation / comments / camera / lighting の6ストアをまとめて初期化する reset 関数（shortcuts ストアは対象外）
 - src/app/UploadPage.tsx: トークン CSS で構成したプロジェクト名・`.glb`/`.gltf` のアップロード画面。拡張子と容量を送信前に検査し、`FILE_TOO_LARGE` などのエラーを表示する
@@ -29,7 +29,7 @@ glTF/GLB の 3D レビュー画面を提供する。レビュー画面は表示�
 - src/store/camera.ts: `selfCamera`、`pendingCamera`、`resetSeq`、`fitSeq`、`modelSize`、`focalLength` と、カメラ更新・再現消費・Reset・Fit・サイズ更新・初期化の action を管理する zustand ストア
 - src/store/lighting.ts: `LightAngles` を `rotateLight` の規則で更新し、既定方向への reset を提供するローカル zustand ストア
 - src/store/session.ts: 自分の ID・色・表示名・接続状態・直近エラーを保持する zustand ストア
-- src/store/presence.ts: 参加者一覧、各参加者のカメラ、Follow 対象を保持する zustand ストア
+- src/store/presence.ts: 参加者一覧、各参加者のカメラと任意の焦点距離、Follow 対象を保持する zustand ストア
 - src/store/annotation.ts: ルーム全員分のライブ線、annotation mode・色・描画中 draft・コメント再現用線・メッシュに埋もれた線の透過表示設定・ペンの描画基準を保持し、welcome/線操作・draft・表示設定・reset を提供する zustand ストア
 - src/store/comments.ts: コメント一覧、Open フィルタ、選択中コメント、投稿アンカー、API エラーを保持し、`setAll` / `upsert` / `select` / `setFilter` / `setComposerAnchor` / `setLastError` / `reset` を提供する zustand ストア
 - src/store/shortcuts.ts: `useShortcutsStore` として永続化された `keymap` を保持し、`setBinding` / `resetKeymap` を提供する。`resetReviewStores()` の対象外
@@ -77,12 +77,12 @@ glTF/GLB の 3D レビュー画面を提供する。レビュー画面は表示�
 - src/features/viewer/model-loading.ts: glTF の `buffers` / `images` などが参照する data/blob URI と同一オリジン URL だけを許可する LoadingManager を作り、外部 URL を `about:blank` に置換する
 - src/features/viewer/model-target.ts: React や Zustand に依存せず、現在のレイキャスト対象 `Object3D` を保持する `setModelTarget` / `getModelTarget`
 - src/features/viewer/pick.ts: Canvas 座標を NDC に変換し、共通モデルターゲットへ最近傍レイキャストを行う。交点と、逆転置の法線行列で変換して正規化したワールド系法線を返す
-- src/features/viewer/follow.ts: Follow 対象カメラの妥当性判定と、共有カメラ関数を使った 1 フレーム分の補間
-- src/features/viewer/CameraRig.tsx: OrbitControls を常時有効にしてカメラストアと同期し、Reset・Fit・カメラ再現・Follow を処理する。controls.domElement に Alt 操作、右ドラッグ dolly、Shift+右ドラッグのライト回転を接続する
+- src/features/viewer/follow.ts: Follow 対象のカメラと焦点距離の妥当性判定、共有カメラ関数を使った 1 フレーム分の補間
+- src/features/viewer/CameraRig.tsx: OrbitControls を常時有効にしてカメラストアと同期し、Reset・Fit・カメラ再現・Follow を処理する。Follow 中だけ対象の焦点距離もカメラストアへ反映し、controls.domElement に Alt 操作、右ドラッグ dolly、Shift+右ドラッグのライト回転を接続する
 - src/features/viewer/camera-input.ts: OrbitControls の Alt／非 Alt 時のマウス割り当てと、target からの距離を指数的に変える右ドラッグ dolly の純粋関数
 - src/features/viewer/viewer-pointer.ts: controls.domElement へ Maya 式の pointer、contextmenu、マウス抑止イベントを接続し、右ドラッグ dolly／Shift+右ドラッグのライト回転と後始末を提供する
-- src/features/viewer/camera-throttle.ts: 最新のカメラだけを保持し、送信成功時刻から 50ms ごとの先頭送信と窓明けトレーリング送信を行う。送信失敗は未送信としてタイマーまたは次の更新で再試行し、破棄時に保留送信をキャンセルする
-- src/features/viewer/useCameraBroadcast.ts: `selfCamera` の変更を `camera-throttle` へ渡し、送信成功時に自分の presence カメラも更新する。`shouldSendCamera` は従来の判定インターフェイスとして公開する
+- src/features/viewer/camera-throttle.ts: `CameraPayload`（カメラと焦点距離）を最新値だけ保持し、`payloadEquals` で両方を比較しながら送信成功時刻から 50ms ごとの先頭送信と窓明けトレーリング送信を行う。送信失敗は未送信としてタイマーまたは次の更新で再試行し、破棄時に保留送信をキャンセルする
+- src/features/viewer/useCameraBroadcast.ts: `selfCamera` または焦点距離の変更を `camera-throttle` へ渡し、`camera` メッセージへ焦点距離を載せる。送信成功時に自分の presence カメラと焦点距離も更新する。`shouldSendCamera` は従来の判定インターフェイスとして公開する
 - src/main.tsx: React アプリのエントリーポイント。tokens → base → controls の順で全体スタイルを読み込む
 - src/styles/tokens.css: 色・文字・間隔・角丸・動き・レイアウトのセマンティックトークン。既存 inline 値を引き継ぎ、`:root` に定義する
 - src/styles/base.css: 全画面共通のリセット、既定の本文、可視フォーカスリング、reduced-motion。クラスは定義しない
@@ -90,7 +90,7 @@ glTF/GLB の 3D レビュー画面を提供する。レビュー画面は表示�
 - tests/api-client.test.ts: API クライアントの URL、body、エラー、スキーマ検証テスト
 - tests/display-name.test.ts: 表示名の trim、保存、Guest 名、localStorage 例外のテスト
 - tests/ws-client.test.ts: JSON 送受信、入力破棄、再接続バックオフ、明示 close のテスト
-- tests/realtime-dispatch.test.ts: welcome の session / presence / annotation 反映、presence/stroke/comment イベント、error、未対応イベント、reset のテスト
+- tests/realtime-dispatch.test.ts: welcome の session / presence / annotation 反映、焦点距離を含む presence/stroke/comment イベント、error、未対応イベント、reset のテスト
 - tests/store-comments.test.ts: コメント一覧の順序、upsert、選択・Open フィルタ正規化、投稿アンカー、エラー、reset のテスト
 - tests/store-annotation.test.ts: annotation ストアの初期値、線操作、mode/色、draft、再現線、透過表示・描画基準設定、順序、reset のテスト
 - tests/stroke-overlay.test.ts: 通常線・深度テスト無効の透過線 spec の順序、props、透明度、非破壊性のテスト
@@ -102,10 +102,10 @@ glTF/GLB の 3D レビュー画面を提供する。レビュー画面は表示�
 - tests/capture.test.ts: 設定ダイアログのキーキャプチャにおける割り当て、待機継続、キャンセル、拒否のテスト
 - tests/shortcut-labels.test.ts: 設定画面のアクション名、拒否メッセージ、各ラベル定数のテスト
 - tests/draw-plane.test.ts: 視線垂直な描画平面の生成、レイとの交差、平行/後方/始点交差の除外、非破壊性のテスト
-- tests/store-presence.test.ts: presence の全置換、upsert、削除、カメラ更新、Follow、reset のテスト
+- tests/store-presence.test.ts: presence の全置換、焦点距離を含む upsert・削除・カメラ更新、Follow、reset のテスト
 - tests/camera-broadcast.test.ts: カメラ送信 throttle の間隔・比較判定テスト
-- tests/camera-throttle.test.ts: 先頭送信、最新値のトレーリング、重複抑止、送信失敗の再試行、破棄時キャンセルのテスト
-- tests/follow.test.ts: Follow 対象カメラの判定、複製、補間、収束テスト
+- tests/camera-throttle.test.ts: `payloadEquals`、焦点距離を含む先頭送信、最新値のトレーリング、重複抑止、送信失敗の再試行、破棄時キャンセルのテスト
+- tests/follow.test.ts: Follow 対象のカメラ・焦点距離の判定、複製、補間、収束テスト
 - tests/routes.test.ts: ルート解析と履歴遷移テスト
 - tests/store-camera.test.ts: カメラストアの初期値、参照を保つ epsilon 判定、複製して保持・消費する再現要求、Reset・Fit・モデルサイズ・全 state 初期化の振る舞いを検証
 - tests/lighting.test.ts: ライト角度の正規化・クランプ・ドラッグ回転・主／補助ライト座標を検証
@@ -138,7 +138,7 @@ glTF/GLB の 3D レビュー画面を提供する。レビュー画面は表示�
 - app/ErrorBoundary.tsx: `ErrorBoundary`
 - store/camera.ts: `useCameraStore`、`CameraStoreState`（`focalLength`、`setFocalLength` を含む）
 - store/session.ts: `useSessionStore`、`SessionStoreState`、`ConnectionStatus`
-- store/presence.ts: `usePresenceStore`、`PresenceStoreState`
+- store/presence.ts: `usePresenceStore`、`PresenceStoreState`（`updateCamera(userId, camera, focalLength?)` を含む）
 - store/annotation.ts: `useAnnotationStore`、`AnnotationStoreState`、`AnnotationMode`、`PenPlacement`、`STROKE_COLORS`、`DEFAULT_STROKE_COLOR`、`orderedStrokes`（`overlay` / `setOverlay` / `placement` / `setPlacement` を含む）
 - store/comments.ts: `useCommentsStore`、`CommentsStoreState`（`items` / `showOnlyOpen` / `selectedId` / `composerAnchor` / `lastError` と全 action）、`selectVisible`
 - store/shortcuts.ts: `useShortcutsStore`、`ShortcutsStoreState`
@@ -159,11 +159,11 @@ glTF/GLB の 3D レビュー画面を提供する。レビュー画面は表示�
 - features/shortcuts/shortcut-labels.ts: `ACTION_LABELS`、設定画面の各ラベル定数、`rejectionMessage(reason)`
 - features/shortcuts/ShortcutSettings.tsx: `ShortcutSettings({ onClose })`
 - features/viewer/ModelMesh.tsx: `ModelMesh({ src })`
-- features/viewer/camera-throttle.ts: `CameraThrottleDeps`、`CameraThrottle`、`createCameraThrottle`
+- features/viewer/camera-throttle.ts: `CameraPayload`、`payloadEquals`、`CameraThrottleDeps`、`CameraThrottle`、`createCameraThrottle`
 - features/viewer/model-loading.ts: `BLOCKED_RESOURCE_URL`、`resolveModelResourceUrl`、`createModelLoadingManager`
 - features/viewer/model-target.ts: `setModelTarget(obj)`、`getModelTarget()`
 - features/viewer/pick.ts: `toNdc(rect, clientX, clientY)`、`pickModel(raycaster, camera, ndc, target)`
-- features/viewer/follow.ts: `FOLLOW_LERP_T`、`followTargetCamera`、`followStep`
+- features/viewer/follow.ts: `FOLLOW_LERP_T`、`FollowTarget`、`followTargetCamera`、`followStep`
 - features/viewer/CameraRig.tsx: `CameraRig()`
 - features/viewer/camera-input.ts: `ViewerMouseButtons`、`MOUSE_BUTTONS_ALT`、`MOUSE_BUTTONS_IDLE`、`mouseButtonsFor`、`DOLLY_SPEED`、`MIN_DOLLY_DISTANCE`、`dollyPosition`
 - features/viewer/viewer-pointer.ts: `ViewerControlsLike`、`ViewerPointerDeps`、`attachViewerPointer(controls, deps)`
@@ -201,7 +201,7 @@ CameraRig の毎フレーム処理は D27 の優先順位に従う。
 `ViewerHud` は `selfCamera` をクリック時に読み、`presetCamera` で注視点と距離を保った視点を作って
 カメラストアの `requestCamera` へ積む。要求は既存の `CameraRig` が補間し、消費時に Follow を解除する。
 `FocalLengthRig` は焦点距離を固定センサー高から換算した垂直画角として PerspectiveCamera に適用し、
-`FocalLengthSlider` はその値をローカルに変更する。焦点距離はこの時点では WebSocket やコメント、localStorage へ送信・保存しない。
+`FocalLengthSlider` はその値をローカルに変更する。焦点距離は `camera` WebSocket メッセージへ載せるが、コメントや localStorage には保存しない。
 
 | 状況 | 動作 |
 | --- | --- |
@@ -227,10 +227,12 @@ annotation ストアへ、`comment:created` / `comment:updated` を comments ス
 `StrokeLines` に渡し、draft が2点以上ならプレビュー線を1本追加する。`StrokeLines` はライブ線とコメント再現線の
 双方で同じ `overlay` 設定を購読し、通常線に加えて必要な場合だけ深度テスト無効の細い透過線を重ねる。
 presence の `applyWelcome` は一覧と Follow 対象を初期化して全置換し、削除されたユーザーを Follow 中なら解除する。
-`useCameraBroadcast` は selfCamera の変更を `createCameraThrottle` へ渡し、前回送信から
-`CAMERA_SEND_INTERVAL_MS` 以上かつ `cameraEquals` で異なる場合だけ送信する。窓内の最新値は
-タイマーで送信し、送信成功値を `cloneCamera` で保持する。送信成功時は自分の presence カメラも更新し、
-Follow 中も送信を継続する。
+`updateCamera` は camera の複製を保存し、受信した焦点距離があるときだけその値も更新する。
+`useCameraBroadcast` は selfCamera または焦点距離の変更を `createCameraThrottle` へ渡し、前回送信から
+`CAMERA_SEND_INTERVAL_MS` 以上かつ `payloadEquals` で異なる場合だけ、camera と焦点距離を送信する。
+窓内の最新値はタイマーで送信し、送信成功値を複製して保持する。送信成功時は自分の presence カメラと
+焦点距離も更新し、Follow 中も送信を継続する。`followTargetCamera` は対象の焦点距離を未送信なら
+`null` として返し、`CameraRig` は Follow 中だけその値を補間せずに自分の camera ストアへ適用する。
 後続の viewer 機能は `ViewerCanvas` の `children` 差し込み口に RemoteCameras / StrokeLines /
 AnnotationLayer などのレイヤーを追加する。`ModelMesh` が登録する `model-target` を `pickModel` に渡すと、
 Canvas のクライアント座標を NDC 化して再帰的にモデルをレイキャストでき、交点法線はヒットした
