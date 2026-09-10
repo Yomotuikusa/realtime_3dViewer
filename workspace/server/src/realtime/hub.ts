@@ -109,12 +109,19 @@ export class RoomHub {
     if (!room) return [];
 
     switch (msg.type) {
-      case "camera":
+      case "camera": {
         connection.user.camera = copyCamera(msg.camera);
+        if (msg.focalLength !== undefined) {
+          connection.user.focalLength = msg.focalLength;
+        }
+        const focalLength = connection.user.focalLength;
         return [{
           target: "others",
-          msg: { type: "camera", userId: connId, camera: copyCamera(msg.camera) },
+          msg: focalLength === undefined
+            ? { type: "camera", userId: connId, camera: copyCamera(msg.camera) }
+            : { type: "camera", userId: connId, camera: copyCamera(msg.camera), focalLength },
         }];
+      }
       case "stroke:add":
         return this.addStroke(room, connId, msg.stroke);
       case "stroke:remove":
