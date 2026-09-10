@@ -20,12 +20,16 @@ export interface AnnotationStoreState {
   color: string;
   drafting: Vec3[] | null;
   replayStrokes: Stroke[];
+  /** メッシュに埋もれた線を透過表示するか。初期値 true */
+  overlay: boolean;
   applyWelcome(strokes: Stroke[]): void;
   addStroke(stroke: Stroke): void;
   removeStroke(strokeId: string): void;
   clearByUser(userId: string): void;
   setMode(mode: AnnotationMode): void;
   setColor(color: string): void;
+  /** 同値なら state を更新しない */
+  setOverlay(overlay: boolean): void;
   beginDraft(point: Vec3): void;
   appendDraftPoint(point: Vec3): void;
   endDraft(): Vec3[];
@@ -39,6 +43,7 @@ const initialState = {
   color: DEFAULT_STROKE_COLOR,
   drafting: null as Vec3[] | null,
   replayStrokes: [] as Stroke[],
+  overlay: true,
 };
 
 export const useAnnotationStore = create<AnnotationStoreState>((set, get) => ({
@@ -93,6 +98,10 @@ export const useAnnotationStore = create<AnnotationStoreState>((set, get) => ({
       return;
     }
     set({ color: color.toLowerCase() });
+  },
+
+  setOverlay(overlay) {
+    set((state) => state.overlay === overlay ? state : { overlay });
   },
 
   beginDraft(point) {
