@@ -17,8 +17,10 @@ import {
   MODE_ORDER,
   RESET_LABEL,
   UNFOLLOW_LABEL,
+  VIEW_PRESET_LABELS,
   withShortcut,
 } from "./hud-labels";
+import { presetCamera, VIEW_PRESET_ORDER } from "./view-presets";
 import "./viewer.css";
 
 export function ViewerHud({ send }: { send: (msg: ClientMessage) => boolean }): ReactElement {
@@ -32,6 +34,7 @@ export function ViewerHud({ send }: { send: (msg: ClientMessage) => boolean }): 
   const connection = useSessionStore((state) => state.connection);
   const requestReset = useCameraStore((state) => state.requestReset);
   const requestFit = useCameraStore((state) => state.requestFit);
+  const requestCamera = useCameraStore((state) => state.requestCamera);
   const resetLighting = useLightingStore((state) => state.reset);
   const keymap = useShortcutsStore((state) => state.keymap);
   const followingUser = followingUserId === null ? undefined : users[followingUserId];
@@ -56,6 +59,18 @@ export function ViewerHud({ send }: { send: (msg: ClientMessage) => boolean }): 
         <div className="hud-view" role="group" aria-label="視点">
           <button className="btn btn--quiet" type="button" onClick={requestReset}>{withShortcut(RESET_LABEL, keymap.viewReset)}</button>
           <button className="btn btn--quiet" type="button" onClick={requestFit}>{withShortcut(FIT_LABEL, keymap.viewFit)}</button>
+        </div>
+        <div className="hud-view" role="group" aria-label="既定の視点">
+          {VIEW_PRESET_ORDER.map((preset) => (
+            <button
+              key={preset}
+              className="btn btn--quiet"
+              type="button"
+              onClick={() => requestCamera(presetCamera(preset, useCameraStore.getState().selfCamera))}
+            >
+              {VIEW_PRESET_LABELS[preset]}
+            </button>
+          ))}
         </div>
         <div className="hud-light" role="group" aria-label="ライト">
           <button className="btn btn--quiet" type="button" onClick={resetLighting}>{LIGHT_RESET_LABEL}</button>

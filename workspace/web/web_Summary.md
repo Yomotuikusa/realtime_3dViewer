@@ -60,6 +60,7 @@ glTF/GLB の 3D レビュー画面を提供する。レビュー画面は表示�
 - src/features/viewer/SceneLights.tsx: lighting ストアの角度から環境光・主ライト・反転した補助ライトを Bounds 外へ描画する
 - src/features/viewer/ViewerHud.tsx: ペン／コメントの toggle ボタン、ペン道具、視点・ライトのリセット、Follow 中バッジ、描画基準を含むビューア操作ヒントを表示し、各ストアと keymap を購読する
 - src/features/viewer/hud-labels.ts: ツールモード・色・Follow・視点／ライト操作・透過表示・描画基準・ヒントの日本語文言と純粋な判定関数
+- src/features/viewer/view-presets.ts: 正面／背面／右／左の向き、並び順、距離を保ったプリセットカメラ計算
 - src/features/viewer/lighting.ts: ワールド固定ライトの角度の正規化・クランプ・ドラッグ回転と主／補助ライト座標を提供する
 - src/features/shortcuts/keymap.ts: `ShortcutAction` / `Binding` / `Keymap` / `DEFAULT_KEYMAP` / `ACTION_ORDER` とキーコードの正規化、割り当て、表示、入力対象判定
 - src/features/shortcuts/keymap-storage.ts: `KEYMAP_STORAGE_KEY` による keymap の localStorage 読み書きと不正値の既定値補完
@@ -90,7 +91,8 @@ glTF/GLB の 3D レビュー画面を提供する。レビュー画面は表示�
 - tests/store-comments.test.ts: コメント一覧の順序、upsert、選択・Open フィルタ正規化、投稿アンカー、エラー、reset のテスト
 - tests/store-annotation.test.ts: annotation ストアの初期値、線操作、mode/色、draft、再現線、透過表示・描画基準設定、順序、reset のテスト
 - tests/stroke-overlay.test.ts: 通常線・深度テスト無効の透過線 spec の順序、props、透明度、非破壊性のテスト
-- tests/hud-labels.test.ts: HUD のモード・操作・透過表示・描画基準・Follow 文言とヒントのテスト
+- tests/hud-labels.test.ts: HUD のモード・操作・透過表示・描画基準・Follow・既定視点文言とヒントのテスト
+- tests/view-presets.test.ts: 既定視点の方向・順序・単位ベクトル・距離維持・最小距離・非破壊性のテスト
 - tests/keymap.test.ts: キーコード、binding、アクション解決、割り当て、表示、入力対象判定のテスト
 - tests/keymap-storage.test.ts: keymap の localStorage 読み書き、不正値補完、例外耐性のテスト
 - tests/store-shortcuts.test.ts: shortcuts ストアの割り当て・永続化・既定値復元とレビュー reset 非対象のテスト
@@ -140,8 +142,9 @@ glTF/GLB の 3D レビュー画面を提供する。レビュー画面は表示�
 - store/lighting.ts: `useLightingStore`、`LightingStoreState`
 - features/viewer/ViewerCanvas.tsx: `ViewerCanvas({ modelSrc, children? })`
 - features/viewer/SceneLights.tsx: `SceneLights()`
-- features/viewer/ViewerHud.tsx: `ViewerHud({ send })`
-- features/viewer/hud-labels.ts: `ToolMode`、`MODE_LABELS`、`MODE_ORDER`、`PLACEMENT_LABELS`、`PLACEMENT_ORDER`、各種ラベル（`OVERLAY_LABEL` / `LIGHT_RESET_LABEL` を含む）、`colorName`、`followingLabel`、`HintInput`（`placement` を含む）、`hint`、`withShortcut`
+- features/viewer/ViewerHud.tsx: `ViewerHud({ send })`。既定視点ボタンは `presetCamera` の結果を `requestCamera` へ積む
+- features/viewer/hud-labels.ts: `ToolMode`、`MODE_LABELS`、`MODE_ORDER`、`VIEW_PRESET_LABELS`、`PLACEMENT_LABELS`、`PLACEMENT_ORDER`、各種ラベル（`OVERLAY_LABEL` / `LIGHT_RESET_LABEL` を含む）、`colorName`、`followingLabel`、`HintInput`（`placement` を含む）、`hint`、`withShortcut`
+- features/viewer/view-presets.ts: `ViewPreset`、`VIEW_PRESET_ORDER`、`VIEW_PRESET_DIRECTIONS`、`MIN_PRESET_DISTANCE`、`presetCamera`
 - features/viewer/lighting.ts: `LightAngles`、ライト定数、`normalizeYaw`、`clampPitch`、`rotateLight`、`lightPosition`、`fillLightPosition`
 - features/shortcuts/keymap.ts: `ShortcutAction`、`Binding`、`Keymap`、`ACTION_ORDER`、`DEFAULT_KEYMAP`、`KeyChord`、`ShortcutEventLike`、`isModifierCode`、`isAssignableCode`、`bindingFromChord`、`isValidBinding`、`resolveAction`、`applyBinding`、`formatBinding`、`isTypingTarget`
 - features/shortcuts/keymap-storage.ts: `KEYMAP_STORAGE_KEY`、`loadKeymap`、`saveKeymap`
@@ -188,6 +191,8 @@ API クライアントは同一オリジンの `/api/...` を使い、URL の pr
 `CameraState` を受け渡し、`resetSeq`/`fitSeq` は操作トリガ、`modelSize` はモデルの最大辺長を保持する。
 `CameraRig` は Reset 発生時に未消費の `pendingCamera` も破棄し、Reset 後の古い再現要求が補間を開始しないようにする。
 CameraRig の毎フレーム処理は D27 の優先順位に従う。
+`ViewerHud` は `selfCamera` をクリック時に読み、`presetCamera` で注視点と距離を保った視点を作って
+カメラストアの `requestCamera` へ積む。要求は既存の `CameraRig` が補間し、消費時に Follow を解除する。
 
 | 状況 | 動作 |
 | --- | --- |

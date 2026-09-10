@@ -1,5 +1,6 @@
 import type { AnnotationMode, PenPlacement } from "../../store/annotation";
 import { formatBinding, type Binding } from "../shortcuts/keymap";
+import type { ViewPreset } from "./view-presets";
 
 /** HUD のボタンに出すモード。"none" は解除状態でありボタンを持たない。 */
 export type ToolMode = Exclude<AnnotationMode, "none">;
@@ -10,6 +11,12 @@ export const MODE_LABELS: Readonly<Record<ToolMode, string>> = {
 };
 
 export const MODE_ORDER: readonly ToolMode[] = ["pen", "comment"];
+export const VIEW_PRESET_LABELS: Readonly<Record<ViewPreset, string>> = {
+  front: "正面",
+  back: "背面",
+  right: "右",
+  left: "左",
+};
 export const RESET_LABEL = "視点を戻す";
 export const LIGHT_RESET_LABEL = "ライトを戻す";
 export const FIT_LABEL = "全体を表示";
