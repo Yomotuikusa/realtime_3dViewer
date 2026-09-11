@@ -44,10 +44,10 @@ const IdSchema = z.string().min(1);
 export const ClientMessageSchema = z.discriminatedUnion("type", [
   z.object({ type: z.literal("join"), name: z.string().max(MAX_NAME_LENGTH) }),
   z.object({ type: z.literal("camera"), camera: CameraStateSchema, focalLength: FocalLengthSchema.optional() }),
-  z.object({ type: z.literal("light"), angles: LightAnglesSchema }),
   z.object({ type: z.literal("stroke:add"), stroke: StrokeSchema }),
   z.object({ type: z.literal("stroke:remove"), strokeId: IdSchema }),
   z.object({ type: z.literal("stroke:clear") }),
+  z.object({ type: z.literal("light"), angles: LightAnglesSchema }),
 ]) satisfies z.ZodType<ClientMessage>;
 
 export const ServerMessageSchema = z.discriminatedUnion("type", [
@@ -66,10 +66,10 @@ export const ServerMessageSchema = z.discriminatedUnion("type", [
     camera: CameraStateSchema,
     focalLength: FocalLengthSchema.optional(),
   }),
-  z.object({ type: z.literal("light"), userId: IdSchema, angles: LightAnglesSchema }),
   z.object({ type: z.literal("stroke:add"), stroke: StrokeSchema }),
   z.object({ type: z.literal("stroke:remove"), strokeId: IdSchema }),
   z.object({ type: z.literal("stroke:clear"), userId: IdSchema }),
+  z.object({ type: z.literal("light"), userId: IdSchema, angles: LightAnglesSchema }),
   z.object({ type: z.literal("comment:created"), comment: CommentSchema }),
   z.object({ type: z.literal("comment:updated"), comment: CommentSchema }),
   z.object({ type: z.literal("error"), code: z.string(), message: z.string() }),
