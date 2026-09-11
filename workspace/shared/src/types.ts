@@ -45,7 +45,10 @@ export interface Project {
   id: string;
   name: string;
   createdAt: number;
+  /** versions の末尾要素と同じもの。既存呼び出し側との互換のため残す */
   latestVersion: ModelVersion;
+  /** project に属する全版。number 昇順。1件以上 */
+  versions: ModelVersion[];
 }
 
 /** ルームで共有するワールド固定ライトの向き(ラジアン)。 */
@@ -144,7 +147,11 @@ export const ProjectSchema = z.object({
   name: z.string().min(1).max(MAX_PROJECT_NAME_LENGTH),
   createdAt: TimestampSchema,
   latestVersion: ModelVersionSchema,
-}) satisfies z.ZodType<Project>;
+  versions: z.array(ModelVersionSchema).min(1),
+}).refine(
+  (project) => project.versions[project.versions.length - 1]?.id === project.latestVersion.id,
+  { message: "latestVersion must be the last element of versions" },
+) satisfies z.ZodType<Project>;
 
 export const PresenceUserSchema = z.object({
   id: IdSchema,

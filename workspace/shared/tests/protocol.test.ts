@@ -31,6 +31,14 @@ const comment = {
   createdAt: 1_700_000_000_000,
   updatedAt: 1_700_000_000_001,
 };
+const version = {
+  id: "version-1",
+  projectId: "project-1",
+  number: 1,
+  fileName: "model.glb",
+  byteSize: 12,
+  createdAt: 1_700_000_000_000,
+};
 
 describe("ClientMessageSchema", () => {
   it("accepts each client message shape", () => {
@@ -40,6 +48,7 @@ describe("ClientMessageSchema", () => {
       { type: "stroke:add", stroke },
       { type: "stroke:remove", strokeId: "stroke-1" },
       { type: "stroke:clear" },
+      { type: "object:visibility", versionId: "version-1", visible: false },
     ];
     for (const message of messages) {
       expect(ClientMessageSchema.safeParse(message).success).toBe(true);
@@ -51,6 +60,8 @@ describe("ClientMessageSchema", () => {
     expect(ClientMessageSchema.safeParse({ type: "camera", camera }).success).toBe(true);
     expect(ClientMessageSchema.safeParse({ type: "stroke:add", stroke: { ...stroke, points: [[0, 0, 0]] } }).success).toBe(false);
     expect(ClientMessageSchema.safeParse({ type: "stroke:remove", strokeId: "" }).success).toBe(false);
+    expect(ClientMessageSchema.safeParse({ type: "object:visibility", versionId: "", visible: false }).success).toBe(false);
+    expect(ClientMessageSchema.safeParse({ type: "object:visibility", versionId: "version-1", visible: "false" }).success).toBe(false);
     expect(ClientMessageSchema.safeParse({ type: "welcome", selfId: "user-1", users: [], strokes: [] }).success).toBe(false);
   });
 
@@ -72,7 +83,7 @@ describe("ClientMessageSchema", () => {
 });
 
 describe("ServerMessageSchema", () => {
-  it("accepts all ten server message variants", () => {
+  it("accepts all twelve server message variants", () => {
     const messages = [
       { type: "welcome", selfId: "user-1", users: [user], strokes: [stroke] },
       { type: "user:joined", user },
@@ -83,6 +94,8 @@ describe("ServerMessageSchema", () => {
       { type: "stroke:clear", userId: "user-1" },
       { type: "comment:created", comment },
       { type: "comment:updated", comment },
+      { type: "object:visibility", userId: "user-1", versionId: "version-1", visible: false },
+      { type: "object:added", version },
       { type: "error", code: "X", message: "bad request" },
     ];
     for (const message of messages) {
@@ -92,6 +105,17 @@ describe("ServerMessageSchema", () => {
 
   it("requires an error message", () => {
     expect(ServerMessageSchema.safeParse({ type: "error", code: "X" }).success).toBe(false);
+  });
+
+  it("validates object visibility and added versions", () => {
+    const withHiddenObjects = ServerMessageSchema.safeParse({ type: "welcome", selfId: "user-1", users: [], strokes: [], hiddenObjectIds: ["v1", "v2"] });
+    expect(withHiddenObjects.success).toBe(true);
+    if (withHiddenObjects.success && withHiddenObjects.data.type === "welcome") {
+      expect(withHiddenObjects.data.hiddenObjectIds).toEqual(["v1", "v2"]);
+    }
+    expect(ServerMessageSchema.safeParse({ type: "welcome", selfId: "user-1", users: [], strokes: [], hiddenObjectIds: [""] }).success).toBe(false);
+    expect(ServerMessageSchema.safeParse({ type: "object:visibility", userId: "user-1", versionId: "", visible: true }).success).toBe(false);
+    expect(ServerMessageSchema.safeParse({ type: "object:added", version: { ...version, number: 0 } }).success).toBe(false);
   });
 
   it("preserves an optional focal length on server camera messages", () => {
@@ -149,6 +173,14 @@ describe("protocol parsers", () => {
       ok: true,
       msg: { type: "camera", camera, focalLength: 85 },
     });
+    expect(parseClientMessage(JSON.stringify({ type: "object:visibility", versionId: "version-1", visible: false }))).toEqual({
+      ok: true,
+      msg: { type: "object:visibility", versionId: "version-1", visible: false },
+    });
+    expect(parseServerMessage(JSON.stringify({ type: "object:added", version }))).toEqual({
+      ok: true,
+      msg: { type: "object:added", version },
+    });
   });
 
   it("exposes the protocol limits", () => {
@@ -176,6 +208,10 @@ describe("light protocol", () => {
     });
     expect(withLight.success).toBe(true);
     if (withLight.success && withLight.data.type === "welcome") expect(withLight.data.light).toEqual(angles);
+
+    const withoutHiddenObjects = ServerMessageSchema.safeParse({ type: "welcome", selfId: "user-1", users: [], strokes: [] });
+    expect(withoutHiddenObjects.success).toBe(true);
+    if (withoutHiddenObjects.success) expect("hiddenObjectIds" in withoutHiddenObjects.data).toBe(false);
   });
 
   it("parses light frames and exposes their send interval", () => {

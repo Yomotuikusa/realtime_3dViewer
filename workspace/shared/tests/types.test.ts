@@ -152,14 +152,25 @@ describe("ProjectSchema", () => {
     name: "Demo project",
     createdAt: 1_700_000_000_000,
     latestVersion: modelVersion,
+    versions: [modelVersion],
   };
 
-  it("requires latestVersion and non-empty strings", () => {
+  it("requires versions and latestVersion and non-empty strings", () => {
     expect(ProjectSchema.safeParse(project).success).toBe(true);
     const { latestVersion: _latestVersion, ...withoutLatestVersion } = project;
     expect(ProjectSchema.safeParse(withoutLatestVersion).success).toBe(false);
+    const { versions: _versions, ...withoutVersions } = project;
+    expect(ProjectSchema.safeParse(withoutVersions).success).toBe(false);
+    expect(ProjectSchema.safeParse({ ...project, versions: [] }).success).toBe(false);
     expect(ProjectSchema.safeParse({ ...project, id: "" }).success).toBe(false);
     expect(ProjectSchema.safeParse({ ...project, name: "" }).success).toBe(false);
+  });
+
+  it("requires latestVersion to be the last version", () => {
+    const secondVersion = { ...modelVersion, id: "version-2", number: 2 };
+    expect(ProjectSchema.safeParse({ ...project, versions: [modelVersion, secondVersion], latestVersion: secondVersion }).success).toBe(true);
+    expect(ProjectSchema.safeParse({ ...project, versions: [secondVersion, modelVersion], latestVersion: secondVersion }).success).toBe(false);
+    expect(ProjectSchema.safeParse({ ...project, versions: [{ ...modelVersion, byteSize: -1 }] }).success).toBe(false);
   });
 });
 
