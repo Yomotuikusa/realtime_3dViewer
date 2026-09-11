@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   CLEAR_LABEL,
+  CLIP_LABEL,
   colorName,
   FIT_LABEL,
   FIT_SHORT_LABEL,
@@ -13,6 +14,10 @@ import {
   MODE_LABELS,
   MODE_ORDER,
   OVERLAY_LABEL,
+  PAUSE_LABEL,
+  PLAYBACK_TIME_LABEL,
+  PLAY_LABEL,
+  playbackTimeText,
   PLACEMENT_LABELS,
   PLACEMENT_ORDER,
   RESET_LABEL,
@@ -44,6 +49,10 @@ describe("viewer HUD labels", () => {
     expect(UNDO_LABEL).toBe("1本戻す");
     expect(CLEAR_LABEL).toBe("自分の線を消す");
     expect(OVERLAY_LABEL).toBe("透過表示");
+    expect(PLAY_LABEL).toBe("再生");
+    expect(PAUSE_LABEL).toBe("一時停止");
+    expect(PLAYBACK_TIME_LABEL).toBe("時刻");
+    expect(CLIP_LABEL).toBe("クリップ");
     expect(UNFOLLOW_LABEL).toBe("追従を解除");
     expect(VIEW_PRESET_LABELS).toEqual({ front: "正面", back: "背面", right: "右", left: "左" });
     for (const preset of VIEW_PRESET_ORDER) {
@@ -60,6 +69,12 @@ describe("viewer HUD labels", () => {
     expect(focalLengthText(50.4)).toBe("50mm");
     expect(focalLengthText(84.6)).toBe("85mm");
     expect(focalLengthText(26.991)).toBe("27mm");
+  });
+
+  it("formats playback time with two decimal places", () => {
+    expect(playbackTimeText(1.25, 3)).toBe("1.25 / 3.00 s");
+    expect(playbackTimeText(0, 0)).toBe("0.00 / 0.00 s");
+    expect(playbackTimeText(1.005, 2.5)).toBe("1.00 / 2.50 s");
   });
 
   it("names the six stroke colors and preserves unknown colors", () => {

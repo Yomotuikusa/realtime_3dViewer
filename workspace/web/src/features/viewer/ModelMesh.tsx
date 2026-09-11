@@ -2,11 +2,14 @@ import { useEffect, type ReactElement } from "react";
 import { useGLTF } from "@react-three/drei";
 import { Box3, Vector3 } from "three";
 import { useCameraStore } from "../../store/camera";
+import { usePlaybackStore } from "../../store/playback";
 import { setModelTarget } from "./model-target";
 import { createModelLoadingManager } from "./model-loading";
+import { clipSummaries } from "./playback";
+import { PlaybackRig } from "./PlaybackRig";
 
 export function ModelMesh({ src }: { src: string }): ReactElement {
-  const { scene } = useGLTF(src, true, true, (loader) => {
+  const { scene, animations } = useGLTF(src, true, true, (loader) => {
     loader.manager = createModelLoadingManager(location.origin);
   });
 
@@ -22,5 +25,15 @@ export function ModelMesh({ src }: { src: string }): ReactElement {
     return () => setModelTarget(null);
   }, [scene]);
 
-  return <primitive object={scene} />;
+  useEffect(() => {
+    usePlaybackStore.getState().setClips(clipSummaries(animations));
+    return () => usePlaybackStore.getState().setClips([]);
+  }, [animations]);
+
+  return (
+    <>
+      <primitive object={scene} />
+      {animations.length > 0 && <PlaybackRig root={scene} clips={animations} />}
+    </>
+  );
 }

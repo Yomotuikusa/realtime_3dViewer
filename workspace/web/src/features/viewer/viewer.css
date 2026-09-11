@@ -132,6 +132,35 @@
   text-align: center;
 }
 
+.hud-playback {
+  display: grid;
+  gap: var(--space-1);
+  padding: var(--space-1) 0;
+  font-size: var(--text-sm);
+}
+
+.hud-playback__head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--space-2);
+  white-space: nowrap;
+}
+
+.hud-playback__clip,
+.hud-playback__range {
+  width: 100%;
+}
+
+.hud-playback__toggle {
+  box-shadow: var(--shadow-control);
+}
+
+.hud-playback__time {
+  color: var(--color-text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
 .hud-following {
   display: contents;
 }

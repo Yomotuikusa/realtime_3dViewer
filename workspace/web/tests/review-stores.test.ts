@@ -4,6 +4,7 @@ import { useAnnotationStore } from "../src/store/annotation";
 import { useCameraStore } from "../src/store/camera";
 import { useCommentsStore } from "../src/store/comments";
 import { useLightingStore } from "../src/store/lighting";
+import { usePlaybackStore } from "../src/store/playback";
 import { usePresenceStore } from "../src/store/presence";
 import { useSessionStore } from "../src/store/session";
 
@@ -29,6 +30,9 @@ describe("resetReviewStores", () => {
     useCommentsStore.getState().setComposerAnchor([1, 2, 3]);
     useCameraStore.getState().requestCamera({ position: [1, 2, 3], target: [0, 0, 0] });
     useLightingStore.getState().rotate(100, 0);
+    usePlaybackStore.getState().setClips([{ name: "walk", duration: 3 }]);
+    usePlaybackStore.getState().play();
+    usePlaybackStore.getState().seek(1);
 
     resetReviewStores();
 
@@ -48,5 +52,6 @@ describe("resetReviewStores", () => {
     });
     expect(useCameraStore.getState()).toMatchObject({ pendingCamera: null, modelSize: 1 });
     expect(useLightingStore.getState().angles).toEqual({ yaw: Math.PI / 4, pitch: Math.PI / 4 });
+    expect(usePlaybackStore.getState()).toMatchObject({ clips: [], clipIndex: 0, playing: false, time: 0 });
   });
 });
