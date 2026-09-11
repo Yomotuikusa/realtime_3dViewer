@@ -59,6 +59,11 @@ export interface LightAngles {
   pitch: number;
 }
 
+/** ルームで共有するメッシュの表示方法。solid=通常、wireframe=線のみ、solid-wireframe=通常描画に線を重ねる */
+export type MeshDisplayMode = "solid" | "wireframe" | "solid-wireframe";
+/** 誰も切り替えていないルームの表示方法 */
+export const DEFAULT_MESH_DISPLAY: MeshDisplayMode = "solid";
+
 export interface PresenceUser {
   id: string;
   name: string;
@@ -108,6 +113,8 @@ export const LightAnglesSchema = z.object({
   yaw: z.number(),
   pitch: z.number(),
 }) satisfies z.ZodType<LightAngles>;
+
+export const MeshDisplayModeSchema = z.enum(["solid", "wireframe", "solid-wireframe"]) satisfies z.ZodType<MeshDisplayMode>;
 
 export const StrokeSchema = z.object({
   id: IdSchema,

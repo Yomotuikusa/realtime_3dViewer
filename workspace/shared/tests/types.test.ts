@@ -4,7 +4,9 @@ import {
   ColorSchema,
   CommentSchema,
   CommentStatusSchema,
+  DEFAULT_MESH_DISPLAY,
   FocalLengthSchema,
+  MeshDisplayModeSchema,
   ModelVersionSchema,
   PresenceUserSchema,
   ProjectSchema,
@@ -96,6 +98,21 @@ describe("CommentStatusSchema", () => {
     expect(CommentStatusSchema.safeParse("open").success).toBe(true);
     expect(CommentStatusSchema.safeParse("resolved").success).toBe(true);
     expect(CommentStatusSchema.safeParse("closed").success).toBe(false);
+  });
+});
+
+describe("MeshDisplayModeSchema", () => {
+  it("accepts the three display modes", () => {
+    for (const mode of ["solid", "wireframe", "solid-wireframe"]) {
+      expect(MeshDisplayModeSchema.safeParse(mode).success).toBe(true);
+    }
+  });
+
+  it("rejects invalid display modes and defaults to solid", () => {
+    for (const mode of ["Solid", "mesh", "", 1, undefined]) {
+      expect(MeshDisplayModeSchema.safeParse(mode).success).toBe(false);
+    }
+    expect(DEFAULT_MESH_DISPLAY).toBe("solid");
   });
 });
 

@@ -3,6 +3,7 @@ import { resetReviewStores } from "../src/app/review-stores";
 import { useAnnotationStore } from "../src/store/annotation";
 import { useCameraStore } from "../src/store/camera";
 import { useCommentsStore } from "../src/store/comments";
+import { useDisplayStore } from "../src/store/display";
 import { useLightingStore } from "../src/store/lighting";
 import { useObjectsStore } from "../src/store/objects";
 import { usePlaybackStore } from "../src/store/playback";
@@ -40,6 +41,7 @@ describe("resetReviewStores", () => {
       createdAt: 1,
     }]);
     useObjectsStore.getState().setVisible("v1", false);
+    useDisplayStore.getState().setMeshDisplay("wireframe");
     usePlaybackStore.getState().setClips([{ name: "walk", duration: 3 }]);
     usePlaybackStore.getState().play();
     usePlaybackStore.getState().seek(1);
@@ -63,6 +65,7 @@ describe("resetReviewStores", () => {
     expect(useCameraStore.getState()).toMatchObject({ pendingCamera: null, modelSize: 1 });
     expect(useLightingStore.getState().angles).toEqual({ yaw: Math.PI / 4, pitch: Math.PI / 4 });
     expect(useObjectsStore.getState()).toMatchObject({ objects: [], hiddenIds: [] });
+    expect(useDisplayStore.getState().meshDisplay).toBe("solid");
     expect(usePlaybackStore.getState()).toMatchObject({ clips: [], clipIndex: 0, playing: false, time: 0, fps: 24 });
   });
 });

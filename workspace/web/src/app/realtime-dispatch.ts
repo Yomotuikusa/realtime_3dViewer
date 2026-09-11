@@ -1,6 +1,8 @@
 import type { ServerMessage } from "@shared/protocol";
+import { DEFAULT_MESH_DISPLAY } from "@shared/types";
 import { useAnnotationStore } from "../store/annotation";
 import { useCommentsStore } from "../store/comments";
+import { useDisplayStore } from "../store/display";
 import { useLightingStore } from "../store/lighting";
 import { useObjectsStore } from "../store/objects";
 import { usePresenceStore } from "../store/presence";
@@ -11,6 +13,7 @@ export function dispatchServerMessage(msg: ServerMessage): void {
   const presence = usePresenceStore.getState();
   const annotation = useAnnotationStore.getState();
   const comments = useCommentsStore.getState();
+  const display = useDisplayStore.getState();
   const lighting = useLightingStore.getState();
   const objects = useObjectsStore.getState();
 
@@ -24,6 +27,7 @@ export function dispatchServerMessage(msg: ServerMessage): void {
         lighting.applyRemote(msg.light);
       }
       objects.applyWelcome(msg.hiddenObjectIds ?? []);
+      display.setMeshDisplay(msg.meshDisplay ?? DEFAULT_MESH_DISPLAY);
       break;
     }
     case "user:joined":
@@ -56,6 +60,9 @@ export function dispatchServerMessage(msg: ServerMessage): void {
       break;
     case "object:added":
       objects.append(msg.version);
+      break;
+    case "mesh:display":
+      display.setMeshDisplay(msg.mode);
       break;
     case "error":
       session.setLastError(`${msg.code}: ${msg.message}`);

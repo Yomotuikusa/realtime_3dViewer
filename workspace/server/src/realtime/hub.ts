@@ -1,6 +1,6 @@
 import { nanoid } from "nanoid";
 import type { ClientMessage, ServerMessage } from "@shared/protocol";
-import type { CameraState, LightAngles, PresenceUser, Stroke } from "@shared/types";
+import type { CameraState, LightAngles, MeshDisplayMode, PresenceUser, Stroke } from "@shared/types";
 
 /** Colors are selected in room-local join order. */
 export const PRESENCE_PALETTE: readonly string[] = [
@@ -42,6 +42,8 @@ interface Room {
   light: LightAngles | null;
   /** 非表示にされたオブジェクトの versionId。挿入順を保つ */
   hiddenObjects: Set<string>;
+  /** ルームで共有するメッシュの表示方法。誰も切り替えていなければ null */
+  meshDisplay: MeshDisplayMode | null;
 }
 
 function defaultGuestDigits(): string {
@@ -138,6 +140,9 @@ export class RoomHub {
           target: "others",
           msg: { type: "object:visibility", userId: connId, versionId: msg.versionId, visible: msg.visible },
         }];
+      case "mesh:display":
+        room.meshDisplay = msg.mode;
+        return [{ target: "others", msg: { type: "mesh:display", userId: connId, mode: msg.mode } }];
       case "stroke:add":
         return this.addStroke(room, connId, msg.stroke);
       case "stroke:remove":
@@ -174,6 +179,10 @@ export class RoomHub {
     return room ? [...room.hiddenObjects] : [];
   }
 
+  meshDisplayIn(projectId: string): MeshDisplayMode | null {
+    return this.rooms.get(projectId)?.meshDisplay ?? null;
+  }
+
   private join(connId: string, connection: Connection, name: string): Outbound[] {
     if (connection.user) {
       return [{
@@ -195,6 +204,7 @@ export class RoomHub {
       strokes: new Map<string, Stroke>(),
       light: null,
       hiddenObjects: new Set<string>(),
+      meshDisplay: null,
     };
     this.rooms.set(connection.projectId, room);
 
@@ -221,6 +231,7 @@ export class RoomHub {
           strokes,
           ...(room.light === null ? {} : { light: { ...room.light } }),
           ...(hiddenObjectIds.length === 0 ? {} : { hiddenObjectIds }),
+          ...(room.meshDisplay === null ? {} : { meshDisplay: room.meshDisplay }),
         },
       },
       { target: "others", msg: { type: "user:joined", user: copyUser(user) } },
