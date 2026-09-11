@@ -58,6 +58,14 @@ export function createApp(deps: AppDeps): HonoType {
       onError: tooLarge,
     }),
   );
+  app.use("/api/projects/:projectId/versions", validateContentLength);
+  app.use(
+    "/api/projects/:projectId/versions",
+    bodyLimit({
+      maxSize: config.maxUploadBytes + MULTIPART_OVERHEAD_BYTES,
+      onError: tooLarge,
+    }),
+  );
   app.use("/api/projects/:projectId/comments", validateContentLength);
   app.use(
     "/api/projects/:projectId/comments",

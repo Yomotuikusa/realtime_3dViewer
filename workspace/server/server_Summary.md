@@ -15,9 +15,12 @@ server の基盤。本番は `npm run build && npm run start` で起動する。
 - `src/db/comments.ts`: コメントの登録、project 単位の一覧、status 更新。JSON 列と
   shared の `Comment` の相互変換を担う。
 - `src/storage/files.ts`: `dataDir/uploads/<versionId>.glb` への一時ファイル経由の非同期保存・削除。
-- `src/routes/projects.ts`: multipart モデルアップロード、project JSON の取得と、モデル本体の
-  配信。アップロード成功時はファイル保存と projects / model_versions 登録を同一処理で行い、
-  拡張子に応じた Content-Type と immutable キャッシュヘッダを設定する。
+- `src/routes/projects.ts`: multipart モデルアップロード、既存 project への版追加、project JSON
+  の取得とモデル本体の配信を提供する。複数ファイルの保存と projects / model_versions 登録を
+  同一処理で行い、失敗時は保存済みファイルを削除する。版追加成功後は `object:added` を publish
+  し、拡張子に応じた Content-Type と immutable キャッシュヘッダを設定する。
+- `src/routes/project-upload.ts`: multipart の file フィールド(単一または配列)を全件検証し、
+  検証済みのファイル名・バイト列へ変換する。File 以外、形式不正、サイズ超過を API エラーへ変換する。
 - `src/routes/comments.ts`: project 配下のコメント一覧、投稿、status 更新を提供する。
   一覧は `status` 絞り込みと `created_at` 昇順に対応し、投稿・更新は保存後にそれぞれ
   `comment:created` / `comment:updated` を `publish` へ渡す。project、version、comment の
@@ -44,7 +47,8 @@ server の基盤。本番は `npm run build && npm run start` で起動する。
 - `src/app.ts`: `createApp(deps)`。厳密な `Content-Length` 検証を含むリクエスト本体の
   bodyLimit、共通の `nosniff` ヘッダ、500 時の `request_failed` ログ、JSON 404、
   `/api/projects` と
-  `/api/projects/:projectId/comments` のマウント、および最後の static route のマウントを担う。
+  `/api/projects/:projectId/versions` と `/api/projects/:projectId/comments` のマウント、および
+  最後の static route のマウントを担う。project 作成・版追加 multipart の本体上限も検査する。
 - `src/index.ts`: `DATA_DIR` を作成して SQLite / ファイルストレージ / Hono HTTP / WebSocket を
   1プロセスで起動するエントリポイント。起動時に `server_started` の JSON 1行をログ出力する。
 - `tests/helpers/tmp.ts`: `server/.vite/test-tmp` 配下の一時ディレクトリ管理。
@@ -61,13 +65,15 @@ server の基盤。本番は `npm run build && npm run start` で起動する。
 - `tests/storage-files.test.ts`: ファイル保存、上書き、rename 失敗時の tmp 残留防止、削除のテスト。
 - `tests/app.test.ts`: JSON 404、未知エラーの 500 応答と `request_failed` ログ、
   期待される HTTP エラーのログ抑制のテスト。
-- `tests/app-body-limit.test.ts`: multipart とコメント JSON の Content-Length / chunked 本体上限、
-  本体なしのコメント一覧のテスト。
+- `tests/app-body-limit.test.ts`: project 作成・版追加 multipart とコメント JSON の Content-Length /
+  chunked 本体上限、本体なしのコメント一覧のテスト。
 - `tests/routes-projects-read.test.ts`: project 取得、モデル配信、Content-Type、キャッシュ、
   project/version/file の NOT_FOUND のテスト。
 - `tests/upload-validation.test.ts`: モデル拡張子、GLB/glTF の内容検査のテスト。
-- `tests/routes-projects-upload.test.ts`: multipart の POST、Project 応答、保存ファイル、入力検証、
-  上限超過、DB 失敗時の後始末のテスト。
+- `tests/routes-projects-upload.test.ts`: multipart の単一・複数 POST、Project 応答、保存ファイル、
+  入力検証、上限超過、全件事前検証、DB 失敗時の後始末のテスト。
+- `tests/routes-project-versions.test.ts`: 既存 project への版追加、2回追加後の全版取得と採番、publish、
+  存在しない project、単一ファイル制約、形式不正、DB 失敗時の後始末のテスト。
 - `tests/routes-comments.test.ts`: コメント一覧の順序・絞り込み、投稿・status 更新、入力検証、
   project/version スコープ、publish 呼び出しのテスト。
 - `tests/realtime-ws.test.ts`: join、Presence、camera / stroke 配信、切断、入力検証、連続違反 close、
@@ -97,10 +103,15 @@ server の基盤。本番は `npm run build && npm run start` で起動する。
 - `MAX_JSON_BODY_BYTES` / `MULTIPART_OVERHEAD_BYTES`: コメント JSON の 1 MiB 上限と、
   multipart 本体上限へ加える 64 KiB の余裕を公開する。
 - `projectRoutes`: `GET /api/projects/:projectId` と
-  `GET /api/projects/:projectId/versions/:versionId/model`、`POST /api/projects` を提供する。
-  POST は multipart の `name` と `file` を受け、201 で `Project` を返す。名前は trim して保存し、
-  不正な入力は `VALIDATION`、非 glTF/GLB は `UNSUPPORTED_FORMAT`、上限超過は
-  `PAYLOAD_TOO_LARGE`、保存後の DB 失敗など予期しないエラーは `INTERNAL` を返す。
+  `GET /api/projects/:projectId/versions/:versionId/model`、`POST /api/projects`、
+  `POST /api/projects/:projectId/versions` を提供する。作成 POST は multipart の `name` と
+  1件以上の `file` を送信順に受け、201 で全 `versions` を含む `Project` を返す。版追加 POST は
+  1件の `file` を受け、採番済み `ModelVersion` を201で返し、DB反映後に `object:added` を publish
+  する。名前は trim して保存し、不正な入力は `VALIDATION`、非 glTF/GLB は
+  拡張子不正は HTTP 415 の `UNSUPPORTED_FORMAT`、内容不正は HTTP 400 の
+  `UNSUPPORTED_FORMAT`、上限超過は `PAYLOAD_TOO_LARGE`、保存後の DB 失敗など予期しないエラーは
+  `INTERNAL` を返す。
+- `readUploadedModels`: multipart の file フィールドを検証済み `UploadedModel[]` へ変換する。
 - `commentRoutes`: `GET /api/projects/:projectId/comments` は `Comment[]` を返し、任意の
   `status=open|resolved` で絞り込む。POST は `CreateCommentInput` を検証し、対象 version が
   project に属することを確認して 201 の `Comment` と `comment:created` を返す。PATCH は
