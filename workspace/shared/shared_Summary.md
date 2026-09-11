@@ -27,7 +27,7 @@
 - スキーマ: `Vec3Schema`, `ColorSchema`, `CameraStateSchema`, `FocalLengthSchema`, `LightAnglesSchema`, `MeshDisplayModeSchema`, `StrokeSchema`, `CommentStatusSchema`, `CommentSchema`, `ModelVersionSchema`, `ProjectSchema`, `PresenceUserSchema`
 - api: `ErrorCode`, `ApiError`, `ApiErrorSchema`, `MAX_UPLOAD_BYTES_DEFAULT`, `ALLOWED_MODEL_EXTENSIONS`, `ProjectNameSchema`, `CreateCommentInput`, `UpdateCommentStatusInput`, `ListCommentsQuery`
 - protocol: `ClientMessage`, `ServerMessage`, `ClientMessageSchema`, `ServerMessageSchema`, `ParseResult`, `parseClientMessage`, `parseServerMessage`, `MAX_NAME_LENGTH`, `CAMERA_SEND_INTERVAL_MS`, `LIGHT_SEND_INTERVAL_MS`; Client の `object:visibility` / `mesh:display`、Server の `welcome.hiddenObjectIds` / `meshDisplay`、`object:visibility`、`object:added`、`mesh:display` を含む
-- types の定数: `MAX_ID_LENGTH`, `MAX_FILE_NAME_LENGTH`, `MAX_PROJECT_NAME_LENGTH`, `MAX_AUTHOR_NAME_LENGTH`, `MAX_COMMENT_BODY_LENGTH`, `MIN_FOCAL_LENGTH_MM`, `MAX_FOCAL_LENGTH_MM`, `DEFAULT_FOCAL_LENGTH_MM`
+- types の定数: `MAX_ID_LENGTH`, `MAX_FILE_NAME_LENGTH`, `MAX_PROJECT_NAME_LENGTH`, `MAX_AUTHOR_NAME_LENGTH`, `MAX_COMMENT_BODY_LENGTH`, `MIN_FOCAL_LENGTH_MM`, `MAX_FOCAL_LENGTH_MM`, `DEFAULT_FOCAL_LENGTH_MM`, `DEFAULT_MESH_DISPLAY`
 - types の入力スキーマ: `IdSchema`, `FileNameSchema`
 - camera: `DEFAULT_CAMERA`, `vec3Equals`, `lerpVec3`, `cameraEquals`, `lerpCamera`, `cloneCamera`, `clampFocalLength`
 - stroke: `simplifyTolerance`, `simplify`, `isSendableStroke`
