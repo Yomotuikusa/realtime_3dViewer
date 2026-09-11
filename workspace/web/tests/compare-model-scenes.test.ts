@@ -58,7 +58,10 @@ describe("model scenes store", () => {
     expect(useModelScenesStore.getState().scenes).not.toBe(scenesBefore);
     expect(useModelScenesStore.getState().scenes.v1).toBe(first);
     expect(useModelScenesStore.getState().scenes.v2).toBe(second);
+    const stateBeforeUnknownUnregister = useModelScenesStore.getState();
     expect(() => useModelScenesStore.getState().unregister("v9", first)).not.toThrow();
+    expect(useModelScenesStore.getState()).toBe(stateBeforeUnknownUnregister);
+    expect(useModelScenesStore.getState().scenes).toBe(stateBeforeUnknownUnregister.scenes);
     useModelScenesStore.getState().reset();
     expect(useModelScenesStore.getState().scenes).toEqual({});
   });

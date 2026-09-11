@@ -36,5 +36,5 @@ export function selectModelScene(
   scenes: Readonly<Record<string, Object3D>>,
   versionId: string | null,
 ): Object3D | null {
-  return versionId === null ? null : scenes[versionId] ?? null;
+  return versionId === null || !Object.hasOwn(scenes, versionId) ? null : scenes[versionId] ?? null;
 }
