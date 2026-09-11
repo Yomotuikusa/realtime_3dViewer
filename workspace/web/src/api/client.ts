@@ -1,5 +1,5 @@
-import type { Comment, CommentStatus, Project } from "@shared/types";
-import { CommentSchema, ProjectSchema } from "@shared/types";
+import type { Comment, CommentStatus, ModelVersion, Project } from "@shared/types";
+import { CommentSchema, ModelVersionSchema, ProjectSchema } from "@shared/types";
 import { ApiErrorSchema } from "@shared/api";
 import type { CreateCommentInput } from "@shared/api";
 import { z } from "zod";
@@ -65,11 +65,25 @@ export function modelUrl(projectId: string, versionId: string): string {
   return `${API_BASE}/api/projects/${encodeURIComponent(projectId)}/versions/${encodeURIComponent(versionId)}/model`;
 }
 
-export function createProject(name: string, file: File): Promise<Project> {
+/** FormData に name と、files の順で file を複数 append して POST /api/projects */
+export function createProject(name: string, files: readonly File[]): Promise<Project> {
   const body = new FormData();
   body.append("name", name);
-  body.append("file", file);
+  for (const file of files) {
+    body.append("file", file);
+  }
   return requestJson("/api/projects", { method: "POST", body }, ProjectSchema);
+}
+
+/** POST /api/projects/:projectId/versions に file 1件を送り、ModelVersionSchema で検証して返す */
+export function addModelVersion(projectId: string, file: File): Promise<ModelVersion> {
+  const body = new FormData();
+  body.append("file", file);
+  return requestJson(
+    `/api/projects/${encodeURIComponent(projectId)}/versions`,
+    { method: "POST", body },
+    ModelVersionSchema,
+  );
 }
 
 export function getProject(projectId: string): Promise<Project> {
