@@ -60,7 +60,10 @@ describe("viewer styles", () => {
     const body = ruleBody(viewerCssText, ".hud-follow");
 
     expect(body).toContain("top: var(--follow-frame-width)");
-    expect(body).toContain("background: var(--color-surface-translucent)");
+    expect(body).toContain("background: var(--color-surface)");
+    expect(body).not.toContain("--color-surface-translucent");
+    expect(body).toContain("font-size: var(--text-lg)");
+    expect(body).toContain("padding: var(--space-2) var(--space-3)");
     expect(body).toContain("translate: -50% 0");
     expect(body).not.toContain("border-left");
   });
@@ -68,9 +71,27 @@ describe("viewer styles", () => {
   it("matches the follow badge selector without matching its child blocks", () => {
     const body = ruleBody(viewerCssText, ".hud-follow");
 
-    expect(body).not.toContain("hud-follow__dot");
+    expect(body).not.toContain("hud-follow__bar");
+    expect(body).not.toContain("hud-follow__unfollow");
     expect(body).not.toContain("hud-follow-frame");
     expect(body).not.toContain("hud-following");
+  });
+
+  it("uses a vertical participant-color bar in the follow badge", () => {
+    const body = ruleBody(viewerCssText, ".hud-follow__bar");
+
+    expect(body).toContain("width: 4px");
+    expect(body).toContain("align-self: stretch");
+    expect(body).toContain("var(--user-color");
+    expect(body).not.toContain("border-radius: 50%");
+  });
+
+  it("styles the follow badge button like a camera menu item", () => {
+    const body = ruleBody(viewerCssText, ".hud-follow__unfollow");
+
+    expect(body).toContain("box-shadow: var(--shadow-control)");
+    expect(viewerHudText).toContain('className="btn hud-follow__unfollow"');
+    expect(viewerHudText).not.toContain("btn--quiet");
   });
 
   it("renders the follow frame before the follow badge and provides the color once", () => {
@@ -81,6 +102,8 @@ describe("viewer styles", () => {
     expect(frameIndex).toBeGreaterThan(viewerHudText.indexOf('className="hud-following"'));
     expect(badgeIndex).toBeGreaterThan(frameIndex);
     expect(viewerHudText.match(/"--user-color"/g)).toHaveLength(1);
+    expect(viewerHudText).toContain("followingUserId !== null &&");
+    expect(viewerHudText).not.toContain("hud-follow__dot");
   });
 
   it("sets the docked camera menu width", () => {
