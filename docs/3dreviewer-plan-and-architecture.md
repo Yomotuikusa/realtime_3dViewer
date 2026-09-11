@@ -147,7 +147,7 @@ tsconfig と vitest 設定だけを持つ(理由は §23)。
 workspace/
   package.json              # 全依存を pin。scripts: typecheck / test / test:shared / test:server / test:web / dev:server / dev:web / build / start
   package-lock.json
-  node_modules -> /home/ojin/projects/3dreviewer/.deps/node_modules   # git 追跡のシンボリックリンク(§23)
+  node_modules -> /opt/3dreviewer/deps/node_modules   # git 追跡のシンボリックリンク(§23)
   tsconfig.base.json        # strict, paths: { "@shared/*": ["./shared/src/*"] }(TypeScript 7 のため baseUrl は使わない)
   .gitignore                # dist, data/, .vite/ (node_modules は root の .gitignore に既にあるが、リンクは -f で追跡)
   shared/
@@ -576,12 +576,23 @@ verify は workspace 直下で実行される前提で、shared 系は `npm run 
     package-lock.json         # workspace/package-lock.json のコピー
     node_modules/             # 実体(npm ci の結果)
   workspace/
-    node_modules -> /home/ojin/projects/3dreviewer/.deps/node_modules   # 絶対パスのシンボリックリンク。git add -f で追跡
+    node_modules -> /opt/3dreviewer/deps/node_modules   # 絶対パスのシンボリックリンク。git add -f で追跡
+
+/opt/3dreviewer/deps -> <このPCのリポジトリ>/.deps   # 非追跡。各マシンで sync-deps.sh が張る
 ```
+
+- リンク先が**絶対パスでなければならない**のは、git worktree (`.worktrees/<id>/workspace/`) と
+  main (`workspace/`) でリポジトリルートからの階層が違い、両方を満たす相対パスが存在しないため
+- その絶対パスを `/opt/3dreviewer/deps` という**マシン非依存の固定値**にすることで、
+  コミットされる内容がどのマシンでも一致する。各マシンはこの固定パスから自分の `.deps` へ
+  リンクを張るだけでよい(`config/sync-deps.sh` が行う。置き場の作成のみ初回に
+  `sudo mkdir -p /opt/3dreviewer && sudo chown $(id -u):$(id -g) /opt/3dreviewer` が要る)
+- リポジトリのパスを直接コミットすると別マシンで必ず壊れる。実際にタスク 008 で
+  この方式を採った際の注意書きどおり、移設後のタスク 057 が `/home/tom/...` を指したまま失敗した
 
 - ワークツリーは main から作られるため、追跡済みリンクは全ワークツリーに自動で現れる
 - `config/orch.toml`:
-  `[sandbox] ro_binds = ["/home/ojin/projects/3dreviewer/.deps/node_modules"]`、
+  `[sandbox] ro_binds = ["/opt/3dreviewer/deps/node_modules"]`、
   `[validate] ignore_dirs = ["node_modules", "dist", ".vite"]`
 - `config/sync-deps.sh`(人間が実行):
   `workspace/package.json` と lockfile を `.deps/` にコピーして `npm ci`

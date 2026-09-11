@@ -34,8 +34,9 @@ ignore_dirs = ["node_modules", "dist", ".vite"]
 # 隔離を保つため必要最小のディレクトリだけを書くこと。$HOME 自身やその上位、
 # 存在しないパスは verify 開始前にエラーになる。
 # 例: ro_binds = ["/home/me/projects/foo/models"]
-# 依存の実体。workspace/node_modules はここへのシンボリックリンク(docs/…§23)
-ro_binds = ["/home/ojin/projects/3dreviewer/.deps/node_modules"]
+# 依存の実体。マシン非依存の安定パスで指す(docs/…§23.2)。
+# /opt/3dreviewer/deps -> <このPCのリポジトリ>/.deps は config/sync-deps.sh が各マシンで張る
+ro_binds = ["/opt/3dreviewer/deps/node_modules"]
 
 [diagnose]
 # タスクが失敗したとき、その場でclaudeを起こして原因を調査させる。

@@ -13,8 +13,9 @@
 ## 1. 前提
 
 - Node.js v24 以上
-- 依存はインストール済み。`workspace/node_modules` は `.deps/node_modules` への
-  シンボリックリンクなので **`npm install` は実行しないこと**(共有実体を壊す)
+- 依存はインストール済み。`workspace/node_modules` は `/opt/3dreviewer/deps/node_modules`
+  (その先は `.deps/node_modules`)へのシンボリックリンクなので **`npm install` は
+  実行しないこと**(共有実体を壊す)
 - WebGL が動くブラウザ。**同時に 2 枚開ける状態**にしておく
   (通常ウィンドウ + シークレットウィンドウ、または別ブラウザ)
 

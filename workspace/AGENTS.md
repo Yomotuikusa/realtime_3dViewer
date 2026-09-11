@@ -48,9 +48,9 @@
 - エラーを握りつぶさない(空のexcept/catchを書かない)
 
 ## 依存関係 (このプロジェクト固有・厳守)
-- `node_modules` は `.deps/node_modules` への絶対パスのシンボリックリンクとして
-  最初から存在する。依存はすべてインストール済みであり、何もしなくても
-  `npm run typecheck` / `npm run test:*` は動く
+- `node_modules` は `/opt/3dreviewer/deps/node_modules` への絶対パスのシンボリックリンク
+  として最初から存在する(その先は各マシンの `.deps/node_modules` の実体)。依存はすべて
+  インストール済みであり、何もしなくても `npm run typecheck` / `npm run test:*` は動く
 - **`npm install` / `npm ci` / `npm update` を絶対に実行しない**。リンクの先は
   全タスクで共有する実体であり、これらのコマンドはその共有物を破壊する
   (過去に実際に壊れ、複数タスクが失敗した)
