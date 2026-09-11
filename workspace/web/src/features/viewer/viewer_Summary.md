@@ -12,17 +12,17 @@ Canvas、モデル、カメラ、ライティング、焦点距離、内蔵ア�
 - FocalLengthSlider.tsx: HUD 内で焦点距離を 14〜300mm の範囲で変更するスライダー。ラベルと値を上段、入力を下段に配置する
 - focal-length.ts: 固定センサー高を使う焦点距離／垂直画角の換算と既定画角
 - CameraMenu.tsx: 焦点距離、枠と影を持つ十字配置の既定視点・全体表示・視点リセットを3ブロックに分けて描画するカメラメニュー本体。操作後もメニューを閉じない
-- PlaybackMenu.tsx: glTF 内蔵アニメーションのクリップ選択、再生／一時停止、時刻表示、シークを2ブロックで描画する HUD メニュー
-- ViewerHud.tsx: ペン／コメントの toggle ボタンとペン道具を左上に、クリップがある場合は PlaybackMenu をカメラの左へ、最初から展開した半透明カメラパネルを右上に表示し、CameraMenu、LightGizmo、Follow 中の参加者色フレームと左端に接して面の全高を占め左下だけ角丸の参加者色の縦帯・不透明な面の上辺タブ、描画基準、操作ヒントを各ストアと keymap に接続する。メニュー内の Escape はメニューだけを閉じる
+- ViewerHud.tsx: ペン／コメントの toggle ボタンとペン道具、最初から展開した半透明カメラパネル、CameraMenu、LightGizmo、Follow 中の参加者色フレーム、描画基準、操作ヒントを各ストアと keymap に接続する。再生 UI はビュー下部の timeline 機能へ委譲する
 - HudMenu.tsx: カメラのトグルボタンと、開いているときだけ表示する `role="group"` パネルを描画する制御コンポーネント。開閉用の chevron を表示し、Escape の閉じ処理を親へ通知する
 - hud-menu.ts: HUD メニューの ID・順序・表示名、初期表示メニューとトグルの純粋な状態遷移
 - playback.ts: AnimationClip の名前・長さの要約、選択クリップ長、時刻の clamp とループ前進を提供する純粋関数
+- playback-frames.ts: glTF のキー時刻から fps を判定し、秒と表示フレームを変換する純粋関数
 - playback-driver.ts: AnimationMixer の単一クリップ action の切替、絶対時刻適用、停止と破棄を担う Three.js ドライバ
 - PlaybackRig.tsx: playback ストアの時刻と再生状態を AnimationMixer へ毎フレーム反映する描画なしの Rig
-- hud-labels.ts: ツールモード・色・Follow・視点操作・ライトギズモ・焦点距離・十字中央／視点グループ・透過表示・描画基準・ヒントの日本語文言と純粋な判定関数
+- hud-labels.ts: HUD のモード、カメラ／ライト、Follow、透過表示、描画基準、ヒントの日本語文言と純粋な判定関数
 - view-presets.ts: 正面／背面／右／左の向き、十字セルと並び順、距離を保ったプリセットカメラ計算、既定視点一致判定と回転ロック判定
 - lighting.ts: `@shared/types` 由来の `LightAngles` を再エクスポートし、ワールド固定ライトの角度の正規化・クランプ・ドラッグ回転と主／補助ライト座標を提供する
-- ModelMesh.tsx: 同一オリジン用の LoadingManager を指定して `useGLTF` でモデルをロードし、バウンディングボックスからモデルサイズを記録して初回 Fit を要求する。ロード中の `scene` を共通モデルターゲットへ登録し、内蔵 `animations` を playback ストアへ登録して再生 Rig を配置し、アンマウント時に解除する。Draco 圧縮時のデコーダ取得（`https://www.gstatic.com/...`）は drei の別 manager による外部依存として残る
+- ModelMesh.tsx: 同一オリジン用の LoadingManager を指定して `useGLTF` でモデルをロードし、バウンディングボックスからモデルサイズを記録して初回 Fit を要求する。ロード中の `scene` を共通モデルターゲットへ登録し、内蔵 `animations` を playback ストアへ登録してキー時刻から fps を判定し、再生 Rig を配置してアンマウント時に解除する。Draco 圧縮時のデコーダ取得（`https://www.gstatic.com/...`）は drei の別 manager による外部依存として残る
 - model-loading.ts: glTF の `buffers` / `images` などが参照する data/blob URI と同一オリジン URL だけを許可する LoadingManager を作り、外部 URL を `about:blank` に置換する
 - model-target.ts: React や Zustand に依存せず、現在のレイキャスト対象 `Object3D` を保持する `setModelTarget` / `getModelTarget`
 - fit-camera.ts: 初期視点と同じ斜め方向からモデル全体を見る Fit カメラ目標を純粋関数で作る
@@ -36,7 +36,7 @@ Canvas、モデル、カメラ、ライティング、焦点距離、内蔵ア�
 - camera-throttle.ts: `CameraPayload`（カメラと焦点距離）向けの比較・複製を定義し、汎用 `send-throttle` へ委譲して送信成功時刻から 50ms ごとの先頭送信と窓明けトレーリング送信を行う。送信失敗は未送信としてタイマーまたは次の更新で再試行し、破棄時に保留送信をキャンセルする
 - useCameraBroadcast.ts: `selfCamera` または焦点距離の変更を `camera-throttle` へ渡し、`camera` メッセージへ焦点距離を載せる。送信成功時に自分の presence カメラと焦点距離も更新する。`shouldSendCamera` は従来の判定インターフェイスとして公開する
 - useLightBroadcast.ts: lighting ストアの local 更新を汎用 throttle 経由で `light` メッセージへ送り、remote 更新は `markSent` で保留値を破棄してエコーを防ぐ。50ms 間隔で角度を送信する
-- viewer.css: HUD のモード選択、枠線と影付きの右上カメラ／アニメーションメニュー、焦点距離・再生シークの各スライダー、各メニューのブロック区切りと十字配置、Follow 中の参加者色フレームと左端に接して面の全高を占め左下だけ角丸の参加者色の縦帯・不透明な面の上辺タブ、操作ヒント、160px の枠を持たないライトギズモのプレーン CSS
+- viewer.css: HUD のモード選択、枠線と影付きの右上カメラメニュー、焦点距離スライダー、各メニューのブロック区切りと十字配置、Follow 中の参加者色フレームと操作ヒント、160px の枠を持たないライトギズモのプレーン CSS
 
 ## 公開インターフェイス
 - ViewerCanvas.tsx: `ViewerCanvas({ modelSrc, children? })`
@@ -50,12 +50,12 @@ Canvas、モデル、カメラ、ライティング、焦点距離、内蔵ア�
 - ViewerHud.tsx: `ViewerHud({ send })`。カメラメニュー本体を `CameraMenu` に、ライト操作ギズモを `LightGizmo` に委譲する
 - HudMenu.tsx: `HudMenu({ id, open, onToggle, onClose, children })`。カメラメニューの開閉 state を持たず、Escape を親へ通知する
 - hud-menu.ts: `HudMenuId`、`HUD_MENU_ORDER`、`HUD_MENU_LABELS`、`HUD_MENU_INITIAL`、`toggleHudMenu`
-- hud-labels.ts: `ToolMode`、`MODE_LABELS`、`MODE_ORDER`、`VIEW_PRESET_LABELS`、`FIT_SHORT_LABEL`、`VIEW_PRESETS_LABEL`、`PLACEMENT_LABELS`、`PLACEMENT_ORDER`、各種ラベル（`FOCAL_LENGTH_LABEL` / `OVERLAY_LABEL` / `LIGHT_DIRECTION_LABEL` / `LIGHT_RESET_LABEL` / `PLAY_LABEL` / `PAUSE_LABEL` / `CLIP_LABEL` / `PLAYBACK_TIME_LABEL` を含む）、`focalLengthText`、`playbackTimeText`、`colorName`、`followingLabel`、`HintInput`（`placement` を含む）、`hint`、`withShortcut`
+- hud-labels.ts: `ToolMode`、`MODE_LABELS`、`MODE_ORDER`、`VIEW_PRESET_LABELS`、`FIT_SHORT_LABEL`、`VIEW_PRESETS_LABEL`、`PLACEMENT_LABELS`、`PLACEMENT_ORDER`、カメラ／ライト／Follow のラベル、`focalLengthText`、`colorName`、`followingLabel`、`HintInput`、`hint`、`withShortcut`
 - view-presets.ts: `ViewPreset`、`VIEW_PRESET_ORDER`、`GridCell`、`VIEW_CROSS_CENTER`、`VIEW_PRESET_CELLS`、`VIEW_PRESET_DIRECTIONS`、`MIN_PRESET_DISTANCE`、`PRESET_MATCH_EPSILON`、`presetCamera`、`matchViewPreset`、`rotationLocked`
 - lighting.ts: `LightAngles`（`@shared/types` 由来の再エクスポート）、ライト定数、`normalizeYaw`、`clampPitch`、`rotateLight`、`lightPosition`、`fillLightPosition`
 - ModelMesh.tsx: `ModelMesh({ src })`
-- PlaybackMenu.tsx: `PlaybackMenu()`
 - playback.ts: `PlaybackClip`、`clipSummaries`、`currentDuration`、`clampTime`、`advanceTime`
+- playback-frames.ts: `DEFAULT_FPS`、fps 判定・clamp・秒／フレーム変換関数
 - playback-driver.ts: `PlaybackDriver`、`createPlaybackDriver`
 - PlaybackRig.tsx: `PlaybackRig({ root, clips })`
 - camera-throttle.ts: `CameraPayload`、`payloadEquals`、`CameraThrottleDeps`、`CameraThrottle`、`createCameraThrottle`
@@ -116,7 +116,7 @@ AnnotationLayer などのレイヤーを追加する。`ModelMesh` が登録す�
 Canvas のクライアント座標を NDC 化して再帰的にモデルをレイキャストでき、交点法線はヒットした
 オブジェクトの `matrixWorld` の逆転置法線行列でワールド系へ変換して正規化される。
 
-`ModelMesh` は glTF の `animations` を playback ストアへ要約して登録し、`PlaybackRig` がローカルだけで選択中クリップを LoopRepeat 再生する。コメントのピンや表面ペンの線はアニメーションに追従せず、作成時のワールド座標に留まる。
+`ModelMesh` は glTF の `animations` を playback ストアへ要約して登録し、キー時刻から fps を自動判定する。`PlaybackRig` がローカルだけで選択中クリップを LoopRepeat 再生する。コメントのピンや表面ペンの線はアニメーションに追従せず、作成時のワールド座標に留まる。
 
 ## テスト
 - tests/camera-broadcast.test.ts: カメラ送信 throttle の間隔・比較判定テスト

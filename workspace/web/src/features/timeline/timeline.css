@@ -1,0 +1,88 @@
+.timeline {
+  display: grid;
+  gap: var(--space-1);
+  padding: var(--space-1) var(--space-3) var(--space-2);
+  border-top: 1px solid var(--color-border);
+  background: var(--color-surface);
+  font-size: var(--text-sm);
+}
+
+.timeline__track {
+  position: relative;
+  width: 100%;
+  height: 32px;
+  border-radius: var(--radius-sm);
+  background: var(--color-surface-subtle);
+  cursor: pointer;
+  touch-action: none;
+  user-select: none;
+}
+
+.timeline__track:focus-visible {
+  outline: 2px solid var(--focus-ring-color);
+  outline-offset: -2px;
+}
+
+.timeline__ruler {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.timeline__tick {
+  stroke: var(--color-border-strong);
+  stroke-width: 1;
+}
+
+.timeline__label {
+  fill: var(--color-text-muted);
+  font-size: var(--text-xs);
+  text-anchor: middle;
+}
+
+.timeline__playhead {
+  fill: var(--color-accent);
+}
+
+.timeline__controls {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.timeline__transport {
+  display: inline-flex;
+  gap: var(--space-1);
+  margin-inline: auto;
+}
+
+.timeline__btn {
+  display: inline-grid;
+  place-items: center;
+  width: 2rem;
+  padding: 0;
+  box-shadow: var(--shadow-control);
+}
+
+.timeline__btn svg {
+  width: 16px;
+  height: 16px;
+}
+
+.timeline__field {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  color: var(--color-text-muted);
+  white-space: nowrap;
+}
+
+.timeline__frame {
+  width: 4.5rem;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+.timeline__clip {
+  max-width: 12rem;
+}

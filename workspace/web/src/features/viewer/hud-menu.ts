@@ -1,11 +1,10 @@
-export type HudMenuId = "playback" | "camera";
+export type HudMenuId = "camera";
 
 /** 右上に並べる順。 */
-export const HUD_MENU_ORDER: readonly HudMenuId[] = ["playback", "camera"];
+export const HUD_MENU_ORDER: readonly HudMenuId[] = ["camera"];
 
 /** トグルボタンの表示名。 */
 export const HUD_MENU_LABELS: Readonly<Record<HudMenuId, string>> = {
-  playback: "アニメーション",
   camera: "カメラ",
 };
 

@@ -12,7 +12,7 @@ export function ViewerCanvas({ modelSrc, children }: { modelSrc: string; childre
   return (
     <Canvas
       camera={{ fov: DEFAULT_FOV, position: DEFAULT_CAMERA.position }}
-      style={{ width: "100%", height: "100%", minHeight: "36rem" }}
+      style={{ width: "100%", height: "100%" }}
     >
       <color attach="background" args={["#f5f7fa"]} />
       <SceneLights />
