@@ -1,4 +1,5 @@
 import { afterEach, describe, expect, it } from "vitest";
+import { DEFAULT_MESH_COMPARE } from "@shared/types";
 import { resetReviewStores } from "../src/app/review-stores";
 import { useAnnotationStore } from "../src/store/annotation";
 import { useCameraStore } from "../src/store/camera";
@@ -42,6 +43,7 @@ describe("resetReviewStores", () => {
     }]);
     useObjectsStore.getState().setVisible("v1", false);
     useDisplayStore.getState().setMeshDisplay("wireframe");
+    useDisplayStore.getState().setMeshCompare({ baseId: "v1", targetId: "v2", thresholdPermille: 10 });
     usePlaybackStore.getState().setClips([{ name: "walk", duration: 3 }]);
     usePlaybackStore.getState().play();
     usePlaybackStore.getState().seek(1);
@@ -66,6 +68,7 @@ describe("resetReviewStores", () => {
     expect(useLightingStore.getState().angles).toEqual({ yaw: Math.PI / 4, pitch: Math.PI / 4 });
     expect(useObjectsStore.getState()).toMatchObject({ objects: [], hiddenIds: [] });
     expect(useDisplayStore.getState().meshDisplay).toBe("solid");
+    expect(useDisplayStore.getState().meshCompare).toEqual(DEFAULT_MESH_COMPARE);
     expect(usePlaybackStore.getState()).toMatchObject({ clips: [], clipIndex: 0, playing: false, time: 0, fps: 24 });
   });
 });

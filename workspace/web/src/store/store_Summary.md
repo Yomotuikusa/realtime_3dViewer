@@ -7,7 +7,7 @@
 - camera.ts: `selfCamera`、`pendingCamera`、`resetSeq`、`fitSeq`、`modelSize`、`focalLength` と、カメラ更新・再現消費・Reset・Fit・サイズ更新・初期化の action を管理する zustand ストア。`setSelfCamera(camera, exact?)` は exact 指定時だけ完全一致で更新を判定する
 - lighting.ts: 共有 `LightAngles` を `rotateLight` の規則で更新し、サーバ受信値を正規化して適用する `applyRemote`、更新元 `origin`、既定方向への reset を提供する zustand ストア
 - objects.ts: project の全 `ModelVersion` を number 昇順で保持し、非表示 versionId、welcome 置換、追加、表示状態変更、primary 版の選択を提供する zustand ストア
-- display.ts: ルーム共有メッシュ表示方法を保持し、同値更新を抑止する `useDisplayStore` を提供する
+- display.ts: ルーム共有メッシュ表示方法とメッシュ比較設定を複製保持し、同値更新を抑止する `useDisplayStore` を提供する
 - playback.ts: ロード中モデルのアニメーションクリップ要約、選択、再生／一時停止、秒の時刻シーク、fps とフレームシークを保持する zustand ストア
 - session.ts: 自分の ID・色・表示名・接続状態・直近エラーを保持する zustand ストア
 - presence.ts: 参加者一覧、各参加者のカメラと任意の焦点距離、Follow 対象を保持する zustand ストア
@@ -25,7 +25,7 @@
 - lighting.ts: `useLightingStore`、`LightingStoreState`、`LightAnglesOrigin`
 - playback.ts: `usePlaybackStore`、`PlaybackStoreState`
 - objects.ts: `useObjectsStore`、`ObjectsStoreState`、`isObjectVisible`、`primaryObjectId`
-- display.ts: `useDisplayStore`、`DisplayStoreState`
+- display.ts: `useDisplayStore`、`DisplayStoreState`（`meshDisplay` / `meshCompare` と各 setter、reset）
 
 ## 他フォルダとの関係
 カメラストアの `selfCamera` は `DEFAULT_CAMERA`、`focalLength` は 50mm を初期値とし、`setSelfCamera(camera, exact?)` は
@@ -43,7 +43,7 @@ presence の `applyWelcome` は一覧と Follow 対象を初期化して全置�
 `viewer_Summary.md` を参照。
 playback ストアは `clips` を要素ごとに複製して保持し、クリップ選択時に時刻を0へ戻す。fps は有限値を1〜240へ丸め、レビュー画面の reset では clips、選択、再生状態、秒の時刻、fps を初期値へ戻す。
 objects ストアは版を要素ごとに複製し、number 昇順で保持する。`hiddenIds` は welcome で全置換し、レビュー画面の reset で objects とともに空へ戻す。number 最小の版を primary としてビューアの Fit・モデルサイズ・クリップ一覧の基準にする。
-display ストアは `MeshDisplayMode` を保持し、初期値と reset は `DEFAULT_MESH_DISPLAY`、同値の set は state と購読通知を変えない。
+display ストアは `MeshDisplayMode` と `MeshCompare` を保持し、初期値と reset はそれぞれ `DEFAULT_MESH_DISPLAY` / `DEFAULT_MESH_COMPARE` の複製、同値の set は state と購読通知を変えない。比較設定の setter と welcome 受信値は浅く複製して保持する。
 comments ストアは `items`（常に `createdAt` 昇順、同値なら `id` 昇順）、`showOnlyOpen`、`selectedId`、`composerAnchor`、`lastError` を保持する。
 `setAll` / `upsert` / `setFilter` の後は、`selectedId` が `selectVisible(items, showOnlyOpen)` に含まれなければ `null` に正規化する。
 `setAll` は一覧全置換、`upsert` は id 単位の追加・置換、`select` は選択変更、`setFilter` は Open フィルタ変更、
@@ -58,4 +58,4 @@ comments ストアは `items`（常に `createdAt` 昇順、同値なら `id` �
 - tests/store-presence.test.ts: presence の全置換、焦点距離を含む upsert・削除・カメラ更新、Follow、reset のテスト
 - tests/store-shortcuts.test.ts: shortcuts ストアの割り当て・永続化・既定値復元とレビュー reset 非対象のテスト
 - tests/store-objects.test.ts: 版のソート・複製・追加、可視性、welcome、primary ヘルパー、reset のテスト
-- tests/store-display.test.ts: メッシュ表示方法の初期値、切替、同値更新抑止、購読通知、reset のテスト
+- tests/store-display.test.ts: メッシュ表示方法と比較設定の初期値、切替、複製、同値更新抑止、購読通知、reset のテスト

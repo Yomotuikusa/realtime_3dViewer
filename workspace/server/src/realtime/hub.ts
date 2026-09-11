@@ -1,6 +1,6 @@
 import { nanoid } from "nanoid";
 import type { ClientMessage, ServerMessage } from "@shared/protocol";
-import type { CameraState, LightAngles, MeshDisplayMode, PresenceUser, Stroke } from "@shared/types";
+import type { CameraState, LightAngles, MeshCompare, MeshDisplayMode, PresenceUser, Stroke } from "@shared/types";
 
 /** Colors are selected in room-local join order. */
 export const PRESENCE_PALETTE: readonly string[] = [
@@ -44,6 +44,8 @@ interface Room {
   hiddenObjects: Set<string>;
   /** ルームで共有するメッシュの表示方法。誰も切り替えていなければ null */
   meshDisplay: MeshDisplayMode | null;
+  /** ルームで共有するメッシュ比較の設定。誰も変えていなければ null */
+  meshCompare: MeshCompare | null;
 }
 
 function defaultGuestDigits(): string {
@@ -143,6 +145,9 @@ export class RoomHub {
       case "mesh:display":
         room.meshDisplay = msg.mode;
         return [{ target: "others", msg: { type: "mesh:display", userId: connId, mode: msg.mode } }];
+      case "mesh:compare":
+        room.meshCompare = { ...msg.compare };
+        return [{ target: "others", msg: { type: "mesh:compare", userId: connId, compare: { ...msg.compare } } }];
       case "stroke:add":
         return this.addStroke(room, connId, msg.stroke);
       case "stroke:remove":
@@ -183,6 +188,11 @@ export class RoomHub {
     return this.rooms.get(projectId)?.meshDisplay ?? null;
   }
 
+  meshCompareIn(projectId: string): MeshCompare | null {
+    const compare = this.rooms.get(projectId)?.meshCompare;
+    return compare ? { ...compare } : null;
+  }
+
   private join(connId: string, connection: Connection, name: string): Outbound[] {
     if (connection.user) {
       return [{
@@ -205,6 +215,7 @@ export class RoomHub {
       light: null,
       hiddenObjects: new Set<string>(),
       meshDisplay: null,
+      meshCompare: null,
     };
     this.rooms.set(connection.projectId, room);
 
@@ -232,6 +243,7 @@ export class RoomHub {
           ...(room.light === null ? {} : { light: { ...room.light } }),
           ...(hiddenObjectIds.length === 0 ? {} : { hiddenObjectIds }),
           ...(room.meshDisplay === null ? {} : { meshDisplay: room.meshDisplay }),
+          ...(room.meshCompare === null ? {} : { meshCompare: { ...room.meshCompare } }),
         },
       },
       { target: "others", msg: { type: "user:joined", user: copyUser(user) } },
