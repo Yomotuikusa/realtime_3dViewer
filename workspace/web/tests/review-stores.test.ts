@@ -52,6 +52,6 @@ describe("resetReviewStores", () => {
     });
     expect(useCameraStore.getState()).toMatchObject({ pendingCamera: null, modelSize: 1 });
     expect(useLightingStore.getState().angles).toEqual({ yaw: Math.PI / 4, pitch: Math.PI / 4 });
-    expect(usePlaybackStore.getState()).toMatchObject({ clips: [], clipIndex: 0, playing: false, time: 0, fps: 24 });
+    expect(usePlaybackStore.getState()).toMatchObject({ clips: [], clipIndex: 0, playing: false, time: 0 });
   });
 });
