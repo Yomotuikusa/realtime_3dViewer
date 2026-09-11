@@ -4,7 +4,7 @@
 Canvas、モデル、カメラ、ライティング、焦点距離、内蔵アニメーション再生、HUD、ポインター入力を合成した 3D ビューアを提供する。
 
 ## ファイル一覧と役割
-- ViewerCanvas.tsx: Canvas、ライティング、焦点距離、Bounds、全オブジェクト、カメラを合成するビューア。display ストアの `meshDisplay` を各モデルへ渡す。版ごとのモデルを単一 group に置き、その group を共通モデルターゲットへ登録する。`children` は RemoteCameras / StrokeLines / AnnotationLayer など後続機能の差し込み口
+- ViewerCanvas.tsx: Canvas、ライティング、焦点距離、Bounds、全オブジェクト、カメラを合成するビューア。display ストアの `meshDisplay` を各モデルへ渡し、`MeshCompareRig` を一つ配置する。版ごとのモデルを単一 group に置き、その group を共通モデルターゲットへ登録する。`children` は RemoteCameras / StrokeLines / AnnotationLayer など後続機能の差し込み口
 - SceneLights.tsx: lighting ストアの角度から環境光・主ライト・反転した補助ライトを Bounds 外へ描画する
 - LightGizmo.tsx: 枠なしで3Dビュー右下へ重ねる、Y軸まわりに45°回転した立方体ギズモを描画し、水平ドラッグ・矢印キー・リセットをライトストアへ接続する
 - light-gizmo.ts: ギズモの寸法・回転・カメラ定数、マーカー座標、ドラッグ／キー入力、yaw 表示の純粋関数
@@ -24,7 +24,7 @@ Canvas、モデル、カメラ、ライティング、焦点距離、内蔵ア�
 - hud-labels.ts: HUD のモード、カメラ／ライト、メッシュ表示、Follow、透過表示、描画基準、ヒントの日本語文言と純粋な判定関数
 - view-presets.ts: 正面／背面／右／左の向き、十字セルと並び順、距離を保ったプリセットカメラ計算、既定視点一致判定と回転ロック判定
 - lighting.ts: `@shared/types` 由来の `LightAngles` を再エクスポートし、ワールド固定ライトの角度の正規化・クランプ・ドラッグ回転と主／補助ライト座標を提供する
-- ModelMesh.tsx: 同一オリジン用の LoadingManager を指定して `useGLTF` でモデルをロードし、`visible` を scene に反映する。`meshDisplay` を全 Mesh へ適用し、アンマウント時は solid に戻す。primary のモデルだけバウンディングボックスからモデルサイズを記録して初回 Fit を要求し、内蔵 `animations` を playback ストアへ登録する。全モデルへ再生 Rig を配置して同じ時刻を各 mixer に適用する。Draco 圧縮時のデコーダ取得（`https://www.gstatic.com/...`）は drei の別 manager による外部依存として残る
+- ModelMesh.tsx: 同一オリジン用の LoadingManager を指定して `useGLTF` でモデルをロードし、`visible` を scene に反映する。`versionId` と scene を比較用レジストリへ登録し、アンマウント時に同じ参照だけを解除する。`meshDisplay` を全 Mesh へ適用し、アンマウント時は solid に戻す。primary のモデルだけバウンディングボックスからモデルサイズを記録して初回 Fit を要求し、内蔵 `animations` を playback ストアへ登録する。全モデルへ再生 Rig を配置して同じ時刻を各 mixer に適用する。Draco 圧縮時のデコーダ取得（`https://www.gstatic.com/...`）は drei の別 manager による外部依存として残る
 - mesh-display.ts: MeshDisplayMode に応じた材質の wireframe / polygon offset 切替と、通常メッシュへ追従する raycast 無効のワイヤフレーム重ね描きを冪等に管理する。ワイヤフレームと比較重ね描きを共通の `VIEWER_OVERLAY_KEY` で識別し、表示方法の走査から除外する
 - model-loading.ts: glTF の `buffers` / `images` などが参照する data/blob URI と同一オリジン URL だけを許可する LoadingManager を作り、外部 URL を `about:blank` に置換する
 - model-target.ts: React や Zustand に依存せず、現在のレイキャスト対象 `Object3D` を保持する `setModelTarget` / `getModelTarget`
@@ -57,7 +57,7 @@ Canvas、モデル、カメラ、ライティング、焦点距離、内蔵ア�
 - hud-labels.ts: `ToolMode`、`MODE_LABELS`、`MODE_ORDER`、`VIEW_PRESET_LABELS`、`FIT_SHORT_LABEL`、`VIEW_PRESETS_LABEL`、`PLACEMENT_LABELS`、`PLACEMENT_ORDER`、`MESH_DISPLAY_LABEL`、`MESH_DISPLAY_LABELS`、`MESH_DISPLAY_ORDER`、カメラ／ライト／Follow のラベル、`focalLengthText`、`colorName`、`followingLabel`、`HintInput`、`hint`、`withShortcut`
 - view-presets.ts: `ViewPreset`、`VIEW_PRESET_ORDER`、`GridCell`、`VIEW_CROSS_CENTER`、`VIEW_PRESET_CELLS`、`VIEW_PRESET_DIRECTIONS`、`MIN_PRESET_DISTANCE`、`PRESET_MATCH_EPSILON`、`presetCamera`、`matchViewPreset`、`rotationLocked`
 - lighting.ts: `LightAngles`（`@shared/types` 由来の再エクスポート）、ライト定数、`normalizeYaw`、`clampPitch`、`rotateLight`、`lightPosition`、`fillLightPosition`
-- ModelMesh.tsx: `ModelMesh({ src, visible, primary, meshDisplay })`
+- ModelMesh.tsx: `ModelMesh({ src, versionId, visible, primary, meshDisplay })`
 - mesh-display.ts: `MESH_DISPLAY_OVERLAY_KEY`、`VIEWER_OVERLAY_KEY`、`WIREFRAME_OVERLAY_COLOR`、`WIREFRAME_OVERLAY_OPACITY`、`isMeshDisplayOverlay`、`isViewerOverlay`、`createWireframeOverlayMaterial`、`createWireframeOverlay`、`applyMeshDisplay`
 - PlaybackClock.tsx: `PlaybackClock()`
 - playback.ts: `PlaybackClip`、`clipSummaries`、`currentDuration`、`clampTime`、`advanceTime`

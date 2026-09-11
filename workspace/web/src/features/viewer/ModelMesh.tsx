@@ -9,9 +9,11 @@ import { clipSummaries } from "./playback";
 import { detectFps } from "./playback-frames";
 import { PlaybackRig } from "./PlaybackRig";
 import type { MeshDisplayMode } from "@shared/types";
+import { useModelScenesStore } from "../compare/model-scenes";
 
-export function ModelMesh({ src, visible, primary, meshDisplay }: {
+export function ModelMesh({ src, versionId, visible, primary, meshDisplay }: {
   src: string;
+  versionId: string;
   visible: boolean;
   primary: boolean;
   meshDisplay: MeshDisplayMode;
@@ -38,6 +40,11 @@ export function ModelMesh({ src, visible, primary, meshDisplay }: {
   useEffect(() => {
     applyMeshDisplay(scene, meshDisplay);
   }, [meshDisplay, scene]);
+
+  useEffect(() => {
+    useModelScenesStore.getState().register(versionId, scene);
+    return () => useModelScenesStore.getState().unregister(versionId, scene);
+  }, [scene, versionId]);
 
   useEffect(() => () => applyMeshDisplay(scene, "solid"), [scene]);
 
