@@ -4,6 +4,7 @@ import { ALLOWED_MODEL_EXTENSIONS, MAX_UPLOAD_BYTES_DEFAULT } from "@shared/api"
 import { ApiClientError, addModelVersion } from "../../api/client";
 import { validateModelFiles } from "../../app/upload-labels";
 import { isObjectVisible, useObjectsStore } from "../../store/objects";
+import { CompareControls } from "./CompareControls";
 import {
   ADD_FAILED,
   ADD_FILES_LABEL,
@@ -110,6 +111,7 @@ export function ObjectList({
           {busy ? ADDING_LABEL : ADD_FILES_LABEL}
         </span>
       </label>
+      <CompareControls send={send} />
       {error !== null && <p className="alert" role="alert">{error}</p>}
     </section>
   );
