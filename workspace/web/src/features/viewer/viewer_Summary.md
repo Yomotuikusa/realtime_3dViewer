@@ -138,7 +138,7 @@ Canvas のクライアント座標を NDC 化して再帰的にモデルをレ�
 - tests/lighting.test.ts: ライト角度の正規化・クランプ・ドラッグ回転・主／補助ライト座標を検証
 - tests/model-loading.test.ts: 埋め込み・同一オリジン URL の許可、外部 URL の遮断、LoadingManager の URL modifier のテスト
 - tests/model-target.test.ts: モデルターゲットの登録・取得テスト
-- tests/pick.test.ts: NDC 変換、可視な交点だけの再帰レイキャスト、ワールド法線変換テスト
+- tests/pick.test.ts: NDC 変換、可視な交点だけの再帰レイキャスト、ワールド法線変換、ModelMesh／PlaybackClock／PlaybackRig／ViewerCanvas／ReviewPage のソース検査
 - tests/view-presets.test.ts: 既定視点の方向・順序・単位ベクトル・距離維持・最小距離・非破壊性、既定視点一致と回転ロック判定のテスト
 - tests/viewer-pointer.test.ts: capture phase の割り当て、Alt+右ドラッグ dolly、pointer capture、継続・終了・ブラウザ既定動作抑止、cleanup のテスト
 - tests/viewer-styles.test.ts: 半透明で上下に結合したカメラメニュー、初期展開と操作後の非クローズ、カメラメニューのボタン影、160px のライトギズモとヒントの退避幅、ライトギズモの枠廃止、シャドウトークン、Follow フレームと上辺タブ、CSS セレクタ完全一致のテキスト検査

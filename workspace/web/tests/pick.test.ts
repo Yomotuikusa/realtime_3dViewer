@@ -1,6 +1,18 @@
+/// <reference types="node" />
+
+import { existsSync, readFileSync } from "node:fs";
+import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { BoxGeometry, Group, Mesh, MeshBasicMaterial, PerspectiveCamera, Raycaster } from "three";
 import { isVisibleInScene, pickModel, toNdc } from "../src/features/viewer/pick";
+
+const sourceRoot = existsSync(join(process.cwd(), "web", "src"))
+  ? join(process.cwd(), "web", "src")
+  : join(process.cwd(), "src");
+
+function readSource(path: string): string {
+  return readFileSync(join(sourceRoot, path), "utf8");
+}
 
 function createCamera(): PerspectiveCamera {
   const camera = new PerspectiveCamera(50, 1, 0.1, 100);
@@ -123,5 +135,42 @@ describe("viewer picking", () => {
     expect(isVisibleInScene(mesh)).toBe(true);
     root.visible = false;
     expect(isVisibleInScene(mesh)).toBe(false);
+  });
+
+  it("keeps model size, fit, and clips work behind the primary guard", () => {
+    const source = readSource("features/viewer/ModelMesh.tsx");
+    const guardedEffects = [...source.matchAll(/useEffect\(\(\) => \{([\s\S]*?)\n  \}, \[[^\]]+\]\);/g)]
+      .map((match) => match[1] ?? "")
+      .filter((body) => body.includes("if (!primary) return;"));
+
+    expect(guardedEffects).toHaveLength(2);
+    expect(guardedEffects.some((body) => (
+      body.includes("setModelSize") && body.includes("requestFit()") && !body.includes("setClips")
+    ))).toBe(true);
+    expect(guardedEffects.some((body) => (
+      body.includes("setClips") && !body.includes("setModelSize") && !body.includes("requestFit()")
+    ))).toBe(true);
+  });
+
+  it("places one playback clock in the canvas and leaves time advancement out of each rig", () => {
+    const canvas = readSource("features/viewer/ViewerCanvas.tsx");
+    const clock = readSource("features/viewer/PlaybackClock.tsx");
+    const rig = readSource("features/viewer/PlaybackRig.tsx");
+
+    expect(canvas.match(/<PlaybackClock\s*\/>/g)).toHaveLength(1);
+    expect(clock).toContain("seek(advanceTime(");
+    expect(rig).not.toContain("seek(");
+    expect(rig).not.toContain("advanceTime(");
+  });
+
+  it("uses the object store canvas API and project-scoped error boundary key", () => {
+    const canvas = readSource("features/viewer/ViewerCanvas.tsx");
+    const reviewPage = readSource("app/ReviewPage.tsx");
+
+    expect(canvas).toContain("export function ViewerCanvas({ children }: { children?: ReactNode })");
+    expect(canvas).not.toContain("modelSrc");
+    expect(reviewPage).not.toContain("modelSrc=");
+    expect(reviewPage).not.toContain("modelUrl");
+    expect(reviewPage).toMatch(/<ErrorBoundary[\s\S]*?key=\{projectId\}/);
   });
 });
