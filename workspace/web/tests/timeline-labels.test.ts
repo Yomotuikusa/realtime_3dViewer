@@ -9,6 +9,7 @@ import {
   PAUSE_LABEL,
   PLAY_LABEL,
   TIMELINE_LABEL,
+  TIMELINE_RESIZE_LABEL,
   TRANSPORT_LABEL,
   frameText,
 } from "../src/features/timeline/timeline-labels";
@@ -24,6 +25,7 @@ describe("timeline labels", () => {
     expect(CLIP_LABEL).toBe("クリップ");
     expect(FRAME_LABEL).toBe("フレーム");
     expect(FPS_LABEL).toBe("fps");
+    expect(TIMELINE_RESIZE_LABEL).toBe("タイムラインの高さ");
   });
 
   it("formats frame values", () => {

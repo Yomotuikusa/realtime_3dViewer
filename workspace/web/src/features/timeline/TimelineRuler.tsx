@@ -1,7 +1,9 @@
-import { useLayoutEffect, useRef, useState, type KeyboardEvent, type PointerEvent, type ReactElement } from "react";
+import { useRef, type KeyboardEvent, type PointerEvent, type ReactElement } from "react";
+import { useElementSize } from "../layout/useElementSize";
 import { frameText, TIMELINE_LABEL } from "./timeline-labels";
 import { frameAtX, frameToX, tickFrames, timelineKeyFrame, timelineTicks } from "./timeline";
 
+/** ルーラー帯の既定(最小)の高さ。CSS のフォールバックと LAYOUT_SIZE_SPECS.timelineHeight.defaultValue に一致する */
 export const RULER_HEIGHT_PX = 32;
 
 export interface TimelineRulerProps {
@@ -12,23 +14,7 @@ export interface TimelineRulerProps {
 
 export function TimelineRuler({ frame, lastFrame, onSeek }: TimelineRulerProps): ReactElement {
   const trackRef = useRef<HTMLDivElement>(null);
-  const [width, setWidth] = useState(0);
-
-  useLayoutEffect(() => {
-    const track = trackRef.current;
-    if (track === null) return;
-    const setMeasuredWidth = (nextWidth: number) => setWidth(Number.isFinite(nextWidth) ? Math.max(0, nextWidth) : 0);
-    if (typeof ResizeObserver === "undefined") {
-      setMeasuredWidth(track.getBoundingClientRect().width);
-      return;
-    }
-    const observer = new ResizeObserver(([entry]) => {
-      if (entry !== undefined) setMeasuredWidth(entry.contentRect.width);
-    });
-    observer.observe(track);
-    setMeasuredWidth(track.getBoundingClientRect().width);
-    return () => observer.disconnect();
-  }, []);
+  const { width, height } = useElementSize(trackRef);
 
   const { labelStep, tickStep } = timelineTicks(lastFrame, width);
   const seekFromClientX = (clientX: number, rect: DOMRect): void => {
@@ -74,20 +60,20 @@ export function TimelineRuler({ frame, lastFrame, onSeek }: TimelineRulerProps):
       onPointerCancel={releasePointer}
       onKeyDown={handleKeyDown}
     >
-      {width > 0 && (
-        <svg className="timeline__ruler" viewBox={"0 0 " + width + " " + RULER_HEIGHT_PX} aria-hidden="true">
+      {width > 0 && height > 0 && (
+        <svg className="timeline__ruler" viewBox={"0 0 " + width + " " + height} aria-hidden="true">
           {tickFrames(lastFrame, tickStep).map((tick) => (
-            <line key={"tick-" + tick} className="timeline__tick" x1={frameToX(tick, lastFrame, width)} x2={frameToX(tick, lastFrame, width)} y1={RULER_HEIGHT_PX - 6} y2={RULER_HEIGHT_PX} />
+            <line key={"tick-" + tick} className="timeline__tick" x1={frameToX(tick, lastFrame, width)} x2={frameToX(tick, lastFrame, width)} y1={height - 6} y2={height} />
           ))}
           {tickFrames(lastFrame, labelStep).map((label) => (
             <g key={"label-" + label}>
-              <line className="timeline__tick" x1={frameToX(label, lastFrame, width)} x2={frameToX(label, lastFrame, width)} y1={RULER_HEIGHT_PX - 12} y2={RULER_HEIGHT_PX} />
+              <line className="timeline__tick" x1={frameToX(label, lastFrame, width)} x2={frameToX(label, lastFrame, width)} y1={height - 12} y2={height} />
               <text className="timeline__label" x={frameToX(label, lastFrame, width)} y={12}>{label}</text>
             </g>
           ))}
           <g className="timeline__playhead" transform={"translate(" + frameToX(frame, lastFrame, width) + " 0)"}>
             <path d="M-5 0h10l-5 6z" />
-            <rect x={-1} y={0} width={2} height={RULER_HEIGHT_PX} />
+            <rect x={-1} y={0} width={2} height={height} />
           </g>
         </svg>
       )}

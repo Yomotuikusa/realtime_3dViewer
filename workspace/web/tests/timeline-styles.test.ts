@@ -5,6 +5,7 @@ import { fileURLToPath } from "node:url";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { RULER_HEIGHT_PX } from "../src/features/timeline/TimelineRuler";
+import { LAYOUT_SIZE_SPECS } from "../src/features/layout/resize";
 
 const srcUrl = new URL("../src", import.meta.url);
 const srcPath = srcUrl.protocol === "file:" ? fileURLToPath(srcUrl) : join(process.cwd(), "web", "src");
@@ -16,6 +17,7 @@ const viewerCanvas = read("features/viewer/ViewerCanvas.tsx");
 const viewerHud = read("features/viewer/ViewerHud.tsx");
 const timelineCss = read("features/timeline/timeline.css");
 const playbackTimeline = read("features/timeline/PlaybackTimeline.tsx");
+const timelineRuler = read("features/timeline/TimelineRuler.tsx");
 
 function ruleBody(text: string, selector: string): string {
   const escaped = selector.replace(/[.*+?^$()|[\]\\]/g, "\\$&");
@@ -52,9 +54,26 @@ describe("timeline layout styles", () => {
   });
 
   it("keeps the ruler touch-safe and centers transport controls", () => {
-    expect(ruleBody(timelineCss, ".timeline__track")).toContain("height: " + RULER_HEIGHT_PX + "px");
+    expect(RULER_HEIGHT_PX).toBe(LAYOUT_SIZE_SPECS.timelineHeight.defaultValue);
+    expect(ruleBody(timelineCss, ".timeline__track")).toContain("height: var(--timeline-track-height, " + RULER_HEIGHT_PX + "px)");
     expect(ruleBody(timelineCss, ".timeline__track")).toContain("touch-action: none");
+    expect(ruleBody(timelineCss, ".timeline")).toContain("position: relative");
+    expect(ruleBody(timelineCss, ".timeline__resize")).toContain("top: -4px");
     expect(ruleBody(timelineCss, ".timeline__transport")).toContain("margin-inline: auto");
     expect(playbackTimeline).toContain('import "./timeline.css"');
+  });
+
+  it("places and sizes the timeline resize handle", () => {
+    expect(playbackTimeline).toContain("<ResizeHandle");
+    expect(playbackTimeline).toContain('axis="y"');
+    expect(playbackTimeline).toContain('"--timeline-track-height"');
+    expect(playbackTimeline.indexOf("<ResizeHandle")).toBeLessThan(playbackTimeline.indexOf("<TimelineRuler"));
+  });
+
+  it("measures the ruler track width and height with useElementSize", () => {
+    expect(timelineRuler).toContain("useElementSize");
+    expect(timelineRuler).not.toContain("new ResizeObserver");
+    expect(timelineRuler).toContain('"0 0 " + width + " " + height');
+    expect(timelineRuler).not.toContain('"0 0 " + width + " " + RULER_HEIGHT_PX');
   });
 });

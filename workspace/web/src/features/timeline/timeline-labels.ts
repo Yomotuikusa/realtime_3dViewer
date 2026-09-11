@@ -7,6 +7,7 @@ export const GO_TO_END_LABEL = "最終へ";
 export const CLIP_LABEL = "クリップ";
 export const FRAME_LABEL = "フレーム";
 export const FPS_LABEL = "fps";
+export const TIMELINE_RESIZE_LABEL = "タイムラインの高さ";
 
 /** スライダーの aria-valuetext。 */
 export function frameText(frame: number, lastFrame: number): string {
