@@ -50,6 +50,7 @@ describe("ClientMessageSchema", () => {
       { type: "stroke:clear" },
       { type: "object:visibility", versionId: "version-1", visible: false },
       { type: "mesh:display", mode: "wireframe" },
+      { type: "mesh:compare", compare: { baseId: "version-1", targetId: "version-2", thresholdPermille: 5 } },
     ];
     for (const message of messages) {
       expect(ClientMessageSchema.safeParse(message).success).toBe(true);
@@ -86,7 +87,7 @@ describe("ClientMessageSchema", () => {
 });
 
 describe("ServerMessageSchema", () => {
-  it("accepts all thirteen server message variants", () => {
+  it("accepts all fourteen server message variants", () => {
     const messages = [
       { type: "welcome", selfId: "user-1", users: [user], strokes: [stroke] },
       { type: "user:joined", user },
@@ -100,6 +101,7 @@ describe("ServerMessageSchema", () => {
       { type: "object:visibility", userId: "user-1", versionId: "version-1", visible: false },
       { type: "object:added", version },
       { type: "mesh:display", userId: "user-1", mode: "solid-wireframe" },
+      { type: "mesh:compare", userId: "user-1", compare: { baseId: "version-1", targetId: "version-2", thresholdPermille: 5 } },
       { type: "error", code: "X", message: "bad request" },
     ];
     for (const message of messages) {

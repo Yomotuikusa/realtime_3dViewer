@@ -64,6 +64,25 @@ export type MeshDisplayMode = "solid" | "wireframe" | "solid-wireframe";
 /** 誰も切り替えていないルームの表示方法 */
 export const DEFAULT_MESH_DISPLAY: MeshDisplayMode = "solid";
 
+/** ルームで共有するメッシュ比較の設定。対象の版を基準の版と比べて着色する */
+export interface MeshCompare {
+  /** 基準にする版の id。未選択なら null */
+  baseId: string | null;
+  /** 基準と比べて着色する版の id。未選択なら null */
+  targetId: string | null;
+  /** しきい値。基準モデルの最大辺長に対する千分率。MIN〜MAX の整数 */
+  thresholdPermille: number;
+}
+export const MIN_COMPARE_THRESHOLD_PERMILLE = 1;
+export const MAX_COMPARE_THRESHOLD_PERMILLE = 50;
+export const DEFAULT_COMPARE_THRESHOLD_PERMILLE = 5;
+/** 誰も比較を設定していないルームの値 */
+export const DEFAULT_MESH_COMPARE: MeshCompare = {
+  baseId: null,
+  targetId: null,
+  thresholdPermille: DEFAULT_COMPARE_THRESHOLD_PERMILLE,
+};
+
 export interface PresenceUser {
   id: string;
   name: string;
@@ -115,6 +134,12 @@ export const LightAnglesSchema = z.object({
 }) satisfies z.ZodType<LightAngles>;
 
 export const MeshDisplayModeSchema = z.enum(["solid", "wireframe", "solid-wireframe"]) satisfies z.ZodType<MeshDisplayMode>;
+
+export const MeshCompareSchema = z.object({
+  baseId: IdSchema.nullable(),
+  targetId: IdSchema.nullable(),
+  thresholdPermille: z.number().int().min(MIN_COMPARE_THRESHOLD_PERMILLE).max(MAX_COMPARE_THRESHOLD_PERMILLE),
+}) satisfies z.ZodType<MeshCompare>;
 
 export const StrokeSchema = z.object({
   id: IdSchema,
