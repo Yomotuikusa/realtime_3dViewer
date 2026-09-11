@@ -50,6 +50,21 @@ describe("POST /api/projects/:projectId/versions", () => {
     expect(existsSync(t.storage.modelFilePath(version.id))).toBe(true);
   });
 
+  it("returns all versions after adding two versions", async () => {
+    const t = testApp();
+    const seeded = seedProject(t);
+    const first = await postVersion(t, seeded.project.id, [modelFile("second.glb")]);
+    const second = await postVersion(t, seeded.project.id, [modelFile("third.glb")]);
+
+    expect(first.status).toBe(201);
+    expect(second.status).toBe(201);
+    const project = ProjectSchema.parse(
+      await (await t.app.request("/api/projects/p1")).json(),
+    );
+    expect(project.versions.map((item) => item.number)).toEqual([1, 2, 3]);
+    expect(project.latestVersion.number).toBe(3);
+  });
+
   it("rejects a missing project without saving or publishing", async () => {
     const t = testApp();
     const response = await postVersion(t, "missing", [modelFile("added.glb")]);

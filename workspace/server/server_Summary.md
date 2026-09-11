@@ -72,8 +72,8 @@ server の基盤。本番は `npm run build && npm run start` で起動する。
 - `tests/upload-validation.test.ts`: モデル拡張子、GLB/glTF の内容検査のテスト。
 - `tests/routes-projects-upload.test.ts`: multipart の単一・複数 POST、Project 応答、保存ファイル、
   入力検証、上限超過、全件事前検証、DB 失敗時の後始末のテスト。
-- `tests/routes-project-versions.test.ts`: 既存 project への版追加、全版取得、publish、存在しない
-  project、単一ファイル制約、形式不正、DB 失敗時の後始末のテスト。
+- `tests/routes-project-versions.test.ts`: 既存 project への版追加、2回追加後の全版取得と採番、publish、
+  存在しない project、単一ファイル制約、形式不正、DB 失敗時の後始末のテスト。
 - `tests/routes-comments.test.ts`: コメント一覧の順序・絞り込み、投稿・status 更新、入力検証、
   project/version スコープ、publish 呼び出しのテスト。
 - `tests/realtime-ws.test.ts`: join、Presence、camera / stroke 配信、切断、入力検証、連続違反 close、
