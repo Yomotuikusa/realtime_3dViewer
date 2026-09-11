@@ -48,6 +48,9 @@ describe("compare deviation", () => {
     expect(isComparableMesh(line)).toBe(false);
     expect(isComparableMesh(overlay)).toBe(false);
     expect(collectComparableMeshes(root)).toEqual([first, second]);
+
+    const rootMesh = box();
+    expect(collectComparableMeshes(rootMesh)).toEqual([rootMesh]);
   });
 
   it("bakes transformed indexed and non-indexed positions without mutating input", () => {
@@ -56,6 +59,7 @@ describe("compare deviation", () => {
     mesh.scale.setScalar(2);
     const originalX = mesh.geometry.getAttribute("position").getX(0);
     const baked = bakeWorldTriangles(mesh)!;
+    expect(baked).not.toBe(mesh.geometry);
     const bakedPosition = baked.getAttribute("position");
     const xs = Array.from({ length: bakedPosition.count }, (_, i) => bakedPosition.getX(i));
     expect(Math.min(...xs)).toBe(4);
@@ -78,11 +82,16 @@ describe("compare deviation", () => {
     expect(Array.from({ length: 36 }, (_, i) => nonIndexedBaked.getIndex()!.getX(i))).toEqual(
       Array.from({ length: 36 }, (_, i) => i),
     );
+
+    const base = new Group();
+    base.add(box());
+    expect(computeDeviation(nonIndexed, base)!.meshes[0]!.signedDistance).toHaveLength(36);
   });
 
   it("returns null for bases without comparable meshes and empty results for empty targets", () => {
     const line = new Line(new BoxGeometry(), new LineBasicMaterial());
     expect(bakeWorldTriangles(line)).toBeNull();
+    expect(bakeWorldTriangles(new Group())).toBeNull();
     expect(computeDeviation(box(), line)).toBeNull();
     const base = new Group();
     base.add(box());
@@ -124,8 +133,13 @@ describe("compare deviation", () => {
     const sphereResult = computeDeviation(sphereTarget, base)!.meshes[0]!.signedDistance;
     for (let i = 0; i < targetPosition.count; i += 1) {
       const value = sphereResult[i]!;
-      if (originalX[i]! > 0.5) expect(value).toBeGreaterThan(0.08);
-      else if (originalX[i]! < -0.5) expect(value).toBeLessThan(-0.08);
+      if (originalX[i]! > 0.5) {
+        expect(value).toBeGreaterThan(0.08);
+        expect(value).toBeLessThan(0.12);
+      } else if (originalX[i]! < -0.5) {
+        expect(value).toBeLessThan(-0.08);
+        expect(value).toBeGreaterThan(-0.12);
+      }
       else expect(Math.abs(value)).toBeLessThan(0.02);
     }
 
