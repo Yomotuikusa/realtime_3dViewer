@@ -1,11 +1,12 @@
 # store
 
 ## 目的
-レビュー画面のカメラ、照明、再生、セッション、presence、annotation、comments、ショートカットの状態を zustand ストアで保持する。
+レビュー画面のカメラ、照明、再生、オブジェクト、セッション、presence、annotation、comments、ショートカットの状態を zustand ストアで保持する。
 
 ## ファイル一覧と役割
 - camera.ts: `selfCamera`、`pendingCamera`、`resetSeq`、`fitSeq`、`modelSize`、`focalLength` と、カメラ更新・再現消費・Reset・Fit・サイズ更新・初期化の action を管理する zustand ストア。`setSelfCamera(camera, exact?)` は exact 指定時だけ完全一致で更新を判定する
 - lighting.ts: 共有 `LightAngles` を `rotateLight` の規則で更新し、サーバ受信値を正規化して適用する `applyRemote`、更新元 `origin`、既定方向への reset を提供する zustand ストア
+- objects.ts: project の全 `ModelVersion` を number 昇順で保持し、非表示 versionId、welcome 置換、追加、表示状態変更、primary 版の選択を提供する zustand ストア
 - playback.ts: ロード中モデルのアニメーションクリップ要約、選択、再生／一時停止、秒の時刻シーク、fps とフレームシークを保持する zustand ストア
 - session.ts: 自分の ID・色・表示名・接続状態・直近エラーを保持する zustand ストア
 - presence.ts: 参加者一覧、各参加者のカメラと任意の焦点距離、Follow 対象を保持する zustand ストア
@@ -22,6 +23,7 @@
 - shortcuts.ts: `useShortcutsStore`、`ShortcutsStoreState`
 - lighting.ts: `useLightingStore`、`LightingStoreState`、`LightAnglesOrigin`
 - playback.ts: `usePlaybackStore`、`PlaybackStoreState`
+- objects.ts: `useObjectsStore`、`ObjectsStoreState`、`isObjectVisible`、`primaryObjectId`
 
 ## 他フォルダとの関係
 カメラストアの `selfCamera` は `DEFAULT_CAMERA`、`focalLength` は 50mm を初期値とし、`setSelfCamera(camera, exact?)` は
@@ -38,6 +40,7 @@ presence の `applyWelcome` は一覧と Follow 対象を初期化して全置�
 `updateCamera` は camera の複製を保存し、受信した焦点距離があるときだけその値も更新する。
 `viewer_Summary.md` を参照。
 playback ストアは `clips` を要素ごとに複製して保持し、クリップ選択時に時刻を0へ戻す。fps は有限値を1〜240へ丸め、レビュー画面の reset では clips、選択、再生状態、秒の時刻、fps を初期値へ戻す。
+objects ストアは版を要素ごとに複製し、number 昇順で保持する。`hiddenIds` は welcome で全置換し、レビュー画面の reset で objects とともに空へ戻す。number 最小の版を primary としてビューアの Fit・モデルサイズ・クリップ一覧の基準にする。
 comments ストアは `items`（常に `createdAt` 昇順、同値なら `id` 昇順）、`showOnlyOpen`、`selectedId`、`composerAnchor`、`lastError` を保持する。
 `setAll` / `upsert` / `setFilter` の後は、`selectedId` が `selectVisible(items, showOnlyOpen)` に含まれなければ `null` に正規化する。
 `setAll` は一覧全置換、`upsert` は id 単位の追加・置換、`select` は選択変更、`setFilter` は Open フィルタ変更、
@@ -51,3 +54,4 @@ comments ストアは `items`（常に `createdAt` 昇順、同値なら `id` �
 - tests/store-playback.test.ts: playback ストアのクリップ複製、選択、再生制御、シーク、無効入力、reset を検証
 - tests/store-presence.test.ts: presence の全置換、焦点距離を含む upsert・削除・カメラ更新、Follow、reset のテスト
 - tests/store-shortcuts.test.ts: shortcuts ストアの割り当て・永続化・既定値復元とレビュー reset 非対象のテスト
+- tests/store-objects.test.ts: 版のソート・複製・追加、可視性、welcome、primary ヘルパー、reset のテスト

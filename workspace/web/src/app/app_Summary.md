@@ -9,9 +9,9 @@
 - display-name.ts: localStorage による表示名の保存、Guest 名生成、入室名の解決
 - JoinDialog.tsx: 保存済み表示名を初期値にした入室フォーム
 - JoinDialog.tsx: 保存済み表示名を初期値にした、入室前にビューアを覆うモーダルフォーム。表示名の解決・保存・入室コールバックは display-name と呼び出し側へ委譲する
-- realtime-dispatch.ts: `ServerMessage` を session / presence / annotation / comments / lighting ストアへ振り分ける入口。`welcome` の共有ライト、presence 更新（camera の焦点距離を含む）、light、stroke、`comment:created` / `comment:updated`、`error` を扱い、`object:visibility` / `object:added` は現段階で no-op とし、未知の型はコンパイル時に検出する
+- realtime-dispatch.ts: `ServerMessage` を session / presence / annotation / comments / lighting / objects ストアへ振り分ける入口。`welcome` の共有ライト・非表示版、presence 更新（camera の焦点距離を含む）、light、stroke、`comment:created` / `comment:updated`、オブジェクト可視性・追加、`error` を扱い、未知の型はコンパイル時に検出する
 - useRealtime.ts: 名前決定後の `WsClient` 接続と、open ごとの `join` 送信。`onRealtimeStatus` は session の接続状態を更新し、open 時に lastError を解除する
-- review-stores.ts: レビュー画面のアンマウント時に session / presence / annotation / comments / camera / lighting / playback の7ストアをまとめて初期化する reset 関数（shortcuts ストアは対象外）
+- review-stores.ts: レビュー画面のアンマウント時に session / presence / annotation / comments / camera / lighting / objects / playback の8ストアをまとめて初期化する reset 関数（shortcuts ストアは対象外）
 - UploadPage.tsx: トークン CSS で構成したプロジェクト名・複数の`.glb`/`.gltf` のアップロード画面。拡張子と合計容量を送信前に検査し、エラーを表示する
 - upload-labels.ts: アップロード画面と NotFound の表示文言、ファイル検証・複数ファイル容量表示 helper の純粋関数
 - upload.css: アップロード画面と NotFound の狭い幅のレイアウト CSS
@@ -39,20 +39,20 @@
 ## 他フォルダとの関係
 ルーティングは `/` を upload、正規表現 `^/p/[A-Za-z0-9_-]+$` に一致するパスを review、それ以外を notFound とする。`navigate` は `pushState` 後に `popstate` を通知する。
 
-`App` は projectId を `ReviewPage` の React key に使い、プロジェクト切替時のアンマウントで `resetReviewStores()` を実行して7ストアを初期化する。`ReviewPage` は ready/error に取得対象の `projectId` を保持し、現在の URL と一致しない間は
+`App` は projectId を `ReviewPage` の React key に使い、プロジェクト切替時のアンマウントで `resetReviewStores()` を実行して8ストアを初期化する。`ReviewPage` は ready/error に取得対象の `projectId` を保持し、現在の URL と一致しない間は
 旧画面を表示せず loading として扱う。
 入室後は `useRealtime` が同一オリジンの `/ws?projectId=...` へ接続し、`open` ごとに `lastError` を解除してから `join` を
 送る。`WsClient` は失敗回数に応じて 1000ms から 10000ms まで指数バックオフし、成功接続で
 失敗回数をリセットする。明示的な `close` 後は再接続しない。
-`dispatchServerMessage` は `welcome` で session の self ID/色、presence の参加者一覧、annotation のライブ線、任意の共有ライトを確定し、
+`dispatchServerMessage` は `welcome` で session の self ID/色、presence の参加者一覧、annotation のライブ線、任意の共有ライト、非表示オブジェクト一覧を確定し、
 `user:joined` / `user:left` / `camera` を presence ストアへ、`stroke:add` / `stroke:remove` / `stroke:clear` を
-annotation ストアへ、`light` を lighting ストアへ、`comment:created` / `comment:updated` を comments ストアへ、`object:visibility` / `object:added` は無視し、`error` を `CODE: message` として保存する。
+annotation ストアへ、`light` を lighting ストアへ、`comment:created` / `comment:updated` を comments ストアへ、`object:visibility` / `object:added` を objects ストアへ反映し、`error` を `CODE: message` として保存する。
 
 ## テスト
 - tests/display-name.test.ts: 表示名の trim、保存、Guest 名、localStorage 例外のテスト
-- tests/realtime-dispatch.test.ts: welcome の session / presence / annotation / light 反映、焦点距離を含む presence/stroke/comment イベント、object メッセージの no-op、error、未対応イベント、reset のテスト
+- tests/realtime-dispatch.test.ts: welcome の session / presence / annotation / light / objects 反映、焦点距離を含む presence/stroke/comment イベント、object 追加・可視性、error、未対応イベント、reset のテスト
 - tests/review-labels.test.ts: 接続状態・コピー状態・ロード/エラー文言のテスト
-- tests/review-stores.test.ts: 7つのレビュー用ストアをまとめて初期化する reset の検証
+- tests/review-stores.test.ts: 8つのレビュー用ストアをまとめて初期化する reset の検証
 - tests/routes.test.ts: ルート解析と履歴遷移テスト
 - tests/upload-labels.test.ts: アップロード/NotFound 文言、容量エラー定数、複数ファイル検証とファイル helper の単位・丸め結果を検証
 - tests/use-realtime.test.ts: 接続状態、open 時のエラー解除と join、closed 時の非送信を検証

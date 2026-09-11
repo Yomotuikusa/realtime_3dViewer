@@ -1,14 +1,26 @@
-import { Suspense, type ReactElement, type ReactNode } from "react";
+import { Suspense, useCallback, type ReactElement, type ReactNode } from "react";
 import { Bounds } from "@react-three/drei";
 import { Canvas } from "@react-three/fiber";
 import { DEFAULT_CAMERA } from "@shared/camera";
+import type { Group } from "three";
+import { modelUrl } from "../../api/client";
+import { isObjectVisible, primaryObjectId, useObjectsStore } from "../../store/objects";
 import { CameraRig } from "./CameraRig";
 import { DEFAULT_FOV } from "./focal-length";
 import { FocalLengthRig } from "./FocalLengthRig";
 import { ModelMesh } from "./ModelMesh";
+import { PlaybackClock } from "./PlaybackClock";
+import { setModelTarget } from "./model-target";
 import { SceneLights } from "./SceneLights";
 
-export function ViewerCanvas({ modelSrc, children }: { modelSrc: string; children?: ReactNode }): ReactElement {
+export function ViewerCanvas({ children }: { children?: ReactNode }): ReactElement {
+  const objects = useObjectsStore((state) => state.objects);
+  const hiddenIds = useObjectsStore((state) => state.hiddenIds);
+  const primaryId = primaryObjectId(objects);
+  const registerModelTarget = useCallback((group: Group | null) => {
+    setModelTarget(group);
+  }, []);
+
   return (
     <Canvas
       camera={{ fov: DEFAULT_FOV, position: DEFAULT_CAMERA.position }}
@@ -17,13 +29,22 @@ export function ViewerCanvas({ modelSrc, children }: { modelSrc: string; childre
       <color attach="background" args={["#f5f7fa"]} />
       <SceneLights />
       <FocalLengthRig />
-      <Suspense fallback={null}>
-        <Bounds fit={false} clip>
-          <CameraRig />
-          <ModelMesh src={modelSrc} />
-          {children}
-        </Bounds>
-      </Suspense>
+      <Bounds fit={false} clip>
+        <CameraRig />
+        <group ref={registerModelTarget}>
+          {objects.map((version) => (
+            <Suspense key={version.id} fallback={null}>
+              <ModelMesh
+                src={modelUrl(version.projectId, version.id)}
+                visible={isObjectVisible(hiddenIds, version.id)}
+                primary={version.id === primaryId}
+              />
+            </Suspense>
+          ))}
+        </group>
+        <PlaybackClock />
+        {children}
+      </Bounds>
     </Canvas>
   );
 }
