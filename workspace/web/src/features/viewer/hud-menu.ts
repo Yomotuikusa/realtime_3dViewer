@@ -1,10 +1,13 @@
-export type HudMenuId = "camera";
+export type HudMenuId = "playback" | "camera";
 
 /** 右上に並べる順。 */
-export const HUD_MENU_ORDER: readonly HudMenuId[] = ["camera"];
+export const HUD_MENU_ORDER: readonly HudMenuId[] = ["playback", "camera"];
 
 /** トグルボタンの表示名。 */
-export const HUD_MENU_LABELS: Readonly<Record<HudMenuId, string>> = { camera: "カメラ" };
+export const HUD_MENU_LABELS: Readonly<Record<HudMenuId, string>> = {
+  playback: "アニメーション",
+  camera: "カメラ",
+};
 
 /** ページ表示直後に開いているメニュー。カメラは常設パネルとして最初から展開する。 */
 export const HUD_MENU_INITIAL: HudMenuId | null = "camera";
