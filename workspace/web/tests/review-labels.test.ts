@@ -6,6 +6,7 @@ import {
   copyText,
   LOADING_MESSAGE,
   MODEL_LOAD_FAILED,
+  PANEL_RESIZE_LABEL,
   PROJECT_LOAD_FAILED,
   RELOAD_LABEL,
 } from "../src/app/review-labels";
@@ -53,5 +54,6 @@ describe("review labels", () => {
     expect(PROJECT_LOAD_FAILED).toBe("プロジェクトの取得に失敗しました。");
     expect(MODEL_LOAD_FAILED).toBe("モデルの読み込みに失敗しました。");
     expect(RELOAD_LABEL).toBe("再読み込み");
+    expect(PANEL_RESIZE_LABEL).toBe("サイドパネルの幅");
   });
 });

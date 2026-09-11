@@ -72,9 +72,14 @@
 }
 
 .review-body {
+  position: relative;
   display: grid;
   grid-template-columns: minmax(0, 1fr) var(--panel-width);
   min-height: 0;
+}
+
+.review-body__resize {
+  right: calc(var(--panel-width) - 4px);
 }
 
 .review-page:not(:has(.review-page__alert)) .review-body {

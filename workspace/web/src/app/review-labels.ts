@@ -59,3 +59,4 @@ export const LOADING_MESSAGE = "プロジェクトを読み込んでいます…
 export const PROJECT_LOAD_FAILED = "プロジェクトの取得に失敗しました。";
 export const MODEL_LOAD_FAILED = "モデルの読み込みに失敗しました。";
 export const RELOAD_LABEL = "再読み込み";
+export const PANEL_RESIZE_LABEL = "サイドパネルの幅";
