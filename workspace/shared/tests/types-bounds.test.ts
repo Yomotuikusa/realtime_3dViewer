@@ -91,14 +91,12 @@ describe("identifier and free-string bounds", () => {
       name: "a".repeat(MAX_PROJECT_NAME_LENGTH),
       createdAt: 1_700_000_000_000,
       latestVersion: modelVersion,
-      versions: [modelVersion],
     }).success).toBe(true);
     expect(ProjectSchema.safeParse({
       id: "project-1",
       name: "a".repeat(MAX_PROJECT_NAME_LENGTH + 1),
       createdAt: 1_700_000_000_000,
       latestVersion: modelVersion,
-      versions: [modelVersion],
     }).success).toBe(false);
   });
 

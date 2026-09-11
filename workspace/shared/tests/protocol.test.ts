@@ -177,6 +177,10 @@ describe("protocol parsers", () => {
       ok: true,
       msg: { type: "object:visibility", versionId: "version-1", visible: false },
     });
+    expect(parseServerMessage(JSON.stringify({ type: "object:visibility", userId: "user-1", versionId: "version-1", visible: false }))).toEqual({
+      ok: true,
+      msg: { type: "object:visibility", userId: "user-1", versionId: "version-1", visible: false },
+    });
     expect(parseServerMessage(JSON.stringify({ type: "object:added", version }))).toEqual({
       ok: true,
       msg: { type: "object:added", version },
