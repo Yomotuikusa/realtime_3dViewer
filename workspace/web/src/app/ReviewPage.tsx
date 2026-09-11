@@ -10,6 +10,7 @@ import { CommentPins } from "../features/comments/CommentPins";
 import { ReplayStrokes } from "../features/comments/ReplayStrokes";
 import { useCommentReplay } from "../features/comments/useCommentReplay";
 import { PresenceList } from "../features/presence/PresenceList";
+import { ObjectList } from "../features/objects/ObjectList";
 import { RemoteCameras } from "../features/presence/RemoteCameras";
 import { ViewerCanvas } from "../features/viewer/ViewerCanvas";
 import { ViewerHud } from "../features/viewer/ViewerHud";
@@ -181,6 +182,7 @@ export function ReviewPage({ projectId }: { projectId: string }): ReactElement {
         />
         <aside className="review-panel" aria-label="サイドパネル">
           <PresenceList />
+          <ObjectList projectId={projectId} send={realtime.send} />
           <section className="review-panel__comments" aria-label="コメント">
             <CommentComposer projectId={projectId} versionId={state.project.latestVersion.id} />
             <CommentList projectId={projectId} />
