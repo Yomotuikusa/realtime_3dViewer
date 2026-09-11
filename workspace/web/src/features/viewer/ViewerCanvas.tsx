@@ -5,6 +5,7 @@ import { DEFAULT_CAMERA } from "@shared/camera";
 import type { Group } from "three";
 import { modelUrl } from "../../api/client";
 import { isObjectVisible, primaryObjectId, useObjectsStore } from "../../store/objects";
+import { useDisplayStore } from "../../store/display";
 import { CameraRig } from "./CameraRig";
 import { DEFAULT_FOV } from "./focal-length";
 import { FocalLengthRig } from "./FocalLengthRig";
@@ -16,6 +17,7 @@ import { SceneLights } from "./SceneLights";
 export function ViewerCanvas({ children }: { children?: ReactNode }): ReactElement {
   const objects = useObjectsStore((state) => state.objects);
   const hiddenIds = useObjectsStore((state) => state.hiddenIds);
+  const meshDisplay = useDisplayStore((state) => state.meshDisplay);
   const primaryId = primaryObjectId(objects);
   const registerModelTarget = useCallback((group: Group | null) => {
     setModelTarget(group);
@@ -38,6 +40,7 @@ export function ViewerCanvas({ children }: { children?: ReactNode }): ReactEleme
                 src={modelUrl(version.projectId, version.id)}
                 visible={isObjectVisible(hiddenIds, version.id)}
                 primary={version.id === primaryId}
+                meshDisplay={meshDisplay}
               />
             </Suspense>
           ))}

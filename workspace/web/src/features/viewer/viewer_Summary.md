@@ -4,7 +4,7 @@
 Canvas、モデル、カメラ、ライティング、焦点距離、内蔵アニメーション再生、HUD、ポインター入力を合成した 3D ビューアを提供する。
 
 ## ファイル一覧と役割
-- ViewerCanvas.tsx: Canvas、ライティング、焦点距離、Bounds、全オブジェクト、カメラを合成するビューア。版ごとのモデルを単一 group に置き、その group を共通モデルターゲットへ登録する。`children` は RemoteCameras / StrokeLines / AnnotationLayer など後続機能の差し込み口
+- ViewerCanvas.tsx: Canvas、ライティング、焦点距離、Bounds、全オブジェクト、カメラを合成するビューア。display ストアの `meshDisplay` を各モデルへ渡す。版ごとのモデルを単一 group に置き、その group を共通モデルターゲットへ登録する。`children` は RemoteCameras / StrokeLines / AnnotationLayer など後続機能の差し込み口
 - SceneLights.tsx: lighting ストアの角度から環境光・主ライト・反転した補助ライトを Bounds 外へ描画する
 - LightGizmo.tsx: 枠なしで3Dビュー右下へ重ねる、Y軸まわりに45°回転した立方体ギズモを描画し、水平ドラッグ・矢印キー・リセットをライトストアへ接続する
 - light-gizmo.ts: ギズモの寸法・回転・カメラ定数、マーカー座標、ドラッグ／キー入力、yaw 表示の純粋関数
@@ -23,7 +23,8 @@ Canvas、モデル、カメラ、ライティング、焦点距離、内蔵ア�
 - hud-labels.ts: HUD のモード、カメラ／ライト、Follow、透過表示、描画基準、ヒントの日本語文言と純粋な判定関数
 - view-presets.ts: 正面／背面／右／左の向き、十字セルと並び順、距離を保ったプリセットカメラ計算、既定視点一致判定と回転ロック判定
 - lighting.ts: `@shared/types` 由来の `LightAngles` を再エクスポートし、ワールド固定ライトの角度の正規化・クランプ・ドラッグ回転と主／補助ライト座標を提供する
-- ModelMesh.tsx: 同一オリジン用の LoadingManager を指定して `useGLTF` でモデルをロードし、`visible` を scene に反映する。primary のモデルだけバウンディングボックスからモデルサイズを記録して初回 Fit を要求し、内蔵 `animations` を playback ストアへ登録する。全モデルへ再生 Rig を配置して同じ時刻を各 mixer に適用する。Draco 圧縮時のデコーダ取得（`https://www.gstatic.com/...`）は drei の別 manager による外部依存として残る
+- ModelMesh.tsx: 同一オリジン用の LoadingManager を指定して `useGLTF` でモデルをロードし、`visible` を scene に反映する。`meshDisplay` を全 Mesh へ適用し、アンマウント時は solid に戻す。primary のモデルだけバウンディングボックスからモデルサイズを記録して初回 Fit を要求し、内蔵 `animations` を playback ストアへ登録する。全モデルへ再生 Rig を配置して同じ時刻を各 mixer に適用する。Draco 圧縮時のデコーダ取得（`https://www.gstatic.com/...`）は drei の別 manager による外部依存として残る
+- mesh-display.ts: MeshDisplayMode に応じた材質の wireframe / polygon offset 切替と、通常メッシュへ追従する raycast 無効のワイヤフレーム重ね描きを冪等に管理する
 - model-loading.ts: glTF の `buffers` / `images` などが参照する data/blob URI と同一オリジン URL だけを許可する LoadingManager を作り、外部 URL を `about:blank` に置換する
 - model-target.ts: React や Zustand に依存せず、現在のレイキャスト対象 `Object3D` を保持する `setModelTarget` / `getModelTarget`
 - fit-camera.ts: 初期視点と同じ斜め方向からモデル全体を見る Fit カメラ目標を純粋関数で作る
@@ -54,7 +55,8 @@ Canvas、モデル、カメラ、ライティング、焦点距離、内蔵ア�
 - hud-labels.ts: `ToolMode`、`MODE_LABELS`、`MODE_ORDER`、`VIEW_PRESET_LABELS`、`FIT_SHORT_LABEL`、`VIEW_PRESETS_LABEL`、`PLACEMENT_LABELS`、`PLACEMENT_ORDER`、カメラ／ライト／Follow のラベル、`focalLengthText`、`colorName`、`followingLabel`、`HintInput`、`hint`、`withShortcut`
 - view-presets.ts: `ViewPreset`、`VIEW_PRESET_ORDER`、`GridCell`、`VIEW_CROSS_CENTER`、`VIEW_PRESET_CELLS`、`VIEW_PRESET_DIRECTIONS`、`MIN_PRESET_DISTANCE`、`PRESET_MATCH_EPSILON`、`presetCamera`、`matchViewPreset`、`rotationLocked`
 - lighting.ts: `LightAngles`（`@shared/types` 由来の再エクスポート）、ライト定数、`normalizeYaw`、`clampPitch`、`rotateLight`、`lightPosition`、`fillLightPosition`
-- ModelMesh.tsx: `ModelMesh({ src, visible, primary })`
+- ModelMesh.tsx: `ModelMesh({ src, visible, primary, meshDisplay })`
+- mesh-display.ts: `MESH_DISPLAY_OVERLAY_KEY`、`WIREFRAME_OVERLAY_COLOR`、`WIREFRAME_OVERLAY_OPACITY`、`isMeshDisplayOverlay`、`createWireframeOverlayMaterial`、`createWireframeOverlay`、`applyMeshDisplay`
 - PlaybackClock.tsx: `PlaybackClock()`
 - playback.ts: `PlaybackClip`、`clipSummaries`、`currentDuration`、`clampTime`、`advanceTime`
 - playback-frames.ts: `DEFAULT_FPS`、fps 判定・clamp・秒／フレーム変換関数
@@ -118,7 +120,7 @@ AnnotationLayer などのレイヤーを追加する。`ModelMesh` が登録す�
 Canvas のクライアント座標を NDC 化して再帰的にモデルをレイキャストでき、交点法線はヒットした
 オブジェクトの `matrixWorld` の逆転置法線行列でワールド系へ変換して正規化される。
 
-`ModelMesh` は primary の glTF の `animations` だけを playback ストアへ要約して登録し、キー時刻から fps を自動判定する。`PlaybackClock` が Canvas で一度だけ時刻を進め、各 `PlaybackRig` がローカルだけで選択中クリップを LoopRepeat 再生する。コメントのピンや表面ペンの線はアニメーションに追従せず、作成時のワールド座標に留まる。
+`ModelMesh` は primary の glTF の `animations` だけを playback ストアへ要約して登録し、キー時刻から fps を自動判定する。`PlaybackClock` が Canvas で一度だけ時刻を進め、各 `PlaybackRig` がローカルだけで選択中クリップを LoopRepeat 再生する。`meshDisplay` は `applyMeshDisplay` で各モデルへ適用され、solid-wireframe の重ね描きは skeleton / morph の参照を共有し、raycast を無効にしてコメントのピンや表面ペンの判定を二重化しない。コメントのピンや表面ペンの線はアニメーションに追従せず、作成時のワールド座標に留まる。
 
 ## テスト
 - tests/camera-broadcast.test.ts: カメラ送信 throttle の間隔・比較判定テスト
@@ -139,6 +141,7 @@ Canvas のクライアント座標を NDC 化して再帰的にモデルをレ�
 - tests/model-loading.test.ts: 埋め込み・同一オリジン URL の許可、外部 URL の遮断、LoadingManager の URL modifier のテスト
 - tests/model-target.test.ts: モデルターゲットの登録・取得テスト
 - tests/pick.test.ts: NDC 変換、可視な交点だけの再帰レイキャスト、ワールド法線変換、ModelMesh／PlaybackClock／PlaybackRig／ViewerCanvas／ReviewPage のソース検査
+- tests/mesh-display.test.ts: MeshDisplayMode ごとの材質切替、ワイヤフレーム重ね描きの共有状態・raycast 無効化・冪等性・破棄、対象外オブジェクトと結線のテスト
 - tests/view-presets.test.ts: 既定視点の方向・順序・単位ベクトル・距離維持・最小距離・非破壊性、既定視点一致と回転ロック判定のテスト
 - tests/viewer-pointer.test.ts: capture phase の割り当て、Alt+右ドラッグ dolly、pointer capture、継続・終了・ブラウザ既定動作抑止、cleanup のテスト
 - tests/viewer-styles.test.ts: 半透明で上下に結合したカメラメニュー、初期展開と操作後の非クローズ、カメラメニューのボタン影、160px のライトギズモとヒントの退避幅、ライトギズモの枠廃止、シャドウトークン、Follow フレームと上辺タブ、CSS セレクタ完全一致のテキスト検査
