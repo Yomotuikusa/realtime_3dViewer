@@ -36,6 +36,21 @@ describe("request body limits", () => {
     await tooLargeResponse(response);
   });
 
+  it("rejects an oversized advertised version-upload body before parsing", async () => {
+    const t = testApp({ maxUploadBytes: 100 });
+    const response = await t.app.request("/api/projects/p1/versions", {
+      method: "POST",
+      headers: {
+        "content-type": "multipart/form-data; boundary=test",
+        "content-length": String(100 + MULTIPART_OVERHEAD_BYTES + 1),
+      },
+      body: "--test\r\n",
+    });
+
+    expect(response.status).toBe(413);
+    await tooLargeResponse(response);
+  });
+
   it.each(["abc", "1e9"])(
     "rejects an invalid advertised multipart Content-Length: %s",
     async (contentLength) => {
