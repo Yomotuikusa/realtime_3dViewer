@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import type { ServerMessage } from "@shared/protocol";
+import { DEFAULT_MESH_COMPARE } from "@shared/types";
 import { dispatchServerMessage } from "../src/app/realtime-dispatch";
 import { useAnnotationStore } from "../src/store/annotation";
 import { useCommentsStore } from "../src/store/comments";
@@ -141,6 +142,10 @@ describe("realtime dispatch", () => {
   });
 
   it("applies mesh display events and welcome state", () => {
+    const compare = { baseId: "v1", targetId: "v2", thresholdPermille: 10 };
+    dispatchServerMessage({ type: "mesh:compare", userId: "u2", compare });
+    expect(useDisplayStore.getState().meshCompare).toEqual(compare);
+
     dispatchServerMessage({ type: "mesh:display", userId: "u2", mode: "wireframe" });
     expect(useDisplayStore.getState().meshDisplay).toBe("wireframe");
 
@@ -150,16 +155,21 @@ describe("realtime dispatch", () => {
       users: [user],
       strokes: [],
       meshDisplay: "solid-wireframe",
+      meshCompare: compare,
     });
     expect(useDisplayStore.getState().meshDisplay).toBe("solid-wireframe");
+    expect(useDisplayStore.getState().meshCompare).toEqual(compare);
 
     useDisplayStore.getState().setMeshDisplay("wireframe");
     dispatchServerMessage({ type: "welcome", selfId: "u1", users: [user], strokes: [] });
     expect(useDisplayStore.getState().meshDisplay).toBe("solid");
+    expect(useDisplayStore.getState().meshCompare).toEqual(DEFAULT_MESH_COMPARE);
 
     dispatchServerMessage({ type: "mesh:display", userId: "u2", mode: "wireframe" });
+    dispatchServerMessage({ type: "mesh:compare", userId: "u2", compare });
     dispatchServerMessage({ type: "error", code: "BAD_REQUEST", message: "x" });
     expect(useDisplayStore.getState().meshDisplay).toBe("wireframe");
+    expect(useDisplayStore.getState().meshCompare).toEqual(compare);
   });
 
   it("has the documented initial state and resets to it", () => {
