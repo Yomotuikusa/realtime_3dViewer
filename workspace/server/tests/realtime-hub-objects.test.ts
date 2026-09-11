@@ -31,14 +31,16 @@ describe("RoomHub object visibility", () => {
     join(hub, "a", "Alice");
     hub.handle("a", { type: "object:visibility", versionId: "v1", visible: false });
     hub.connect("p1");
-    join(hub, "b", "Bob");
+    const welcome = join(hub, "b", "Bob")[0]!.msg;
+    expect(welcome.type).toBe("welcome");
+    if (welcome.type === "welcome") expect("hiddenObjectIds" in welcome).toBe(false);
     hub.disconnect("a");
     hub.disconnect("b");
 
     hub.connect("p1");
-    const welcome = join(hub, "c", "Carol")[0]!.msg;
-    expect(welcome.type).toBe("welcome");
-    if (welcome.type === "welcome") expect("hiddenObjectIds" in welcome).toBe(false);
+    const newRoomWelcome = join(hub, "c", "Carol")[0]!.msg;
+    expect(newRoomWelcome.type).toBe("welcome");
+    if (newRoomWelcome.type === "welcome") expect("hiddenObjectIds" in newRoomWelcome).toBe(false);
   });
 
   it("ignores visibility messages before join or from unknown connections", () => {

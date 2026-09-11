@@ -39,6 +39,7 @@ describe("realtime dispatch", () => {
       selfId: "u1",
       users: [{ id: "u1", name: "Rin", color: "#f00", camera: null }, user],
       strokes: [stroke],
+      hiddenObjectIds: ["v1"],
     });
 
     expect(useSessionStore.getState().selfId).toBe("u1");
