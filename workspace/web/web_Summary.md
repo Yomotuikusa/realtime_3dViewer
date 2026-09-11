@@ -17,6 +17,7 @@ glTF/GLB の 3D レビュー画面を提供する。レビュー画面は表示�
 - `src/app/app_Summary.md`
 - `src/store/store_Summary.md`
 - `src/features/viewer/viewer_Summary.md`
+- `src/features/compare/compare_Summary.md`
 - `src/features/timeline/timeline_Summary.md`
 - `src/features/annotation/annotation_Summary.md`
 - `src/features/comments/comments_Summary.md`
