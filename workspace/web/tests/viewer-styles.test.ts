@@ -81,7 +81,7 @@ describe("viewer styles", () => {
   it("uses a vertical participant-color bar in the follow badge", () => {
     const body = ruleBody(viewerCssText, ".hud-follow__bar");
 
-    expect(body).toContain("width: 4px");
+    expect(body).toContain("width: 16px");
     expect(body).toContain("align-self: stretch");
     expect(body).toContain("margin-block: calc(var(--space-2) * -1)");
     expect(body).toContain("border-radius: 0 0 0 calc(var(--radius-md) - 1px)");
