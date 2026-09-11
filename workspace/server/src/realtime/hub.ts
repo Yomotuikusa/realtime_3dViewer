@@ -1,6 +1,6 @@
 import { nanoid } from "nanoid";
 import type { ClientMessage, ServerMessage } from "@shared/protocol";
-import type { CameraState, PresenceUser, Stroke } from "@shared/types";
+import type { CameraState, LightAngles, PresenceUser, Stroke } from "@shared/types";
 
 /** Colors are selected in room-local join order. */
 export const PRESENCE_PALETTE: readonly string[] = [
@@ -38,6 +38,8 @@ interface Connection {
 interface Room {
   users: Map<string, PresenceUser>;
   strokes: Map<string, Stroke>;
+  /** ルームで共有するライトの向き。誰も変えていなければ null */
+  light: LightAngles | null;
 }
 
 function defaultGuestDigits(): string {
@@ -122,6 +124,11 @@ export class RoomHub {
             : { type: "camera", userId: connId, camera: copyCamera(msg.camera), focalLength },
         }];
       }
+      case "light": {
+        const angles: LightAngles = { yaw: msg.angles.yaw, pitch: msg.angles.pitch };
+        room.light = angles;
+        return [{ target: "others", msg: { type: "light", userId: connId, angles: { ...angles } } }];
+      }
       case "stroke:add":
         return this.addStroke(room, connId, msg.stroke);
       case "stroke:remove":
@@ -172,6 +179,7 @@ export class RoomHub {
     const room = existingRoom ?? {
       users: new Map<string, PresenceUser>(),
       strokes: new Map<string, Stroke>(),
+      light: null,
     };
     this.rooms.set(connection.projectId, room);
 
@@ -185,15 +193,14 @@ export class RoomHub {
     room.users.set(connId, user);
     connection.user = user;
 
+    const users = [...room.users.values()].map(copyUser);
+    const strokes = [...room.strokes.values()].map(copyStroke);
     return [
       {
         target: "self",
-        msg: {
-          type: "welcome",
-          selfId: connId,
-          users: [...room.users.values()].map(copyUser),
-          strokes: [...room.strokes.values()].map(copyStroke),
-        },
+        msg: room.light === null
+          ? { type: "welcome", selfId: connId, users, strokes }
+          : { type: "welcome", selfId: connId, users, strokes, light: { ...room.light } },
       },
       { target: "others", msg: { type: "user:joined", user: copyUser(user) } },
     ];

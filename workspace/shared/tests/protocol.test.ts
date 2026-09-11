@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   CAMERA_SEND_INTERVAL_MS,
   ClientMessageSchema,
+  LIGHT_SEND_INTERVAL_MS,
   MAX_NAME_LENGTH,
   ServerMessageSchema,
   parseClientMessage,
@@ -153,5 +154,35 @@ describe("protocol parsers", () => {
   it("exposes the protocol limits", () => {
     expect(CAMERA_SEND_INTERVAL_MS).toBe(50);
     expect(MAX_NAME_LENGTH).toBe(50);
+  });
+});
+
+describe("light protocol", () => {
+  const angles = { yaw: 1, pitch: 0.5 };
+
+  it("validates light messages and optional welcome state", () => {
+    expect(ClientMessageSchema.safeParse({ type: "light", angles }).success).toBe(true);
+    expect(ClientMessageSchema.safeParse({ type: "light", angles: { yaw: Number.NaN, pitch: 0 } }).success).toBe(false);
+    expect(ClientMessageSchema.safeParse({ type: "light" }).success).toBe(false);
+    expect(ServerMessageSchema.safeParse({ type: "light", userId: "user-1", angles }).success).toBe(true);
+    expect(ServerMessageSchema.safeParse({ type: "light", angles }).success).toBe(false);
+
+    const withoutLight = ServerMessageSchema.safeParse({ type: "welcome", selfId: "user-1", users: [], strokes: [] });
+    expect(withoutLight.success).toBe(true);
+    if (withoutLight.success) expect("light" in withoutLight.data).toBe(false);
+
+    const withLight = ServerMessageSchema.safeParse({
+      type: "welcome", selfId: "user-1", users: [], strokes: [], light: angles,
+    });
+    expect(withLight.success).toBe(true);
+    if (withLight.success && withLight.data.type === "welcome") expect(withLight.data.light).toEqual(angles);
+  });
+
+  it("parses light frames and exposes their send interval", () => {
+    expect(parseClientMessage(JSON.stringify({ type: "light", angles }))).toEqual({
+      ok: true,
+      msg: { type: "light", angles },
+    });
+    expect(LIGHT_SEND_INTERVAL_MS).toBe(50);
   });
 });

@@ -1,12 +1,6 @@
-import type { Vec3 } from "@shared/types";
+import type { LightAngles, Vec3 } from "@shared/types";
 
-/** ワールド固定のライトの向き。 */
-export interface LightAngles {
-  /** 方位角(ラジアン)。[-π, π) に正規化して保持する */
-  yaw: number;
-  /** 仰角(ラジアン)。0 が水平、正が上方 */
-  pitch: number;
-}
+export type { LightAngles };
 
 export const DEFAULT_LIGHT_ANGLES: LightAngles = { yaw: Math.PI / 4, pitch: Math.PI / 4 };
 export const MAX_LIGHT_PITCH = (85 * Math.PI) / 180;

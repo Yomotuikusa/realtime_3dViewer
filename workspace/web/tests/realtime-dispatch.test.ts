@@ -3,6 +3,7 @@ import type { ServerMessage } from "@shared/protocol";
 import { dispatchServerMessage } from "../src/app/realtime-dispatch";
 import { useAnnotationStore } from "../src/store/annotation";
 import { useCommentsStore } from "../src/store/comments";
+import { useLightingStore } from "../src/store/lighting";
 import { usePresenceStore } from "../src/store/presence";
 import { useSessionStore } from "../src/store/session";
 
@@ -28,6 +29,7 @@ beforeEach(() => {
   useCommentsStore.getState().reset();
   useSessionStore.getState().reset();
   usePresenceStore.getState().reset();
+  useLightingStore.getState().reset();
 });
 
 describe("realtime dispatch", () => {
@@ -125,5 +127,25 @@ describe("realtime dispatch", () => {
       connection: "closed",
       lastError: null,
     });
+  });
+
+  it("applies light events and welcome light state", () => {
+    dispatchServerMessage({ type: "light", userId: "u2", angles: { yaw: 1, pitch: 0.5 } });
+    expect(useLightingStore.getState().angles).toEqual({ yaw: 1, pitch: 0.5 });
+    expect(useLightingStore.getState().origin).toBe("remote");
+
+    useLightingStore.getState().reset();
+    dispatchServerMessage({ type: "welcome", selfId: "u1", users: [], strokes: [], light: { yaw: 1, pitch: 0.5 } });
+    expect(useLightingStore.getState().angles).toEqual({ yaw: 1, pitch: 0.5 });
+    expect(useLightingStore.getState().origin).toBe("remote");
+  });
+
+  it("keeps the default light when welcome has no light and ignores errors", () => {
+    dispatchServerMessage({ type: "welcome", selfId: "u1", users: [], strokes: [] });
+    expect(useLightingStore.getState().angles).toEqual({ yaw: Math.PI / 4, pitch: Math.PI / 4 });
+    expect(useLightingStore.getState().origin).toBe("local");
+    useLightingStore.getState().applyRemote({ yaw: 1, pitch: 0.5 });
+    dispatchServerMessage({ type: "error", code: "BAD_REQUEST", message: "x" });
+    expect(useLightingStore.getState().angles).toEqual({ yaw: 1, pitch: 0.5 });
   });
 });
