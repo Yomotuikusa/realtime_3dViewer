@@ -31,6 +31,13 @@ function uploadForm(name: string | undefined, file: File | string | undefined): 
   return form;
 }
 
+function multiUploadForm(name: string, files: File[]): FormData {
+  const form = new FormData();
+  form.append("name", name);
+  for (const file of files) form.append("file", file);
+  return form;
+}
+
 async function post(
   t: TestApp,
   name: string | undefined,
@@ -49,6 +56,95 @@ function projectCount(t: TestApp): number {
 }
 
 describe("POST /api/projects", () => {
+  it("stores multiple uploaded models in submission order", async () => {
+    const t = testApp();
+    const firstBytes = glbBytes();
+    const secondBytes = new TextEncoder().encode('{"asset":{}}');
+    const response = await t.app.request("/api/projects", {
+      method: "POST",
+      body: multiUploadForm("Robot", [
+        modelFile(firstBytes, "a.glb"),
+        modelFile(secondBytes, "b.gltf"),
+      ]),
+    });
+
+    expect(response.status).toBe(201);
+    const project = ProjectSchema.parse(await response.json());
+    expect(project.versions.map(({ number, fileName }) => ({ number, fileName }))).toEqual([
+      { number: 1, fileName: "a.glb" },
+      { number: 2, fileName: "b.gltf" },
+    ]);
+    expect(project.latestVersion.id).toBe(project.versions[1]!.id);
+    expect(existsSync(t.storage.modelFilePath(project.versions[0]!.id))).toBe(true);
+    expect(existsSync(t.storage.modelFilePath(project.versions[1]!.id))).toBe(true);
+  });
+
+  it("validates every model before saving any file", async () => {
+    const t = testApp();
+    const response = await t.app.request("/api/projects", {
+      method: "POST",
+      body: multiUploadForm("Robot", [
+        modelFile(glbBytes(), "a.glb"),
+        modelFile(new TextEncoder().encode("not a model"), "c.txt"),
+      ]),
+    });
+
+    expect(response.status).toBe(415);
+    expect((await response.json()).error.code).toBe("UNSUPPORTED_FORMAT");
+    expect(projectCount(t)).toBe(0);
+    expect(readdirSync(`${t.dir}/uploads`)).toEqual([]);
+  });
+
+  it("does not save a valid first file when a later file is too large", async () => {
+    const t = testApp({ maxUploadBytes: 12 });
+    const response = await t.app.request("/api/projects", {
+      method: "POST",
+      body: multiUploadForm("Robot", [
+        modelFile(glbBytes(), "a.glb"),
+        modelFile(new Uint8Array(13), "b.glb"),
+      ]),
+    });
+
+    expect(response.status).toBe(413);
+    expect((await response.json()).error.code).toBe("PAYLOAD_TOO_LARGE");
+    expect(projectCount(t)).toBe(0);
+    expect(readdirSync(`${t.dir}/uploads`)).toEqual([]);
+  });
+
+  it("does not save a valid first file when a later model is invalid", async () => {
+    const t = testApp();
+    const response = await t.app.request("/api/projects", {
+      method: "POST",
+      body: multiUploadForm("Robot", [
+        modelFile(glbBytes(), "a.glb"),
+        modelFile(new TextEncoder().encode("FBX!"), "b.glb"),
+      ]),
+    });
+
+    expect(response.status).toBe(400);
+    expect((await response.json()).error.code).toBe("UNSUPPORTED_FORMAT");
+    expect(projectCount(t)).toBe(0);
+    expect(readdirSync(`${t.dir}/uploads`)).toEqual([]);
+  });
+
+  it("deletes every saved file when a multi-file transaction fails", async () => {
+    const t = testApp();
+    seedProject(t);
+    t.ids.push("p2", "v1", "v1");
+    const response = await t.app.request("/api/projects", {
+      method: "POST",
+      body: multiUploadForm("Robot", [
+        modelFile(glbBytes(), "a.glb"),
+        modelFile(new TextEncoder().encode("glTFabcdefgh"), "b.glb"),
+      ]),
+    });
+
+    expect(response.status).toBe(500);
+    expect((await response.json()).error.code).toBe("INTERNAL");
+    expect(projectCount(t)).toBe(1);
+    expect(readdirSync(`${t.dir}/uploads`)).toEqual([]);
+  });
+
   it("stores a project and serves its uploaded model", async () => {
     const t = testApp();
     const bytes = glbBytes();
@@ -108,7 +204,7 @@ describe("POST /api/projects", () => {
   it("rejects unsupported models before creating database rows or files", async () => {
     const t = testApp();
     const response = await post(t, "Robot", modelFile(glbBytes(), "a.fbx"));
-    expect(response.status).toBe(400);
+    expect(response.status).toBe(415);
     expect((await response.json()).error.code).toBe("UNSUPPORTED_FORMAT");
     expect(projectCount(t)).toBe(0);
     expect(readdirSync(`${t.dir}/uploads`)).toEqual([]);
