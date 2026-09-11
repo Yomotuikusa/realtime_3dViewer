@@ -1,6 +1,7 @@
 import type { ServerMessage } from "@shared/protocol";
 import { useAnnotationStore } from "../store/annotation";
 import { useCommentsStore } from "../store/comments";
+import { useLightingStore } from "../store/lighting";
 import { usePresenceStore } from "../store/presence";
 import { useSessionStore } from "../store/session";
 
@@ -9,6 +10,7 @@ export function dispatchServerMessage(msg: ServerMessage): void {
   const presence = usePresenceStore.getState();
   const annotation = useAnnotationStore.getState();
   const comments = useCommentsStore.getState();
+  const lighting = useLightingStore.getState();
 
   switch (msg.type) {
     case "welcome": {
@@ -16,6 +18,9 @@ export function dispatchServerMessage(msg: ServerMessage): void {
       session.setSelf(msg.selfId, color);
       presence.applyWelcome(msg.users);
       annotation.applyWelcome(msg.strokes);
+      if (msg.light !== undefined) {
+        lighting.applyRemote(msg.light);
+      }
       break;
     }
     case "user:joined":
@@ -26,6 +31,9 @@ export function dispatchServerMessage(msg: ServerMessage): void {
       break;
     case "camera":
       presence.updateCamera(msg.userId, msg.camera, msg.focalLength);
+      break;
+    case "light":
+      lighting.applyRemote(msg.angles);
       break;
     case "stroke:add":
       annotation.addStroke(msg.stroke);

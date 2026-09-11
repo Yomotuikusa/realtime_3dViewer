@@ -48,6 +48,14 @@ export interface Project {
   latestVersion: ModelVersion;
 }
 
+/** ルームで共有するワールド固定ライトの向き(ラジアン)。 */
+export interface LightAngles {
+  /** 方位角。web 側は [-π, π) に正規化して持つ */
+  yaw: number;
+  /** 仰角。0 が水平、正が上方 */
+  pitch: number;
+}
+
 export interface PresenceUser {
   id: string;
   name: string;
@@ -91,6 +99,12 @@ export const CameraStateSchema = z.object({
 
 /** 焦点距離(mm)。MIN_FOCAL_LENGTH_MM 以上 MAX_FOCAL_LENGTH_MM 以下の有限数 */
 export const FocalLengthSchema = z.number().min(MIN_FOCAL_LENGTH_MM).max(MAX_FOCAL_LENGTH_MM);
+
+/** ライトの向き。範囲は検証せず、有限数であることだけを保証する(適用側で正規化する) */
+export const LightAnglesSchema = z.object({
+  yaw: z.number(),
+  pitch: z.number(),
+}) satisfies z.ZodType<LightAngles>;
 
 export const StrokeSchema = z.object({
   id: IdSchema,

@@ -42,4 +42,38 @@ describe("lighting store", () => {
     expect(useLightingStore.getState().angles).toEqual(DEFAULT_LIGHT_ANGLES);
     expect(DEFAULT_LIGHT_ANGLES).toEqual({ yaw: Math.PI / 4, pitch: Math.PI / 4 });
   });
+
+  it("tracks local updates with a local origin", () => {
+    expect(useLightingStore.getState().origin).toBe("local");
+    useLightingStore.getState().rotate(100, 0);
+    expect(useLightingStore.getState().origin).toBe("local");
+    useLightingStore.getState().reset();
+    expect(useLightingStore.getState().origin).toBe("local");
+  });
+
+  it("normalizes and clones remote angles", () => {
+    const input = { yaw: 1, pitch: 0.5 };
+    useLightingStore.getState().applyRemote(input);
+    expect(useLightingStore.getState().angles).toEqual(input);
+    expect(useLightingStore.getState().origin).toBe("remote");
+    expect(useLightingStore.getState().angles).not.toBe(input);
+
+    useLightingStore.getState().applyRemote({ yaw: Math.PI * 1.5, pitch: 100 });
+    expect(useLightingStore.getState().angles.yaw).toBeCloseTo(-Math.PI / 2, 10);
+    expect(useLightingStore.getState().angles.pitch).toBe(MAX_LIGHT_PITCH);
+    const invalid = { yaw: Number.NaN, pitch: Number.NaN };
+    useLightingStore.getState().applyRemote(invalid);
+    expect(invalid).toEqual({ yaw: Number.NaN, pitch: Number.NaN });
+    expect(useLightingStore.getState().angles).toEqual({ yaw: 0, pitch: 0 });
+  });
+
+  it("continues local rotation from remote angles and resets locally", () => {
+    useLightingStore.getState().applyRemote({ yaw: 1, pitch: 0.5 });
+    useLightingStore.getState().rotate(100, 0);
+    expect(useLightingStore.getState().angles.yaw).toBeCloseTo(1.8, 10);
+    expect(useLightingStore.getState().origin).toBe("local");
+    useLightingStore.getState().reset();
+    expect(useLightingStore.getState().angles).toEqual(DEFAULT_LIGHT_ANGLES);
+    expect(useLightingStore.getState().origin).toBe("local");
+  });
 });

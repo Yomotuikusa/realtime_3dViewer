@@ -5,7 +5,7 @@
 
 ## ファイル一覧と役割
 - camera.ts: `selfCamera`、`pendingCamera`、`resetSeq`、`fitSeq`、`modelSize`、`focalLength` と、カメラ更新・再現消費・Reset・Fit・サイズ更新・初期化の action を管理する zustand ストア。`setSelfCamera(camera, exact?)` は exact 指定時だけ完全一致で更新を判定する
-- lighting.ts: `LightAngles` を `rotateLight` の規則で更新し、既定方向への reset を提供するローカル zustand ストア
+- lighting.ts: 共有 `LightAngles` を `rotateLight` の規則で更新し、サーバ受信値を正規化して適用する `applyRemote`、更新元 `origin`、既定方向への reset を提供する zustand ストア
 - session.ts: 自分の ID・色・表示名・接続状態・直近エラーを保持する zustand ストア
 - presence.ts: 参加者一覧、各参加者のカメラと任意の焦点距離、Follow 対象を保持する zustand ストア
 - annotation.ts: ルーム全員分のライブ線、annotation mode・色・描画中 draft・コメント再現用線・メッシュに埋もれた線の透過表示設定・ペンの描画基準を保持し、welcome/線操作・draft・表示設定・reset を提供する zustand ストア
@@ -19,7 +19,7 @@
 - annotation.ts: `useAnnotationStore`、`AnnotationStoreState`、`AnnotationMode`、`PenPlacement`、`STROKE_COLORS`、`DEFAULT_STROKE_COLOR`、`orderedStrokes`（`overlay` / `setOverlay` / `placement` / `setPlacement` を含む）
 - comments.ts: `useCommentsStore`、`CommentsStoreState`（`items` / `showOnlyOpen` / `selectedId` / `composerAnchor` / `lastError` と全 action）、`selectVisible`
 - shortcuts.ts: `useShortcutsStore`、`ShortcutsStoreState`
-- lighting.ts: `useLightingStore`、`LightingStoreState`
+- lighting.ts: `useLightingStore`、`LightingStoreState`、`LightAnglesOrigin`
 
 ## 他フォルダとの関係
 カメラストアの `selfCamera` は `DEFAULT_CAMERA`、`focalLength` は 50mm を初期値とし、`setSelfCamera(camera, exact?)` は
@@ -44,6 +44,6 @@ comments ストアは `items`（常に `createdAt` 昇順、同値なら `id` �
 - tests/store-comments.test.ts: コメント一覧の順序、upsert、選択・Open フィルタ正規化、投稿アンカー、エラー、reset のテスト
 - tests/store-annotation.test.ts: annotation ストアの初期値、線操作、mode/色、draft、再現線、透過表示・描画基準設定、順序、reset のテスト
 - tests/store-camera.test.ts: カメラストアの初期値、参照を保つ epsilon／exact 判定、複製して保持・消費する再現要求、Reset・Fit・モデルサイズ・全 state 初期化の振る舞いを検証
-- tests/store-lighting.test.ts: lighting ストアの既定値、累積回転、値の複製、reset を検証
+- tests/store-lighting.test.ts: lighting ストアの既定値、累積回転、値の複製、remote 正規化、origin、reset を検証
 - tests/store-presence.test.ts: presence の全置換、焦点距離を含む upsert・削除・カメラ更新、Follow、reset のテスト
 - tests/store-shortcuts.test.ts: shortcuts ストアの割り当て・永続化・既定値復元とレビュー reset 非対象のテスト

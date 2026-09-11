@@ -3,29 +3,35 @@ import {
   CameraStateSchema,
   CommentSchema,
   FocalLengthSchema,
+  LightAnglesSchema,
   PresenceUserSchema,
   StrokeSchema,
   type CameraState,
   type Comment,
+  type LightAngles,
   type PresenceUser,
   type Stroke,
 } from "./types";
 
 export const MAX_NAME_LENGTH = 50;
 export const CAMERA_SEND_INTERVAL_MS = 50;
+/** ライトの向きの送信間隔(ms)。061 の送信 throttle が使う */
+export const LIGHT_SEND_INTERVAL_MS = 50;
 
 export type ClientMessage =
   | { type: "join"; name: string }
   | { type: "camera"; camera: CameraState; focalLength?: number }
+  | { type: "light"; angles: LightAngles }
   | { type: "stroke:add"; stroke: Stroke }
   | { type: "stroke:remove"; strokeId: string }
   | { type: "stroke:clear" };
 
 export type ServerMessage =
-  | { type: "welcome"; selfId: string; users: PresenceUser[]; strokes: Stroke[] }
+  | { type: "welcome"; selfId: string; users: PresenceUser[]; strokes: Stroke[]; light?: LightAngles }
   | { type: "user:joined"; user: PresenceUser }
   | { type: "user:left"; userId: string }
   | { type: "camera"; userId: string; camera: CameraState; focalLength?: number }
+  | { type: "light"; userId: string; angles: LightAngles }
   | { type: "stroke:add"; stroke: Stroke }
   | { type: "stroke:remove"; strokeId: string }
   | { type: "stroke:clear"; userId: string }
@@ -41,6 +47,7 @@ export const ClientMessageSchema = z.discriminatedUnion("type", [
   z.object({ type: z.literal("stroke:add"), stroke: StrokeSchema }),
   z.object({ type: z.literal("stroke:remove"), strokeId: IdSchema }),
   z.object({ type: z.literal("stroke:clear") }),
+  z.object({ type: z.literal("light"), angles: LightAnglesSchema }),
 ]) satisfies z.ZodType<ClientMessage>;
 
 export const ServerMessageSchema = z.discriminatedUnion("type", [
@@ -49,6 +56,7 @@ export const ServerMessageSchema = z.discriminatedUnion("type", [
     selfId: IdSchema,
     users: z.array(PresenceUserSchema),
     strokes: z.array(StrokeSchema),
+    light: LightAnglesSchema.optional(),
   }),
   z.object({ type: z.literal("user:joined"), user: PresenceUserSchema }),
   z.object({ type: z.literal("user:left"), userId: IdSchema }),
@@ -61,6 +69,7 @@ export const ServerMessageSchema = z.discriminatedUnion("type", [
   z.object({ type: z.literal("stroke:add"), stroke: StrokeSchema }),
   z.object({ type: z.literal("stroke:remove"), strokeId: IdSchema }),
   z.object({ type: z.literal("stroke:clear"), userId: IdSchema }),
+  z.object({ type: z.literal("light"), userId: IdSchema, angles: LightAnglesSchema }),
   z.object({ type: z.literal("comment:created"), comment: CommentSchema }),
   z.object({ type: z.literal("comment:updated"), comment: CommentSchema }),
   z.object({ type: z.literal("error"), code: z.string(), message: z.string() }),
