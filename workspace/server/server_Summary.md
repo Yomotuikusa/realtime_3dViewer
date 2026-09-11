@@ -108,6 +108,7 @@ server の基盤。本番は `npm run build && npm run start` で起動する。
   1件以上の `file` を送信順に受け、201 で全 `versions` を含む `Project` を返す。版追加 POST は
   1件の `file` を受け、採番済み `ModelVersion` を201で返し、DB反映後に `object:added` を publish
   する。名前は trim して保存し、不正な入力は `VALIDATION`、非 glTF/GLB は
+  拡張子不正は HTTP 415 の `UNSUPPORTED_FORMAT`、内容不正は HTTP 400 の
   `UNSUPPORTED_FORMAT`、上限超過は `PAYLOAD_TOO_LARGE`、保存後の DB 失敗など予期しないエラーは
   `INTERNAL` を返す。
 - `readUploadedModels`: multipart の file フィールドを検証済み `UploadedModel[]` へ変換する。

@@ -22,7 +22,15 @@ export async function readUploadedModels(
   const models: UploadedModel[] = [];
   for (const value of fields) {
     const file = value as File;
-    const extension = modelExtension(file.name);
+    let extension;
+    try {
+      extension = modelExtension(file.name);
+    } catch (error) {
+      if (error instanceof HttpError && error.code === "UNSUPPORTED_FORMAT") {
+        throw new HttpError(415, "UNSUPPORTED_FORMAT", error.message);
+      }
+      throw error;
+    }
     if (file.size > maxBytes) {
       throw new HttpError(413, "PAYLOAD_TOO_LARGE", "Upload is too large");
     }

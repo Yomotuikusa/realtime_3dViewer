@@ -78,7 +78,7 @@ describe("POST /api/projects/:projectId/versions", () => {
     seedProject(t);
     const response = await postVersion(t, "p1", [modelFile("bad.txt")]);
 
-    expect(response.status).toBe(400);
+    expect(response.status).toBe(415);
     expect((await response.json()).error.code).toBe("UNSUPPORTED_FORMAT");
     expect(t.published).toEqual([]);
   });
