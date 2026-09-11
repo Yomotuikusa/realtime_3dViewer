@@ -15,7 +15,7 @@
 - UploadPage.tsx: トークン CSS で構成したプロジェクト名・複数の`.glb`/`.gltf` のアップロード画面。拡張子と合計容量を送信前に検査し、エラーを表示する
 - upload-labels.ts: アップロード画面と NotFound の表示文言、ファイル検証・複数ファイル容量表示 helper の純粋関数
 - upload.css: アップロード画面と NotFound の狭い幅のレイアウト CSS
-- ReviewPage.tsx: プロジェクト取得、レビュー画面の骨格、ロード状態・エラーカード、`.review-stage` とビュー下部タイムラインを含むビューア／サイズ変更可能なサイドパネルのレイアウトを担当する。Canvas に RemoteCameras / RoomStrokes / ReplayStrokes / AnnotationLayer / CommentPickLayer / CommentPins を配置し、`.review-hud` を HUD 差し込み口、`.review-panel__comments` をコメント領域差し込み口として提供し、カメラとライトの変更を realtime 送信へ結線し、入室後だけショートカットを有効にする
+- ReviewPage.tsx: プロジェクト取得、レビュー画面の骨格、ロード状態・エラーカード、`.review-stage` とビュー下部タイムラインを含むビューア／サイズ変更可能なサイドパネルのレイアウトを担当する。Canvas に RemoteCameras / RoomStrokes / ReplayStrokes / AnnotationLayer / CommentPickLayer / CommentPins を配置し、右ドックに PresenceList / ObjectList / `.review-panel__comments` を順に配置する。`.review-hud` を HUD 差し込み口、`.review-panel__comments` をコメント領域差し込み口として提供し、カメラとライトの変更を realtime 送信へ結線し、入室後だけショートカットを有効にする
 - ReviewHeader.tsx: 接続状態バッジ、入室後の自分の表示名・色、レビュー URL のコピーと失敗時の手動コピー欄を表示し、入室後だけショートカット設定を開くボタンを表示する
 - review-labels.ts: 接続状態・コピー状態・ロード/エラー文言、サイドパネル幅ハンドルのラベルを定義する JSX 非依存の純粋関数と定数
 - review.css: レビュー画面のヘッダ、`.review-stage` を含むビューア/HUD、入室 backdrop/dialog、サイドパネルと境界ハンドル、ロード/エラー状態のプレーン CSS
