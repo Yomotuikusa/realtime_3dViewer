@@ -570,38 +570,44 @@ verify は workspace 直下で実行される前提で、shared 系は `npm run 
 ### 23.2 方式: 共有 node_modules をシンボリックリンクで見せる
 
 ```
+/opt/3dreviewer/deps/         # 依存の実体。リポジトリ外・非追跡。人間が config/sync-deps.sh で更新
+  package.json                # workspace/package.json のコピー
+  package-lock.json           # workspace/package-lock.json のコピー
+  node_modules/               # 実体(npm ci の結果)
+
 /home/ojin/projects/3dreviewer/
-  .deps/                      # gitignore。人間が config/sync-deps.sh で更新する
-    package.json              # workspace/package.json のコピー
-    package-lock.json         # workspace/package-lock.json のコピー
-    node_modules/             # 実体(npm ci の結果)
   workspace/
     node_modules -> /opt/3dreviewer/deps/node_modules   # 絶対パスのシンボリックリンク。git add -f で追跡
-
-/opt/3dreviewer/deps -> <このPCのリポジトリ>/.deps   # 非追跡。各マシンで sync-deps.sh が張る
 ```
 
 - リンク先が**絶対パスでなければならない**のは、git worktree (`.worktrees/<id>/workspace/`) と
   main (`workspace/`) でリポジトリルートからの階層が違い、両方を満たす相対パスが存在しないため
 - その絶対パスを `/opt/3dreviewer/deps` という**マシン非依存の固定値**にすることで、
-  コミットされる内容がどのマシンでも一致する。各マシンはこの固定パスから自分の `.deps` へ
-  リンクを張るだけでよい(`config/sync-deps.sh` が行う。置き場の作成のみ初回に
+  コミットされる内容がどのマシンでも一致する。各マシンはこの固定パスに実体を置くだけでよい
+  (`config/sync-deps.sh` が行う。置き場の作成のみ初回に
   `sudo mkdir -p /opt/3dreviewer && sudo chown $(id -u):$(id -g) /opt/3dreviewer` が要る)
 - リポジトリのパスを直接コミットすると別マシンで必ず壊れる。実際にタスク 008 で
   この方式を採った際の注意書きどおり、移設後のタスク 057 が `/home/tom/...` を指したまま失敗した
+- **`/opt/3dreviewer/deps` は実ディレクトリでなければならない。** 実体をリポジトリ内(`.deps/`)に
+  置いて `/opt/3dreviewer/deps` からシンボリックリンクで指す二段構成は**動かない**。bwrap は
+  `ro_binds` の**宛先**パスの途中にあるシンボリックリンクを辿らないため、マウントポイントを
+  作れず `bwrap: Can't mkdir /opt/3dreviewer/deps/node_modules: No such file or directory` で
+  run 全体が 1 タスクも起動せずに落ちる(2026-09-11 に実測)。ホスト側からは解決できてしまうので
+  `config/check-env.sh` の検査でしか捕まえられない。なお `workspace/node_modules` 側のリンクは
+  バインドの**中身**を指すだけなので問題なく機能する
 
 - ワークツリーは main から作られるため、追跡済みリンクは全ワークツリーに自動で現れる
 - `config/orch.toml`:
   `[sandbox] ro_binds = ["/opt/3dreviewer/deps/node_modules"]`、
   `[validate] ignore_dirs = ["node_modules", "dist", ".vite"]`
 - `config/sync-deps.sh`(人間が実行):
-  `workspace/package.json` と lockfile を `.deps/` にコピーして `npm ci`
+  `workspace/package.json` と lockfile を `/opt/3dreviewer/deps/` にコピーして `npm ci`
 - `config/preflight.sh`: 中身が読み込まれて `sh -c` でサンドボックスへ渡される(ファイルとしては実行
   されないので `$0` からスクリプト位置は取れない)。cwd は `workspace/` で、見えるのは `workspace/` と
-  ro_binds の `.deps/node_modules` だけ(リポジトリのルートも `.deps/` 自身も見えない)。よって
+  ro_binds の `/opt/3dreviewer/deps/node_modules` だけ(リポジトリのルートは見えない)。よって
   リポジトリ内は cwd 相対で参照する。リンク先が存在すること、`workspace/package-lock.json` と
-  `.deps/node_modules/.synced-package-lock.json`(sync-deps.sh が写す照合用コピー。サンドボックスからは
-  `.deps/node_modules` しか見えないため中に置く)が一致することを検査し、不一致なら `sync-deps.sh` を案内して exit 1
+  `node_modules/.synced-package-lock.json`(sync-deps.sh が写す照合用コピー。サンドボックスからは
+  `node_modules` しか見えないため中に置く)が一致することを検査し、不一致なら `sync-deps.sh` を案内して exit 1
 - lockfile の生成は `cd workspace && npm install --package-lock-only`(node_modules を作らない)
 
 ### 23.3 この方式から導かれる規則
@@ -612,7 +618,7 @@ verify は workspace 直下で実行される前提で、shared 系は `npm run 
 3. **node_modules は読み取り専用**として扱う。vite / vitest の `cacheDir` は各フォルダ配下に置き、
    vite / vitest の起動には必ず `--configLoader runner` を付ける(既定の bundle モードは設定ファイルの
    バンドル結果を `node_modules/.vite-temp` に書こうとして EROFS で落ちる。package.json の scripts に付与済み)
-4. リンクは絶対パスなので**このマシン専用**。別マシンでは `sync-deps.sh` を流し、リンクを張り直す
+4. リンクの文字列は全マシンで同一。別マシンでは `sync-deps.sh` を流して実体を用意するだけでよい
 5. 骨組み(§23.2 のファイル群、root package.json、tsconfig.base.json、各フォルダの tsconfig /
    vitest 設定、`web/vite.config.ts`、`web/index.html`、各 `<名前>_Summary.md` の雛形)は
    **整備済み(2026-09-09)**。orch と同じ bwrap 構成のサンドボックス内で preflight / typecheck /

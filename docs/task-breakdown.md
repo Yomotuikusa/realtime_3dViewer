@@ -27,7 +27,7 @@
   `SHARED_SCAFFOLD` という export を server/web が import しているので、
   **022 まで `shared/src/index.ts` から `SHARED_SCAFFOLD` を消してはならない**
   (消すと server/web の typecheck が落ちる)
-- `config/orch.toml`: `ro_binds = [".deps/node_modules"]`, `ignore_dirs = ["node_modules","dist",".vite"]`
+- `config/orch.toml`: `ro_binds = ["/opt/3dreviewer/deps/node_modules"]`, `ignore_dirs = ["node_modules","dist",".vite"]`
 - `node:sqlite` は Node 24.12 で `DatabaseSync` が使える(ExperimentalWarning が出るが無害)
 - typecheck は空の状態で通ることを確認済み
 

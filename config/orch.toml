@@ -35,7 +35,8 @@ ignore_dirs = ["node_modules", "dist", ".vite"]
 # 存在しないパスは verify 開始前にエラーになる。
 # 例: ro_binds = ["/home/me/projects/foo/models"]
 # 依存の実体。マシン非依存の安定パスで指す(docs/…§23.2)。
-# /opt/3dreviewer/deps -> <このPCのリポジトリ>/.deps は config/sync-deps.sh が各マシンで張る
+# /opt/3dreviewer/deps は config/sync-deps.sh が各マシンに作る実ディレクトリ。
+# ここをシンボリックリンクにすると bwrap が宛先を作れず run 全体が起動しない
 ro_binds = ["/opt/3dreviewer/deps/node_modules"]
 
 [diagnose]

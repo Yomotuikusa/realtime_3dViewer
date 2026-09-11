@@ -14,7 +14,7 @@
 
 - Node.js v24 以上
 - 依存はインストール済み。`workspace/node_modules` は `/opt/3dreviewer/deps/node_modules`
-  (その先は `.deps/node_modules`)へのシンボリックリンクなので **`npm install` は
+  (その先は `/opt/3dreviewer/deps/node_modules`)へのシンボリックリンクなので **`npm install` は
   実行しないこと**(共有実体を壊す)
 - WebGL が動くブラウザ。**同時に 2 枚開ける状態**にしておく
   (通常ウィンドウ + シークレットウィンドウ、または別ブラウザ)
@@ -215,4 +215,4 @@ npm test && npm run typecheck && npm run build
 | モデルが真っ暗 / 出ない | ブラウザのコンソールで WebGL エラーを確認。`全体を表示` でカメラが外れていないか見る |
 | 2 枚目のブラウザで同じユーザーに見える | 同一ウィンドウの別タブでも別接続として扱われる。表示名は localStorage 共有なので、区別したいならシークレットウィンドウを使う |
 | `ERR_MODULE_NOT_FOUND: .../watch` | `dev:server` の引数順が壊れている(`tsx watch --tsconfig ...` が正しい) |
-| モジュールが見つからない | `npm install` を実行しないこと。`config/sync-deps.sh` で共有の `.deps/node_modules` を更新する |
+| モジュールが見つからない | `npm install` を実行しないこと。`config/sync-deps.sh` で共有の `/opt/3dreviewer/deps/node_modules` を更新する |

@@ -36,22 +36,33 @@ if [ "$(readlink "$root/workspace/node_modules" 2>/dev/null || true)" != "$stabl
     直し方: sh config/sync-deps.sh"
 fi
 
-# 3. 安定パスがこのマシンで解決できるか
+# 3. 置き場が実ディレクトリか。
+#    bwrap は ro_binds の「宛先」パス途中のシンボリックリンクを辿らないため、
+#    /opt/3dreviewer/deps がリンクだとマウントポイントを作れず
+#    `bwrap: Can't mkdir .../node_modules` で run 全体が起動しない。
+#    ホスト側では解決できてしまうので、この検査でしか捕まえられない
+if [ -L /opt/3dreviewer/deps ]; then
+  err "/opt/3dreviewer/deps がシンボリックリンクです(bwrap は宛先パス途中のリンクを辿れません)。
+    実体をここへ置いてください。直し方:
+      rm /opt/3dreviewer/deps && mkdir /opt/3dreviewer/deps && sh config/sync-deps.sh"
+fi
+
+# 4. 安定パスがこのマシンで解決できるか
 if [ ! -d "$stable" ]; then
-  err "$stable を解決できません(このマシンの初期設定が未了か .deps が空)。
+  err "$stable を解決できません(このマシンの初期設定が未了です)。
     直し方: sudo mkdir -p /opt/3dreviewer && sudo chown $(id -u):$(id -g) /opt/3dreviewer
             sh config/sync-deps.sh"
 elif [ ! -f "$stable/typescript/package.json" ]; then
   err "$stable が不完全です。  直し方: sh config/sync-deps.sh"
 fi
 
-# 4. orch.toml の ro_binds が安定パスと一致しているか
+# 5. orch.toml の ro_binds が安定パスと一致しているか
 if ! grep -q "^ro_binds = \[\"$stable\"\]" "$root/config/orch.toml"; then
   err "config/orch.toml の ro_binds が $stable と一致しません。
     現在: $(grep '^ro_binds' "$root/config/orch.toml" || echo '(未設定)')"
 fi
 
-# 5. lockfile の同期 (preflight と同じ検査をホスト側でも先取りする)
+# 6. lockfile の同期 (preflight と同じ検査をホスト側でも先取りする)
 if [ -d "$stable" ] && ! cmp -s "$root/workspace/package-lock.json" "$stable/.synced-package-lock.json"; then
   err "package-lock.json と .synced-package-lock.json が不一致です。
     直し方: sh config/sync-deps.sh"

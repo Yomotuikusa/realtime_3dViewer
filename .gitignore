@@ -11,5 +11,4 @@ __pycache__/
 *.pyc
 node_modules/
 
-# 依存の実体 (workspace/node_modules のリンク先。config/sync-deps.sh で生成)
-/.deps/
+# 依存の実体はリポジトリ外の /opt/3dreviewer/deps/ に置く (docs/…§23.2)
