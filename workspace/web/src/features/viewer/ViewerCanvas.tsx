@@ -10,6 +10,7 @@ import { CameraRig } from "./CameraRig";
 import { DEFAULT_FOV } from "./focal-length";
 import { FocalLengthRig } from "./FocalLengthRig";
 import { ModelMesh } from "./ModelMesh";
+import { MeshCompareRig } from "../compare/MeshCompareRig";
 import { PlaybackClock } from "./PlaybackClock";
 import { setModelTarget } from "./model-target";
 import { SceneLights } from "./SceneLights";
@@ -38,6 +39,7 @@ export function ViewerCanvas({ children }: { children?: ReactNode }): ReactEleme
             <Suspense key={version.id} fallback={null}>
               <ModelMesh
                 src={modelUrl(version.projectId, version.id)}
+                versionId={version.id}
                 visible={isObjectVisible(hiddenIds, version.id)}
                 primary={version.id === primaryId}
                 meshDisplay={meshDisplay}
@@ -46,6 +48,7 @@ export function ViewerCanvas({ children }: { children?: ReactNode }): ReactEleme
           ))}
         </group>
         <PlaybackClock />
+        <MeshCompareRig />
         {children}
       </Bounds>
     </Canvas>
