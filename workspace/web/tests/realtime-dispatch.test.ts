@@ -3,6 +3,7 @@ import type { ServerMessage } from "@shared/protocol";
 import { dispatchServerMessage } from "../src/app/realtime-dispatch";
 import { useAnnotationStore } from "../src/store/annotation";
 import { useCommentsStore } from "../src/store/comments";
+import { useDisplayStore } from "../src/store/display";
 import { useLightingStore } from "../src/store/lighting";
 import { useObjectsStore } from "../src/store/objects";
 import { usePresenceStore } from "../src/store/presence";
@@ -32,6 +33,7 @@ beforeEach(() => {
   usePresenceStore.getState().reset();
   useLightingStore.getState().reset();
   useObjectsStore.getState().reset();
+  useDisplayStore.getState().reset();
 });
 
 describe("realtime dispatch", () => {
@@ -136,6 +138,28 @@ describe("realtime dispatch", () => {
     expect(useObjectsStore.getState().hiddenIds).toEqual(["v1"]);
     dispatchServerMessage({ type: "welcome", selfId: "u1", users: [user], strokes: [] });
     expect(useObjectsStore.getState().hiddenIds).toEqual([]);
+  });
+
+  it("applies mesh display events and welcome state", () => {
+    dispatchServerMessage({ type: "mesh:display", userId: "u2", mode: "wireframe" });
+    expect(useDisplayStore.getState().meshDisplay).toBe("wireframe");
+
+    dispatchServerMessage({
+      type: "welcome",
+      selfId: "u1",
+      users: [user],
+      strokes: [],
+      meshDisplay: "solid-wireframe",
+    });
+    expect(useDisplayStore.getState().meshDisplay).toBe("solid-wireframe");
+
+    useDisplayStore.getState().setMeshDisplay("wireframe");
+    dispatchServerMessage({ type: "welcome", selfId: "u1", users: [user], strokes: [] });
+    expect(useDisplayStore.getState().meshDisplay).toBe("solid");
+
+    dispatchServerMessage({ type: "mesh:display", userId: "u2", mode: "wireframe" });
+    dispatchServerMessage({ type: "error", code: "BAD_REQUEST", message: "x" });
+    expect(useDisplayStore.getState().meshDisplay).toBe("wireframe");
   });
 
   it("has the documented initial state and resets to it", () => {

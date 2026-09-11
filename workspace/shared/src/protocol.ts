@@ -4,12 +4,14 @@ import {
   CommentSchema,
   FocalLengthSchema,
   LightAnglesSchema,
+  MeshDisplayModeSchema,
   ModelVersionSchema,
   PresenceUserSchema,
   StrokeSchema,
   type CameraState,
   type Comment,
   type LightAngles,
+  type MeshDisplayMode,
   type ModelVersion,
   type PresenceUser,
   type Stroke,
@@ -28,7 +30,9 @@ export type ClientMessage =
   | { type: "stroke:remove"; strokeId: string }
   | { type: "stroke:clear" }
   /** 自分が versionId のオブジェクトの表示・非表示を切り替えた */
-  | { type: "object:visibility"; versionId: string; visible: boolean };
+  | { type: "object:visibility"; versionId: string; visible: boolean }
+  /** 自分がメッシュの表示方法を切り替えた */
+  | { type: "mesh:display"; mode: MeshDisplayMode };
 
 export type ServerMessage =
   | {
@@ -39,6 +43,8 @@ export type ServerMessage =
       light?: LightAngles;
       /** ルームで非表示になっているオブジェクトの versionId。空なら省略される */
       hiddenObjectIds?: string[];
+      /** ルームのメッシュ表示方法。誰も切り替えていなければ省略される */
+      meshDisplay?: MeshDisplayMode;
     }
   | { type: "user:joined"; user: PresenceUser }
   | { type: "user:left"; userId: string }
@@ -53,6 +59,8 @@ export type ServerMessage =
   | { type: "object:visibility"; userId: string; versionId: string; visible: boolean }
   /** REST でオブジェクトが追加された(ルーム全員へ配信) */
   | { type: "object:added"; version: ModelVersion }
+  /** userId がメッシュの表示方法を切り替えた(送信元以外へ中継) */
+  | { type: "mesh:display"; userId: string; mode: MeshDisplayMode }
   | { type: "error"; code: string; message: string };
 
 const IdSchema = z.string().min(1);
@@ -65,6 +73,7 @@ export const ClientMessageSchema = z.discriminatedUnion("type", [
   z.object({ type: z.literal("stroke:remove"), strokeId: IdSchema }),
   z.object({ type: z.literal("stroke:clear") }),
   z.object({ type: z.literal("object:visibility"), versionId: IdSchema, visible: z.boolean() }),
+  z.object({ type: z.literal("mesh:display"), mode: MeshDisplayModeSchema }),
 ]) satisfies z.ZodType<ClientMessage>;
 
 export const ServerMessageSchema = z.discriminatedUnion("type", [
@@ -75,6 +84,7 @@ export const ServerMessageSchema = z.discriminatedUnion("type", [
     strokes: z.array(StrokeSchema),
     light: LightAnglesSchema.optional(),
     hiddenObjectIds: z.array(IdSchema).optional(),
+    meshDisplay: MeshDisplayModeSchema.optional(),
   }),
   z.object({ type: z.literal("user:joined"), user: PresenceUserSchema }),
   z.object({ type: z.literal("user:left"), userId: IdSchema }),
@@ -92,6 +102,7 @@ export const ServerMessageSchema = z.discriminatedUnion("type", [
   z.object({ type: z.literal("comment:updated"), comment: CommentSchema }),
   z.object({ type: z.literal("object:visibility"), userId: IdSchema, versionId: IdSchema, visible: z.boolean() }),
   z.object({ type: z.literal("object:added"), version: ModelVersionSchema }),
+  z.object({ type: z.literal("mesh:display"), userId: IdSchema, mode: MeshDisplayModeSchema }),
   z.object({ type: z.literal("error"), code: z.string(), message: z.string() }),
 ]) satisfies z.ZodType<ServerMessage>;
 

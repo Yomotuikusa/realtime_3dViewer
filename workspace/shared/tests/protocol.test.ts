@@ -49,6 +49,7 @@ describe("ClientMessageSchema", () => {
       { type: "stroke:remove", strokeId: "stroke-1" },
       { type: "stroke:clear" },
       { type: "object:visibility", versionId: "version-1", visible: false },
+      { type: "mesh:display", mode: "wireframe" },
     ];
     for (const message of messages) {
       expect(ClientMessageSchema.safeParse(message).success).toBe(true);
@@ -62,6 +63,8 @@ describe("ClientMessageSchema", () => {
     expect(ClientMessageSchema.safeParse({ type: "stroke:remove", strokeId: "" }).success).toBe(false);
     expect(ClientMessageSchema.safeParse({ type: "object:visibility", versionId: "", visible: false }).success).toBe(false);
     expect(ClientMessageSchema.safeParse({ type: "object:visibility", versionId: "version-1", visible: "false" }).success).toBe(false);
+    expect(ClientMessageSchema.safeParse({ type: "mesh:display", mode: "mesh" }).success).toBe(false);
+    expect(ClientMessageSchema.safeParse({ type: "mesh:display" }).success).toBe(false);
     expect(ClientMessageSchema.safeParse({ type: "welcome", selfId: "user-1", users: [], strokes: [] }).success).toBe(false);
   });
 
@@ -83,7 +86,7 @@ describe("ClientMessageSchema", () => {
 });
 
 describe("ServerMessageSchema", () => {
-  it("accepts all twelve server message variants", () => {
+  it("accepts all thirteen server message variants", () => {
     const messages = [
       { type: "welcome", selfId: "user-1", users: [user], strokes: [stroke] },
       { type: "user:joined", user },
@@ -96,6 +99,7 @@ describe("ServerMessageSchema", () => {
       { type: "comment:updated", comment },
       { type: "object:visibility", userId: "user-1", versionId: "version-1", visible: false },
       { type: "object:added", version },
+      { type: "mesh:display", userId: "user-1", mode: "solid-wireframe" },
       { type: "error", code: "X", message: "bad request" },
     ];
     for (const message of messages) {
@@ -116,6 +120,22 @@ describe("ServerMessageSchema", () => {
     expect(ServerMessageSchema.safeParse({ type: "welcome", selfId: "user-1", users: [], strokes: [], hiddenObjectIds: [""] }).success).toBe(false);
     expect(ServerMessageSchema.safeParse({ type: "object:visibility", userId: "user-1", versionId: "", visible: true }).success).toBe(false);
     expect(ServerMessageSchema.safeParse({ type: "object:added", version: { ...version, number: 0 } }).success).toBe(false);
+  });
+
+  it("validates mesh display messages and optional welcome state", () => {
+    expect(ServerMessageSchema.safeParse({ type: "mesh:display", userId: "user-1", mode: "solid" }).success).toBe(true);
+    expect(ServerMessageSchema.safeParse({ type: "mesh:display", mode: "solid" }).success).toBe(false);
+    expect(ServerMessageSchema.safeParse({ type: "welcome", selfId: "user-1", users: [], strokes: [], meshDisplay: "x" }).success).toBe(false);
+
+    const withoutDisplay = ServerMessageSchema.safeParse({ type: "welcome", selfId: "user-1", users: [], strokes: [] });
+    expect(withoutDisplay.success).toBe(true);
+    if (withoutDisplay.success) expect("meshDisplay" in withoutDisplay.data).toBe(false);
+
+    const withDisplay = ServerMessageSchema.safeParse({
+      type: "welcome", selfId: "user-1", users: [], strokes: [], meshDisplay: "wireframe",
+    });
+    expect(withDisplay.success).toBe(true);
+    if (withDisplay.success && withDisplay.data.type === "welcome") expect(withDisplay.data.meshDisplay).toBe("wireframe");
   });
 
   it("preserves an optional focal length on server camera messages", () => {
@@ -176,6 +196,10 @@ describe("protocol parsers", () => {
     expect(parseClientMessage(JSON.stringify({ type: "object:visibility", versionId: "version-1", visible: false }))).toEqual({
       ok: true,
       msg: { type: "object:visibility", versionId: "version-1", visible: false },
+    });
+    expect(parseClientMessage(JSON.stringify({ type: "mesh:display", mode: "wireframe" }))).toEqual({
+      ok: true,
+      msg: { type: "mesh:display", mode: "wireframe" },
     });
     expect(parseServerMessage(JSON.stringify({ type: "object:visibility", userId: "user-1", versionId: "version-1", visible: false }))).toEqual({
       ok: true,

@@ -31,7 +31,7 @@ server の基盤。本番は `npm run build && npm run start` で起動する。
   `index.html` へ SPA フォールバックする。`/api/`、拡張子付きの不在ファイル、GET / HEAD
   以外は後段へ渡し、字句解決と realpath の両方で root 外への traversal / symlink 脱出を拒否する。
 - `src/realtime/hub.ts`: `ws` 非依存のインメモリ RoomHub。接続・join 済み Presence、カメラ、
-  ルーム共有ライト、非表示オブジェクト、線の状態を project 単位で保持し、camera メッセージの `focalLength` は参加者ごとに保持する。
+  ルーム共有ライトとメッシュ表示方法、非表示オブジェクト、線の状態を project 単位で保持し、camera メッセージの `focalLength` は参加者ごとに保持する。
   `object:visibility` は非表示の `versionId` 集合をルーム単位で保持し、送信元以外へ中継する。
   未指定の camera でも直前の値を保って中継し、`welcome` / `user:joined` / `usersIn` にも載せる。
   接続ごとの配信先を `Outbound` で返す。接続数は
@@ -82,6 +82,7 @@ server の基盤。本番は `npm run build && npm run start` で起動する。
   反映、未指定時のキー省略、切断・再join、stroke との独立性を検証する。
 - `tests/realtime-hub-light.test.ts`: RoomHub のライトの中継、後勝ち保持、welcome への反映、値の複製、ルーム分離・削除を検証する。
 - `tests/realtime-hub-objects.test.ts`: RoomHub のオブジェクト可視性のルーム単位保持、Set の挿入順、welcome 反映と配列複製、ルーム分離・削除、未参加接続の無視、他状態との独立性を検証する。
+- `tests/realtime-hub-display.test.ts`: RoomHub のメッシュ表示方法の中継、後勝ち保持、welcome 反映、ルーム分離・削除、未参加接続の無視、他状態との独立性を検証する。
 - `tests/realtime-guards.test.ts`: project / Origin / 接続数 / ルーム数 / payload の接続ガードと、
   stroke 所有者検証・上限内の大きな stroke のテスト。
 - `tsconfig.json`: 型検査設定(../tsconfig.base.json を継承。`@shared/*` は shared/src を指す)。
@@ -127,6 +128,7 @@ server の基盤。本番は `npm run build && npm run start` で起動する。
   `welcome` に任意で載せ、light イベントとして送信元以外へ中継する。`object:visibility` は
   `visible: false` の id を Set の挿入順で保持し、表示に戻すと削除する。非表示 id がある場合だけ
   `welcome.hiddenObjectIds` に複製して載せ、イベントは状態が変わらなくても送信元以外へ中継する。
+  `mesh:display` は mode をルーム単位で最後に受けた値として保持し、送信元以外へ中継し、値が存在する場合だけ `welcome.meshDisplay` に載せる。`meshDisplayIn` で現在値を参照できる。
   `Outbound.target` は `self` (送信元のみ)、`others` (送信元以外)、`all` (ルーム全員) を表す。
   `PRESENCE_PALETTE` は8色で、ルーム内の未使用色をjoin順に割り当て、全色使用時はサイズの剰余で
   再利用する。`MAX_ROOM_STROKES = 2000` 本まで保持し、同じIDの追加は所有者自身による場合だけ
