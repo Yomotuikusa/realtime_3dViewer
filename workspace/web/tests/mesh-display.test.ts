@@ -22,7 +22,9 @@ import {
   applyMeshDisplay,
   createWireframeOverlay,
   isMeshDisplayOverlay,
+  isViewerOverlay,
   MESH_DISPLAY_OVERLAY_KEY,
+  VIEWER_OVERLAY_KEY,
   WIREFRAME_OVERLAY_COLOR,
   WIREFRAME_OVERLAY_OPACITY,
 } from "../src/features/viewer/mesh-display";
@@ -92,6 +94,8 @@ describe("mesh display", () => {
     const material = overlay.material as MeshBasicMaterial;
 
     expect(overlay.userData[MESH_DISPLAY_OVERLAY_KEY]).toBe(true);
+    expect(overlay.userData[VIEWER_OVERLAY_KEY]).toBe(true);
+    expect(isViewerOverlay(overlay)).toBe(true);
     expect(scene.mesh.children).toHaveLength(0);
     expect(overlay.geometry).toBe(scene.mesh.geometry);
     expect(material).toBeInstanceOf(MeshBasicMaterial);
@@ -200,8 +204,28 @@ describe("mesh display", () => {
   it("recognizes only marked overlay objects", () => {
     const group = new Group();
     expect(isMeshDisplayOverlay(group)).toBe(false);
+    expect(isViewerOverlay(group)).toBe(false);
     group.userData[MESH_DISPLAY_OVERLAY_KEY] = true;
     expect(isMeshDisplayOverlay(group)).toBe(true);
+    group.userData[VIEWER_OVERLAY_KEY] = false;
+    expect(isViewerOverlay(group)).toBe(false);
+  });
+
+  it("ignores viewer overlays without removing them", () => {
+    const root = new Group();
+    const mesh = new Mesh(new BoxGeometry(), new MeshStandardMaterial());
+    const comparisonOverlay = new Mesh(new BoxGeometry(), new MeshStandardMaterial());
+    comparisonOverlay.userData[VIEWER_OVERLAY_KEY] = true;
+    mesh.add(comparisonOverlay);
+    root.add(mesh);
+
+    applyMeshDisplay(root, "wireframe");
+    expect((comparisonOverlay.material as MeshStandardMaterial).wireframe).toBe(false);
+    applyMeshDisplay(root, "solid-wireframe");
+    expect(overlays(mesh)).toHaveLength(1);
+    expect(mesh.children).toContain(comparisonOverlay);
+    applyMeshDisplay(root, "solid");
+    expect(mesh.children).toContain(comparisonOverlay);
   });
 
   it("connects ModelMesh and ViewerCanvas to mesh display state", () => {

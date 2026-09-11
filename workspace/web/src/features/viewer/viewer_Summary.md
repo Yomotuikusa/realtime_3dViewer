@@ -25,7 +25,7 @@ Canvas、モデル、カメラ、ライティング、焦点距離、内蔵ア�
 - view-presets.ts: 正面／背面／右／左の向き、十字セルと並び順、距離を保ったプリセットカメラ計算、既定視点一致判定と回転ロック判定
 - lighting.ts: `@shared/types` 由来の `LightAngles` を再エクスポートし、ワールド固定ライトの角度の正規化・クランプ・ドラッグ回転と主／補助ライト座標を提供する
 - ModelMesh.tsx: 同一オリジン用の LoadingManager を指定して `useGLTF` でモデルをロードし、`visible` を scene に反映する。`meshDisplay` を全 Mesh へ適用し、アンマウント時は solid に戻す。primary のモデルだけバウンディングボックスからモデルサイズを記録して初回 Fit を要求し、内蔵 `animations` を playback ストアへ登録する。全モデルへ再生 Rig を配置して同じ時刻を各 mixer に適用する。Draco 圧縮時のデコーダ取得（`https://www.gstatic.com/...`）は drei の別 manager による外部依存として残る
-- mesh-display.ts: MeshDisplayMode に応じた材質の wireframe / polygon offset 切替と、通常メッシュへ追従する raycast 無効のワイヤフレーム重ね描きを冪等に管理する
+- mesh-display.ts: MeshDisplayMode に応じた材質の wireframe / polygon offset 切替と、通常メッシュへ追従する raycast 無効のワイヤフレーム重ね描きを冪等に管理する。ワイヤフレームと比較重ね描きを共通の `VIEWER_OVERLAY_KEY` で識別し、表示方法の走査から除外する
 - model-loading.ts: glTF の `buffers` / `images` などが参照する data/blob URI と同一オリジン URL だけを許可する LoadingManager を作り、外部 URL を `about:blank` に置換する
 - model-target.ts: React や Zustand に依存せず、現在のレイキャスト対象 `Object3D` を保持する `setModelTarget` / `getModelTarget`
 - fit-camera.ts: 初期視点と同じ斜め方向からモデル全体を見る Fit カメラ目標を純粋関数で作る
@@ -58,7 +58,7 @@ Canvas、モデル、カメラ、ライティング、焦点距離、内蔵ア�
 - view-presets.ts: `ViewPreset`、`VIEW_PRESET_ORDER`、`GridCell`、`VIEW_CROSS_CENTER`、`VIEW_PRESET_CELLS`、`VIEW_PRESET_DIRECTIONS`、`MIN_PRESET_DISTANCE`、`PRESET_MATCH_EPSILON`、`presetCamera`、`matchViewPreset`、`rotationLocked`
 - lighting.ts: `LightAngles`（`@shared/types` 由来の再エクスポート）、ライト定数、`normalizeYaw`、`clampPitch`、`rotateLight`、`lightPosition`、`fillLightPosition`
 - ModelMesh.tsx: `ModelMesh({ src, visible, primary, meshDisplay })`
-- mesh-display.ts: `MESH_DISPLAY_OVERLAY_KEY`、`WIREFRAME_OVERLAY_COLOR`、`WIREFRAME_OVERLAY_OPACITY`、`isMeshDisplayOverlay`、`createWireframeOverlayMaterial`、`createWireframeOverlay`、`applyMeshDisplay`
+- mesh-display.ts: `MESH_DISPLAY_OVERLAY_KEY`、`VIEWER_OVERLAY_KEY`、`WIREFRAME_OVERLAY_COLOR`、`WIREFRAME_OVERLAY_OPACITY`、`isMeshDisplayOverlay`、`isViewerOverlay`、`createWireframeOverlayMaterial`、`createWireframeOverlay`、`applyMeshDisplay`
 - PlaybackClock.tsx: `PlaybackClock()`
 - playback.ts: `PlaybackClip`、`clipSummaries`、`currentDuration`、`clampTime`、`advanceTime`
 - playback-frames.ts: `DEFAULT_FPS`、fps 判定・clamp・秒／フレーム変換関数
@@ -122,7 +122,7 @@ AnnotationLayer などのレイヤーを追加する。`ModelMesh` が登録す�
 Canvas のクライアント座標を NDC 化して再帰的にモデルをレイキャストでき、交点法線はヒットした
 オブジェクトの `matrixWorld` の逆転置法線行列でワールド系へ変換して正規化される。
 
-`ModelMesh` は primary の glTF の `animations` だけを playback ストアへ要約して登録し、キー時刻から fps を自動判定する。`PlaybackClock` が Canvas で一度だけ時刻を進め、各 `PlaybackRig` がローカルだけで選択中クリップを LoopRepeat 再生する。`meshDisplay` は `applyMeshDisplay` で各モデルへ適用され、solid-wireframe の重ね描きは skeleton / morph の参照を共有し、raycast を無効にしてコメントのピンや表面ペンの判定を二重化しない。コメントのピンや表面ペンの線はアニメーションに追従せず、作成時のワールド座標に留まる。
+`ModelMesh` は primary の glTF の `animations` だけを playback ストアへ要約して登録し、キー時刻から fps を自動判定する。`PlaybackClock` が Canvas で一度だけ時刻を進め、各 `PlaybackRig` がローカルだけで選択中クリップを LoopRepeat 再生する。`meshDisplay` は `applyMeshDisplay` で各モデルへ適用され、`VIEWER_OVERLAY_KEY` を持つビューアの重ね描きを走査対象から除外する。solid-wireframe の重ね描きは skeleton / morph の参照を共有し、raycast を無効にしてコメントのピンや表面ペンの判定を二重化しない。コメントのピンや表面ペンの線はアニメーションに追従せず、作成時のワールド座標に留まる。
 
 ## テスト
 - tests/camera-broadcast.test.ts: カメラ送信 throttle の間隔・比較判定テスト
