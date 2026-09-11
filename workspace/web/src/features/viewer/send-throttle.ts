@@ -22,9 +22,11 @@ export interface SendThrottle<T> {
 }
 
 export function createSendThrottle<T>(deps: SendThrottleDeps<T>): SendThrottle<T> {
-  let lastSentValue: T | null = null;
+  let lastSentValue!: T;
+  let hasLastSentValue = false;
   let lastSentAt = Number.NEGATIVE_INFINITY;
-  let pendingValue: T | null = null;
+  let pendingValue!: T;
+  let hasPendingValue = false;
   let cancelScheduled: (() => void) | null = null;
   let disposed = false;
 
@@ -44,7 +46,7 @@ export function createSendThrottle<T>(deps: SendThrottleDeps<T>): SendThrottle<T
   };
 
   const trySendPending = (): void => {
-    if (disposed || pendingValue === null) {
+    if (disposed || !hasPendingValue) {
       return;
     }
 
@@ -55,14 +57,15 @@ export function createSendThrottle<T>(deps: SendThrottleDeps<T>): SendThrottle<T
     }
 
     const value = deps.clone(pendingValue);
-    if (lastSentValue !== null && deps.equals(lastSentValue, value)) {
-      pendingValue = null;
+    if (hasLastSentValue && deps.equals(lastSentValue, value)) {
+      hasPendingValue = false;
       return;
     }
     if (deps.send(value)) {
       lastSentValue = deps.clone(value);
+      hasLastSentValue = true;
       lastSentAt = now;
-      pendingValue = null;
+      hasPendingValue = false;
       clearSchedule();
       return;
     }
@@ -74,12 +77,13 @@ export function createSendThrottle<T>(deps: SendThrottleDeps<T>): SendThrottle<T
       return;
     }
     const nextValue = deps.clone(value);
-    if (lastSentValue !== null && deps.equals(lastSentValue, nextValue)) {
-      pendingValue = null;
+    if (hasLastSentValue && deps.equals(lastSentValue, nextValue)) {
+      hasPendingValue = false;
       clearSchedule();
       return;
     }
     pendingValue = nextValue;
+    hasPendingValue = true;
     const now = deps.now();
     if (now - lastSentAt < deps.intervalMs) {
       schedulePending(deps.intervalMs - (now - lastSentAt));
@@ -95,12 +99,13 @@ export function createSendThrottle<T>(deps: SendThrottleDeps<T>): SendThrottle<T
         return;
       }
       lastSentValue = deps.clone(value);
-      pendingValue = null;
+      hasLastSentValue = true;
+      hasPendingValue = false;
       clearSchedule();
     },
     dispose() {
       disposed = true;
-      pendingValue = null;
+      hasPendingValue = false;
       clearSchedule();
     },
   };
