@@ -4,6 +4,7 @@ import { useAnnotationStore } from "../src/store/annotation";
 import { useCameraStore } from "../src/store/camera";
 import { useCommentsStore } from "../src/store/comments";
 import { useLightingStore } from "../src/store/lighting";
+import { useObjectsStore } from "../src/store/objects";
 import { usePlaybackStore } from "../src/store/playback";
 import { usePresenceStore } from "../src/store/presence";
 import { useSessionStore } from "../src/store/session";
@@ -30,6 +31,15 @@ describe("resetReviewStores", () => {
     useCommentsStore.getState().setComposerAnchor([1, 2, 3]);
     useCameraStore.getState().requestCamera({ position: [1, 2, 3], target: [0, 0, 0] });
     useLightingStore.getState().rotate(100, 0);
+    useObjectsStore.getState().setObjects([{
+      id: "v1",
+      projectId: "p1",
+      number: 1,
+      fileName: "model.glb",
+      byteSize: 1,
+      createdAt: 1,
+    }]);
+    useObjectsStore.getState().setVisible("v1", false);
     usePlaybackStore.getState().setClips([{ name: "walk", duration: 3 }]);
     usePlaybackStore.getState().play();
     usePlaybackStore.getState().seek(1);
@@ -52,6 +62,7 @@ describe("resetReviewStores", () => {
     });
     expect(useCameraStore.getState()).toMatchObject({ pendingCamera: null, modelSize: 1 });
     expect(useLightingStore.getState().angles).toEqual({ yaw: Math.PI / 4, pitch: Math.PI / 4 });
+    expect(useObjectsStore.getState()).toMatchObject({ objects: [], hiddenIds: [] });
     expect(usePlaybackStore.getState()).toMatchObject({ clips: [], clipIndex: 0, playing: false, time: 0, fps: 24 });
   });
 });

@@ -11,6 +11,16 @@ export interface PickHit {
   normal: Vec3 | null;
 }
 
+/** object 自身から scene root まで、すべて visible な交点だけを採用する。 */
+export function isVisibleInScene(object: Object3D): boolean {
+  let current: Object3D | null = object;
+  while (current !== null) {
+    if (!current.visible) return false;
+    current = current.parent;
+  }
+  return true;
+}
+
 export function toNdc(
   rect: { left: number; top: number; width: number; height: number },
   clientX: number,
@@ -33,7 +43,7 @@ export function pickModel(
   }
 
   raycaster.setFromCamera(new Vector2(ndc.x, ndc.y), camera);
-  const intersection = raycaster.intersectObject(target, true)[0];
+  const intersection = raycaster.intersectObject(target, true).find((hit) => isVisibleInScene(hit.object));
   if (!intersection) {
     return null;
   }

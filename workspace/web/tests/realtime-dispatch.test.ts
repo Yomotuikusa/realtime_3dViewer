@@ -4,6 +4,7 @@ import { dispatchServerMessage } from "../src/app/realtime-dispatch";
 import { useAnnotationStore } from "../src/store/annotation";
 import { useCommentsStore } from "../src/store/comments";
 import { useLightingStore } from "../src/store/lighting";
+import { useObjectsStore } from "../src/store/objects";
 import { usePresenceStore } from "../src/store/presence";
 import { useSessionStore } from "../src/store/session";
 
@@ -30,6 +31,7 @@ beforeEach(() => {
   useSessionStore.getState().reset();
   usePresenceStore.getState().reset();
   useLightingStore.getState().reset();
+  useObjectsStore.getState().reset();
 });
 
 describe("realtime dispatch", () => {
@@ -110,22 +112,7 @@ describe("realtime dispatch", () => {
     expect(useSessionStore.getState().selfId).toBeNull();
   });
 
-  it("ignores object visibility and added messages", () => {
-    dispatchServerMessage({ type: "welcome", selfId: "u1", users: [user], strokes: [] });
-    const before = {
-      session: {
-        selfId: useSessionStore.getState().selfId,
-        color: useSessionStore.getState().color,
-        lastError: useSessionStore.getState().lastError,
-      },
-      presence: usePresenceStore.getState().users,
-      annotation: useAnnotationStore.getState().strokes,
-      comments: useCommentsStore.getState().items,
-      lighting: {
-        angles: useLightingStore.getState().angles,
-        origin: useLightingStore.getState().origin,
-      },
-    };
+  it("applies object visibility and added messages", () => {
     const version = {
       id: "v1",
       projectId: "p1",
@@ -135,24 +122,20 @@ describe("realtime dispatch", () => {
       createdAt: 1,
     };
 
-    expect(() => {
-      dispatchServerMessage({ type: "object:visibility", userId: "u2", versionId: "v1", visible: false });
-      dispatchServerMessage({ type: "object:added", version });
-    }).not.toThrow();
-    expect({
-      session: {
-        selfId: useSessionStore.getState().selfId,
-        color: useSessionStore.getState().color,
-        lastError: useSessionStore.getState().lastError,
-      },
-      presence: usePresenceStore.getState().users,
-      annotation: useAnnotationStore.getState().strokes,
-      comments: useCommentsStore.getState().items,
-      lighting: {
-        angles: useLightingStore.getState().angles,
-        origin: useLightingStore.getState().origin,
-      },
-    }).toEqual(before);
+    dispatchServerMessage({ type: "object:visibility", userId: "u2", versionId: "v1", visible: false });
+    expect(useObjectsStore.getState().hiddenIds).toEqual(["v1"]);
+    dispatchServerMessage({ type: "object:added", version });
+    expect(useObjectsStore.getState().objects).toEqual([version]);
+    const before = useObjectsStore.getState();
+    dispatchServerMessage({ type: "object:added", version });
+    expect(useObjectsStore.getState()).toBe(before);
+  });
+
+  it("applies welcome hidden ids and clears them when omitted", () => {
+    dispatchServerMessage({ type: "welcome", selfId: "u1", users: [user], strokes: [], hiddenObjectIds: ["v1"] });
+    expect(useObjectsStore.getState().hiddenIds).toEqual(["v1"]);
+    dispatchServerMessage({ type: "welcome", selfId: "u1", users: [user], strokes: [] });
+    expect(useObjectsStore.getState().hiddenIds).toEqual([]);
   });
 
   it("has the documented initial state and resets to it", () => {
