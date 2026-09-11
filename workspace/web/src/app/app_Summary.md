@@ -12,8 +12,8 @@
 - realtime-dispatch.ts: `ServerMessage` を session / presence / annotation / comments / lighting ストアへ振り分ける入口。`welcome` の共有ライト、presence 更新（camera の焦点距離を含む）、light、stroke、`comment:created` / `comment:updated`、`error` を扱い、`object:visibility` / `object:added` は現段階で no-op とし、未知の型はコンパイル時に検出する
 - useRealtime.ts: 名前決定後の `WsClient` 接続と、open ごとの `join` 送信。`onRealtimeStatus` は session の接続状態を更新し、open 時に lastError を解除する
 - review-stores.ts: レビュー画面のアンマウント時に session / presence / annotation / comments / camera / lighting / playback の7ストアをまとめて初期化する reset 関数（shortcuts ストアは対象外）
-- UploadPage.tsx: トークン CSS で構成したプロジェクト名・`.glb`/`.gltf` のアップロード画面。拡張子と容量を送信前に検査し、`FILE_TOO_LARGE` などのエラーを表示する
-- upload-labels.ts: アップロード画面と NotFound の表示文言、`FILE_TOO_LARGE`、ファイル容量 helper の純粋関数
+- UploadPage.tsx: トークン CSS で構成したプロジェクト名・複数の`.glb`/`.gltf` のアップロード画面。拡張子と合計容量を送信前に検査し、エラーを表示する
+- upload-labels.ts: アップロード画面と NotFound の表示文言、ファイル検証・複数ファイル容量表示 helper の純粋関数
 - upload.css: アップロード画面と NotFound の狭い幅のレイアウト CSS
 - ReviewPage.tsx: プロジェクト取得、レビュー画面の骨格、ロード状態・エラーカード、`.review-stage` とビュー下部タイムラインを含むビューア／サイズ変更可能なサイドパネルのレイアウトを担当する。Canvas に RemoteCameras / RoomStrokes / ReplayStrokes / AnnotationLayer / CommentPickLayer / CommentPins を配置し、`.review-hud` を HUD 差し込み口、`.review-panel__comments` をコメント領域差し込み口として提供し、カメラとライトの変更を realtime 送信へ結線し、入室後だけショートカットを有効にする
 - ReviewHeader.tsx: 接続状態バッジ、入室後の自分の表示名・色、レビュー URL のコピーと失敗時の手動コピー欄を表示し、入室後だけショートカット設定を開くボタンを表示する
@@ -25,7 +25,7 @@
 - routes.ts: `Route`、`parseRoute`、`projectPath`、`navigate`、`useRoute`
 - App.tsx: `App`
 - UploadPage.tsx: `UploadPage`
-- upload-labels.ts: `APP_NAME` など画面文言、`FILE_TOO_LARGE`、`fileHelp`、`fileSummary`
+- upload-labels.ts: `APP_NAME` など画面文言、`FILE_TOO_LARGE`、`NO_FILE_SELECTED`、`UNSUPPORTED_EXTENSION`、`FileLike`、`fileHelp`、`fileSummary`、`validateModelFiles`、`filesSummary`
 - ReviewPage.tsx: `ReviewPage({ projectId })`。`features/layout` の `ResizeHandle` と `useLayoutSize` を使いサイドパネル幅を保存する
 - ReviewHeader.tsx: `ReviewHeader({ projectName, joined, onOpenSettings })`
 - review-labels.ts: `connectionLabel`、`connectionTone`、`copyLabel`、`copyText`、`PANEL_RESIZE_LABEL`、ロード/エラー文言定数
@@ -54,5 +54,5 @@ annotation ストアへ、`light` を lighting ストアへ、`comment:created` 
 - tests/review-labels.test.ts: 接続状態・コピー状態・ロード/エラー文言のテスト
 - tests/review-stores.test.ts: 7つのレビュー用ストアをまとめて初期化する reset の検証
 - tests/routes.test.ts: ルート解析と履歴遷移テスト
-- tests/upload-labels.test.ts: アップロード/NotFound 文言、容量エラー定数、ファイル helper の単位・丸め結果を検証
+- tests/upload-labels.test.ts: アップロード/NotFound 文言、容量エラー定数、複数ファイル検証とファイル helper の単位・丸め結果を検証
 - tests/use-realtime.test.ts: 接続状態、open 時のエラー解除と join、closed 時の非送信を検証

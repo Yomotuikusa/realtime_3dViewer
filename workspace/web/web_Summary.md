@@ -28,7 +28,7 @@ glTF/GLB の 3D レビュー画面を提供する。レビュー画面は表示�
 対応するテストの追加時は同じ Summary の「テスト」を更新する。
 
 ## 共通ファイル
-- src/api/client.ts: REST の URL（各パスセグメントを URI エンコード）、JSON/FormData リクエスト、レスポンス検証、`ApiClientError`
+- src/api/client.ts: REST の URL（各パスセグメントを URI エンコード）、JSON/FormData リクエスト、プロジェクトの複数ファイル作成・版追加、レスポンス検証、`ApiClientError`
 - src/api/ws.ts: `WsClient`、WebSocket URL、接続状態通知、指数バックオフによる再接続
 - src/main.tsx: React アプリのエントリーポイント。tokens → base → controls の順で全体スタイルを読み込む
 - src/styles/tokens.css: 色・文字・間隔・角丸・動き・レイアウトのセマンティックトークン。既存 inline 値を引き継ぎ、`:root` に定義する
@@ -39,10 +39,10 @@ glTF/GLB の 3D レビュー画面を提供する。レビュー画面は表示�
 - vitest.config.ts: Vitest の対象を `tests/**/*.test.{ts,tsx}` に限定する設定(cacheDir は .vite)
 
 ### 公開インターフェイス
-- src/api/client.ts: `ApiClientError`、`RESPONSE_INVALID_MESSAGE`、`modelUrl`、`createProject`、`getProject`、`listComments`、`createComment`、`updateCommentStatus`
+- src/api/client.ts: `ApiClientError`、`RESPONSE_INVALID_MESSAGE`、`modelUrl`、`createProject(name, files)`、`addModelVersion(projectId, file)`、`getProject`、`listComments`、`createComment`、`updateCommentStatus`
 - src/api/ws.ts: `WsClient`、`wsUrl`、`SocketLike`、再接続定数
 
-API クライアントは同一オリジンの `/api/...` を使い、URL の projectId / versionId / commentId を `encodeURIComponent` でエンコードする。2xx 応答を共有 zod スキーマで検証し、成功本文の不一致は `ApiClientError(status, "VALIDATION", RESPONSE_INVALID_MESSAGE)` とする。API エラー本文を解析できる場合は `ApiClientError(status, code, message)`、ネットワーク断や解析不能なエラーは `INTERNAL` とする。
+API クライアントは同一オリジンの `/api/...` を使い、URL の projectId / versionId / commentId を `encodeURIComponent` でエンコードする。`createProject` は FormData に name と files を順番どおり append し、`addModelVersion` は1ファイルを版追加エンドポイントへ送る。2xx 応答を共有 zod スキーマで検証し、成功本文の不一致は `ApiClientError(status, "VALIDATION", RESPONSE_INVALID_MESSAGE)` とする。API エラー本文を解析できる場合は `ApiClientError(status, code, message)`、ネットワーク断や解析不能なエラーは `INTERNAL` とする。
 
 ## 他機能フォルダとの関係
 `@shared/api` の API エラー・入力型・アップロード拡張子と、`@shared/types` の Project/Comment スキーマを利用する。

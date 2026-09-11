@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { CreateCommentInput } from "@shared/api";
 import {
   ApiClientError,
+  addModelVersion,
   createComment,
   createProject,
   getProject,
@@ -129,17 +130,65 @@ describe("API client", () => {
   });
 
   it("uploads a project as FormData without a Content-Type header", async () => {
-    const file = new File(["model"], "robot.glb");
+    const files = [new File(["model"], "robot.glb")];
     fetchMock.mockResolvedValue(response(201, project));
 
-    await expect(createProject("Robot", file)).resolves.toEqual(project);
+    await expect(createProject("Robot", files)).resolves.toEqual(project);
     const [, init] = fetchMock.mock.calls[0] as [string, RequestInit];
     expect(fetchMock).toHaveBeenCalledWith("/api/projects", expect.objectContaining({ method: "POST" }));
     expect(init.headers).toBeUndefined();
     expect(init.body).toBeInstanceOf(FormData);
     const body = init.body as FormData;
     expect(body.get("name")).toBe("Robot");
-    expect(body.get("file")).toBe(file);
+    expect(body.get("file")).toBe(files[0]);
+  });
+
+  it("uploads multiple project files in order", async () => {
+    const files = [new File(["a"], "a.glb"), new File(["b"], "b.gltf")];
+    fetchMock.mockResolvedValue(response(201, project));
+
+    await expect(createProject("Robot", files)).resolves.toEqual(project);
+    const [, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+    const body = init.body as FormData;
+    expect(body.getAll("file")).toEqual(files);
+    expect(body.get("name")).toBe("Robot");
+  });
+
+  it("rejects a project response without versions", async () => {
+    fetchMock.mockResolvedValue(response(201, { ...project, versions: undefined }));
+
+    await expect(createProject("Robot", [new File(["model"], "robot.glb")])).rejects.toEqual(
+      new ApiClientError(201, "VALIDATION", RESPONSE_INVALID_MESSAGE),
+    );
+  });
+
+  it("adds one model version and validates the response", async () => {
+    const file = new File(["model"], "second.glb");
+    const version = {
+      id: "version-2",
+      projectId: "project-1",
+      number: 2,
+      fileName: "second.glb",
+      byteSize: 5,
+      createdAt: 1_700_000_000_001,
+    };
+    fetchMock.mockResolvedValue(response(201, version));
+
+    await expect(addModelVersion("p 1", file)).resolves.toEqual(version);
+    const [, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+    expect(fetchMock).toHaveBeenCalledWith(
+      "/api/projects/p%201/versions",
+      expect.objectContaining({ method: "POST" }),
+    );
+    expect((init.body as FormData).get("file")).toBe(file);
+  });
+
+  it("maps an add-version not-found error", async () => {
+    fetchMock.mockResolvedValue(response(404, { error: { code: "NOT_FOUND", message: "missing" } }));
+
+    await expect(addModelVersion("p1", new File(["model"], "robot.glb"))).rejects.toEqual(
+      new ApiClientError(404, "NOT_FOUND", "missing"),
+    );
   });
 
   it("lists comments with and without a status query", async () => {
