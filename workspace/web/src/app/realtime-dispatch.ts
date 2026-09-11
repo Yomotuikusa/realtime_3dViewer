@@ -2,6 +2,7 @@ import type { ServerMessage } from "@shared/protocol";
 import { useAnnotationStore } from "../store/annotation";
 import { useCommentsStore } from "../store/comments";
 import { useLightingStore } from "../store/lighting";
+import { useObjectsStore } from "../store/objects";
 import { usePresenceStore } from "../store/presence";
 import { useSessionStore } from "../store/session";
 
@@ -11,6 +12,7 @@ export function dispatchServerMessage(msg: ServerMessage): void {
   const annotation = useAnnotationStore.getState();
   const comments = useCommentsStore.getState();
   const lighting = useLightingStore.getState();
+  const objects = useObjectsStore.getState();
 
   switch (msg.type) {
     case "welcome": {
@@ -21,6 +23,7 @@ export function dispatchServerMessage(msg: ServerMessage): void {
       if (msg.light !== undefined) {
         lighting.applyRemote(msg.light);
       }
+      objects.applyWelcome(msg.hiddenObjectIds ?? []);
       break;
     }
     case "user:joined":
@@ -49,7 +52,10 @@ export function dispatchServerMessage(msg: ServerMessage): void {
       comments.upsert(msg.comment);
       break;
     case "object:visibility":
+      objects.setVisible(msg.versionId, msg.visible);
+      break;
     case "object:added":
+      objects.append(msg.version);
       break;
     case "error":
       session.setLastError(`${msg.code}: ${msg.message}`);

@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type CSSProperties, type ReactElement } from "react";
 import type { Project } from "@shared/types";
-import { ApiClientError, getProject, modelUrl } from "../api/client";
+import { ApiClientError, getProject } from "../api/client";
 import { AnnotationLayer } from "../features/annotation/AnnotationLayer";
 import { RoomStrokes } from "../features/annotation/RoomStrokes";
 import { CommentComposer } from "../features/comments/CommentComposer";
@@ -28,6 +28,7 @@ import {
   panelWidthMax,
 } from "../features/layout/resize";
 import { useSessionStore } from "../store/session";
+import { useObjectsStore } from "../store/objects";
 import { ErrorBoundary } from "./ErrorBoundary";
 import { JoinDialog } from "./JoinDialog";
 import { ReviewHeader } from "./ReviewHeader";
@@ -81,6 +82,7 @@ export function ReviewPage({ projectId }: { projectId: string }): ReactElement {
     void getProject(projectId)
       .then((project) => {
         if (!cancelled) {
+          useObjectsStore.getState().setObjects(project.versions);
           setState({ status: "ready", projectId, project });
         }
       })
@@ -121,7 +123,6 @@ export function ReviewPage({ projectId }: { projectId: string }): ReactElement {
     );
   }
 
-  const src = modelUrl(projectId, state.project.latestVersion.id);
   const handleJoin = (name: string) => {
     useSessionStore.getState().setName(name);
     setJoinName(name);
@@ -146,7 +147,7 @@ export function ReviewPage({ projectId }: { projectId: string }): ReactElement {
               <ViewerHud send={realtime.send} />
             </div>
             <ErrorBoundary
-              key={src}
+              key={projectId}
               fallback={(
                 <ErrorCard
                   message={MODEL_LOAD_FAILED}
@@ -154,7 +155,7 @@ export function ReviewPage({ projectId }: { projectId: string }): ReactElement {
                 />
               )}
             >
-              <ViewerCanvas modelSrc={src}>
+              <ViewerCanvas>
                 <RemoteCameras />
                 <RoomStrokes />
                 <ReplayStrokes />
