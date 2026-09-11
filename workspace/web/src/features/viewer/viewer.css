@@ -165,7 +165,7 @@
   flex: 0 0 auto;
   align-self: stretch;
   margin-block: calc(var(--space-2) * -1);
-  border-radius: 0 0 calc(var(--radius-md) - 1px) 0;
+  border-radius: 0 0 0 calc(var(--radius-md) - 1px);
   background: var(--user-color, var(--color-accent));
 }
 
