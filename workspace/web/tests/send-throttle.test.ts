@@ -164,4 +164,30 @@ describe("createSendThrottle", () => {
     expect(send).not.toHaveBeenCalled();
     expect(clone).toHaveBeenCalled();
   });
+
+  it("supports null as a retained value", () => {
+    const clock = createFakeClock();
+    const send = vi.fn(() => true);
+    const throttle = createSendThrottle<string | null>({
+      send,
+      now: clock.now,
+      schedule: clock.schedule,
+      equals: (left, right) => left === right,
+      clone: (value) => value,
+      intervalMs: 50,
+    });
+
+    throttle.update(null);
+    expect(send).toHaveBeenCalledOnce();
+    expect(send).toHaveBeenLastCalledWith(null);
+    clock.advance(20);
+    throttle.update("a");
+    clock.advance(30);
+    clock.advance(20);
+    throttle.update(null);
+    clock.advance(30);
+
+    expect(send).toHaveBeenCalledTimes(3);
+    expect(send).toHaveBeenLastCalledWith(null);
+  });
 });
