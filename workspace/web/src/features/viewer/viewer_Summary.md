@@ -12,7 +12,7 @@ Canvas、モデル、カメラ、ライティング、焦点距離、HUD、ポ�
 - FocalLengthSlider.tsx: HUD 内で焦点距離を 14〜300mm の範囲で変更するスライダー。ラベルと値を上段、入力を下段に配置する
 - focal-length.ts: 固定センサー高を使う焦点距離／垂直画角の換算と既定画角
 - CameraMenu.tsx: 焦点距離、枠と影を持つ十字配置の既定視点・全体表示・視点リセットを3ブロックに分けて描画するカメラメニュー本体。操作後もメニューを閉じない
-- ViewerHud.tsx: ペン／コメントの toggle ボタンとペン道具を左上に、最初から展開した半透明カメラパネルを右上に表示し、CameraMenu、LightGizmo、Follow 中の参加者色フレームと上辺タブ、描画基準、操作ヒントを各ストアと keymap に接続する。メニュー内の Escape はメニューだけを閉じる
+- ViewerHud.tsx: ペン／コメントの toggle ボタンとペン道具を左上に、最初から展開した半透明カメラパネルを右上に表示し、CameraMenu、LightGizmo、Follow 中の参加者色フレームと参加者色の縦帯・不透明な面の上辺タブ、描画基準、操作ヒントを各ストアと keymap に接続する。メニュー内の Escape はメニューだけを閉じる
 - HudMenu.tsx: カメラのトグルボタンと、開いているときだけ表示する `role="group"` パネルを描画する制御コンポーネント。開閉用の chevron を表示し、Escape の閉じ処理を親へ通知する
 - hud-menu.ts: HUD メニューの ID・順序・表示名、初期表示メニューとトグルの純粋な状態遷移
 - hud-labels.ts: ツールモード・色・Follow・視点操作・ライトギズモ・焦点距離・十字中央／視点グループ・透過表示・描画基準・ヒントの日本語文言と純粋な判定関数
@@ -30,7 +30,7 @@ Canvas、モデル、カメラ、ライティング、焦点距離、HUD、ポ�
 - viewer-pointer.ts: controls.domElement へ Maya 式の pointer、contextmenu、マウス抑止イベントを接続し、右ドラッグ dolly／Shift+右ドラッグのライト回転と後始末を提供する
 - camera-throttle.ts: `CameraPayload`（カメラと焦点距離）を最新値だけ保持し、`payloadEquals` で両方を比較しながら送信成功時刻から 50ms ごとの先頭送信と窓明けトレーリング送信を行う。送信失敗は未送信としてタイマーまたは次の更新で再試行し、破棄時に保留送信をキャンセルする
 - useCameraBroadcast.ts: `selfCamera` または焦点距離の変更を `camera-throttle` へ渡し、`camera` メッセージへ焦点距離を載せる。送信成功時に自分の presence カメラと焦点距離も更新する。`shouldSendCamera` は従来の判定インターフェイスとして公開する
-- viewer.css: HUD のモード選択、枠線と影付きの右上カメラメニュー、焦点距離スライダー、カメラメニューのブロック区切りと十字配置、Follow 中の参加者色フレームと上辺タブ、操作ヒント、160px の枠を持たないライトギズモのプレーン CSS
+- viewer.css: HUD のモード選択、枠線と影付きの右上カメラメニュー、焦点距離スライダー、カメラメニューのブロック区切りと十字配置、Follow 中の参加者色フレームと参加者色の縦帯・不透明な面の上辺タブ、操作ヒント、160px の枠を持たないライトギズモのプレーン CSS
 
 ## 公開インターフェイス
 - ViewerCanvas.tsx: `ViewerCanvas({ modelSrc, children? })`

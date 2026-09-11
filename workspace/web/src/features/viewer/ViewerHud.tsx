@@ -70,9 +70,9 @@ export function ViewerHud({ send }: { send: (msg: ClientMessage) => boolean }): 
         <div className="hud-following" style={{ "--user-color": followingUser?.color } as CSSProperties}>
           <div className="hud-follow-frame" aria-hidden="true" />
           <div className="hud-follow" role="status">
-            <i className="hud-follow__dot" aria-hidden="true" />
+            <i className="hud-follow__bar" aria-hidden="true" />
             {followingLabel(followingUser?.name ?? "")}
-            <button className="btn btn--quiet" type="button" onClick={unfollow}>{UNFOLLOW_LABEL}</button>
+            <button className="btn hud-follow__unfollow" type="button" onClick={unfollow}>{UNFOLLOW_LABEL}</button>
           </div>
         </div>
       )}
