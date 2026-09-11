@@ -40,6 +40,8 @@ interface Room {
   strokes: Map<string, Stroke>;
   /** ルームで共有するライトの向き。誰も変えていなければ null */
   light: LightAngles | null;
+  /** 非表示にされたオブジェクトの versionId。挿入順を保つ */
+  hiddenObjects: Set<string>;
 }
 
 function defaultGuestDigits(): string {
@@ -130,6 +132,8 @@ export class RoomHub {
         return [{ target: "others", msg: { type: "light", userId: connId, angles: { ...angles } } }];
       }
       case "object:visibility":
+        if (msg.visible) room.hiddenObjects.delete(msg.versionId);
+        else room.hiddenObjects.add(msg.versionId);
         return [{
           target: "others",
           msg: { type: "object:visibility", userId: connId, versionId: msg.versionId, visible: msg.visible },
@@ -165,6 +169,11 @@ export class RoomHub {
     return room ? [...room.strokes.values()].map(copyStroke) : [];
   }
 
+  hiddenObjectsIn(projectId: string): string[] {
+    const room = this.rooms.get(projectId);
+    return room ? [...room.hiddenObjects] : [];
+  }
+
   private join(connId: string, connection: Connection, name: string): Outbound[] {
     if (connection.user) {
       return [{
@@ -185,6 +194,7 @@ export class RoomHub {
       users: new Map<string, PresenceUser>(),
       strokes: new Map<string, Stroke>(),
       light: null,
+      hiddenObjects: new Set<string>(),
     };
     this.rooms.set(connection.projectId, room);
 
@@ -200,12 +210,18 @@ export class RoomHub {
 
     const users = [...room.users.values()].map(copyUser);
     const strokes = [...room.strokes.values()].map(copyStroke);
+    const hiddenObjectIds = [...room.hiddenObjects];
     return [
       {
         target: "self",
-        msg: room.light === null
-          ? { type: "welcome", selfId: connId, users, strokes }
-          : { type: "welcome", selfId: connId, users, strokes, light: { ...room.light } },
+        msg: {
+          type: "welcome",
+          selfId: connId,
+          users,
+          strokes,
+          ...(room.light === null ? {} : { light: { ...room.light } }),
+          ...(hiddenObjectIds.length === 0 ? {} : { hiddenObjectIds }),
+        },
       },
       { target: "others", msg: { type: "user:joined", user: copyUser(user) } },
     ];
