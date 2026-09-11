@@ -11,6 +11,8 @@ describe("model scenes store", () => {
     expect(useModelScenesStore.getState().scenes).toEqual({});
     expect(selectModelScene(useModelScenesStore.getState().scenes, null)).toBeNull();
     expect(selectModelScene(useModelScenesStore.getState().scenes, "v1")).toBeNull();
+    expect(selectModelScene(useModelScenesStore.getState().scenes, "toString")).toBeNull();
+    expect(selectModelScene(useModelScenesStore.getState().scenes, "constructor")).toBeNull();
 
     useModelScenesStore.getState().register("v1", scene);
     expect(useModelScenesStore.getState().scenes.v1).toBe(scene);

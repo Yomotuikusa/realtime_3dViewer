@@ -15,13 +15,15 @@ export const useModelScenesStore: UseBoundStore<StoreApi<ModelScenesState>> = cr
   scenes: {},
 
   register(versionId, scene) {
-    if (get().scenes[versionId] === scene) return;
-    set({ scenes: { ...get().scenes, [versionId]: scene } });
+    const scenes = get().scenes;
+    if (Object.hasOwn(scenes, versionId) && scenes[versionId] === scene) return;
+    set({ scenes: { ...scenes, [versionId]: scene } });
   },
 
   unregister(versionId, scene) {
-    if (get().scenes[versionId] !== scene) return;
-    const { [versionId]: removed, ...remaining } = get().scenes;
+    const scenes = get().scenes;
+    if (!Object.hasOwn(scenes, versionId) || scenes[versionId] !== scene) return;
+    const { [versionId]: removed, ...remaining } = scenes;
     void removed;
     set({ scenes: remaining });
   },
