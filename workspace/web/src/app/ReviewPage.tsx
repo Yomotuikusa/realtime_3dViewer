@@ -1,4 +1,4 @@
-import { useEffect, useState, type ReactElement } from "react";
+import { useEffect, useRef, useState, type CSSProperties, type ReactElement } from "react";
 import type { Project } from "@shared/types";
 import { ApiClientError, getProject, modelUrl } from "../api/client";
 import { AnnotationLayer } from "../features/annotation/AnnotationLayer";
@@ -18,13 +18,28 @@ import { useCameraBroadcast } from "../features/viewer/useCameraBroadcast";
 import { useLightBroadcast } from "../features/viewer/useLightBroadcast";
 import { ShortcutSettings } from "../features/shortcuts/ShortcutSettings";
 import { useShortcuts } from "../features/shortcuts/useShortcuts";
+import { ResizeHandle } from "../features/layout/ResizeHandle";
+import { useElementSize } from "../features/layout/useElementSize";
+import { useLayoutSize } from "../features/layout/useLayoutSize";
+import {
+  clampSize,
+  PANEL_WIDTH_DEFAULT_PX,
+  PANEL_WIDTH_MIN_PX,
+  panelWidthMax,
+} from "../features/layout/resize";
 import { useSessionStore } from "../store/session";
 import { ErrorBoundary } from "./ErrorBoundary";
 import { JoinDialog } from "./JoinDialog";
 import { ReviewHeader } from "./ReviewHeader";
 import { resetReviewStores } from "./review-stores";
 import { useRealtime } from "./useRealtime";
-import { LOADING_MESSAGE, MODEL_LOAD_FAILED, PROJECT_LOAD_FAILED, RELOAD_LABEL } from "./review-labels";
+import {
+  LOADING_MESSAGE,
+  MODEL_LOAD_FAILED,
+  PANEL_RESIZE_LABEL,
+  PROJECT_LOAD_FAILED,
+  RELOAD_LABEL,
+} from "./review-labels";
 import "./review.css";
 
 type ReviewState =
@@ -46,6 +61,11 @@ export function ReviewPage({ projectId }: { projectId: string }): ReactElement {
   const [joinName, setJoinName] = useState<string | null>(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [state, setState] = useState<ReviewState>({ status: "loading", projectId });
+  const bodyRef = useRef<HTMLDivElement>(null);
+  const bodySize = useElementSize(bodyRef);
+  const [panelWidth, setPanelWidth] = useLayoutSize("panelWidth");
+  const maxPanelWidth = panelWidthMax(bodySize.width);
+  const effectivePanelWidth = clampSize(panelWidth, PANEL_WIDTH_MIN_PX, maxPanelWidth);
   useCommentReplay();
   const realtime = useRealtime(projectId, joinName);
   useCameraBroadcast(realtime.send);
@@ -115,7 +135,11 @@ export function ReviewPage({ projectId }: { projectId: string }): ReactElement {
         onOpenSettings={() => setSettingsOpen(true)}
       />
       {lastError && <p className="alert review-page__alert" role="alert">{lastError}</p>}
-      <div className="review-body">
+      <div
+        ref={bodyRef}
+        className="review-body"
+        style={{ "--panel-width": effectivePanelWidth + "px" } as CSSProperties}
+      >
         <section className="review-viewer" aria-label="3D ビューア">
           <div className="review-stage">
             <div className="review-hud">
@@ -144,6 +168,16 @@ export function ReviewPage({ projectId }: { projectId: string }): ReactElement {
           {joinName === null && <JoinDialog onJoin={handleJoin} />}
           {settingsOpen && <ShortcutSettings onClose={() => setSettingsOpen(false)} />}
         </section>
+        <ResizeHandle
+          axis="x"
+          className="review-body__resize"
+          value={effectivePanelWidth}
+          min={PANEL_WIDTH_MIN_PX}
+          max={maxPanelWidth}
+          defaultValue={PANEL_WIDTH_DEFAULT_PX}
+          label={PANEL_RESIZE_LABEL}
+          onChange={setPanelWidth}
+        />
         <aside className="review-panel" aria-label="サイドパネル">
           <PresenceList />
           <section className="review-panel__comments" aria-label="コメント">

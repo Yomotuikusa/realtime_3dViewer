@@ -15,10 +15,10 @@
 - UploadPage.tsx: トークン CSS で構成したプロジェクト名・`.glb`/`.gltf` のアップロード画面。拡張子と容量を送信前に検査し、`FILE_TOO_LARGE` などのエラーを表示する
 - upload-labels.ts: アップロード画面と NotFound の表示文言、`FILE_TOO_LARGE`、ファイル容量 helper の純粋関数
 - upload.css: アップロード画面と NotFound の狭い幅のレイアウト CSS
-- ReviewPage.tsx: プロジェクト取得、レビュー画面の骨格、ロード状態・エラーカード、`.review-stage` とビュー下部タイムラインを含むビューア／サイドパネルのレイアウトを担当する。Canvas に RemoteCameras / RoomStrokes / ReplayStrokes / AnnotationLayer / CommentPickLayer / CommentPins を配置し、`.review-hud` を HUD 差し込み口、`.review-panel__comments` をコメント領域差し込み口として提供し、カメラとライトの変更を realtime 送信へ結線し、入室後だけショートカットを有効にする
+- ReviewPage.tsx: プロジェクト取得、レビュー画面の骨格、ロード状態・エラーカード、`.review-stage` とビュー下部タイムラインを含むビューア／サイズ変更可能なサイドパネルのレイアウトを担当する。Canvas に RemoteCameras / RoomStrokes / ReplayStrokes / AnnotationLayer / CommentPickLayer / CommentPins を配置し、`.review-hud` を HUD 差し込み口、`.review-panel__comments` をコメント領域差し込み口として提供し、カメラとライトの変更を realtime 送信へ結線し、入室後だけショートカットを有効にする
 - ReviewHeader.tsx: 接続状態バッジ、入室後の自分の表示名・色、レビュー URL のコピーと失敗時の手動コピー欄を表示し、入室後だけショートカット設定を開くボタンを表示する
-- review-labels.ts: 接続状態・コピー状態・ロード/エラー文言を定義する JSX 非依存の純粋関数と定数
-- review.css: レビュー画面のヘッダ、`.review-stage` を含むビューア/HUD、入室 backdrop/dialog、サイドパネル、ロード/エラー状態のプレーン CSS
+- review-labels.ts: 接続状態・コピー状態・ロード/エラー文言、サイドパネル幅ハンドルのラベルを定義する JSX 非依存の純粋関数と定数
+- review.css: レビュー画面のヘッダ、`.review-stage` を含むビューア/HUD、入室 backdrop/dialog、サイドパネルと境界ハンドル、ロード/エラー状態のプレーン CSS
 - ErrorBoundary.tsx: React/three の描画例外を捕捉し、フォールバックを表示
 
 ## 公開インターフェイス
@@ -26,9 +26,9 @@
 - App.tsx: `App`
 - UploadPage.tsx: `UploadPage`
 - upload-labels.ts: `APP_NAME` など画面文言、`FILE_TOO_LARGE`、`fileHelp`、`fileSummary`
-- ReviewPage.tsx: `ReviewPage({ projectId })`
+- ReviewPage.tsx: `ReviewPage({ projectId })`。`features/layout` の `ResizeHandle` と `useLayoutSize` を使いサイドパネル幅を保存する
 - ReviewHeader.tsx: `ReviewHeader({ projectName, joined, onOpenSettings })`
-- review-labels.ts: `connectionLabel`、`connectionTone`、`copyLabel`、`copyText`、ロード/エラー文言定数
+- review-labels.ts: `connectionLabel`、`connectionTone`、`copyLabel`、`copyText`、`PANEL_RESIZE_LABEL`、ロード/エラー文言定数
 - display-name.ts: `loadStoredName`、`saveName`、`guestName`、`resolveDisplayName`
 - JoinDialog.tsx: `JoinDialog({ onJoin })`
 - useRealtime.ts: `useRealtime(projectId, name)`、`onRealtimeStatus`、`Realtime`
