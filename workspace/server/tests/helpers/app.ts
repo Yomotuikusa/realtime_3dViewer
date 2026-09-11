@@ -78,6 +78,7 @@ export function seedProject(
     name: "Project",
     createdAt: 1700000000000,
     latestVersion: version,
+    versions: [version],
   };
   return { project, version };
 }

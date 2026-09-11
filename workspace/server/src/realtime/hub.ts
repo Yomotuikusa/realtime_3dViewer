@@ -129,6 +129,11 @@ export class RoomHub {
         room.light = angles;
         return [{ target: "others", msg: { type: "light", userId: connId, angles: { ...angles } } }];
       }
+      case "object:visibility":
+        return [{
+          target: "others",
+          msg: { type: "object:visibility", userId: connId, versionId: msg.versionId, visible: msg.visible },
+        }];
       case "stroke:add":
         return this.addStroke(room, connId, msg.stroke);
       case "stroke:remove":

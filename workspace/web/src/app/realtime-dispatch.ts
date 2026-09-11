@@ -48,6 +48,9 @@ export function dispatchServerMessage(msg: ServerMessage): void {
     case "comment:updated":
       comments.upsert(msg.comment);
       break;
+    case "object:visibility":
+    case "object:added":
+      break;
     case "error":
       session.setLastError(`${msg.code}: ${msg.message}`);
       break;

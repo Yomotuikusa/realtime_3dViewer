@@ -60,6 +60,19 @@ export function insertModelVersion(
   return { ...input, number };
 }
 
+/** Return every model version for a project in ascending version-number order. */
+export function listModelVersions(db: Db, projectId: string): ModelVersion[] {
+  const versions = db
+    .prepare(
+      `SELECT id, project_id, number, file_name, byte_size, created_at
+       FROM model_versions
+       WHERE project_id = ?
+       ORDER BY number ASC`,
+    )
+    .all(projectId) as unknown as VersionRow[];
+  return versions.map(toModelVersion);
+}
+
 export function findProject(db: Db, projectId: string): Project | null {
   const project = db
     .prepare("SELECT id, name, created_at FROM projects WHERE id = ?")
@@ -68,16 +81,8 @@ export function findProject(db: Db, projectId: string): Project | null {
     return null;
   }
 
-  const version = db
-    .prepare(
-      `SELECT id, project_id, number, file_name, byte_size, created_at
-       FROM model_versions
-       WHERE project_id = ?
-       ORDER BY number DESC
-       LIMIT 1`,
-    )
-    .get(projectId) as VersionRow | undefined;
-  if (!version) {
+  const versions = listModelVersions(db, projectId);
+  if (versions.length === 0) {
     return null;
   }
 
@@ -85,7 +90,8 @@ export function findProject(db: Db, projectId: string): Project | null {
     id: project.id,
     name: project.name,
     createdAt: project.created_at,
-    latestVersion: toModelVersion(version),
+    latestVersion: versions[versions.length - 1]!,
+    versions,
   };
 }
 

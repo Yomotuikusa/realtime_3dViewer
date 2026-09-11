@@ -11,7 +11,7 @@ server の基盤。本番は `npm run build && npm run start` で起動する。
 - `src/errors.ts`: `HttpError` と未知エラーを API エラー応答へ変換する。
 - `src/db/connection.ts`: `node:sqlite` の接続、PRAGMA、スキーマ適用、トランザクション。
 - `src/db/schema.sql`: projects、model_versions、comments とコメント検索用 index の DDL。
-- `src/db/projects.ts`: projects / model_versions の登録と検索、および行の型変換。
+- `src/db/projects.ts`: projects / model_versions の登録、全版の番号順一覧と検索、および行の型変換。
 - `src/db/comments.ts`: コメントの登録、project 単位の一覧、status 更新。JSON 列と
   shared の `Comment` の相互変換を担う。
 - `src/storage/files.ts`: `dataDir/uploads/<versionId>.glb` への一時ファイル経由の非同期保存・削除。
@@ -29,6 +29,7 @@ server の基盤。本番は `npm run build && npm run start` で起動する。
   以外は後段へ渡し、字句解決と realpath の両方で root 外への traversal / symlink 脱出を拒否する。
 - `src/realtime/hub.ts`: `ws` 非依存のインメモリ RoomHub。接続・join 済み Presence、カメラ、
   ルーム共有ライト、線の状態を project 単位で保持し、camera メッセージの `focalLength` は参加者ごとに保持する。
+  `object:visibility` は状態を持たず、送信元以外へ中継する。
   未指定の camera でも直前の値を保って中継し、`welcome` / `user:joined` / `usersIn` にも載せる。
   接続ごとの配信先を `Outbound` で返す。接続数は
   `MAX_CONNECTIONS = 1000`、ルーム数は `MAX_ROOMS = 200`、線は1ルームあたり
@@ -54,7 +55,7 @@ server の基盤。本番は `npm run build && npm run start` で起動する。
 - `tests/routes-static.test.ts`: Content-Type、静的ファイル、キャッシュ、SPA フォールバック、
   HEAD、API 非横取り、パストラバーサル、未存在 root のテスト。
 - `tests/errors.test.ts`: HTTP / Zod / 未知エラーの応答変換テスト。
-- `tests/db-projects.test.ts`: SQLite 接続、スキーマ、トランザクション、projects 層のテスト。
+- `tests/db-projects.test.ts`: SQLite 接続、スキーマ、トランザクション、projects 層の全版一覧・検索テスト。
 - `tests/db-comments.test.ts`: comments 層の JSON 往復、FK、一覧順序・status 絞り込み、
   project スコープ、status トグルのテスト。
 - `tests/storage-files.test.ts`: ファイル保存、上書き、rename 失敗時の tmp 残留防止、削除のテスト。
@@ -74,6 +75,7 @@ server の基盤。本番は `npm run build && npm run start` で起動する。
 - `tests/realtime-hub-focal.test.ts`: RoomHub の camera `focalLength` の保持・中継、Presence への
   反映、未指定時のキー省略、切断・再join、stroke との独立性を検証する。
 - `tests/realtime-hub-light.test.ts`: RoomHub のライトの中継、後勝ち保持、welcome への反映、値の複製、ルーム分離・削除を検証する。
+- `tests/realtime-hub-objects.test.ts`: RoomHub のオブジェクト可視性中継、未参加接続の無視、状態を welcome に保持しないことを検証する。
 - `tests/realtime-guards.test.ts`: project / Origin / 接続数 / ルーム数 / payload の接続ガードと、
   stroke 所有者検証・上限内の大きな stroke のテスト。
 - `tsconfig.json`: 型検査設定(../tsconfig.base.json を継承。`@shared/*` は shared/src を指す)。
@@ -84,7 +86,7 @@ server の基盤。本番は `npm run build && npm run start` で起動する。
 - `HttpError` / `toErrorResponse`: API のエラーコード・HTTP ステータス・メッセージを統一する。
 - `openDb` / `migrate` / `withTransaction`: SQLite 接続とトランザクションを管理する。
 - `insertProject` / `insertModelVersion`: プロジェクトと版を登録する。
-- `findProject` / `findModelVersion`: shared の `Project` / `ModelVersion` へ変換して検索する。
+- `listModelVersions` / `findProject` / `findModelVersion`: 全版を番号昇順で列挙し、shared の `Project` / `ModelVersion` へ変換して検索する。
 - `insertComment`: `NewComment` を status `open` として登録し、`Comment` を返す。
 - `listComments`: project 単位でコメントを順序付き一覧する。
 - `updateCommentStatus`: project と comment を指定して status と更新時刻を変更する。
@@ -111,7 +113,8 @@ server の基盤。本番は `npm run build && npm run start` で起動する。
   camera の `focalLength` は参加者単位で最後に指定された値を保持し、未指定の camera 中継でも
   その値を維持する。未指定の参加者はキーを持たず、保持値は `welcome` / `user:joined` /
   `usersIn` の Presence に反映される。`light` はルーム単位で最後に受けた有限角度を保持し、
-  `welcome` に任意で載せ、light イベントとして送信元以外へ中継する。
+  `welcome` に任意で載せ、light イベントとして送信元以外へ中継する。`object:visibility` は
+  状態を保存せず送信元以外へ中継する。
   `Outbound.target` は `self` (送信元のみ)、`others` (送信元以外)、`all` (ルーム全員) を表す。
   `PRESENCE_PALETTE` は8色で、ルーム内の未使用色をjoin順に割り当て、全色使用時はサイズの剰余で
   再利用する。`MAX_ROOM_STROKES = 2000` 本まで保持し、同じIDの追加は所有者自身による場合だけ

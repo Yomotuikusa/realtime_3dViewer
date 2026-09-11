@@ -39,6 +39,7 @@ describe("realtime dispatch", () => {
       selfId: "u1",
       users: [{ id: "u1", name: "Rin", color: "#f00", camera: null }, user],
       strokes: [stroke],
+      hiddenObjectIds: ["v1"],
     });
 
     expect(useSessionStore.getState().selfId).toBe("u1");
@@ -107,6 +108,51 @@ describe("realtime dispatch", () => {
     };
     expect(() => dispatchServerMessage(message)).not.toThrow();
     expect(useSessionStore.getState().selfId).toBeNull();
+  });
+
+  it("ignores object visibility and added messages", () => {
+    dispatchServerMessage({ type: "welcome", selfId: "u1", users: [user], strokes: [] });
+    const before = {
+      session: {
+        selfId: useSessionStore.getState().selfId,
+        color: useSessionStore.getState().color,
+        lastError: useSessionStore.getState().lastError,
+      },
+      presence: usePresenceStore.getState().users,
+      annotation: useAnnotationStore.getState().strokes,
+      comments: useCommentsStore.getState().items,
+      lighting: {
+        angles: useLightingStore.getState().angles,
+        origin: useLightingStore.getState().origin,
+      },
+    };
+    const version = {
+      id: "v1",
+      projectId: "p1",
+      number: 1,
+      fileName: "model.glb",
+      byteSize: 1,
+      createdAt: 1,
+    };
+
+    expect(() => {
+      dispatchServerMessage({ type: "object:visibility", userId: "u2", versionId: "v1", visible: false });
+      dispatchServerMessage({ type: "object:added", version });
+    }).not.toThrow();
+    expect({
+      session: {
+        selfId: useSessionStore.getState().selfId,
+        color: useSessionStore.getState().color,
+        lastError: useSessionStore.getState().lastError,
+      },
+      presence: usePresenceStore.getState().users,
+      annotation: useAnnotationStore.getState().strokes,
+      comments: useCommentsStore.getState().items,
+      lighting: {
+        angles: useLightingStore.getState().angles,
+        origin: useLightingStore.getState().origin,
+      },
+    }).toEqual(before);
   });
 
   it("has the documented initial state and resets to it", () => {

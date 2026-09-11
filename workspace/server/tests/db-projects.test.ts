@@ -7,6 +7,7 @@ import {
   findProject,
   insertModelVersion,
   insertProject,
+  listModelVersions,
 } from "../src/db/projects";
 import { makeTmpDir, removeTmpDir } from "./helpers/tmp";
 
@@ -83,7 +84,7 @@ describe("projects database layer", () => {
     db.close();
   });
 
-  it("assigns increasing version numbers and finds the latest version", () => {
+  it("assigns increasing version numbers and lists all versions in order", () => {
     const db = openDb(":memory:");
     insertProject(db, { id: "p1", name: "Project", createdAt: 10 });
     const first = insertModelVersion(db, {
@@ -110,12 +111,32 @@ describe("projects database layer", () => {
       createdAt: 11,
     });
     expect(second.number).toBe(2);
+    expect(listModelVersions(db, "p1")).toEqual([first, second]);
+    expect(listModelVersions(db, "missing")).toEqual([]);
     expect(findProject(db, "p1")).toEqual({
       id: "p1",
       name: "Project",
       createdAt: 10,
       latestVersion: second,
+      versions: [first, second],
     });
+    db.close();
+  });
+
+  it("lists three versions by ascending number", () => {
+    const db = openDb(":memory:");
+    insertProject(db, { id: "p1", name: "Project", createdAt: 10 });
+    for (const id of ["v1", "v2", "v3"]) {
+      insertModelVersion(db, {
+        id,
+        projectId: "p1",
+        fileName: `${id}.glb`,
+        byteSize: 1,
+        createdAt: 10,
+      });
+    }
+
+    expect(listModelVersions(db, "p1").map((version) => version.id)).toEqual(["v1", "v2", "v3"]);
     db.close();
   });
 

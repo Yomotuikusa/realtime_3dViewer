@@ -4,11 +4,13 @@ import {
   CommentSchema,
   FocalLengthSchema,
   LightAnglesSchema,
+  ModelVersionSchema,
   PresenceUserSchema,
   StrokeSchema,
   type CameraState,
   type Comment,
   type LightAngles,
+  type ModelVersion,
   type PresenceUser,
   type Stroke,
 } from "./types";
@@ -24,10 +26,20 @@ export type ClientMessage =
   | { type: "light"; angles: LightAngles }
   | { type: "stroke:add"; stroke: Stroke }
   | { type: "stroke:remove"; strokeId: string }
-  | { type: "stroke:clear" };
+  | { type: "stroke:clear" }
+  /** 自分が versionId のオブジェクトの表示・非表示を切り替えた */
+  | { type: "object:visibility"; versionId: string; visible: boolean };
 
 export type ServerMessage =
-  | { type: "welcome"; selfId: string; users: PresenceUser[]; strokes: Stroke[]; light?: LightAngles }
+  | {
+      type: "welcome";
+      selfId: string;
+      users: PresenceUser[];
+      strokes: Stroke[];
+      light?: LightAngles;
+      /** ルームで非表示になっているオブジェクトの versionId。空なら省略される */
+      hiddenObjectIds?: string[];
+    }
   | { type: "user:joined"; user: PresenceUser }
   | { type: "user:left"; userId: string }
   | { type: "camera"; userId: string; camera: CameraState; focalLength?: number }
@@ -37,6 +49,10 @@ export type ServerMessage =
   | { type: "stroke:clear"; userId: string }
   | { type: "comment:created"; comment: Comment }
   | { type: "comment:updated"; comment: Comment }
+  /** userId が versionId の表示・非表示を切り替えた(送信元以外へ中継) */
+  | { type: "object:visibility"; userId: string; versionId: string; visible: boolean }
+  /** REST でオブジェクトが追加された(ルーム全員へ配信) */
+  | { type: "object:added"; version: ModelVersion }
   | { type: "error"; code: string; message: string };
 
 const IdSchema = z.string().min(1);
@@ -44,10 +60,11 @@ const IdSchema = z.string().min(1);
 export const ClientMessageSchema = z.discriminatedUnion("type", [
   z.object({ type: z.literal("join"), name: z.string().max(MAX_NAME_LENGTH) }),
   z.object({ type: z.literal("camera"), camera: CameraStateSchema, focalLength: FocalLengthSchema.optional() }),
+  z.object({ type: z.literal("light"), angles: LightAnglesSchema }),
   z.object({ type: z.literal("stroke:add"), stroke: StrokeSchema }),
   z.object({ type: z.literal("stroke:remove"), strokeId: IdSchema }),
   z.object({ type: z.literal("stroke:clear") }),
-  z.object({ type: z.literal("light"), angles: LightAnglesSchema }),
+  z.object({ type: z.literal("object:visibility"), versionId: IdSchema, visible: z.boolean() }),
 ]) satisfies z.ZodType<ClientMessage>;
 
 export const ServerMessageSchema = z.discriminatedUnion("type", [
@@ -57,6 +74,7 @@ export const ServerMessageSchema = z.discriminatedUnion("type", [
     users: z.array(PresenceUserSchema),
     strokes: z.array(StrokeSchema),
     light: LightAnglesSchema.optional(),
+    hiddenObjectIds: z.array(IdSchema).optional(),
   }),
   z.object({ type: z.literal("user:joined"), user: PresenceUserSchema }),
   z.object({ type: z.literal("user:left"), userId: IdSchema }),
@@ -66,12 +84,14 @@ export const ServerMessageSchema = z.discriminatedUnion("type", [
     camera: CameraStateSchema,
     focalLength: FocalLengthSchema.optional(),
   }),
+  z.object({ type: z.literal("light"), userId: IdSchema, angles: LightAnglesSchema }),
   z.object({ type: z.literal("stroke:add"), stroke: StrokeSchema }),
   z.object({ type: z.literal("stroke:remove"), strokeId: IdSchema }),
   z.object({ type: z.literal("stroke:clear"), userId: IdSchema }),
-  z.object({ type: z.literal("light"), userId: IdSchema, angles: LightAnglesSchema }),
   z.object({ type: z.literal("comment:created"), comment: CommentSchema }),
   z.object({ type: z.literal("comment:updated"), comment: CommentSchema }),
+  z.object({ type: z.literal("object:visibility"), userId: IdSchema, versionId: IdSchema, visible: z.boolean() }),
+  z.object({ type: z.literal("object:added"), version: ModelVersionSchema }),
   z.object({ type: z.literal("error"), code: z.string(), message: z.string() }),
 ]) satisfies z.ZodType<ServerMessage>;
 
