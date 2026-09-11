@@ -7,6 +7,7 @@ import { useSessionStore } from "../../store/session";
 import { useShortcutsStore } from "../../store/shortcuts";
 import { AnnotationToolbar } from "../annotation/AnnotationToolbar";
 import { CameraMenu } from "./CameraMenu";
+import { DisplayMenu } from "./DisplayMenu";
 import { HudMenu } from "./HudMenu";
 import { LightGizmo } from "./LightGizmo";
 import {
@@ -63,6 +64,14 @@ export function ViewerHud({ send }: { send: (msg: ClientMessage) => boolean }): 
           onClose={() => setOpenMenu(null)}
         >
           <CameraMenu />
+        </HudMenu>
+        <HudMenu
+          id="display"
+          open={openMenu === "display"}
+          onToggle={() => setOpenMenu((open) => toggleHudMenu(open, "display"))}
+          onClose={() => setOpenMenu(null)}
+        >
+          <DisplayMenu send={send} />
         </HudMenu>
       </div>
       <LightGizmo />

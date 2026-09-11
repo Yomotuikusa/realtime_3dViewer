@@ -12,15 +12,16 @@ Canvas、モデル、カメラ、ライティング、焦点距離、内蔵ア�
 - FocalLengthSlider.tsx: HUD 内で焦点距離を 14〜300mm の範囲で変更するスライダー。ラベルと値を上段、入力を下段に配置する
 - focal-length.ts: 固定センサー高を使う焦点距離／垂直画角の換算と既定画角
 - CameraMenu.tsx: 焦点距離、枠と影を持つ十字配置の既定視点・全体表示・視点リセットを3ブロックに分けて描画するカメラメニュー本体。操作後もメニューを閉じない
-- ViewerHud.tsx: ペン／コメントの toggle ボタンとペン道具、最初から展開した半透明カメラパネル、CameraMenu、LightGizmo、Follow 中の参加者色フレーム、描画基準、操作ヒントを各ストアと keymap に接続する。再生 UI はビュー下部の timeline 機能へ委譲する
+- ViewerHud.tsx: ペン／コメントの toggle ボタンとペン道具、排他的に開閉する半透明のカメラ／表示メニュー、CameraMenu、DisplayMenu、LightGizmo、Follow 中の参加者色フレーム、描画基準、操作ヒントを各ストアと keymap に接続する。再生 UI はビュー下部の timeline 機能へ委譲する
+- DisplayMenu.tsx: `useDisplayStore` のメッシュ表示方法を3択ボタンへ反映し、選択時にローカル更新して `mesh:display` をルームへ送信する表示メニュー本体
 - HudMenu.tsx: カメラのトグルボタンと、開いているときだけ表示する `role="group"` パネルを描画する制御コンポーネント。開閉用の chevron を表示し、Escape の閉じ処理を親へ通知する
-- hud-menu.ts: HUD メニューの ID・順序・表示名、初期表示メニューとトグルの純粋な状態遷移
+- hud-menu.ts: HUD のカメラ／表示メニューの ID・順序・表示名、初期表示メニューと排他的トグルの純粋な状態遷移
 - playback.ts: AnimationClip の名前・長さの要約、選択クリップ長、時刻の clamp とループ前進を提供する純粋関数
 - playback-frames.ts: glTF のキー時刻から fps を判定し、秒と表示フレームを変換する純粋関数
 - playback-driver.ts: AnimationMixer の単一クリップ action の切替、絶対時刻適用、停止と破棄を担う Three.js ドライバ
 - PlaybackClock.tsx: Canvas に一つだけ配置し、再生中の playback 時刻を毎フレーム一度だけ進める描画なしの部品
 - PlaybackRig.tsx: 各モデルの playback ストアの clipIndex と time を AnimationMixer へ毎フレーム反映する描画なしの Rig。時刻は進めない
-- hud-labels.ts: HUD のモード、カメラ／ライト、Follow、透過表示、描画基準、ヒントの日本語文言と純粋な判定関数
+- hud-labels.ts: HUD のモード、カメラ／ライト、メッシュ表示、Follow、透過表示、描画基準、ヒントの日本語文言と純粋な判定関数
 - view-presets.ts: 正面／背面／右／左の向き、十字セルと並び順、距離を保ったプリセットカメラ計算、既定視点一致判定と回転ロック判定
 - lighting.ts: `@shared/types` 由来の `LightAngles` を再エクスポートし、ワールド固定ライトの角度の正規化・クランプ・ドラッグ回転と主／補助ライト座標を提供する
 - ModelMesh.tsx: 同一オリジン用の LoadingManager を指定して `useGLTF` でモデルをロードし、`visible` を scene に反映する。`meshDisplay` を全 Mesh へ適用し、アンマウント時は solid に戻す。primary のモデルだけバウンディングボックスからモデルサイズを記録して初回 Fit を要求し、内蔵 `animations` を playback ストアへ登録する。全モデルへ再生 Rig を配置して同じ時刻を各 mixer に適用する。Draco 圧縮時のデコーダ取得（`https://www.gstatic.com/...`）は drei の別 manager による外部依存として残る
@@ -38,7 +39,7 @@ Canvas、モデル、カメラ、ライティング、焦点距離、内蔵ア�
 - camera-throttle.ts: `CameraPayload`（カメラと焦点距離）向けの比較・複製を定義し、汎用 `send-throttle` へ委譲して送信成功時刻から 50ms ごとの先頭送信と窓明けトレーリング送信を行う。送信失敗は未送信としてタイマーまたは次の更新で再試行し、破棄時に保留送信をキャンセルする
 - useCameraBroadcast.ts: `selfCamera` または焦点距離の変更を `camera-throttle` へ渡し、`camera` メッセージへ焦点距離を載せる。送信成功時に自分の presence カメラと焦点距離も更新する。`shouldSendCamera` は従来の判定インターフェイスとして公開する
 - useLightBroadcast.ts: lighting ストアの local 更新を汎用 throttle 経由で `light` メッセージへ送り、remote 更新は `markSent` で保留値を破棄してエコーを防ぐ。50ms 間隔で角度を送信する
-- viewer.css: HUD のモード選択、枠線と影付きの右上カメラメニュー、焦点距離スライダー、各メニューのブロック区切りと十字配置、Follow 中の参加者色フレームと操作ヒント、160px の枠を持たないライトギズモのプレーン CSS
+- viewer.css: HUD のモード選択、枠線と影付きの右上カメラ／表示メニュー、焦点距離スライダー、各メニューのブロック区切りと十字配置、表示メニューの押下状態、Follow 中の参加者色フレームと操作ヒント、160px の枠を持たないライトギズモのプレーン CSS
 
 ## 公開インターフェイス
 - ViewerCanvas.tsx: `ViewerCanvas({ children? })`
@@ -49,10 +50,11 @@ Canvas、モデル、カメラ、ライティング、焦点距離、内蔵ア�
 - FocalLengthSlider.tsx: `FocalLengthSlider()`。ラベル・値とスライダーを別段に描画する
 - CameraMenu.tsx: `CameraMenu()`。焦点距離、十字の既定視点／全体表示、視点リセットを描画し、操作後もカメラ要求だけを行う
 - focal-length.ts: `SENSOR_HEIGHT_MM`、`FOCAL_LENGTH_STEP_MM`、`fovFromFocalLength`、`focalLengthFromFov`、`DEFAULT_FOV`
-- ViewerHud.tsx: `ViewerHud({ send })`。カメラメニュー本体を `CameraMenu` に、ライト操作ギズモを `LightGizmo` に委譲する
+- ViewerHud.tsx: `ViewerHud({ send })`。カメラメニュー本体を `CameraMenu` に、表示メニュー本体を `DisplayMenu` に、ライト操作ギズモを `LightGizmo` に委譲する
+- DisplayMenu.tsx: `DisplayMenu({ send })`。メッシュ表示の3択を描画し、ローカルストア更新後に `mesh:display` を送信する
 - HudMenu.tsx: `HudMenu({ id, open, onToggle, onClose, children })`。カメラメニューの開閉 state を持たず、Escape を親へ通知する
 - hud-menu.ts: `HudMenuId`、`HUD_MENU_ORDER`、`HUD_MENU_LABELS`、`HUD_MENU_INITIAL`、`toggleHudMenu`
-- hud-labels.ts: `ToolMode`、`MODE_LABELS`、`MODE_ORDER`、`VIEW_PRESET_LABELS`、`FIT_SHORT_LABEL`、`VIEW_PRESETS_LABEL`、`PLACEMENT_LABELS`、`PLACEMENT_ORDER`、カメラ／ライト／Follow のラベル、`focalLengthText`、`colorName`、`followingLabel`、`HintInput`、`hint`、`withShortcut`
+- hud-labels.ts: `ToolMode`、`MODE_LABELS`、`MODE_ORDER`、`VIEW_PRESET_LABELS`、`FIT_SHORT_LABEL`、`VIEW_PRESETS_LABEL`、`PLACEMENT_LABELS`、`PLACEMENT_ORDER`、`MESH_DISPLAY_LABEL`、`MESH_DISPLAY_LABELS`、`MESH_DISPLAY_ORDER`、カメラ／ライト／Follow のラベル、`focalLengthText`、`colorName`、`followingLabel`、`HintInput`、`hint`、`withShortcut`
 - view-presets.ts: `ViewPreset`、`VIEW_PRESET_ORDER`、`GridCell`、`VIEW_CROSS_CENTER`、`VIEW_PRESET_CELLS`、`VIEW_PRESET_DIRECTIONS`、`MIN_PRESET_DISTANCE`、`PRESET_MATCH_EPSILON`、`presetCamera`、`matchViewPreset`、`rotationLocked`
 - lighting.ts: `LightAngles`（`@shared/types` 由来の再エクスポート）、ライト定数、`normalizeYaw`、`clampPitch`、`rotateLight`、`lightPosition`、`fillLightPosition`
 - ModelMesh.tsx: `ModelMesh({ src, visible, primary, meshDisplay })`
@@ -80,7 +82,7 @@ Canvas、モデル、カメラ、ライティング、焦点距離、内蔵ア�
 `CameraRig` は Reset 発生時に未消費の `pendingCamera` も破棄し、Reset 後の古い再現要求が補間を開始しないようにする。`selfCamera` の派生 boolean で既定視点ちょうどの向きだけ `OrbitControls.enableRotate` を無効化する。Follow 中は、回転無効時には OrbitControls の `start` が発火せず操作で `presence.unfollow()` できなくなるためロックしない。
 CameraRig の毎フレーム処理は D27 の優先順位に従う。
 
-`ViewerHud` は右上のカメラメニューをローカル state だけで管理し、初期状態では半透明パネルを展開して右下へ `LightGizmo` を常設する。
+`ViewerHud` は右上のカメラ／表示メニューを単一のローカル state で排他的に管理し、初期状態では半透明のカメラパネルを展開して右下へ `LightGizmo` を常設する。
 3D ビューや他の HUD の pointerdown では閉じず、トグルボタンまたはメニュー内の Escape だけで折りたたむ。Escape はショートカットの
 `clearMode` へ伝播せずメニューだけを閉じる。
 `selfCamera` をクリック時に読み、`presetCamera` で注視点と距離を保った視点を作ってカメラストアの
@@ -132,8 +134,8 @@ Canvas のクライアント座標を NDC 化して再帰的にモデルをレ�
 - tests/follow.test.ts: Follow 対象のカメラ・焦点距離の判定、複製、補間、収束テスト
 - tests/camera-animation.test.ts: ease-out補間、独立複製、時間基準の開始前・途中・到達・NaN、CameraRig の減衰無効化のソース検査
 - tests/fit-camera.test.ts: Fit 方向・距離・中心の非破壊性、既定視点非一致、CameraRig の Bounds 内部補間を使わないことのソース検査
-- tests/hud-labels.test.ts: HUD のモード・操作・透過表示・描画基準・Follow・既定視点文言とヒントのテスト
-- tests/hud-menu.test.ts: HUD メニューの初期表示、順序・表示名、トグルの純粋関数テスト
+- tests/hud-labels.test.ts: HUD のモード・操作・透過表示・描画基準・メッシュ表示・Follow・既定視点文言とヒントのテスト
+- tests/hud-menu.test.ts: HUD メニューの初期表示、順序・表示名、カメラ／表示の排他的トグルの純粋関数テスト
 - tests/playback.test.ts: クリップ要約、選択中クリップ長、時刻 clamp、ループ前進のテスト
 - tests/playback-driver.test.ts: AnimationMixer の絶対時刻適用、action 切替、無効 index、破棄のテスト
 - tests/light-gizmo.test.ts: ライトギズモの定数、回転、カメラ視野、座標・入力・表示の純粋関数テスト
@@ -144,4 +146,4 @@ Canvas のクライアント座標を NDC 化して再帰的にモデルをレ�
 - tests/mesh-display.test.ts: MeshDisplayMode ごとの材質切替、ワイヤフレーム重ね描きの共有状態・raycast 無効化・冪等性・破棄、対象外オブジェクトと結線のテスト
 - tests/view-presets.test.ts: 既定視点の方向・順序・単位ベクトル・距離維持・最小距離・非破壊性、既定視点一致と回転ロック判定のテスト
 - tests/viewer-pointer.test.ts: capture phase の割り当て、Alt+右ドラッグ dolly、pointer capture、継続・終了・ブラウザ既定動作抑止、cleanup のテスト
-- tests/viewer-styles.test.ts: 半透明で上下に結合したカメラメニュー、初期展開と操作後の非クローズ、カメラメニューのボタン影、160px のライトギズモとヒントの退避幅、ライトギズモの枠廃止、シャドウトークン、Follow フレームと上辺タブ、CSS セレクタ完全一致のテキスト検査
+- tests/viewer-styles.test.ts: 半透明で上下に結合したカメラ／表示メニュー、初期展開と操作後の非クローズ、カメラ／表示メニューのボタン状態と影、160px のライトギズモとヒントの退避幅、ライトギズモの枠廃止、シャドウトークン、Follow フレームと上辺タブ、CSS セレクタ完全一致のテキスト検査

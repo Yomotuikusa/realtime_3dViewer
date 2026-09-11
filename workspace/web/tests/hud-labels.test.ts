@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { DEFAULT_MESH_DISPLAY } from "@shared/types";
 import {
   CLEAR_LABEL,
   colorName,
@@ -12,6 +13,9 @@ import {
   LIGHT_RESET_LABEL,
   MODE_LABELS,
   MODE_ORDER,
+  MESH_DISPLAY_LABEL,
+  MESH_DISPLAY_LABELS,
+  MESH_DISPLAY_ORDER,
   OVERLAY_LABEL,
   PLACEMENT_LABELS,
   PLACEMENT_ORDER,
@@ -51,6 +55,17 @@ describe("viewer HUD labels", () => {
     }
     expect(PLACEMENT_LABELS).toEqual({ surface: "表面", space: "空間" });
     expect(PLACEMENT_ORDER).toEqual(["surface", "space"]);
+    expect(MESH_DISPLAY_LABEL).toBe("メッシュの表示");
+    expect(MESH_DISPLAY_LABELS).toEqual({
+      solid: "メッシュ",
+      wireframe: "ワイヤフレーム",
+      "solid-wireframe": "メッシュ+ワイヤ",
+    });
+    expect(MESH_DISPLAY_ORDER).toEqual(["solid", "wireframe", "solid-wireframe"]);
+    expect(MESH_DISPLAY_ORDER[0]).toBe(DEFAULT_MESH_DISPLAY);
+    for (const mode of MESH_DISPLAY_ORDER) {
+      expect(MESH_DISPLAY_LABELS[mode]).toBeTruthy();
+    }
   });
 
   it("formats focal length in whole millimeters", () => {

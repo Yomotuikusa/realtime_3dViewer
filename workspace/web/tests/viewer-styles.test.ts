@@ -12,6 +12,7 @@ const srcDir = existsSync(urlPath) ? urlPath : join(process.cwd(), "web", "src")
 const tokensText = readFileSync(join(srcDir, "styles/tokens.css"), "utf8");
 const viewerCssText = readFileSync(join(srcDir, "features/viewer/viewer.css"), "utf8");
 const cameraMenuText = readFileSync(join(srcDir, "features/viewer/CameraMenu.tsx"), "utf8");
+const displayMenuText = readFileSync(join(srcDir, "features/viewer/DisplayMenu.tsx"), "utf8");
 const hudMenuText = readFileSync(join(srcDir, "features/viewer/HudMenu.tsx"), "utf8");
 const viewerHudText = readFileSync(join(srcDir, "features/viewer/ViewerHud.tsx"), "utf8");
 
@@ -167,6 +168,30 @@ describe("viewer styles", () => {
 
   it("adds the control shadow to camera menu items", () => {
     expect(ruleBody(viewerCssText, ".hud-menu__item")).toContain("box-shadow: var(--shadow-control)");
+  });
+
+  it("styles the selected display menu item", () => {
+    const body = ruleBody(viewerCssText, '.hud-menu__item[aria-pressed="true"]');
+
+    expect(body).toContain("background: var(--color-accent)");
+    expect(body).toContain("color: var(--color-on-accent)");
+  });
+
+  it("lays out display choices as a grid", () => {
+    expect(ruleBody(viewerCssText, ".hud-display")).toContain("display: grid");
+  });
+
+  it("connects ViewerHud to the display menu", () => {
+    expect(viewerHudText).toContain('id="display"');
+    expect(viewerHudText).toContain("<DisplayMenu send={send} />");
+  });
+
+  it("defines display menu buttons from one quiet-free map", () => {
+    expect(displayMenuText.match(/className="btn hud-menu__item"/g)).toHaveLength(1);
+    expect(displayMenuText).not.toContain("btn--quiet");
+    expect(displayMenuText).not.toContain("onClose");
+    expect(displayMenuText).toContain("aria-label={MESH_DISPLAY_LABEL}");
+    expect(displayMenuText).toContain('type: "mesh:display"');
   });
 
   it("keeps all camera menu item buttons quiet-free", () => {

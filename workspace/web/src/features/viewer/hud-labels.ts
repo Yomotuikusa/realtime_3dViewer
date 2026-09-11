@@ -1,4 +1,5 @@
 import type { AnnotationMode, PenPlacement } from "../../store/annotation";
+import type { MeshDisplayMode } from "@shared/types";
 import { formatBinding, type Binding } from "../shortcuts/keymap";
 import type { ViewPreset } from "./view-presets";
 
@@ -36,6 +37,14 @@ export const PLACEMENT_LABELS: Readonly<Record<PenPlacement, string>> = {
   space: "空間",
 };
 export const PLACEMENT_ORDER: readonly PenPlacement[] = ["surface", "space"];
+/** 「表示」メニューの role="group" の aria-label */
+export const MESH_DISPLAY_LABEL = "メッシュの表示";
+export const MESH_DISPLAY_LABELS: Readonly<Record<MeshDisplayMode, string>> = {
+  solid: "メッシュ",
+  wireframe: "ワイヤフレーム",
+  "solid-wireframe": "メッシュ+ワイヤ",
+};
+export const MESH_DISPLAY_ORDER: readonly MeshDisplayMode[] = ["solid", "wireframe", "solid-wireframe"];
 
 /** スライダー横の現在値表示。 */
 export function focalLengthText(focalLengthMm: number): string {
