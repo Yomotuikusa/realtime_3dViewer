@@ -1,11 +1,12 @@
-export type HudMenuId = "camera";
+export type HudMenuId = "camera" | "display";
 
-/** 右上に並べる順。 */
-export const HUD_MENU_ORDER: readonly HudMenuId[] = ["camera"];
+/** 右上に並べる順。カメラが左、表示が右。 */
+export const HUD_MENU_ORDER: readonly HudMenuId[] = ["camera", "display"];
 
 /** トグルボタンの表示名。 */
 export const HUD_MENU_LABELS: Readonly<Record<HudMenuId, string>> = {
   camera: "カメラ",
+  display: "表示",
 };
 
 /** ページ表示直後に開いているメニュー。カメラは常設パネルとして最初から展開する。 */

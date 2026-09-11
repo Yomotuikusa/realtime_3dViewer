@@ -96,6 +96,17 @@
   border-top: 1px solid var(--color-border);
 }
 
+.hud-menu__item[aria-pressed="true"] {
+  border-color: var(--color-accent);
+  background: var(--color-accent);
+  color: var(--color-on-accent);
+}
+
+.hud-display {
+  display: grid;
+  gap: var(--space-1);
+}
+
 .hud-focal {
   display: grid;
   gap: var(--space-1);
