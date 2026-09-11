@@ -3,6 +3,8 @@ import type { MeshDisplayMode } from "@shared/types";
 
 /** 重ね描き用オブジェクトの userData キー。値は true */
 export const MESH_DISPLAY_OVERLAY_KEY = "meshDisplayOverlay";
+/** ビューアが後付けする重ね描き Mesh 共通の userData キー。値は true */
+export const VIEWER_OVERLAY_KEY = "viewerOverlay";
 /** 重ね描きの線の色(濃いグレー) */
 export const WIREFRAME_OVERLAY_COLOR = 0x1f2937;
 /** 重ね描きの線の不透明度 */
@@ -18,6 +20,11 @@ type WireframeMaterial = Material & {
 /** userData[MESH_DISPLAY_OVERLAY_KEY] === true なら重ね描き用オブジェクト */
 export function isMeshDisplayOverlay(object: Object3D): boolean {
   return object.userData[MESH_DISPLAY_OVERLAY_KEY] === true;
+}
+
+/** userData[VIEWER_OVERLAY_KEY] === true ならビューアが後付けした重ね描き */
+export function isViewerOverlay(object: Object3D): boolean {
+  return object.userData[VIEWER_OVERLAY_KEY] === true;
 }
 
 /** 重ね描きの線を描くための共有しない材質を作る。 */
@@ -47,6 +54,7 @@ export function createWireframeOverlay(mesh: Mesh): Mesh {
   overlay.morphTargetDictionary = mesh.morphTargetDictionary;
   overlay.raycast = () => undefined;
   overlay.userData[MESH_DISPLAY_OVERLAY_KEY] = true;
+  overlay.userData[VIEWER_OVERLAY_KEY] = true;
   return overlay;
 }
 
@@ -68,7 +76,7 @@ function disposeOverlay(overlay: Mesh): void {
 export function applyMeshDisplay(root: Object3D, mode: MeshDisplayMode): void {
   const meshes: Mesh[] = [];
   root.traverse((object) => {
-    if (object instanceof Mesh && !isMeshDisplayOverlay(object)) meshes.push(object);
+    if (object instanceof Mesh && !isViewerOverlay(object)) meshes.push(object);
   });
 
   for (const mesh of meshes) {
