@@ -1,6 +1,7 @@
 import { cameraEquals, cloneCamera } from "@shared/camera";
 import { CAMERA_SEND_INTERVAL_MS } from "@shared/protocol";
 import type { CameraState } from "@shared/types";
+import { createSendThrottle, type SendThrottle } from "./send-throttle";
 
 /** 1回の送信で運ぶ視点情報。 */
 export interface CameraPayload {
@@ -23,89 +24,15 @@ export interface CameraThrottleDeps {
   intervalMs?: number;
 }
 
-export interface CameraThrottle {
-  /** 最新の視点情報を通知する。間隔内なら保持し、窓明けに最新値だけを送る */
-  update(payload: CameraPayload): void;
-  /** 保留中の送信とタイマーを破棄する */
-  dispose(): void;
-}
+export type CameraThrottle = SendThrottle<CameraPayload>;
 
 export function createCameraThrottle(deps: CameraThrottleDeps): CameraThrottle {
-  const intervalMs = deps.intervalMs ?? CAMERA_SEND_INTERVAL_MS;
-  let lastSentPayload: CameraPayload | null = null;
-  let lastSentAt = Number.NEGATIVE_INFINITY;
-  let pendingPayload: CameraPayload | null = null;
-  let cancelScheduled: (() => void) | null = null;
-  let disposed = false;
-
-  const clearSchedule = (): void => {
-    cancelScheduled?.();
-    cancelScheduled = null;
-  };
-
-  const schedulePending = (delayMs: number): void => {
-    if (cancelScheduled !== null || disposed) {
-      return;
-    }
-    cancelScheduled = deps.schedule(() => {
-      cancelScheduled = null;
-      trySendPending();
-    }, delayMs);
-  };
-
-  const trySendPending = (): void => {
-    if (disposed || pendingPayload === null) {
-      return;
-    }
-
-    const now = deps.now();
-    if (now - lastSentAt < intervalMs) {
-      schedulePending(intervalMs - (now - lastSentAt));
-      return;
-    }
-
-    const payload = clonePayload(pendingPayload);
-    if (lastSentPayload !== null && payloadEquals(lastSentPayload, payload)) {
-      pendingPayload = null;
-      return;
-    }
-    if (deps.send(payload)) {
-      lastSentPayload = clonePayload(payload);
-      lastSentAt = now;
-      pendingPayload = null;
-      clearSchedule();
-      return;
-    }
-    schedulePending(intervalMs);
-  };
-
-  const update = (payload: CameraPayload): void => {
-    if (disposed) {
-      return;
-    }
-    const nextPayload = clonePayload(payload);
-    if (lastSentPayload !== null && payloadEquals(lastSentPayload, nextPayload)) {
-      pendingPayload = null;
-      clearSchedule();
-      return;
-    }
-    pendingPayload = nextPayload;
-    const now = deps.now();
-    if (now - lastSentAt < intervalMs) {
-      schedulePending(intervalMs - (now - lastSentAt));
-      return;
-    }
-    trySendPending();
-  };
-
-  return {
-    update,
-    dispose() {
-      disposed = true;
-      pendingPayload = null;
-      clearSchedule();
-    },
-  };
+  return createSendThrottle<CameraPayload>({
+    ...deps,
+    intervalMs: deps.intervalMs ?? CAMERA_SEND_INTERVAL_MS,
+    equals: payloadEquals,
+    clone: clonePayload,
+  });
 }
 
 function clonePayload(payload: CameraPayload): CameraPayload {

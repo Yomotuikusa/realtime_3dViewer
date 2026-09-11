@@ -28,8 +28,10 @@ Canvas、モデル、カメラ、ライティング、焦点距離、HUD、ポ�
 - CameraRig.tsx: OrbitControls を常時有効にしてカメラストアと同期し、Reset・Fit・時間基準のカメラ再現・Follow を処理する。Fit はモデル本体の箱から `fitCamera` で目標を作り `requestCamera` に積む(`Bounds` 内部補間は使わない)。既定視点ちょうどの向きでは `enableRotate` を false にし、Follow 中は回転ロックしない。OrbitControls の減衰を無効にし操作は即時反映する。補間中のユーザー操作で補間を中断する。Follow 中だけ対象の焦点距離もカメラストアへ反映し、controls.domElement に Alt 操作、右ドラッグ dolly、Shift+右ドラッグのライト回転を接続する
 - camera-input.ts: OrbitControls の Alt／非 Alt 時のマウス割り当てと、target からの距離を指数的に変える右ドラッグ dolly の純粋関数
 - viewer-pointer.ts: controls.domElement へ Maya 式の pointer、contextmenu、マウス抑止イベントを接続し、右ドラッグ dolly／Shift+右ドラッグのライト回転と後始末を提供する
-- camera-throttle.ts: `CameraPayload`（カメラと焦点距離）を最新値だけ保持し、`payloadEquals` で両方を比較しながら送信成功時刻から 50ms ごとの先頭送信と窓明けトレーリング送信を行う。送信失敗は未送信としてタイマーまたは次の更新で再試行し、破棄時に保留送信をキャンセルする
+- send-throttle.ts: 値の複製・同値判定を差し替え可能な汎用送信 throttle。先頭送信と窓明けトレーリング送信、送信失敗の再試行、受信値を送信済みとして扱う `markSent`、破棄時の保留送信キャンセルを提供する
+- camera-throttle.ts: `CameraPayload`（カメラと焦点距離）向けの比較・複製を定義し、汎用 `send-throttle` へ委譲して送信成功時刻から 50ms ごとの先頭送信と窓明けトレーリング送信を行う。送信失敗は未送信としてタイマーまたは次の更新で再試行し、破棄時に保留送信をキャンセルする
 - useCameraBroadcast.ts: `selfCamera` または焦点距離の変更を `camera-throttle` へ渡し、`camera` メッセージへ焦点距離を載せる。送信成功時に自分の presence カメラと焦点距離も更新する。`shouldSendCamera` は従来の判定インターフェイスとして公開する
+- useLightBroadcast.ts: lighting ストアの local 更新を汎用 throttle 経由で `light` メッセージへ送り、remote 更新は `markSent` で保留値を破棄してエコーを防ぐ。50ms 間隔で角度を送信する
 - viewer.css: HUD のモード選択、枠線と影付きの右上カメラメニュー、焦点距離スライダー、カメラメニューのブロック区切りと十字配置、Follow 中の参加者色フレームと左端に接して面の全高を占め左下だけ角丸の参加者色の縦帯・不透明な面の上辺タブ、操作ヒント、160px の枠を持たないライトギズモのプレーン CSS
 
 ## 公開インターフェイス
@@ -49,6 +51,8 @@ Canvas、モデル、カメラ、ライティング、焦点距離、HUD、ポ�
 - lighting.ts: `LightAngles`（`@shared/types` 由来の再エクスポート）、ライト定数、`normalizeYaw`、`clampPitch`、`rotateLight`、`lightPosition`、`fillLightPosition`
 - ModelMesh.tsx: `ModelMesh({ src })`
 - camera-throttle.ts: `CameraPayload`、`payloadEquals`、`CameraThrottleDeps`、`CameraThrottle`、`createCameraThrottle`
+- send-throttle.ts: `SendThrottleDeps<T>`、`SendThrottle<T>`、`createSendThrottle<T>`
+- useLightBroadcast.ts: `lightAnglesEqual`、`LightingChange`、`onLightingChange`、`useLightBroadcast`
 - model-loading.ts: `BLOCKED_RESOURCE_URL`、`resolveModelResourceUrl`、`createModelLoadingManager`
 - model-target.ts: `setModelTarget(obj)`、`getModelTarget()`
 - pick.ts: `toNdc(rect, clientX, clientY)`、`pickModel(raycaster, camera, ndc, target)`
@@ -95,6 +99,10 @@ OrbitControls の `start` はユーザー操作として `presence.unfollow()` �
 `null` として返し、`CameraRig` は Follow 中だけその値を補間せずに自分の camera ストアへ適用する。
 presence_Summary.md を参照。
 
+`useLightBroadcast` は lighting ストアの `origin` が local の変更だけを `LIGHT_SEND_INTERVAL_MS` の汎用 throttle へ渡す。
+remote の受信値は `markSent` で最後の値として記録し、保留中の自分の値とタイマーを捨てるため、受信値を送り返さない。
+light の送信成功時にストアを追加更新することはない。
+
 後続の viewer 機能は `ViewerCanvas` の `children` 差し込み口に RemoteCameras / StrokeLines /
 AnnotationLayer などのレイヤーを追加する。`ModelMesh` が登録する `model-target` を `pickModel` に渡すと、
 Canvas のクライアント座標を NDC 化して再帰的にモデルをレイキャストでき、交点法線はヒットした
@@ -104,6 +112,8 @@ Canvas のクライアント座標を NDC 化して再帰的にモデルをレ�
 - tests/camera-broadcast.test.ts: カメラ送信 throttle の間隔・比較判定テスト
 - tests/camera-input.test.ts: Alt／非 Alt のマウス割り当て、指数 dolly、最小距離、入力配列非破壊のテスト
 - tests/camera-throttle.test.ts: `payloadEquals`、焦点距離を含む先頭送信、最新値のトレーリング、重複抑止、送信失敗の再試行、破棄時キャンセルのテスト
+- tests/send-throttle.test.ts: 汎用 throttle の先頭送信、最新値のトレーリング、`markSent` による保留破棄・送信済み判定・間隔維持、破棄、失敗後の mark、複製のテスト
+- tests/light-broadcast.test.ts: ライト角度の厳密比較と local／remote 更新の throttle 呼び分け・順序のテスト
 - tests/focal-length.test.ts: 焦点距離と垂直画角の換算テスト
 - tests/follow.test.ts: Follow 対象のカメラ・焦点距離の判定、複製、補間、収束テスト
 - tests/camera-animation.test.ts: ease-out補間、独立複製、時間基準の開始前・途中・到達・NaN、CameraRig の減衰無効化のソース検査
