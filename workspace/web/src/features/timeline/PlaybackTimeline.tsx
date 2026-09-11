@@ -1,4 +1,7 @@
-import type { ReactElement } from "react";
+import type { CSSProperties, ReactElement } from "react";
+import { ResizeHandle } from "../layout/ResizeHandle";
+import { clampSize, TIMELINE_TRACK_DEFAULT_PX, TIMELINE_TRACK_MAX_PX, TIMELINE_TRACK_MIN_PX } from "../layout/resize";
+import { useLayoutSize } from "../layout/useLayoutSize";
 import { usePlaybackStore } from "../../store/playback";
 import { currentDuration } from "../viewer/playback";
 import { frameOfTime, lastFrameOf } from "../viewer/playback-frames";
@@ -13,6 +16,7 @@ import {
   lastFrameText,
   PAUSE_LABEL,
   PLAY_LABEL,
+  TIMELINE_RESIZE_LABEL,
   TIMELINE_LABEL,
   TRANSPORT_LABEL,
 } from "./timeline-labels";
@@ -29,12 +33,29 @@ export function PlaybackTimeline(): ReactElement | null {
   const toggle = usePlaybackStore((state) => state.toggle);
   const seekFrame = usePlaybackStore((state) => state.seekFrame);
   const setFps = usePlaybackStore((state) => state.setFps);
+  const [trackHeight, setTrackHeight] = useLayoutSize("timelineHeight");
   if (clips.length === 0) return null;
 
+  const effective = clampSize(trackHeight, TIMELINE_TRACK_MIN_PX, TIMELINE_TRACK_MAX_PX);
   const lastFrame = lastFrameOf(currentDuration(clips, clipIndex), fps);
   const frame = frameOfTime(time, fps);
   return (
-    <div className="timeline" role="region" aria-label={TIMELINE_LABEL}>
+    <div
+      className="timeline"
+      role="region"
+      aria-label={TIMELINE_LABEL}
+      style={{ "--timeline-track-height": effective + "px" } as CSSProperties}
+    >
+      <ResizeHandle
+        axis="y"
+        className="timeline__resize"
+        value={effective}
+        min={TIMELINE_TRACK_MIN_PX}
+        max={TIMELINE_TRACK_MAX_PX}
+        defaultValue={TIMELINE_TRACK_DEFAULT_PX}
+        label={TIMELINE_RESIZE_LABEL}
+        onChange={setTrackHeight}
+      />
       <TimelineRuler frame={frame} lastFrame={lastFrame} onSeek={seekFrame} />
       <div className="timeline__controls">
         <select className="input timeline__clip" aria-label={CLIP_LABEL} title={CLIP_LABEL} value={clipIndex} onChange={(event) => selectClip(Number(event.target.value))}>
