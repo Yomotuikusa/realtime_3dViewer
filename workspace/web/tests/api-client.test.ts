@@ -23,6 +23,14 @@ const project = {
     byteSize: 12,
     createdAt: 1_700_000_000_000,
   },
+  versions: [{
+    id: "version-1",
+    projectId: "project-1",
+    number: 1,
+    fileName: "robot.glb",
+    byteSize: 12,
+    createdAt: 1_700_000_000_000,
+  }],
 };
 
 const comment = {
