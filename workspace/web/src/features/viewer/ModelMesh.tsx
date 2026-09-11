@@ -6,6 +6,7 @@ import { usePlaybackStore } from "../../store/playback";
 import { setModelTarget } from "./model-target";
 import { createModelLoadingManager } from "./model-loading";
 import { clipSummaries } from "./playback";
+import { detectFps } from "./playback-frames";
 import { PlaybackRig } from "./PlaybackRig";
 
 export function ModelMesh({ src }: { src: string }): ReactElement {
@@ -26,7 +27,7 @@ export function ModelMesh({ src }: { src: string }): ReactElement {
   }, [scene]);
 
   useEffect(() => {
-    usePlaybackStore.getState().setClips(clipSummaries(animations));
+    usePlaybackStore.getState().setClips(clipSummaries(animations), detectFps(animations));
     return () => usePlaybackStore.getState().setClips([]);
   }, [animations]);
 

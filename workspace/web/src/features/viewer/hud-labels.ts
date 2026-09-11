@@ -31,12 +31,6 @@ export const UNDO_LABEL = "1本戻す";
 export const CLEAR_LABEL = "自分の線を消す";
 export const OVERLAY_LABEL = "透過表示";
 export const UNFOLLOW_LABEL = "追従を解除";
-export const PLAY_LABEL = "再生";
-export const PAUSE_LABEL = "一時停止";
-/** クリップ選択 select の label */
-export const CLIP_LABEL = "クリップ";
-/** シークバー(input[type=range])の label */
-export const PLAYBACK_TIME_LABEL = "時刻";
 export const PLACEMENT_LABELS: Readonly<Record<PenPlacement, string>> = {
   surface: "表面",
   space: "空間",
@@ -46,11 +40,6 @@ export const PLACEMENT_ORDER: readonly PenPlacement[] = ["surface", "space"];
 /** スライダー横の現在値表示。 */
 export function focalLengthText(focalLengthMm: number): string {
   return `${Math.round(focalLengthMm)}mm`;
-}
-
-/** シークバー横の現在値表示。 */
-export function playbackTimeText(time: number, duration: number): string {
-  return `${time.toFixed(2)} / ${duration.toFixed(2)} s`;
 }
 
 /** ボタン名にショートカットキーを併記する。未割り当てなら name をそのまま返す。 */

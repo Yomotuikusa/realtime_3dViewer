@@ -5,12 +5,10 @@ import { useCommentsStore } from "../../store/comments";
 import { usePresenceStore } from "../../store/presence";
 import { useSessionStore } from "../../store/session";
 import { useShortcutsStore } from "../../store/shortcuts";
-import { usePlaybackStore } from "../../store/playback";
 import { AnnotationToolbar } from "../annotation/AnnotationToolbar";
 import { CameraMenu } from "./CameraMenu";
 import { HudMenu } from "./HudMenu";
 import { LightGizmo } from "./LightGizmo";
-import { PlaybackMenu } from "./PlaybackMenu";
 import {
   HUD_MENU_INITIAL,
   toggleHudMenu,
@@ -36,7 +34,6 @@ export function ViewerHud({ send }: { send: (msg: ClientMessage) => boolean }): 
   const hasAnchor = useCommentsStore((state) => state.composerAnchor !== null);
   const connection = useSessionStore((state) => state.connection);
   const keymap = useShortcutsStore((state) => state.keymap);
-  const hasClips = usePlaybackStore((state) => state.clips.length > 0);
   const followingUser = followingUserId === null ? undefined : users[followingUserId];
   const [openMenu, setOpenMenu] = useState<HudMenuId | null>(HUD_MENU_INITIAL);
 
@@ -59,16 +56,6 @@ export function ViewerHud({ send }: { send: (msg: ClientMessage) => boolean }): 
         {mode === "pen" && <AnnotationToolbar send={send} />}
       </div>
       <div className="hud-menus">
-        {hasClips && (
-          <HudMenu
-            id="playback"
-            open={openMenu === "playback"}
-            onToggle={() => setOpenMenu((open) => toggleHudMenu(open, "playback"))}
-            onClose={() => setOpenMenu(null)}
-          >
-            <PlaybackMenu />
-          </HudMenu>
-        )}
         <HudMenu
           id="camera"
           open={openMenu === "camera"}

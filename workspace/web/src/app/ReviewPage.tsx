@@ -13,6 +13,7 @@ import { PresenceList } from "../features/presence/PresenceList";
 import { RemoteCameras } from "../features/presence/RemoteCameras";
 import { ViewerCanvas } from "../features/viewer/ViewerCanvas";
 import { ViewerHud } from "../features/viewer/ViewerHud";
+import { PlaybackTimeline } from "../features/timeline/PlaybackTimeline";
 import { useCameraBroadcast } from "../features/viewer/useCameraBroadcast";
 import { useLightBroadcast } from "../features/viewer/useLightBroadcast";
 import { ShortcutSettings } from "../features/shortcuts/ShortcutSettings";
@@ -116,27 +117,30 @@ export function ReviewPage({ projectId }: { projectId: string }): ReactElement {
       {lastError && <p className="alert review-page__alert" role="alert">{lastError}</p>}
       <div className="review-body">
         <section className="review-viewer" aria-label="3D ビューア">
-          <div className="review-hud">
-            <ViewerHud send={realtime.send} />
+          <div className="review-stage">
+            <div className="review-hud">
+              <ViewerHud send={realtime.send} />
+            </div>
+            <ErrorBoundary
+              key={src}
+              fallback={(
+                <ErrorCard
+                  message={MODEL_LOAD_FAILED}
+                  onRetry={() => window.location.reload()}
+                />
+              )}
+            >
+              <ViewerCanvas modelSrc={src}>
+                <RemoteCameras />
+                <RoomStrokes />
+                <ReplayStrokes />
+                <AnnotationLayer send={realtime.send} />
+                <CommentPickLayer />
+                <CommentPins />
+              </ViewerCanvas>
+            </ErrorBoundary>
           </div>
-          <ErrorBoundary
-            key={src}
-            fallback={(
-              <ErrorCard
-                message={MODEL_LOAD_FAILED}
-                onRetry={() => window.location.reload()}
-              />
-            )}
-          >
-            <ViewerCanvas modelSrc={src}>
-              <RemoteCameras />
-              <RoomStrokes />
-              <ReplayStrokes />
-              <AnnotationLayer send={realtime.send} />
-              <CommentPickLayer />
-              <CommentPins />
-            </ViewerCanvas>
-          </ErrorBoundary>
+          <PlaybackTimeline />
           {joinName === null && <JoinDialog onJoin={handleJoin} />}
           {settingsOpen && <ShortcutSettings onClose={() => setSettingsOpen(false)} />}
         </section>
