@@ -6,19 +6,20 @@ import { navigate, projectPath } from "./routes";
 import {
   APP_NAME,
   MODEL_FILE_LABEL,
+  MODEL_FILES_HELP_SUFFIX,
   PROJECT_NAME_LABEL,
   SUBMIT_LABEL,
   SUBMITTING_LABEL,
   UPLOAD_LEAD,
-  FILE_TOO_LARGE,
   fileHelp,
-  fileSummary,
+  filesSummary,
+  validateModelFiles,
 } from "./upload-labels";
 import "./upload.css";
 
 export function UploadPage(): React.ReactElement {
   const [name, setName] = useState("");
-  const [file, setFile] = useState<File | null>(null);
+  const [files, setFiles] = useState<File[]>([]);
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
@@ -28,26 +29,16 @@ export function UploadPage(): React.ReactElement {
       setError("プロジェクト名を入力してください。");
       return;
     }
-    if (!file) {
-      setError("モデルファイルを選択してください。");
-      return;
-    }
-
-    const dotIndex = file.name.lastIndexOf(".");
-    const extension = dotIndex >= 0 ? file.name.slice(dotIndex).toLowerCase() : "";
-    if (!ALLOWED_MODEL_EXTENSIONS.some((allowed) => allowed === extension)) {
-      setError("対応しているモデル形式は .glb と .gltf です。");
-      return;
-    }
-    if (file.size > MAX_UPLOAD_BYTES_DEFAULT) {
-      setError(FILE_TOO_LARGE);
+    const fileError = validateModelFiles(files, ALLOWED_MODEL_EXTENSIONS, MAX_UPLOAD_BYTES_DEFAULT);
+    if (fileError) {
+      setError(fileError);
       return;
     }
 
     setSubmitting(true);
     setError("");
     try {
-      const project = await createProject(name.trim(), file);
+      const project = await createProject(name.trim(), files);
       navigate(projectPath(project.id));
     } catch (caught) {
       const message = caught instanceof ApiClientError
@@ -84,12 +75,15 @@ export function UploadPage(): React.ReactElement {
           <input
             className="input"
             type="file"
+            multiple
             accept=".glb,.gltf"
-            onChange={(event) => setFile(event.target.files?.[0] ?? null)}
+            onChange={(event) => setFiles(Array.from(event.target.files ?? []))}
             disabled={submitting}
           />
           <span className="upload__help">
-            {file ? fileSummary(file.name, file.size) : fileHelp(ALLOWED_MODEL_EXTENSIONS, MAX_UPLOAD_BYTES_DEFAULT)}
+            {files.length > 0
+              ? filesSummary(files)
+              : `${fileHelp(ALLOWED_MODEL_EXTENSIONS, MAX_UPLOAD_BYTES_DEFAULT)}。${MODEL_FILES_HELP_SUFFIX}`}
           </span>
         </label>
         {error && <p className="alert" role="alert">{error}</p>}
