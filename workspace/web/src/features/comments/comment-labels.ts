@@ -9,6 +9,7 @@ export const CANCEL_LABEL = "キャンセル";
 export const EMPTY_MESSAGE = "コメントはまだありません。「コメント」モードでモデルをクリックすると投稿できます。";
 export const EMPTY_FILTERED_MESSAGE = "未解決のコメントはありません。";
 export const RECORD_FRAME_LABEL = "フレームを記録";
+export const CLOSE_CALLOUT_LABEL = "コメントを閉じる";
 
 export function recordFrameLabel(frame: number): string {
   return `フレーム ${frame} を記録`;

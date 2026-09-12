@@ -177,6 +177,66 @@
   gap: var(--space-2);
 }
 
+.comments-callout {
+  display: grid;
+  gap: var(--space-1);
+  width: 16rem;
+  max-width: 16rem;
+  margin-left: var(--space-3);
+  padding: var(--space-2);
+  border: 1px solid var(--color-accent);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  color: var(--color-text);
+  font-size: var(--text-sm);
+  box-shadow: var(--shadow-overlay);
+  transform: translateY(-50%);
+  pointer-events: auto;
+}
+
+.comments-callout__head {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.comments-callout__meta {
+  display: flex;
+  flex: 1 1 auto;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.comments-callout__meta strong,
+.comments-callout__meta time {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.comments-callout__meta time {
+  color: var(--color-text-muted);
+}
+
+.comments-callout__close {
+  flex: 0 0 auto;
+  margin: 0;
+  padding-inline: var(--space-1);
+}
+
+.comments-callout__body {
+  max-height: 10rem;
+  margin: 0;
+  overflow: auto;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.comments-callout[data-status="resolved"] .comments-callout__body {
+  color: var(--color-text-muted);
+}
+
 .comments-pin {
   width: 1.1rem;
   height: 1.1rem;

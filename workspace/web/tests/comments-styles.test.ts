@@ -104,6 +104,28 @@ describe("comments styles", () => {
     expect(composer).toContain("border: 1px solid var(--color-accent)");
   });
 
+  it("styles the selected comment callout and its body", () => {
+    const callout = selectorBlock(commentsCss, ".comments-callout");
+    expect(callout).toContain("width: 16rem");
+    expect(callout).toContain("margin-left: var(--space-3)");
+    expect(callout).toContain("border: 1px solid var(--color-accent)");
+    expect(callout).toContain("box-shadow: var(--shadow-overlay)");
+    expect(callout).toContain("transform: translateY(-50%)");
+    expect(callout).toContain("pointer-events: auto");
+
+    const body = selectorBlock(commentsCss, ".comments-callout__body");
+    expect(body).toContain("max-height: 10rem");
+    expect(body).toContain("overflow: auto");
+    expect(body).toContain("white-space: pre-wrap");
+    expect(body).toContain("overflow-wrap: anywhere");
+
+    expect(selectorBlock(commentsCss, ".comments-callout__close")).toContain("margin: 0");
+    expect(selectorBlock(
+      commentsCss,
+      '.comments-callout[data-status="resolved"] .comments-callout__body',
+    )).toContain("var(--color-text-muted)");
+  });
+
   it("styles the frame switch and playback badge", () => {
     const frameSwitch = selectorBlock(commentsCss, ".comments-composer__frame");
     expect(frameSwitch).toContain("display: flex");
