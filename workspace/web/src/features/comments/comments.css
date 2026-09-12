@@ -56,6 +56,7 @@
 .comments__list {
   grid-row: 4;
   display: grid;
+  align-content: start;
   gap: var(--space-2);
   min-height: 0;
   overflow: auto;
@@ -85,10 +86,6 @@
   border-color: var(--color-accent);
   background: var(--color-accent-subtle);
   box-shadow: 0 0 0 3px var(--color-accent-subtle), var(--shadow-card);
-}
-
-.comments-row[data-status="resolved"] .comments-row__body {
-  color: var(--color-text-muted);
 }
 
 .comments-row__select {
@@ -126,9 +123,20 @@
 .comments-row__body {
   display: -webkit-box;
   overflow: hidden;
+  overflow-wrap: anywhere;
   margin: 0;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
+}
+
+.comments-row[data-selected="true"] .comments-row__body {
+  display: block;
+  overflow: visible;
+  -webkit-line-clamp: unset;
+}
+
+.comments-row[data-status="resolved"] .comments-row__body {
+  color: var(--color-text-muted);
 }
 
 .comments-row__toggle {
