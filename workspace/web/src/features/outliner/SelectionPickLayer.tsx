@@ -8,6 +8,7 @@ import { getModelTarget } from "../viewer/model-target";
 import { pickSelection } from "./pick-selection";
 import { toNdc } from "../viewer/pick";
 import { useSelectionStore } from "./selection";
+import { jointSelectionOf, pickJoint } from "../joint/joint-pick";
 
 /** Canvas に 1 つだけ置く描画なしの部品。通常モードの左クリックで版全体を選択する */
 export function SelectionPickLayer(): null {
@@ -34,12 +35,15 @@ export function SelectionPickLayer(): null {
       if (event.button !== 0 || start === null || !isClick(start, event)) return;
 
       const rect = canvas.getBoundingClientRect();
-      const hit = pickSelection(
+      const ndc = toNdc(rect, event.clientX, event.clientY);
+      const scenes = useModelScenesStore.getState().scenes;
+      const hit = jointSelectionOf(pickJoint(camera, ndc, rect, scenes))
+        ?? pickSelection(
         raycaster.current,
         camera,
-        toNdc(rect, event.clientX, event.clientY),
+        ndc,
         getModelTarget(),
-        useModelScenesStore.getState().scenes,
+        scenes,
       );
       if (hit === null) {
         useSelectionStore.getState().clear();
