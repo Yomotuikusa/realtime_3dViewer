@@ -2,7 +2,14 @@ import { Hono } from "hono";
 import { writeFileSync } from "node:fs";
 import { join } from "node:path";
 import type { ServerMessage } from "@shared/protocol";
-import type { Comment, CommentStatus, ModelVersion, Project, Stroke } from "@shared/types";
+import type {
+  Comment,
+  CommentPlayback,
+  CommentStatus,
+  ModelVersion,
+  Project,
+  Stroke,
+} from "@shared/types";
 import { createApp, type AppDeps } from "../../src/app";
 import { loadConfig, type Config } from "../../src/config";
 import { openDb, type Db } from "../../src/db/connection";
@@ -94,6 +101,7 @@ export function seedComment(
     status?: CommentStatus;
     createdAt?: number;
     strokes?: Stroke[];
+    playback?: CommentPlayback | null;
   },
 ): Comment {
   const createdAt = opts.createdAt ?? 1700000000000;
@@ -115,6 +123,7 @@ export function seedComment(
     anchor: [0, 0, 0],
     camera: { position: [0, 0, 5], target: [0, 0, 0] },
     strokes: opts.strokes ?? [],
+    ...(opts.playback === undefined ? {} : { playback: opts.playback }),
     createdAt,
   });
   if (opts.status === "resolved") {

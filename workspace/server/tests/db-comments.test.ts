@@ -79,9 +79,34 @@ describe("comments database layer", () => {
 
     expect(insertComment(db, input)).toEqual({
       ...input,
+      playback: null,
       status: "open",
       updatedAt: input.createdAt,
     });
+  });
+
+  it("round-trips playback through insert, list, and status updates", () => {
+    const db = makeDb();
+    seedVersion(db);
+    const playback = { clipIndex: 1, frame: 48 };
+
+    const inserted = insertComment(db, newComment({ playback }));
+    expect(inserted.playback).toEqual(playback);
+    expect(listComments(db, "p1")[0]?.playback).toEqual(playback);
+    expect(updateCommentStatus(db, "p1", "c1", "resolved", 99)).toMatchObject({
+      status: "resolved",
+      playback,
+    });
+  });
+
+  it("returns null playback when it is omitted or explicitly null", () => {
+    const db = makeDb();
+    seedVersion(db);
+
+    insertComment(db, newComment());
+    insertComment(db, newComment({ id: "c2", playback: null }));
+
+    expect(listComments(db, "p1").map((comment) => comment.playback)).toEqual([null, null]);
   });
 
   it("enforces project and version foreign keys", () => {
