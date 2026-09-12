@@ -9,6 +9,7 @@ import { createRoot } from "react-dom/client";
 import { Bone, BoxGeometry, Group, Mesh, MeshBasicMaterial } from "three";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import type { ClientMessage } from "@shared/protocol";
+import * as trailModule from "@shared/trail";
 import { useDisplayStore } from "../src/store/display";
 import { useModelScenesStore } from "../src/features/compare/model-scenes";
 import { useSelectionStore } from "../src/features/outliner/selection";
@@ -156,6 +157,85 @@ describe("trail display bar", () => {
       await act(async () => undefined);
       await act(async () => button().click());
       expect(useDisplayStore.getState().motionTrail).toEqual({ visible: false, target: { versionId: "v1", objectPath: "0/2" } });
+    } finally {
+      await act(async () => root.unmount());
+      host.remove();
+    }
+  });
+
+  it("turns off for the currently displayed selected bone", async () => {
+    const { scene, bone } = createScene();
+    const target = { versionId: "v1", objectPath: "0/1" };
+    useModelScenesStore.getState().register("v1", scene);
+    useSelectionStore.getState().select({ versionId: "v1", objectId: bone.uuid });
+    useDisplayStore.getState().setMotionTrail({ visible: true, target });
+    const send = vi.fn(() => true);
+    const { root, host } = await renderBar(send);
+    try {
+      const button = host.querySelector("button") as HTMLButtonElement;
+      expect(button.disabled).toBe(false);
+      expect(button.getAttribute("aria-pressed")).toBe("true");
+      await act(async () => button.click());
+      expect(useDisplayStore.getState().motionTrail).toEqual({ visible: false, target });
+      expect(send).toHaveBeenCalledWith({ type: "trail:display", trail: { visible: false, target } });
+    } finally {
+      await act(async () => root.unmount());
+      host.remove();
+    }
+  });
+
+  it("turns off while a non-bone is selected", async () => {
+    const { scene, mesh } = createScene();
+    const target = { versionId: "v1", objectPath: "0/1" };
+    useModelScenesStore.getState().register("v1", scene);
+    useSelectionStore.getState().select({ versionId: "v1", objectId: mesh.uuid });
+    useDisplayStore.getState().setMotionTrail({ visible: true, target });
+    const send = vi.fn(() => true);
+    const { root, host } = await renderBar(send);
+    try {
+      const button = host.querySelector("button") as HTMLButtonElement;
+      expect(button.disabled).toBe(false);
+      expect(button.getAttribute("aria-pressed")).toBe("true");
+      await act(async () => button.click());
+      expect(useDisplayStore.getState().motionTrail).toEqual({ visible: false, target });
+      expect(send).toHaveBeenCalledWith({ type: "trail:display", trail: { visible: false, target } });
+    } finally {
+      await act(async () => root.unmount());
+      host.remove();
+    }
+  });
+
+  it("keeps the local update when sending fails", async () => {
+    const { scene, bone } = createScene();
+    useModelScenesStore.getState().register("v1", scene);
+    useSelectionStore.getState().select({ versionId: "v1", objectId: bone.uuid });
+    const send = vi.fn(() => false);
+    const { root, host } = await renderBar(send);
+    try {
+      await act(async () => (host.querySelector("button") as HTMLButtonElement).click());
+      expect(useDisplayStore.getState().motionTrail).toEqual({
+        visible: true,
+        target: { versionId: "v1", objectPath: "0/1" },
+      });
+      expect(send).toHaveBeenCalledOnce();
+    } finally {
+      await act(async () => root.unmount());
+      host.remove();
+    }
+  });
+
+  it("does not update or send when the trail is equal", async () => {
+    const { scene, bone } = createScene();
+    useModelScenesStore.getState().register("v1", scene);
+    useSelectionStore.getState().select({ versionId: "v1", objectId: bone.uuid });
+    const send = vi.fn(() => true);
+    const setMotionTrail = vi.spyOn(useDisplayStore.getState(), "setMotionTrail");
+    vi.spyOn(trailModule, "motionTrailEquals").mockReturnValue(true);
+    const { root, host } = await renderBar(send);
+    try {
+      await act(async () => (host.querySelector("button") as HTMLButtonElement).click());
+      expect(setMotionTrail).not.toHaveBeenCalled();
+      expect(send).not.toHaveBeenCalled();
     } finally {
       await act(async () => root.unmount());
       host.remove();
