@@ -58,9 +58,12 @@ describe("model scene loader selection", () => {
     ]) {
       expect(sceneSource).toContain(name);
     }
+    expect(sceneSource).toContain('from "../trail/model-clips"');
+    expect(sceneSource).toContain("register(versionId, animations)");
+    expect(sceneSource).toContain("unregister(versionId, animations)");
     expect(sceneSource).toContain("const { versionId, primary, meshDisplay } = options;");
     expect(sceneSource).not.toMatch(/useGLTF|useLoader|FBXLoader|OBJLoader/);
-    expect(sceneSource.match(/useEffect\(/g)).toHaveLength(5);
+    expect(sceneSource.match(/useEffect\(/g)).toHaveLength(6);
   });
 
   it("passes the filename from the canvas into the model dispatcher", () => {
