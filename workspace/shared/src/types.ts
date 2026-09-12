@@ -18,6 +18,14 @@ export interface Stroke {
 
 export type CommentStatus = "open" | "resolved";
 
+/** コメント投稿時のタイムライン位置。クリップの無いモデルでは記録しない */
+export interface CommentPlayback {
+  /** playback ストアの clips の添字。0 以上の整数 */
+  clipIndex: number;
+  /** 表示フレーム(fps 換算後の整数)。0 以上 */
+  frame: number;
+}
+
 export interface Comment {
   id: string;
   projectId: string;
@@ -27,6 +35,8 @@ export interface Comment {
   anchor: Vec3;
   camera: CameraState;
   strokes: Stroke[];
+  /** 投稿時の再生位置。未登録は null。省略は null と同義(古い保存データ) */
+  playback?: CommentPlayback | null;
   status: CommentStatus;
   createdAt: number;
   updatedAt: number;
@@ -151,6 +161,11 @@ export const StrokeSchema = z.object({
 
 export const CommentStatusSchema = z.enum(["open", "resolved"]) satisfies z.ZodType<CommentStatus>;
 
+export const CommentPlaybackSchema = z.object({
+  clipIndex: z.number().int().min(0),
+  frame: z.number().int().min(0),
+}) satisfies z.ZodType<CommentPlayback>;
+
 export const CommentSchema = z.object({
   id: IdSchema,
   projectId: IdSchema,
@@ -160,6 +175,7 @@ export const CommentSchema = z.object({
   anchor: Vec3Schema,
   camera: CameraStateSchema,
   strokes: z.array(StrokeSchema),
+  playback: CommentPlaybackSchema.nullable().optional(),
   status: CommentStatusSchema,
   createdAt: TimestampSchema,
   updatedAt: TimestampSchema,
