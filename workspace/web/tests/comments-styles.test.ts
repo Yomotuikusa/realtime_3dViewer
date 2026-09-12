@@ -75,6 +75,28 @@ describe("comments styles", () => {
     expect(selectorBlock(commentsCss, ".comments-row__toggle")).toContain("margin: 0");
   });
 
+  it("stacks comment cards and expands only the selected body", () => {
+    const list = selectorBlock(commentsCss, ".comments__list");
+    expect(list).toContain("align-content: start");
+    expect(list).not.toMatch(/align-content:\s*(?:stretch|space)/);
+
+    const body = selectorBlock(commentsCss, "\n.comments-row__body");
+    expect(body).toContain("-webkit-line-clamp: 2");
+    expect(body).toContain("overflow: hidden");
+    expect(body).toContain("overflow-wrap: anywhere");
+
+    const selectedBody = selectorBlock(
+      commentsCss,
+      '.comments-row[data-selected="true"] .comments-row__body',
+    );
+    expect(selectedBody).toContain("display: block");
+    expect(selectedBody).toContain("overflow: visible");
+    expect(selectedBody).toContain("-webkit-line-clamp: unset");
+    expect(commentsCss.match(/-webkit-line-clamp:\s*2/g)).toHaveLength(1);
+    expect(commentList).toContain("data-selected");
+    expect(commentList).toContain("comments-row__body");
+  });
+
   it("gives the composer the card shadow", () => {
     const composer = selectorBlock(commentsCss, ".comments-composer");
     expect(composer).toContain("box-shadow: var(--shadow-card)");
