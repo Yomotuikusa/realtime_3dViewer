@@ -8,7 +8,7 @@
 
 - outliner-tree.ts: three の scene から、重ね描きを除外したプレーンなアウトライナ木を作り、ノード種別を判定する
 - selection.ts: 選択中の版と Object3D uuid を保持する Zustand ストアと選択判定を提供する
-- selection-highlight.ts: 選択対象と子孫へ accent 色の選択重ね描きを付け外しする純粋関数を提供する
+- selection-highlight.ts: 選択対象と子孫へ明るい青(0x60a5fa、不透明度 0.6)の選択重ね描きを付け外しする純粋関数を提供する
 - SelectionRig.tsx: 選択ストアと scene レジストリを購読し、選択重ね描きを管理する Canvas 用 Rig
 - outliner-labels.ts: 見出し、状態、種別、名前、展開操作の表示文言を提供する
 - outliner-icons.tsx: 7 種別のインライン SVG アイコンと展開用山形を提供する

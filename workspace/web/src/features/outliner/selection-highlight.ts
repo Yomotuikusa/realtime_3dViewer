@@ -15,10 +15,10 @@ import { VIEWER_OVERLAY_KEY, isViewerOverlay } from "../viewer/mesh-display";
 
 /** 選択重ね描きの userData キー。値は true */
 export const SELECTION_OVERLAY_KEY = "outlinerSelectionOverlay";
-/** tokens.css の --color-accent と同じ色 */
-export const SELECTION_COLOR = 0x175cd3;
+/** 選択重ね描きの色。灰色のモデルに重ねても明るく見える淡い青(accent より明度が高い) */
+export const SELECTION_COLOR = 0x60a5fa;
 /** Mesh 重ね描きの不透明度 */
-export const SELECTION_MESH_OPACITY = 0.35;
+export const SELECTION_MESH_OPACITY = 0.6;
 
 /** userData[SELECTION_OVERLAY_KEY] === true なら選択重ね描き */
 export function isSelectionOverlay(object: Object3D): boolean {
