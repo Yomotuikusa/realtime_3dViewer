@@ -7,7 +7,9 @@ import {
   OUTLINER_HEADING,
   OUTLINER_LOADING,
   OUTLINER_RESIZE_LABEL,
+  OUTLINER_VISIBILITY_HEADING,
   UNNAMED_LABEL,
+  visibilityAriaLabel,
 } from "../src/features/outliner/outliner-labels";
 
 describe("outliner labels", () => {
@@ -16,6 +18,7 @@ describe("outliner labels", () => {
     expect(OUTLINER_RESIZE_LABEL).toBe("アウトライナの幅");
     expect(OUTLINER_EMPTY).toBe("オブジェクトがありません");
     expect(OUTLINER_LOADING).toBe("読み込み中…");
+    expect(OUTLINER_VISIBILITY_HEADING).toBe("表示");
     expect(UNNAMED_LABEL).toBe("(名前なし)");
     expect(Object.keys(KIND_LABELS).sort()).toEqual(["bone", "camera", "curve", "group", "light", "mesh", "points"]);
     expect(KIND_LABELS).toEqual({ mesh: "メッシュ", curve: "カーブ", points: "ポイント", bone: "ボーン", light: "ライト", camera: "カメラ", group: "グループ" });
@@ -28,5 +31,6 @@ describe("outliner labels", () => {
     expect(nodeLabel("   ")).toBe(UNNAMED_LABEL);
     expect(expandAriaLabel("Body", false)).toBe("Body を展開");
     expect(expandAriaLabel("Body", true)).toBe("Body を折りたたむ");
+    expect(visibilityAriaLabel("Body")).toBe("Body の表示を切り替え");
   });
 });

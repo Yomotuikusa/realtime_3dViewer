@@ -7,6 +7,24 @@
   padding: var(--space-3);
 }
 
+.outliner__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  padding-right: var(--space-1);
+}
+
+.outliner__eye {
+  display: inline-flex;
+  color: var(--color-text-muted);
+}
+
+.outliner__eye-icon {
+  width: 1rem;
+  height: 1rem;
+}
+
 .outliner__heading {
   color: var(--color-text-muted);
   font-size: var(--text-sm);
@@ -88,6 +106,19 @@
 }
 
 .outliner__select[disabled] {
+  cursor: default;
+}
+
+.outliner__visible {
+  flex: 0 0 auto;
+  width: 0.875rem;
+  height: 0.875rem;
+  margin: 0 var(--space-1) 0 0;
+  accent-color: var(--color-accent);
+  cursor: pointer;
+}
+
+.outliner__visible[disabled] {
   cursor: default;
 }
 

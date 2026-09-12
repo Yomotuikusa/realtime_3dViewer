@@ -160,7 +160,7 @@ export function ReviewPage({ projectId }: { projectId: string }): ReactElement {
         } as CSSProperties}
       >
         <aside className="review-outliner" aria-label="アウトライナドック">
-          <Outliner />
+          <Outliner send={realtime.send} />
         </aside>
         <ResizeHandle
           axis="x"

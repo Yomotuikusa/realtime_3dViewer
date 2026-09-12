@@ -6,6 +6,7 @@ import { describe, expect, it } from "vitest";
 import { KIND_LABELS } from "../src/features/outliner/outliner-labels";
 import {
   ChevronIcon,
+  EyeIcon,
   MeshIcon,
   OUTLINER_KIND_ICONS,
 } from "../src/features/outliner/outliner-icons";
@@ -40,6 +41,13 @@ describe("outliner styles and source contracts", () => {
     expect(chevron.props.className).toBe("outliner__chevron");
     expect(chevron.props["data-kind"]).toBeUndefined();
     expect(OUTLINER_KIND_ICONS.mesh).toBe(MeshIcon);
+    const eye = EyeIcon() as React.ReactElement<Record<string, unknown>>;
+    expect(eye.type).toBe("svg");
+    expect(eye.props.className).toBe("outliner__eye-icon");
+    expect(eye.props.viewBox).toBe("0 0 16 16");
+    expect(eye.props["aria-hidden"]).toBe("true");
+    expect(eye.props["data-kind"]).toBeUndefined();
+    expect(Object.values(OUTLINER_KIND_ICONS)).not.toContain(EyeIcon);
   });
 
   it("keeps the required CSS state rules", () => {
@@ -47,13 +55,16 @@ describe("outliner styles and source contracts", () => {
     expect(ruleBody(cssText, ".outliner__row")).toContain("var(--outliner-depth, 0)");
     expect(ruleBody(cssText, '.outliner__expand[aria-expanded="true"] .outliner__chevron')).toContain("rotate(90deg)");
     expect(ruleBody(cssText, '.outliner__item[data-hidden="true"] > .outliner__row')).not.toBeNull();
+    expect(ruleBody(cssText, ".outliner__head")).toContain("justify-content: space-between");
+    expect(ruleBody(cssText, ".outliner__visible")).toContain("accent-color: var(--color-accent)");
+    expect(ruleBody(cssText, ".outliner__visible[disabled]")).not.toBeNull();
     expect(iconText).toContain("CUBE_OUTLINE");
     expect(iconText).toContain("CUBE_FRONT_EDGES");
     expect(iconText).toContain('from "../viewer/display-icons"');
     expect(iconText).not.toMatch(/#[0-9a-f]{3,8}/i);
   });
 
-  it("keeps tree and selection local to the outliner", () => {
+  it("shares visibility and keeps selection local", () => {
     expect(outlinerText).toContain("useState<string[]>([])");
     expect(outlinerText).toContain('role="tree"');
     expect(outlinerText).toContain("useModelScenesStore");
@@ -62,6 +73,17 @@ describe("outliner styles and source contracts", () => {
     expect(outlinerText).toContain("toggleId(");
     expect(outlinerText).toContain("versionTag(");
     expect(outlinerText).toContain("isObjectVisible(");
+    expect(outlinerText).toContain("send(");
+    expect(outlinerText).toContain('"object:visibility"');
+    expect(outlinerText).toContain('"object:part-visibility"');
+    expect(outlinerText).toContain("setPartVisible(");
+    expect(outlinerText).toContain("setVisible(");
+    expect(outlinerText).toContain("hiddenObjectPaths(");
+    expect(outlinerText).toContain("isObjectPartVisible(");
+    expect(outlinerText).toContain("<EyeIcon");
+    expect(outlinerText).toContain("OUTLINER_VISIBILITY_HEADING");
+    expect(outlinerText).toContain("ClientMessage");
+    expect(outlinerText).not.toContain("hidden={");
     expect(outlinerText).toContain('import "./outliner.css"');
     expect(rowText).toContain('role="treeitem"');
     expect(rowText).toContain('role="group"');
@@ -72,9 +94,16 @@ describe("outliner styles and source contracts", () => {
     expect(rowText).toContain('data-tone="neutral"');
     expect(rowText).toContain('"--outliner-depth"');
     expect(rowText).toContain("<OutlinerBranch");
-    expect(outlinerText).not.toContain("send(");
-    expect(outlinerText).not.toContain("ClientMessage");
     expect(rowText).not.toContain("send(");
     expect(rowText).not.toContain("ClientMessage");
+    expect(rowText).toContain('type="checkbox"');
+    expect(rowText).toContain('className="outliner__visible"');
+    expect(rowText).toContain("checked={visible}");
+    expect(rowText).toContain("visibilityAriaLabel(");
+    expect(rowText).toContain("onChange={onToggleVisible}");
+    expect(rowText).toContain("data-hidden={!visible || ancestorHidden}");
+    expect(rowText).not.toContain("hidden?:");
+    expect(rowText.indexOf('type="checkbox"')).toBeGreaterThan(rowText.indexOf('className="outliner__select"'));
+    expect(rowText.indexOf('type="checkbox"')).toBeLessThan(rowText.indexOf('role="group"'));
   });
 });
