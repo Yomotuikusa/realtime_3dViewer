@@ -152,7 +152,7 @@ Canvas のクライアント座標を NDC 化して再帰的にモデルをレ�
 - tests/model-target.test.ts: モデルターゲットの登録・取得テスト
 - tests/pick.test.ts: NDC 変換、可視な交点だけの再帰レイキャスト、ワールド法線変換、useModelScene／PlaybackClock／PlaybackRig／ViewerCanvas／ReviewPage のソース検査
 - tests/fbx-compat.test.ts: Group / Bone への no-op bind、SkinnedMesh の本来の bind の維持、冪等なインストールをテスト
-- tests/model-scene.test.ts: FBX / OBJ / glTF ローダーの選択、同一オリジン manager、形式対応表、OBJ の不変アニメーション配列、共通副作用の分離、ViewerCanvas の fileName 受け渡し、FBX 互換処理の読み込み前呼び出しをソース検査
+- tests/model-scene.test.ts: FBX / OBJ / glTF ローダーの選択、同一オリジン manager、形式対応表、OBJ の不変アニメーション配列、共通副作用の分離、ViewerCanvas の fileName 受け渡し、FBX 互換処理の読み込み前呼び出しをソース検査し、useModelScene のクリップ登録・条件付き解除を実マウントで検証する
 - tests/mesh-display.test.ts: MeshDisplayMode ごとの材質切替、ワイヤフレーム重ね描きの共有状態・raycast 無効化・冪等性・破棄、対象外オブジェクトと結線のテスト
 - tests/view-presets.test.ts: 既定視点の方向・順序・単位ベクトル・距離維持・最小距離・非破壊性、既定視点一致と回転ロック判定のテスト
 - tests/viewer-pointer.test.ts: capture phase の割り当て、Alt+右ドラッグ dolly、pointer capture、継続・終了・ブラウザ既定動作抑止、cleanup のテスト

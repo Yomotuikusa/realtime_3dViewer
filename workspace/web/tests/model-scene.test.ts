@@ -2,7 +2,13 @@
 
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
-import { describe, expect, it } from "vitest";
+import { act, createElement } from "react";
+import { createRoot } from "react-dom/client";
+import { afterEach, describe, expect, it } from "vitest";
+import { AnimationClip, Object3D } from "three";
+import { useModelScenesStore } from "../src/features/compare/model-scenes";
+import { useModelClipsStore, selectModelClips } from "../src/features/trail/model-clips";
+import { useModelScene } from "../src/features/viewer/useModelScene";
 
 const sourceRoot = existsSync(join(process.cwd(), "web", "src"))
   ? join(process.cwd(), "web", "src")
@@ -11,6 +17,22 @@ const sourceRoot = existsSync(join(process.cwd(), "web", "src"))
 function readSource(path: string): string {
   return readFileSync(join(sourceRoot, path), "utf8");
 }
+
+interface SceneHarnessProps {
+  scene: Object3D;
+  animations: readonly AnimationClip[];
+  versionId: string;
+}
+
+function SceneHarness({ scene, animations, versionId }: SceneHarnessProps): null {
+  useModelScene(scene, animations, { versionId, primary: false, meshDisplay: "solid" });
+  return null;
+}
+
+afterEach(() => {
+  useModelClipsStore.getState().reset();
+  useModelScenesStore.getState().reset();
+});
 
 describe("model scene loader selection", () => {
   it("imports the FBX and OBJ loaders", () => {
@@ -64,6 +86,44 @@ describe("model scene loader selection", () => {
     expect(sceneSource).toContain("const { versionId, primary, meshDisplay } = options;");
     expect(sceneSource).not.toMatch(/useGLTF|useLoader|FBXLoader|OBJLoader/);
     expect(sceneSource.match(/useEffect\(/g)).toHaveLength(6);
+  });
+
+  it("registers clips for non-primary mounts and conditionally unregisters them", async () => {
+    const firstScene = new Object3D();
+    const secondScene = new Object3D();
+    const firstClips = [new AnimationClip("first", 1)];
+    const secondClips = [new AnimationClip("second", 2)];
+    const firstHost = document.createElement("div");
+    const secondHost = document.createElement("div");
+    const firstRoot = createRoot(firstHost);
+    const secondRoot = createRoot(secondHost);
+
+    try {
+      await act(async () => {
+        firstRoot.render(createElement(SceneHarness, { scene: firstScene, animations: firstClips, versionId: "v1" }));
+      });
+      expect(selectModelClips(useModelClipsStore.getState().clips, "v1")).toBe(firstClips);
+
+      await act(async () => {
+        secondRoot.render(createElement(SceneHarness, { scene: secondScene, animations: secondClips, versionId: "v1" }));
+      });
+      expect(selectModelClips(useModelClipsStore.getState().clips, "v1")).toBe(secondClips);
+
+      await act(async () => {
+        firstRoot.unmount();
+      });
+      expect(selectModelClips(useModelClipsStore.getState().clips, "v1")).toBe(secondClips);
+
+      await act(async () => {
+        secondRoot.unmount();
+      });
+      expect(selectModelClips(useModelClipsStore.getState().clips, "v1")).toBeNull();
+    } finally {
+      firstRoot.unmount();
+      secondRoot.unmount();
+      firstHost.remove();
+      secondHost.remove();
+    }
   });
 
   it("passes the filename from the canvas into the model dispatcher", () => {
