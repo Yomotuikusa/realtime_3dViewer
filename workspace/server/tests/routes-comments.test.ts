@@ -241,6 +241,7 @@ describe("comment routes", () => {
       body: "seed",
       status: "open",
       strokes: [],
+      playback: null,
       createdAt: 1700000000000,
     });
   });

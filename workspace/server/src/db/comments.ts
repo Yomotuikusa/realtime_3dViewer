@@ -1,6 +1,7 @@
 import type {
   CameraState,
   Comment,
+  CommentPlayback,
   CommentStatus,
   Stroke,
   Vec3,
@@ -16,6 +17,8 @@ export interface NewComment {
   anchor: Vec3;
   camera: CameraState;
   strokes: Stroke[];
+  /** 未指定・null は NULL として保存する */
+  playback?: CommentPlayback | null;
   createdAt: number;
 }
 
@@ -28,6 +31,7 @@ interface CommentRow {
   anchor_json: string;
   camera_json: string;
   strokes_json: string;
+  playback_json: string | null;
   status: CommentStatus;
   created_at: number;
   updated_at: number;
@@ -43,6 +47,9 @@ function toComment(row: CommentRow): Comment {
     anchor: JSON.parse(row.anchor_json) as Vec3,
     camera: JSON.parse(row.camera_json) as CameraState,
     strokes: JSON.parse(row.strokes_json) as Stroke[],
+    playback: row.playback_json === null
+      ? null
+      : (JSON.parse(row.playback_json) as CommentPlayback),
     status: row.status,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
@@ -53,7 +60,8 @@ function selectComment(db: Db, projectId: string, commentId: string): Comment | 
   const row = db
     .prepare(
       `SELECT id, project_id, version_id, author_name, body,
-              anchor_json, camera_json, strokes_json, status, created_at, updated_at
+              anchor_json, camera_json, strokes_json, playback_json,
+              status, created_at, updated_at
        FROM comments
        WHERE project_id = ? AND id = ?`,
     )
@@ -65,8 +73,8 @@ export function insertComment(db: Db, input: NewComment): Comment {
   db.prepare(
     `INSERT INTO comments
       (id, project_id, version_id, author_name, body, anchor_json, camera_json,
-       strokes_json, status, created_at, updated_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'open', ?, ?)`,
+       strokes_json, playback_json, status, created_at, updated_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'open', ?, ?)`,
   ).run(
     input.id,
     input.projectId,
@@ -76,6 +84,7 @@ export function insertComment(db: Db, input: NewComment): Comment {
     JSON.stringify(input.anchor),
     JSON.stringify(input.camera),
     JSON.stringify(input.strokes),
+    input.playback == null ? null : JSON.stringify(input.playback),
     input.createdAt,
     input.createdAt,
   );
@@ -92,7 +101,8 @@ export function listComments(
   const rows = db
     .prepare(
       `SELECT id, project_id, version_id, author_name, body,
-              anchor_json, camera_json, strokes_json, status, created_at, updated_at
+              anchor_json, camera_json, strokes_json, playback_json,
+              status, created_at, updated_at
        FROM comments
        WHERE project_id = ?${whereStatus}
        ORDER BY created_at ASC, id ASC`,

@@ -23,6 +23,7 @@ CREATE TABLE IF NOT EXISTS comments (
   anchor_json TEXT NOT NULL,
   camera_json TEXT NOT NULL,
   strokes_json TEXT NOT NULL,
+  playback_json TEXT,
   status TEXT NOT NULL CHECK(status IN ('open','resolved')),
   created_at INTEGER NOT NULL,
   updated_at INTEGER NOT NULL
