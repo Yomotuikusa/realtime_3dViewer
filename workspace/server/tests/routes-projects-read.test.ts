@@ -60,4 +60,16 @@ describe("project read routes", () => {
     expect(missing.status).toBe(404);
     expect((await missing.json()).error.code).toBe("NOT_FOUND");
   });
+
+  it.each([
+    ["a.fbx", "application/octet-stream"],
+    ["a.obj", "text/plain; charset=utf-8"],
+    ["a.bin", "application/octet-stream"],
+  ])("uses the expected media type for %s", async (fileName, contentType) => {
+    const t = testApp();
+    const seeded = seedProject(t, { fileName });
+    const response = await t.app.request(`/api/projects/p1/versions/${seeded.version.id}/model`);
+
+    expect(response.headers.get("content-type")).toBe(contentType);
+  });
 });

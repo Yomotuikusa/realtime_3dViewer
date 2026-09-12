@@ -1,7 +1,7 @@
 import { readFile } from "node:fs/promises";
 import type { Hono } from "hono";
 import { Hono as HonoApp } from "hono";
-import { ProjectNameSchema } from "@shared/api";
+import { MODEL_CONTENT_TYPES, modelFormat, ProjectNameSchema } from "@shared/api";
 import type { ModelVersion } from "@shared/types";
 import type { AppDeps } from "../app";
 import {
@@ -127,9 +127,8 @@ export function projectRoutes(deps: Required<AppDeps>): Hono {
     }
 
     const data = await readModelFile(deps.storage.modelFilePath(version.id));
-    const contentType = version.fileName.toLowerCase().endsWith(".gltf")
-      ? "model/gltf+json"
-      : "model/gltf-binary";
+    const format = modelFormat(version.fileName);
+    const contentType = format ? MODEL_CONTENT_TYPES[format] : "application/octet-stream";
     c.header("Content-Type", contentType);
     c.header("Cache-Control", "public, max-age=31536000, immutable");
     c.header("Content-Length", String(data.byteLength));

@@ -35,7 +35,28 @@ export const ApiErrorSchema = z.object({
 }) satisfies z.ZodType<ApiError>;
 
 export const MAX_UPLOAD_BYTES_DEFAULT = 100 * 1024 * 1024;
-export const ALLOWED_MODEL_EXTENSIONS = [".glb", ".gltf"] as const;
+export const ALLOWED_MODEL_EXTENSIONS = [".glb", ".gltf", ".fbx", ".obj"] as const;
+
+/** Accepted model format, without the leading dot. */
+export type ModelFormat = "glb" | "gltf" | "fbx" | "obj";
+
+/** Content-Type used when serving each accepted model format. */
+export const MODEL_CONTENT_TYPES: Readonly<Record<ModelFormat, string>> = {
+  glb: "model/gltf-binary",
+  gltf: "model/gltf+json",
+  fbx: "application/octet-stream",
+  obj: "text/plain; charset=utf-8",
+};
+
+/** Return the supported final filename extension, without its leading dot. */
+export function modelFormat(fileName: string): ModelFormat | null {
+  const dot = fileName.lastIndexOf(".");
+  if (dot <= 0 || dot === fileName.length - 1) return null;
+  const extension = fileName.slice(dot + 1).toLowerCase();
+  return extension === "glb" || extension === "gltf" || extension === "fbx" || extension === "obj"
+    ? extension
+    : null;
+}
 export const ProjectNameSchema = z.string().trim().min(1).max(MAX_PROJECT_NAME_LENGTH);
 
 export const CreateCommentInput = z.object({
