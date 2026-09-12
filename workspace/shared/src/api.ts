@@ -1,6 +1,7 @@
 import { z } from "zod";
 import {
   CameraStateSchema,
+  CommentPlaybackSchema,
   CommentStatusSchema,
   IdSchema,
   MAX_AUTHOR_NAME_LENGTH,
@@ -44,6 +45,7 @@ export const CreateCommentInput = z.object({
   anchor: Vec3Schema,
   camera: CameraStateSchema,
   strokes: z.array(StrokeSchema).max(200),
+  playback: CommentPlaybackSchema.nullable().optional(),
 });
 export type CreateCommentInput = z.infer<typeof CreateCommentInput>;
 

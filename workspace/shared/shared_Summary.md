@@ -7,8 +7,8 @@
 ## ファイル一覧と役割
 - tsconfig.json: 型検査設定(../tsconfig.base.json を継承。`@shared/*` は shared/src を指す)
 - vitest.config.ts: テスト設定(tests/**/*.test.ts、cacheDir は .vite)
-- src/types.ts: Vec3、CameraState、Stroke、Comment、ModelVersion、Project(全 versions と latestVersion の整合性を含む)、LightAngles、MeshDisplayMode、MeshCompare、PresenceUser の型と、識別子・ファイル名・自由文字列・焦点距離・ライト角度・メッシュ表示方法・比較設定を検証する zod スキーマ
-- src/api.ts: REST のエラー、プロジェクト名、コメント入出力スキーマと upload 定数
+- src/types.ts: Vec3、CameraState、Stroke、Comment(`CommentPlayback` による任意のクリップ添字・フレーム位置を含む)、ModelVersion、Project(全 versions と latestVersion の整合性を含む)、LightAngles、MeshDisplayMode、MeshCompare、PresenceUser の型と、識別子・ファイル名・自由文字列・焦点距離・ライト角度・メッシュ表示方法・比較設定・コメント再生位置を検証する zod スキーマ
+- src/api.ts: REST のエラー、プロジェクト名、コメント入出力スキーマ(`CreateCommentInput` は任意の `CommentPlayback` を含む)と upload 定数
 - src/protocol.ts: WS の ClientMessage/ServerMessage 型(カメラの focalLength、ルーム共有 light / mesh display / mesh compare、オブジェクト可視性・版追加を含む)、送信間隔定数、discriminated union スキーマ、JSON フレーム parse 関数
 - src/camera.ts: three.js に依存しない CameraState/Vec3 の比較、補間、複製(NaN は補間開始点として処理)、焦点距離(mm)のクランプ
 - src/stroke.ts: 反復処理による3D Ramer–Douglas–Peucker の点列間引きと送信可否判定
@@ -23,10 +23,11 @@
 - tests/mesh-compare.test.ts: mesh compare のスキーマ境界、純粋関数、protocol の受信・parse テスト
 - tests/camera.test.ts: カメラの比較、補間、クランプ、複製のテスト
 - tests/stroke.test.ts: 点列間引き、許容誤差、送信可能範囲のテスト
+- tests/comment-playback.test.ts: コメント再生位置の型・スキーマ、REST 入力、WS コメント受信のテスト
 
 ## 公開インターフェイス
-- 型: `Vec3`, `CameraState`, `Stroke`, `CommentStatus`, `Comment`, `ModelVersion`, `Project`(`versions` と `latestVersion` を含む), `LightAngles`, `MeshDisplayMode`, `MeshCompare`, `ActiveMeshCompare`, `PresenceUser`(`focalLength` は任意)
-- スキーマ: `Vec3Schema`, `ColorSchema`, `CameraStateSchema`, `FocalLengthSchema`, `LightAnglesSchema`, `MeshDisplayModeSchema`, `MeshCompareSchema`, `StrokeSchema`, `CommentStatusSchema`, `CommentSchema`, `ModelVersionSchema`, `ProjectSchema`, `PresenceUserSchema`
+- 型: `Vec3`, `CameraState`, `Stroke`, `CommentStatus`, `CommentPlayback`, `Comment`(`playback` は任意・null 許容), `ModelVersion`, `Project`(`versions` と `latestVersion` を含む), `LightAngles`, `MeshDisplayMode`, `MeshCompare`, `ActiveMeshCompare`, `PresenceUser`(`focalLength` は任意)
+- スキーマ: `Vec3Schema`, `ColorSchema`, `CameraStateSchema`, `FocalLengthSchema`, `LightAnglesSchema`, `MeshDisplayModeSchema`, `MeshCompareSchema`, `StrokeSchema`, `CommentStatusSchema`, `CommentPlaybackSchema`, `CommentSchema`, `ModelVersionSchema`, `ProjectSchema`, `PresenceUserSchema`
 - api: `ErrorCode`, `ApiError`, `ApiErrorSchema`, `MAX_UPLOAD_BYTES_DEFAULT`, `ALLOWED_MODEL_EXTENSIONS`, `ProjectNameSchema`, `CreateCommentInput`, `UpdateCommentStatusInput`, `ListCommentsQuery`
 - protocol: `ClientMessage`, `ServerMessage`, `ClientMessageSchema`, `ServerMessageSchema`, `ParseResult`, `parseClientMessage`, `parseServerMessage`, `MAX_NAME_LENGTH`, `CAMERA_SEND_INTERVAL_MS`, `LIGHT_SEND_INTERVAL_MS`; Client の `object:visibility` / `mesh:display` / `mesh:compare`、Server の `welcome.hiddenObjectIds` / `meshDisplay` / `meshCompare`、`object:visibility`、`object:added`、`mesh:display`、`mesh:compare` を含む
 - types の定数: `MAX_ID_LENGTH`, `MAX_FILE_NAME_LENGTH`, `MAX_PROJECT_NAME_LENGTH`, `MAX_AUTHOR_NAME_LENGTH`, `MAX_COMMENT_BODY_LENGTH`, `MIN_FOCAL_LENGTH_MM`, `MAX_FOCAL_LENGTH_MM`, `DEFAULT_FOCAL_LENGTH_MM`, `DEFAULT_MESH_DISPLAY`, `MIN_COMPARE_THRESHOLD_PERMILLE`, `MAX_COMPARE_THRESHOLD_PERMILLE`, `DEFAULT_COMPARE_THRESHOLD_PERMILLE`, `DEFAULT_MESH_COMPARE`
