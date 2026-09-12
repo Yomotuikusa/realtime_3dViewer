@@ -59,6 +59,9 @@ export function dispatchServerMessage(msg: ServerMessage): void {
     case "object:visibility":
       objects.setVisible(msg.versionId, msg.visible);
       break;
+    case "object:part-visibility":
+      objects.setPartVisible(msg.versionId, msg.objectPath, msg.visible);
+      break;
     case "object:added":
       objects.append(msg.version);
       break;
@@ -67,9 +70,6 @@ export function dispatchServerMessage(msg: ServerMessage): void {
       break;
     case "mesh:compare":
       display.setMeshCompare(msg.compare);
-      break;
-    case "object:part-visibility":
-      objects.setPartVisible(msg.versionId, msg.objectPath, msg.visible);
       break;
     case "error":
       session.setLastError(`${msg.code}: ${msg.message}`);
