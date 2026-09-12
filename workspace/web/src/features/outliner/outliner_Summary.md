@@ -2,11 +2,13 @@
 
 ## 目的
 
-読み込み済みモデルの scene 階層を、版ごとのルート行と種別アイコン付きの折りたたみツリーとして表示する。行選択はローカルの selection ストアで管理する。
+読み込み済みモデルの scene 階層を、版ごとのルート行と種別アイコン付きの折りたたみツリーとして表示する。各ノードは重ね描きを数えない部位 path を持ち、行選択はローカルの selection ストアで管理する。
 
 ## ファイル一覧と役割
 
-- outliner-tree.ts: three の scene から、重ね描きを除外したプレーンなアウトライナ木を作り、ノード種別を判定する
+- outliner-tree.ts: three の scene から、重ね描きを除外したプレーンなアウトライナ木と部位 path を作り、ノード種別を判定し、path から Object3D を検索する
+- visibility.ts: scene ルートを除く重ね描きでないオブジェクトへ、共有された非表示 path を再帰的に適用する
+- VisibilityRig.tsx: objects ストアの `hiddenParts` と model-scenes ストアを購読し、版ごとの scene へ部位表示状態を同期する Canvas 用 Rig
 - selection.ts: 選択中の版と Object3D uuid を保持する Zustand ストアと選択判定を提供する
 - selection-highlight.ts: 選択対象と子孫へ明るい青(0x60a5fa、不透明度 0.6)の選択重ね描きを付け外しする純粋関数を提供する
 - SelectionRig.tsx: 選択ストアと scene レジストリを購読し、選択重ね描きを管理する Canvas 用 Rig
@@ -18,10 +20,12 @@
 
 ## 公開インターフェイス
 
-- outliner-tree.ts: `OutlinerNodeKind`、`OutlinerNode`、`classifyObject`、`buildOutlinerTree`、`toggleId`
+- outliner-tree.ts: `OutlinerNodeKind`、`OutlinerNode`、`classifyObject`、`buildOutlinerTree`、`plainChildren`、`childPath`、`objectAtPath`、`toggleId`
 - selection.ts: `OutlinerSelection`、`SelectionStoreState`、`useSelectionStore`、`isSelected`
 - selection-highlight.ts: `SELECTION_OVERLAY_KEY`、`SELECTION_COLOR`、`SELECTION_MESH_OPACITY`、`isSelectionOverlay`、`createSelectionOverlay`、`applySelectionHighlight`、`clearSelectionHighlight`
 - SelectionRig.tsx: `SelectionRig`
+- visibility.ts: `applyPartVisibility`
+- VisibilityRig.tsx: `VisibilityRig`
 - outliner-labels.ts: アウトライナ文言定数、`KIND_LABELS`、`nodeLabel`、`expandAriaLabel`
 - outliner-icons.tsx: `OUTLINER_ICON_VIEW_BOX`、各種アイコン、`OUTLINER_KIND_ICONS`、`OutlinerKindIcon`
 - OutlinerRow.tsx: `OutlinerRowProps`、`OutlinerRow`、`OutlinerBranchProps`、`OutlinerBranch`
@@ -32,6 +36,8 @@
 版一覧は objects ストア、scene は compare の model-scenes ストア、選択は selection ストアで 095 の Rig が読む、配置は 096 の ReviewPage。
 選択重ね描きは `VIEWER_OVERLAY_KEY` を持つので表示モード・比較・アウトライナ木から除外される。Rig の配置は ReviewPage(096)。
 ビューア重ね描きの除外判定とメッシュアイコンの図案は viewer の既存公開インターフェイスを利用する。選択・展開状態はルームへ送信しない。
+部位の表示・非表示はルーム共有(設計書 §13.5)。鍵は uuid ではなく `path`(重ね描きを数えない子インデックス)。Rig は objects ストアの `hiddenParts` を読む。配置は ReviewPage(102)。
+既知の制限として、Rig は hidden path にない部位を一律 `visible = true` に戻すため、読み込み時点で `visible = false` だったオブジェクトの状態は保持しない。
 
 ## テスト
 
@@ -40,3 +46,4 @@
 - tests/outliner-labels.test.ts: 表示文言、種別ラベル、名前整形、展開 aria ラベルを検証する
 - tests/outliner-styles.test.ts: アイコンの SVG 属性、CSS 状態規則、コンポーネントの構造を検証する
 - tests/outliner-highlight.test.ts: 選択重ね描きの生成、適用、解除、Rig のソース契約を検証する
+- tests/outliner-visibility.test.ts: 部位 path による可視性適用、重ね描き・root の保持、VisibilityRig のソース契約を検証する

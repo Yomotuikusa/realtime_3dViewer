@@ -11,6 +11,7 @@ import { ReplayStrokes } from "../features/comments/ReplayStrokes";
 import { useCommentReplay } from "../features/comments/useCommentReplay";
 import { Outliner } from "../features/outliner/Outliner";
 import { SelectionRig } from "../features/outliner/SelectionRig";
+import { VisibilityRig } from "../features/outliner/VisibilityRig";
 import { OUTLINER_RESIZE_LABEL } from "../features/outliner/outliner-labels";
 import { PresenceList } from "../features/presence/PresenceList";
 import { ObjectList } from "../features/objects/ObjectList";
@@ -196,6 +197,7 @@ export function ReviewPage({ projectId }: { projectId: string }): ReactElement {
                 <CommentPickLayer />
                 <CommentPins />
                 <SelectionRig />
+                <VisibilityRig />
               </ViewerCanvas>
             </ErrorBoundary>
           </div>
