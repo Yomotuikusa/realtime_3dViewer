@@ -4,6 +4,26 @@ import { isSelected, useSelectionStore } from "../src/features/outliner/selectio
 afterEach(() => useSelectionStore.getState().reset());
 
 describe("outliner selection", () => {
+  it("selects directly and preserves state for the same selection", () => {
+    const first = { versionId: "v1", objectId: "o1" };
+    useSelectionStore.getState().select(first);
+    expect(useSelectionStore.getState().selected).toBe(first);
+
+    const stateBefore = useSelectionStore.getState();
+    useSelectionStore.getState().select({ versionId: "v1", objectId: "o1" });
+    expect(useSelectionStore.getState().selected).toBe(first);
+    expect(useSelectionStore.getState()).toBe(stateBefore);
+
+    useSelectionStore.getState().select({ versionId: "v1", objectId: "o2" });
+    expect(useSelectionStore.getState().selected).toEqual({ versionId: "v1", objectId: "o2" });
+  });
+
+  it("coexists with toggleSelection", () => {
+    useSelectionStore.getState().select({ versionId: "v1", objectId: "o1" });
+    useSelectionStore.getState().toggleSelection({ versionId: "v1", objectId: "o1" });
+    expect(useSelectionStore.getState().selected).toBeNull();
+  });
+
   it("selects, replaces, toggles, and clears an object", () => {
     expect(useSelectionStore.getState().selected).toBeNull();
     useSelectionStore.getState().toggleSelection({ versionId: "v1", objectId: "o1" });

@@ -7,6 +7,8 @@ export interface OutlinerSelection {
 
 export interface SelectionStoreState {
   selected: OutlinerSelection | null;
+  /** selection をそのまま選択にする。既に同じ選択なら state を更新しない */
+  select(selection: OutlinerSelection): void;
   toggleSelection(selection: OutlinerSelection): void;
   clear(): void;
   reset(): void;
@@ -14,6 +16,14 @@ export interface SelectionStoreState {
 
 export const useSelectionStore: UseBoundStore<StoreApi<SelectionStoreState>> = create<SelectionStoreState>((set, get) => ({
   selected: null,
+
+  select(selection) {
+    const current = get().selected;
+    if (current?.versionId === selection.versionId && current.objectId === selection.objectId) {
+      return;
+    }
+    set({ selected: selection });
+  },
 
   toggleSelection(selection) {
     const current = get().selected;
