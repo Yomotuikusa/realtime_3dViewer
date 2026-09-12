@@ -26,7 +26,7 @@ export function dispatchServerMessage(msg: ServerMessage): void {
       if (msg.light !== undefined) {
         lighting.applyRemote(msg.light);
       }
-      objects.applyWelcome(msg.hiddenObjectIds ?? []);
+      objects.applyWelcome(msg.hiddenObjectIds ?? [], msg.hiddenObjectParts ?? []);
       display.setMeshDisplay(msg.meshDisplay ?? DEFAULT_MESH_DISPLAY);
       display.setMeshCompare(msg.meshCompare ?? DEFAULT_MESH_COMPARE);
       break;
@@ -59,6 +59,9 @@ export function dispatchServerMessage(msg: ServerMessage): void {
     case "object:visibility":
       objects.setVisible(msg.versionId, msg.visible);
       break;
+    case "object:part-visibility":
+      objects.setPartVisible(msg.versionId, msg.objectPath, msg.visible);
+      break;
     case "object:added":
       objects.append(msg.version);
       break;
@@ -67,9 +70,6 @@ export function dispatchServerMessage(msg: ServerMessage): void {
       break;
     case "mesh:compare":
       display.setMeshCompare(msg.compare);
-      break;
-    case "object:part-visibility":
-      // 仮の分岐。ストアへの反映は 101 が実装する
       break;
     case "error":
       session.setLastError(`${msg.code}: ${msg.message}`);

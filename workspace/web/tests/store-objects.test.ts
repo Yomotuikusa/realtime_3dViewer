@@ -1,6 +1,8 @@
 import { afterEach, describe, expect, it } from "vitest";
-import type { ModelVersion } from "@shared/types";
+import type { ModelVersion, ObjectPartRef } from "@shared/types";
 import {
+  hiddenObjectPaths,
+  isObjectPartVisible,
   isObjectVisible,
   primaryObjectId,
   useObjectsStore,
@@ -47,17 +49,69 @@ describe("objects store", () => {
     expect(useObjectsStore.getState()).toBe(visibleState);
   });
 
-  it("replaces welcome hidden ids, removes duplicates, and resets", () => {
-    useObjectsStore.getState().applyWelcome(["v2", "v1", "v2"]);
-    expect(useObjectsStore.getState().hiddenIds).toEqual(["v2", "v1"]);
-    useObjectsStore.getState().setObjects([v1]);
-    useObjectsStore.getState().reset();
-    expect(useObjectsStore.getState()).toMatchObject({ objects: [], hiddenIds: [] });
+  it("changes part visibility only when needed and preserves insertion order", () => {
+    expect(useObjectsStore.getState().hiddenParts).toEqual([]);
+    useObjectsStore.getState().setPartVisible("v1", "0/1", false);
+    expect(useObjectsStore.getState().hiddenParts).toEqual([{ versionId: "v1", objectPath: "0/1" }]);
+    const hiddenState = useObjectsStore.getState();
+    useObjectsStore.getState().setPartVisible("v1", "0/1", false);
+    expect(useObjectsStore.getState()).toBe(hiddenState);
+
+    useObjectsStore.getState().setPartVisible("v1", "2", false);
+    useObjectsStore.getState().setPartVisible("v1", "0/1", true);
+    expect(useObjectsStore.getState().hiddenParts).toEqual([{ versionId: "v1", objectPath: "2" }]);
+    const visibleState = useObjectsStore.getState();
+    useObjectsStore.getState().setPartVisible("v1", "0/1", true);
+    expect(useObjectsStore.getState()).toBe(visibleState);
+
+    useObjectsStore.getState().setPartVisible("v2", "0/1", false);
+    expect(useObjectsStore.getState().hiddenParts).toEqual([
+      { versionId: "v1", objectPath: "2" },
+      { versionId: "v2", objectPath: "0/1" },
+    ]);
   });
 
-  it("provides visibility and primary object helpers", () => {
+  it("replaces welcome hidden ids, removes duplicates, and resets", () => {
+    const welcomeParts: ObjectPartRef[] = [
+      { versionId: "v1", objectPath: "0" },
+      { versionId: "v1", objectPath: "0" },
+      { versionId: "v2", objectPath: "1" },
+    ];
+    useObjectsStore.getState().applyWelcome(["v2", "v1", "v2"], welcomeParts);
+    expect(useObjectsStore.getState().hiddenIds).toEqual(["v2", "v1"]);
+    expect(useObjectsStore.getState().hiddenParts).toEqual([
+      { versionId: "v1", objectPath: "0" },
+      { versionId: "v2", objectPath: "1" },
+    ]);
+    const welcomeState = useObjectsStore.getState();
+    useObjectsStore.getState().applyWelcome(["v2", "v1", "v2"], welcomeParts);
+    expect(useObjectsStore.getState()).toBe(welcomeState);
+    welcomeParts[0]!.objectPath = "changed";
+    expect(useObjectsStore.getState().hiddenParts[0]).toEqual({ versionId: "v1", objectPath: "0" });
+
+    useObjectsStore.getState().applyWelcome([]);
+    expect(useObjectsStore.getState().hiddenParts).toEqual([]);
+    useObjectsStore.getState().setObjects([v1]);
+    useObjectsStore.getState().setPartVisible("v1", "0", false);
+    useObjectsStore.getState().setObjects([v1]);
+    expect(useObjectsStore.getState().hiddenParts).toEqual([{ versionId: "v1", objectPath: "0" }]);
+    useObjectsStore.getState().reset();
+    expect(useObjectsStore.getState()).toMatchObject({ objects: [], hiddenIds: [], hiddenParts: [] });
+  });
+
+  it("provides visibility, part paths, and primary object helpers", () => {
     expect(isObjectVisible(["v1"], "v1")).toBe(false);
     expect(isObjectVisible(["v1"], "v2")).toBe(true);
+    const hiddenParts: ObjectPartRef[] = [
+      { versionId: "v1", objectPath: "2" },
+      { versionId: "v2", objectPath: "0" },
+      { versionId: "v1", objectPath: "0/1" },
+    ];
+    expect(isObjectPartVisible(hiddenParts, "v1", "0/1")).toBe(false);
+    expect(isObjectPartVisible(hiddenParts, "v1", "0/2")).toBe(true);
+    expect(isObjectPartVisible(hiddenParts, "v2", "0/1")).toBe(true);
+    expect(hiddenObjectPaths(hiddenParts, "v1")).toEqual(["2", "0/1"]);
+    expect(hiddenObjectPaths(hiddenParts, "v3")).toEqual([]);
     expect(primaryObjectId([v3, v1, v2])).toBe("v1");
     expect(primaryObjectId([])).toBeNull();
   });

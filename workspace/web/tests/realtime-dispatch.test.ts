@@ -127,6 +127,11 @@ describe("realtime dispatch", () => {
 
     dispatchServerMessage({ type: "object:visibility", userId: "u2", versionId: "v1", visible: false });
     expect(useObjectsStore.getState().hiddenIds).toEqual(["v1"]);
+    dispatchServerMessage({ type: "object:part-visibility", userId: "u2", versionId: "v1", objectPath: "0/2", visible: false });
+    expect(useObjectsStore.getState().hiddenParts).toEqual([{ versionId: "v1", objectPath: "0/2" }]);
+    expect(useObjectsStore.getState().hiddenIds).toEqual(["v1"]);
+    dispatchServerMessage({ type: "object:part-visibility", userId: "u2", versionId: "v1", objectPath: "0/2", visible: true });
+    expect(useObjectsStore.getState().hiddenParts).toEqual([]);
     dispatchServerMessage({ type: "object:added", version });
     expect(useObjectsStore.getState().objects).toEqual([version]);
     const before = useObjectsStore.getState();
@@ -135,10 +140,19 @@ describe("realtime dispatch", () => {
   });
 
   it("applies welcome hidden ids and clears them when omitted", () => {
-    dispatchServerMessage({ type: "welcome", selfId: "u1", users: [user], strokes: [], hiddenObjectIds: ["v1"] });
+    dispatchServerMessage({
+      type: "welcome",
+      selfId: "u1",
+      users: [user],
+      strokes: [],
+      hiddenObjectIds: ["v1"],
+      hiddenObjectParts: [{ versionId: "v1", objectPath: "0" }],
+    });
     expect(useObjectsStore.getState().hiddenIds).toEqual(["v1"]);
+    expect(useObjectsStore.getState().hiddenParts).toEqual([{ versionId: "v1", objectPath: "0" }]);
     dispatchServerMessage({ type: "welcome", selfId: "u1", users: [user], strokes: [] });
     expect(useObjectsStore.getState().hiddenIds).toEqual([]);
+    expect(useObjectsStore.getState().hiddenParts).toEqual([]);
   });
 
   it("applies mesh display events and welcome state", () => {
