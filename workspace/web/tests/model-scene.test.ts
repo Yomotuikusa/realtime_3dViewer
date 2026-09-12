@@ -88,6 +88,28 @@ describe("model scene loader selection", () => {
     expect(sceneSource.match(/useEffect\(/g)).toHaveLength(6);
   });
 
+  it("registers and unregisters clips through a mounted non-primary hook", async () => {
+    const scene = new Object3D();
+    const clips = [new AnimationClip("non-primary", 1)];
+    const host = document.createElement("div");
+    const root = createRoot(host);
+
+    try {
+      await act(async () => {
+        root.render(createElement(SceneHarness, { scene, animations: clips, versionId: "v-non-primary" }));
+      });
+      expect(useModelClipsStore.getState().clips["v-non-primary"]).toBe(clips);
+
+      await act(async () => {
+        root.unmount();
+      });
+      expect(Object.hasOwn(useModelClipsStore.getState().clips, "v-non-primary")).toBe(false);
+    } finally {
+      root.unmount();
+      host.remove();
+    }
+  });
+
   it("registers clips for non-primary mounts and conditionally unregisters them", async () => {
     const firstScene = new Object3D();
     const secondScene = new Object3D();
