@@ -7,6 +7,8 @@ import {
   MeshCompareSchema,
   MeshDisplayModeSchema,
   ModelVersionSchema,
+  ObjectPartRefSchema,
+  ObjectPathSchema,
   PresenceUserSchema,
   StrokeSchema,
   type CameraState,
@@ -15,6 +17,8 @@ import {
   type MeshCompare,
   type MeshDisplayMode,
   type ModelVersion,
+  type ObjectPartRef,
+  type ObjectPath,
   type PresenceUser,
   type Stroke,
 } from "./types";
@@ -33,6 +37,8 @@ export type ClientMessage =
   | { type: "stroke:clear" }
   /** 自分が versionId のオブジェクトの表示・非表示を切り替えた */
   | { type: "object:visibility"; versionId: string; visible: boolean }
+  /** 自分が versionId の版内オブジェクト(部位)の表示・非表示を切り替えた */
+  | { type: "object:part-visibility"; versionId: string; objectPath: ObjectPath; visible: boolean }
   /** 自分がメッシュの表示方法を切り替えた */
   | { type: "mesh:display"; mode: MeshDisplayMode }
   /** 自分がメッシュ比較の設定を変えた(値全体を送る) */
@@ -47,6 +53,8 @@ export type ServerMessage =
       light?: LightAngles;
       /** ルームで非表示になっているオブジェクトの versionId。空なら省略される */
       hiddenObjectIds?: string[];
+      /** ルームで非表示になっている部位。空なら省略される */
+      hiddenObjectParts?: ObjectPartRef[];
       /** ルームのメッシュ表示方法。誰も切り替えていなければ省略される */
       meshDisplay?: MeshDisplayMode;
       /** ルームのメッシュ比較設定。誰も変えていなければ省略される */
@@ -63,6 +71,8 @@ export type ServerMessage =
   | { type: "comment:updated"; comment: Comment }
   /** userId が versionId の表示・非表示を切り替えた(送信元以外へ中継) */
   | { type: "object:visibility"; userId: string; versionId: string; visible: boolean }
+  /** userId が versionId の部位 objectPath の表示・非表示を切り替えた(送信元以外へ中継) */
+  | { type: "object:part-visibility"; userId: string; versionId: string; objectPath: ObjectPath; visible: boolean }
   /** REST でオブジェクトが追加された(ルーム全員へ配信) */
   | { type: "object:added"; version: ModelVersion }
   /** userId がメッシュの表示方法を切り替えた(送信元以外へ中継) */
@@ -81,6 +91,7 @@ export const ClientMessageSchema = z.discriminatedUnion("type", [
   z.object({ type: z.literal("stroke:remove"), strokeId: IdSchema }),
   z.object({ type: z.literal("stroke:clear") }),
   z.object({ type: z.literal("object:visibility"), versionId: IdSchema, visible: z.boolean() }),
+  z.object({ type: z.literal("object:part-visibility"), versionId: IdSchema, objectPath: ObjectPathSchema, visible: z.boolean() }),
   z.object({ type: z.literal("mesh:display"), mode: MeshDisplayModeSchema }),
   z.object({ type: z.literal("mesh:compare"), compare: MeshCompareSchema }),
 ]) satisfies z.ZodType<ClientMessage>;
@@ -93,6 +104,7 @@ export const ServerMessageSchema = z.discriminatedUnion("type", [
     strokes: z.array(StrokeSchema),
     light: LightAnglesSchema.optional(),
     hiddenObjectIds: z.array(IdSchema).optional(),
+    hiddenObjectParts: z.array(ObjectPartRefSchema).optional(),
     meshDisplay: MeshDisplayModeSchema.optional(),
     meshCompare: MeshCompareSchema.optional(),
   }),
@@ -111,6 +123,7 @@ export const ServerMessageSchema = z.discriminatedUnion("type", [
   z.object({ type: z.literal("comment:created"), comment: CommentSchema }),
   z.object({ type: z.literal("comment:updated"), comment: CommentSchema }),
   z.object({ type: z.literal("object:visibility"), userId: IdSchema, versionId: IdSchema, visible: z.boolean() }),
+  z.object({ type: z.literal("object:part-visibility"), userId: IdSchema, versionId: IdSchema, objectPath: ObjectPathSchema, visible: z.boolean() }),
   z.object({ type: z.literal("object:added"), version: ModelVersionSchema }),
   z.object({ type: z.literal("mesh:display"), userId: IdSchema, mode: MeshDisplayModeSchema }),
   z.object({ type: z.literal("mesh:compare"), userId: IdSchema, compare: MeshCompareSchema }),

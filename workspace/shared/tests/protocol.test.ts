@@ -49,6 +49,7 @@ describe("ClientMessageSchema", () => {
       { type: "stroke:remove", strokeId: "stroke-1" },
       { type: "stroke:clear" },
       { type: "object:visibility", versionId: "version-1", visible: false },
+      { type: "object:part-visibility", versionId: "version-1", objectPath: "0/2", visible: false },
       { type: "mesh:display", mode: "wireframe" },
       { type: "mesh:compare", compare: { baseId: "version-1", targetId: "version-2", thresholdPermille: 5 } },
     ];
@@ -64,6 +65,10 @@ describe("ClientMessageSchema", () => {
     expect(ClientMessageSchema.safeParse({ type: "stroke:remove", strokeId: "" }).success).toBe(false);
     expect(ClientMessageSchema.safeParse({ type: "object:visibility", versionId: "", visible: false }).success).toBe(false);
     expect(ClientMessageSchema.safeParse({ type: "object:visibility", versionId: "version-1", visible: "false" }).success).toBe(false);
+    expect(ClientMessageSchema.safeParse({ type: "object:part-visibility", versionId: "version-1", objectPath: "", visible: false }).success).toBe(false);
+    expect(ClientMessageSchema.safeParse({ type: "object:part-visibility", versionId: "version-1", objectPath: "a", visible: false }).success).toBe(false);
+    expect(ClientMessageSchema.safeParse({ type: "object:part-visibility", versionId: "version-1", objectPath: "0", visible: "false" }).success).toBe(false);
+    expect(ClientMessageSchema.safeParse({ type: "object:part-visibility", versionId: "version-1", visible: false }).success).toBe(false);
     expect(ClientMessageSchema.safeParse({ type: "mesh:display", mode: "mesh" }).success).toBe(false);
     expect(ClientMessageSchema.safeParse({ type: "mesh:display" }).success).toBe(false);
     expect(ClientMessageSchema.safeParse({ type: "welcome", selfId: "user-1", users: [], strokes: [] }).success).toBe(false);
@@ -87,7 +92,7 @@ describe("ClientMessageSchema", () => {
 });
 
 describe("ServerMessageSchema", () => {
-  it("accepts all fourteen server message variants", () => {
+  it("accepts all fifteen server message variants", () => {
     const messages = [
       { type: "welcome", selfId: "user-1", users: [user], strokes: [stroke] },
       { type: "user:joined", user },
@@ -99,6 +104,7 @@ describe("ServerMessageSchema", () => {
       { type: "comment:created", comment },
       { type: "comment:updated", comment },
       { type: "object:visibility", userId: "user-1", versionId: "version-1", visible: false },
+      { type: "object:part-visibility", userId: "user-1", versionId: "version-1", objectPath: "0/2", visible: true },
       { type: "object:added", version },
       { type: "mesh:display", userId: "user-1", mode: "solid-wireframe" },
       { type: "mesh:compare", userId: "user-1", compare: { baseId: "version-1", targetId: "version-2", thresholdPermille: 5 } },
@@ -119,6 +125,21 @@ describe("ServerMessageSchema", () => {
     if (withHiddenObjects.success && withHiddenObjects.data.type === "welcome") {
       expect(withHiddenObjects.data.hiddenObjectIds).toEqual(["v1", "v2"]);
     }
+    const hiddenObjectParts = [
+      { versionId: "v1", objectPath: "0" },
+      { versionId: "v1", objectPath: "0/1" },
+    ];
+    const withHiddenObjectParts = ServerMessageSchema.safeParse({
+      type: "welcome", selfId: "user-1", users: [], strokes: [], hiddenObjectParts,
+    });
+    expect(withHiddenObjectParts.success).toBe(true);
+    if (withHiddenObjectParts.success && withHiddenObjectParts.data.type === "welcome") {
+      expect(withHiddenObjectParts.data.hiddenObjectParts).toEqual(hiddenObjectParts);
+    }
+    expect(ServerMessageSchema.safeParse({
+      type: "welcome", selfId: "user-1", users: [], strokes: [],
+      hiddenObjectParts: [{ versionId: "v1", objectPath: "" }],
+    }).success).toBe(false);
     expect(ServerMessageSchema.safeParse({ type: "welcome", selfId: "user-1", users: [], strokes: [], hiddenObjectIds: [""] }).success).toBe(false);
     expect(ServerMessageSchema.safeParse({ type: "object:visibility", userId: "user-1", versionId: "", visible: true }).success).toBe(false);
     expect(ServerMessageSchema.safeParse({ type: "object:added", version: { ...version, number: 0 } }).success).toBe(false);
@@ -132,6 +153,7 @@ describe("ServerMessageSchema", () => {
     const withoutDisplay = ServerMessageSchema.safeParse({ type: "welcome", selfId: "user-1", users: [], strokes: [] });
     expect(withoutDisplay.success).toBe(true);
     if (withoutDisplay.success) expect("meshDisplay" in withoutDisplay.data).toBe(false);
+    if (withoutDisplay.success) expect("hiddenObjectParts" in withoutDisplay.data).toBe(false);
 
     const withDisplay = ServerMessageSchema.safeParse({
       type: "welcome", selfId: "user-1", users: [], strokes: [], meshDisplay: "wireframe",
@@ -199,6 +221,10 @@ describe("protocol parsers", () => {
       ok: true,
       msg: { type: "object:visibility", versionId: "version-1", visible: false },
     });
+    expect(parseClientMessage(JSON.stringify({ type: "object:part-visibility", versionId: "version-1", objectPath: "0/2", visible: false }))).toEqual({
+      ok: true,
+      msg: { type: "object:part-visibility", versionId: "version-1", objectPath: "0/2", visible: false },
+    });
     expect(parseClientMessage(JSON.stringify({ type: "mesh:display", mode: "wireframe" }))).toEqual({
       ok: true,
       msg: { type: "mesh:display", mode: "wireframe" },
@@ -206,6 +232,10 @@ describe("protocol parsers", () => {
     expect(parseServerMessage(JSON.stringify({ type: "object:visibility", userId: "user-1", versionId: "version-1", visible: false }))).toEqual({
       ok: true,
       msg: { type: "object:visibility", userId: "user-1", versionId: "version-1", visible: false },
+    });
+    expect(parseServerMessage(JSON.stringify({ type: "object:part-visibility", userId: "user-1", versionId: "version-1", objectPath: "0/2", visible: true }))).toEqual({
+      ok: true,
+      msg: { type: "object:part-visibility", userId: "user-1", versionId: "version-1", objectPath: "0/2", visible: true },
     });
     expect(parseServerMessage(JSON.stringify({ type: "object:added", version }))).toEqual({
       ok: true,

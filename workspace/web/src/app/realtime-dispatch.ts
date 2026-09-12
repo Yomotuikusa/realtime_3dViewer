@@ -68,6 +68,9 @@ export function dispatchServerMessage(msg: ServerMessage): void {
     case "mesh:compare":
       display.setMeshCompare(msg.compare);
       break;
+    case "object:part-visibility":
+      // 仮の分岐。ストアへの反映は 101 が実装する
+      break;
     case "error":
       session.setLastError(`${msg.code}: ${msg.message}`);
       break;
