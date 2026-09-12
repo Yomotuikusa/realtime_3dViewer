@@ -27,7 +27,7 @@ Canvas、モデル、カメラ、ライティング、焦点距離、内蔵ア�
 - lighting.ts: `@shared/types` 由来の `LightAngles` を再エクスポートし、ワールド固定ライトの角度の正規化・クランプ・ドラッグ回転と主／補助ライト座標を提供する
 - ModelMesh.tsx: 拡張子から形式を判別して glTF / FBX / OBJ のローダーへ割り、`useModelScene` で共通接続する。形式ごとに同一オリジン用の LoadingManager を指定し、読み込み前に `installFbxSkinCompat()` を呼び、`visible` を scene に反映する。OBJ は材質なしの単色表示、FBX はスケール補正なしとする。Draco 圧縮時のデコーダ取得（`https://www.gstatic.com/...`）は drei の別 manager による外部依存として残る
 - fbx-compat.ts: FBXLoader が未対応の Model を Group または Bone にしてスキンを適用しようとする場合に、no-op の `bind` で該当ノードのスキン適用だけを読み飛ばす
-- useModelScene.ts: 読み込み済みの glTF / FBX / OBJ の scene を共通処理へ接続する。primary のモデルだけバウンディングボックスからモデルサイズを記録して初回 Fit を要求し、内蔵 `animations` を playback ストアへ登録する。`meshDisplay` を全 Mesh へ適用し、アンマウント時は solid に戻す。`versionId` と scene を比較用レジストリへ登録し、アンマウント時に同じ参照だけを解除する
+- useModelScene.ts: 読み込み済みの glTF / FBX / OBJ の scene を共通処理へ接続する。primary のモデルだけバウンディングボックスからモデルサイズを記録して初回 Fit を要求し、内蔵 `animations` を playback ストアへ登録する。全版の `animations` を trail のクリップレジストリへ登録する。`meshDisplay` を全 Mesh へ適用し、アンマウント時は solid に戻す。`versionId` と scene を比較用レジストリへ登録し、アンマウント時は同じ参照だけを解除する
 - mesh-display.ts: MeshDisplayMode に応じた材質の wireframe / polygon offset 切替と、通常メッシュへ追従する raycast 無効のワイヤフレーム重ね描きを冪等に管理する。ワイヤフレームと比較重ね描きを共通の `VIEWER_OVERLAY_KEY` で識別し、表示方法の走査から除外する
 - model-loading.ts: glTF の `buffers` / `images` などが参照する data/blob URI と同一オリジン URL だけを許可する LoadingManager を作り、外部 URL を `about:blank` に置換する
 - model-target.ts: React や Zustand に依存せず、現在のレイキャスト対象 `Object3D` を保持する `setModelTarget` / `getModelTarget`
@@ -152,7 +152,7 @@ Canvas のクライアント座標を NDC 化して再帰的にモデルをレ�
 - tests/model-target.test.ts: モデルターゲットの登録・取得テスト
 - tests/pick.test.ts: NDC 変換、可視な交点だけの再帰レイキャスト、ワールド法線変換、useModelScene／PlaybackClock／PlaybackRig／ViewerCanvas／ReviewPage のソース検査
 - tests/fbx-compat.test.ts: Group / Bone への no-op bind、SkinnedMesh の本来の bind の維持、冪等なインストールをテスト
-- tests/model-scene.test.ts: FBX / OBJ / glTF ローダーの選択、同一オリジン manager、形式対応表、OBJ の不変アニメーション配列、共通副作用の分離、ViewerCanvas の fileName 受け渡し、FBX 互換処理の読み込み前呼び出しをソース検査
+- tests/model-scene.test.ts: FBX / OBJ / glTF ローダーの選択、同一オリジン manager、形式対応表、OBJ の不変アニメーション配列、共通副作用の分離、ViewerCanvas の fileName 受け渡し、FBX 互換処理の読み込み前呼び出しをソース検査し、useModelScene のクリップ登録・条件付き解除を実マウントで検証する
 - tests/mesh-display.test.ts: MeshDisplayMode ごとの材質切替、ワイヤフレーム重ね描きの共有状態・raycast 無効化・冪等性・破棄、対象外オブジェクトと結線のテスト
 - tests/view-presets.test.ts: 既定視点の方向・順序・単位ベクトル・距離維持・最小距離・非破壊性、既定視点一致と回転ロック判定のテスト
 - tests/viewer-pointer.test.ts: capture phase の割り当て、Alt+右ドラッグ dolly、pointer capture、継続・終了・ブラウザ既定動作抑止、cleanup のテスト
