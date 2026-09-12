@@ -161,6 +161,17 @@
   font-weight: 600;
 }
 
+.comments-composer__frame {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  font-size: var(--text-sm);
+}
+
+.comments-row__frame {
+  white-space: nowrap;
+}
+
 .comments-composer__actions {
   display: flex;
   gap: var(--space-2);

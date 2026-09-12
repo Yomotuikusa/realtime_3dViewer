@@ -1,4 +1,4 @@
-import type { CommentStatus } from "@shared/types";
+import type { CommentPlayback, CommentStatus } from "@shared/types";
 
 export const COMMENTS_HEADING = "コメント";
 export const FILTER_OPEN_ONLY = "未解決のみ";
@@ -8,6 +8,19 @@ export const SUBMIT_LABEL = "投稿する";
 export const CANCEL_LABEL = "キャンセル";
 export const EMPTY_MESSAGE = "コメントはまだありません。「コメント」モードでモデルをクリックすると投稿できます。";
 export const EMPTY_FILTERED_MESSAGE = "未解決のコメントはありません。";
+export const RECORD_FRAME_LABEL = "フレームを記録";
+
+export function recordFrameLabel(frame: number): string {
+  return `フレーム ${frame} を記録`;
+}
+
+export function playbackBadge(playback: CommentPlayback): string {
+  return `F ${playback.frame}`;
+}
+
+export function playbackTitle(playback: CommentPlayback): string {
+  return `クリップ ${playback.clipIndex + 1} / フレーム ${playback.frame}`;
+}
 
 export function commentsHeading(count: number): string {
   return `${COMMENTS_HEADING} (${count})`;

@@ -1,6 +1,8 @@
 import { cloneCamera } from "@shared/camera";
 import type { CreateCommentInput } from "@shared/api";
-import type { CameraState, Stroke, Vec3 } from "@shared/types";
+import type { CameraState, CommentPlayback, Stroke, Vec3 } from "@shared/types";
+import { frameOfTime } from "../viewer/playback-frames";
+import type { PlaybackClip } from "../viewer/playback";
 
 /** クリック判定に使う移動量の上限(px) */
 export const CLICK_MOVE_THRESHOLD_PX = 5;
@@ -32,6 +34,20 @@ export function ownStrokesForComment(
   return ownStrokes.length <= 200 ? ownStrokes : ownStrokes.slice(-200);
 }
 
+/** 投稿に載せる再生位置。スイッチ OFF またはクリップ無しなら null。 */
+export function commentPlaybackOf(
+  playback: { clips: readonly PlaybackClip[]; clipIndex: number; time: number; fps: number },
+  recordFrame: boolean,
+): CommentPlayback | null {
+  if (!recordFrame || playback.clips.length === 0) {
+    return null;
+  }
+  return {
+    clipIndex: playback.clipIndex,
+    frame: frameOfTime(playback.time, playback.fps),
+  };
+}
+
 /** コメント投稿用の入力を組み立てる。本文が空の場合は null を返す。 */
 export function buildCommentInput(args: {
   versionId: string;
@@ -41,6 +57,7 @@ export function buildCommentInput(args: {
   camera: CameraState;
   strokes: Record<string, Stroke>;
   userId: string | null;
+  playback: CommentPlayback | null;
 }): CreateCommentInput | null {
   const body = args.body.trim();
   if (body.length === 0) {
@@ -53,5 +70,6 @@ export function buildCommentInput(args: {
     anchor: [...args.anchor],
     camera: cloneCamera(args.camera),
     strokes: ownStrokesForComment(args.strokes, args.userId),
+    playback: args.playback,
   };
 }
