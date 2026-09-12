@@ -7,6 +7,7 @@ import { useSessionStore } from "../../store/session";
 import { useShortcutsStore } from "../../store/shortcuts";
 import { AnnotationToolbar } from "../annotation/AnnotationToolbar";
 import { JointDisplayBar } from "../joint/JointDisplayBar";
+import { TrailBar } from "../trail/TrailBar";
 import { CameraMenu } from "./CameraMenu";
 import { DisplayModeBar } from "./DisplayModeBar";
 import { HudMenu } from "./HudMenu";
@@ -60,6 +61,7 @@ export function ViewerHud({ send }: { send: (msg: ClientMessage) => boolean }): 
       <div className="hud-menus">
         <DisplayModeBar send={send} />
         <JointDisplayBar send={send} />
+        <TrailBar send={send} />
         <HudMenu
           id="camera"
           open={openMenu === "camera"}
