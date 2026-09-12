@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { ALLOWED_MODEL_EXTENSIONS } from "@shared/api";
 import {
   APP_NAME,
   FILE_TOO_LARGE,
@@ -7,6 +8,7 @@ import {
   NO_FILE_SELECTED,
   NOT_FOUND_HOME,
   NOT_FOUND_TITLE,
+  OBJ_MATERIAL_NOTE,
   PROJECT_NAME_LABEL,
   SUBMIT_LABEL,
   SUBMITTING_LABEL,
@@ -25,7 +27,7 @@ describe("upload labels", () => {
 
   it("exposes the upload and not-found labels", () => {
     expect(APP_NAME).toBe("3D Reviewer");
-    expect(UPLOAD_LEAD).toBe("glTF / GLB をアップロードすると、共有用のレビュー URL が発行されます。");
+    expect(UPLOAD_LEAD).toBe("glTF / GLB / FBX / OBJ をアップロードすると、共有用のレビュー URL が発行されます。");
     expect(PROJECT_NAME_LABEL).toBe("プロジェクト名");
     expect(MODEL_FILE_LABEL).toBe("モデルファイル");
     expect(MODEL_FILES_HELP_SUFFIX).toBe("複数選択できます");
@@ -33,6 +35,14 @@ describe("upload labels", () => {
     expect(SUBMITTING_LABEL).toBe("アップロード中…");
     expect(NOT_FOUND_TITLE).toBe("ページが見つかりません");
     expect(NOT_FOUND_HOME).toBe("アップロード画面へ");
+  });
+
+  it("exposes supported model formats and the OBJ material note", () => {
+    expect(UNSUPPORTED_EXTENSION).toBe("対応しているモデル形式は .glb / .gltf / .fbx / .obj です。");
+    expect(OBJ_MATERIAL_NOTE).toBe("OBJ は材質ファイル(.mtl)を読み込まないため、単色で表示されます。");
+    expect(ALLOWED_MODEL_EXTENSIONS.join(",")).toBe(".glb,.gltf,.fbx,.obj");
+    expect(fileHelp(ALLOWED_MODEL_EXTENSIONS, 100 * 1024 * 1024))
+      .toBe(".glb / .gltf / .fbx / .obj、100 MB まで");
   });
 
   it("describes supported extensions and upload size", () => {
@@ -71,5 +81,16 @@ describe("upload labels", () => {
       { name: "a.txt", size: 60 * 1024 * 1024 },
       { name: "b.glb", size: 60 * 1024 * 1024 },
     ], extensions, maxBytes)).toBe(UNSUPPORTED_EXTENSION);
+
+    expect(validateModelFiles([{ name: "a.fbx", size: 1 }], ALLOWED_MODEL_EXTENSIONS, maxBytes)).toBeNull();
+    expect(validateModelFiles([{ name: "a.OBJ", size: 1 }], ALLOWED_MODEL_EXTENSIONS, maxBytes)).toBeNull();
+    expect(validateModelFiles([
+      { name: "a.glb", size: 1 },
+      { name: "b.fbx", size: 1 },
+    ], ALLOWED_MODEL_EXTENSIONS, maxBytes)).toBeNull();
+    expect(validateModelFiles([{ name: "a.stl", size: 1 }], ALLOWED_MODEL_EXTENSIONS, maxBytes))
+      .toBe(UNSUPPORTED_EXTENSION);
+    expect(validateModelFiles([{ name: "a.fbx", size: 101 * 1024 * 1024 }], ALLOWED_MODEL_EXTENSIONS, maxBytes))
+      .toBe(FILE_TOO_LARGE);
   });
 });
