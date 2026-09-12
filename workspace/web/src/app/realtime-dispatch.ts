@@ -62,6 +62,8 @@ export function dispatchServerMessage(msg: ServerMessage): void {
     case "object:added":
       objects.append(msg.version);
       break;
+    case "object:part-visibility":
+      break;
     case "mesh:display":
       display.setMeshDisplay(msg.mode);
       break;
