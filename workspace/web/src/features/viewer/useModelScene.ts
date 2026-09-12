@@ -5,6 +5,7 @@ import type { MeshDisplayMode } from "@shared/types";
 import { useCameraStore } from "../../store/camera";
 import { usePlaybackStore } from "../../store/playback";
 import { useModelScenesStore } from "../compare/model-scenes";
+import { useModelClipsStore } from "../trail/model-clips";
 import { applyMeshDisplay } from "./mesh-display";
 import { clipSummaries } from "./playback";
 import { detectFps } from "./playback-frames";
@@ -49,6 +50,11 @@ export function useModelScene(
     useModelScenesStore.getState().register(versionId, scene);
     return () => useModelScenesStore.getState().unregister(versionId, scene);
   }, [scene, versionId]);
+
+  useEffect(() => {
+    useModelClipsStore.getState().register(versionId, animations);
+    return () => useModelClipsStore.getState().unregister(versionId, animations);
+  }, [animations, versionId]);
 
   useEffect(() => () => applyMeshDisplay(scene, "solid"), [scene]);
 }
