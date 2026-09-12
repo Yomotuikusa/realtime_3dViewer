@@ -139,8 +139,6 @@ export class RoomHub {
         }
         return [{ target: "all", msg: { type: "stroke:clear", userId: connId } }];
     }
-
-    return [];
   }
 
   connectionsIn(projectId: string): string[] {
