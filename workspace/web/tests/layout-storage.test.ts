@@ -26,6 +26,18 @@ describe("layout storage", () => {
     expect(loadLayoutSize("timelineHeight")).toBe(64);
   });
 
+  it("stores the outliner width independently", () => {
+    saveLayoutSize("outlinerWidth", 300);
+    expect(loadLayoutSize("outlinerWidth")).toBe(300);
+    expect(loadLayoutSize("panelWidth")).toBeNull();
+  });
+
+  it("preserves panel width when saving the outliner width", () => {
+    saveLayoutSize("panelWidth", 400);
+    saveLayoutSize("outlinerWidth", 300);
+    expect(JSON.parse(localStorage.getItem(LAYOUT_STORAGE_KEY) ?? "null")).toEqual({ panelWidth: 400, outlinerWidth: 300 });
+  });
+
   it("replaces malformed stored data and tolerates storage exceptions", () => {
     localStorage.setItem(LAYOUT_STORAGE_KEY, "{");
     saveLayoutSize("panelWidth", 400);

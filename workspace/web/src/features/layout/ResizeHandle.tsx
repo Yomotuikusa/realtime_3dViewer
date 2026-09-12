@@ -1,9 +1,11 @@
 import { useRef, useState, type KeyboardEvent, type PointerEvent, type ReactElement } from "react";
-import { resizeDragValue, resizeKeyValue, type ResizeAxis, type ResizeDrag } from "./resize";
+import { resizeDragValue, resizeKeyValue, type ResizeAxis, type ResizeDrag, type ResizeSide } from "./resize";
 import "./layout.css";
 
 export interface ResizeHandleProps {
   axis: ResizeAxis;
+  /** 省略時 "end"(従来の向き)。 */
+  side?: ResizeSide;
   value: number;
   min: number;
   max: number;
@@ -15,6 +17,7 @@ export interface ResizeHandleProps {
 
 export function ResizeHandle({
   axis,
+  side = "end",
   value,
   min,
   max,
@@ -47,6 +50,7 @@ export function ResizeHandle({
       axis === "x" ? event.clientX : event.clientY,
       min,
       max,
+      side,
     );
     if (nextValue !== null) {
       onChange(nextValue);
@@ -63,7 +67,7 @@ export function ResizeHandle({
   };
 
   const handleKeyDown = (event: KeyboardEvent<HTMLDivElement>): void => {
-    const nextValue = resizeKeyValue(event.key, axis, value, min, max);
+    const nextValue = resizeKeyValue(event.key, axis, value, min, max, side);
     if (nextValue !== null) {
       event.preventDefault();
       onChange(nextValue);
@@ -76,6 +80,7 @@ export function ResizeHandle({
       tabIndex={0}
       className={classes}
       data-axis={axis}
+      data-side={side}
       data-dragging={dragging}
       aria-orientation={axis === "x" ? "vertical" : "horizontal"}
       aria-label={label}
