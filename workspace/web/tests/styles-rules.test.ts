@@ -55,6 +55,7 @@ const tokenNames = [
   "--color-surface-translucent",
   "--shadow-overlay",
   "--shadow-control",
+  "--shadow-card",
   "--focus-ring-color",
   "--duration-fast",
   "--panel-width",
