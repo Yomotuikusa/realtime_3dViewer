@@ -12,7 +12,6 @@ const srcDir = existsSync(urlPath) ? urlPath : join(process.cwd(), "web", "src")
 const tokensText = readFileSync(join(srcDir, "styles/tokens.css"), "utf8");
 const viewerCssText = readFileSync(join(srcDir, "features/viewer/viewer.css"), "utf8");
 const cameraMenuText = readFileSync(join(srcDir, "features/viewer/CameraMenu.tsx"), "utf8");
-const displayMenuText = readFileSync(join(srcDir, "features/viewer/DisplayMenu.tsx"), "utf8");
 const hudMenuText = readFileSync(join(srcDir, "features/viewer/HudMenu.tsx"), "utf8");
 const viewerHudText = readFileSync(join(srcDir, "features/viewer/ViewerHud.tsx"), "utf8");
 
@@ -170,28 +169,54 @@ describe("viewer styles", () => {
     expect(ruleBody(viewerCssText, ".hud-menu__item")).toContain("box-shadow: var(--shadow-control)");
   });
 
-  it("styles the selected display menu item", () => {
-    const body = ruleBody(viewerCssText, '.hud-menu__item[aria-pressed="true"]');
+  it("gives the display bar the same segmented frame as the tool modes", () => {
+    const declarations = [
+      "display: inline-flex",
+      "gap: 2px",
+      "padding: 2px",
+      "border-radius: var(--radius-md)",
+      "background: var(--color-surface)",
+      "box-shadow: var(--shadow-overlay)",
+    ];
+
+    for (const selector of [".hud-display", ".hud-modes"]) {
+      const body = ruleBody(viewerCssText, selector);
+      for (const declaration of declarations) expect(body).toContain(declaration);
+    }
+  });
+
+  it("styles display bar buttons as icon segments", () => {
+    const body = ruleBody(viewerCssText, ".hud-display__btn");
+
+    expect(body).toContain("width: 2rem");
+    expect(body).toContain("padding: 0");
+    expect(body).toContain("border: 0");
+  });
+
+  it("styles the selected display bar button", () => {
+    const body = ruleBody(viewerCssText, '.hud-display__btn[aria-pressed="true"]');
 
     expect(body).toContain("background: var(--color-accent)");
     expect(body).toContain("color: var(--color-on-accent)");
   });
 
-  it("lays out display choices as a grid", () => {
-    expect(ruleBody(viewerCssText, ".hud-display")).toContain("display: grid");
+  it("sizes display bar icons", () => {
+    const body = ruleBody(viewerCssText, ".hud-display__icon");
+
+    expect(body).toContain("width: 1.125rem");
+    expect(body).toContain("height: 1.125rem");
   });
 
-  it("connects ViewerHud to the display menu", () => {
-    expect(viewerHudText).toContain('id="display"');
-    expect(viewerHudText).toContain("<DisplayMenu send={send} />");
+  it("aligns HUD menus at their top edge", () => {
+    expect(ruleBody(viewerCssText, ".hud-menus")).toContain("align-items: flex-start");
   });
 
-  it("defines display menu buttons from one quiet-free map", () => {
-    expect(displayMenuText.match(/className="btn hud-menu__item"/g)).toHaveLength(1);
-    expect(displayMenuText).not.toContain("btn--quiet");
-    expect(displayMenuText).not.toContain("onClose");
-    expect(displayMenuText).toContain("aria-label={MESH_DISPLAY_LABEL}");
-    expect(displayMenuText).toContain('type: "mesh:display"');
+  it("removes the old selected display menu item rule", () => {
+    expect(ruleBody(viewerCssText, '.hud-menu__item[aria-pressed="true"]')).toBeNull();
+  });
+
+  it("connects ViewerHud to the display mode bar", () => {
+    expect(viewerHudText).toContain("<DisplayModeBar send={send} />");
   });
 
   it("keeps all camera menu item buttons quiet-free", () => {

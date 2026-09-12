@@ -37,7 +37,7 @@ export const PLACEMENT_LABELS: Readonly<Record<PenPlacement, string>> = {
   space: "空間",
 };
 export const PLACEMENT_ORDER: readonly PenPlacement[] = ["surface", "space"];
-/** 「表示」メニューの role="group" の aria-label */
+/** メッシュ表示モードバーの role="group" の aria-label */
 export const MESH_DISPLAY_LABEL = "メッシュの表示";
 export const MESH_DISPLAY_LABELS: Readonly<Record<MeshDisplayMode, string>> = {
   solid: "メッシュ",
