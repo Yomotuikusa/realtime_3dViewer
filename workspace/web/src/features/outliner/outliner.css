@@ -1,0 +1,120 @@
+.outliner {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  gap: var(--space-2);
+  min-width: 0;
+  min-height: 0;
+  padding: var(--space-3);
+}
+
+.outliner__heading {
+  color: var(--color-text-muted);
+  font-size: var(--text-sm);
+  font-weight: 600;
+}
+
+.outliner__empty {
+  color: var(--color-text-muted);
+  font-size: var(--text-sm);
+}
+
+.outliner__tree,
+.outliner__group {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.outliner__row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  min-height: 1.75rem;
+  padding-left: calc(var(--outliner-depth, 0) * var(--space-4));
+}
+
+.outliner__expand {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  width: 1.25rem;
+  height: 1.25rem;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--color-text-muted);
+  cursor: pointer;
+}
+
+.outliner__expand--leaf {
+  cursor: default;
+}
+
+.outliner__chevron {
+  width: 0.75rem;
+  height: 0.75rem;
+  transition: transform var(--duration-fast);
+}
+
+.outliner__expand[aria-expanded="true"] .outliner__chevron {
+  transform: rotate(90deg);
+}
+
+.outliner__select {
+  display: flex;
+  flex: 1 1 auto;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 0;
+  padding: var(--space-1) var(--space-2);
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.outliner__select:hover {
+  background: var(--color-surface-muted);
+}
+
+.outliner__select[aria-pressed="true"] {
+  border-color: var(--color-accent);
+  background: var(--color-accent-subtle);
+  color: var(--color-accent);
+}
+
+.outliner__select[disabled] {
+  cursor: default;
+}
+
+.outliner__icon {
+  flex: 0 0 auto;
+  width: 1rem;
+  height: 1rem;
+}
+
+.outliner__tag {
+  flex: 0 0 auto;
+}
+
+.outliner__name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.outliner__kind {
+  flex: 0 0 auto;
+  margin-left: auto;
+  color: var(--color-text-muted);
+  font-size: var(--text-xs);
+}
+
+.outliner__item[data-hidden="true"] > .outliner__row {
+  color: var(--color-text-muted);
+}
