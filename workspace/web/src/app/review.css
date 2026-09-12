@@ -150,6 +150,7 @@
   overflow: auto;
   padding: var(--space-4);
   border-left: 1px solid var(--color-border);
+  background: var(--color-surface-subtle);
 }
 
 .review-panel__comments {

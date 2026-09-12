@@ -1,0 +1,101 @@
+/// <reference types="node" />
+
+import { readFileSync } from "node:fs";
+import { fileURLToPath } from "node:url";
+import { join } from "node:path";
+import { describe, expect, it } from "vitest";
+
+const srcUrl = new URL("../src", import.meta.url);
+const srcDir = srcUrl.protocol === "file:"
+  ? fileURLToPath(srcUrl)
+  : join(process.cwd(), "web/src");
+const tokensCss = readFileSync(join(srcDir, "styles/tokens.css"), "utf8");
+const commentsCss = readFileSync(join(srcDir, "features/comments/comments.css"), "utf8");
+const reviewCss = readFileSync(join(srcDir, "app/review.css"), "utf8");
+const commentList = readFileSync(join(srcDir, "features/comments/CommentList.tsx"), "utf8");
+
+function selectorBlock(css: string, selector: string): string {
+  const index = css.indexOf(`${selector} {`);
+  expect(index).toBeGreaterThanOrEqual(0);
+  const start = css.indexOf("{", index);
+  const end = css.indexOf("}", start);
+  return css.slice(start + 1, end);
+}
+
+describe("comments styles", () => {
+  it("defines the card shadow token", () => {
+    const rootBlock = selectorBlock(tokensCss, ":root");
+    expect(rootBlock).toContain("--shadow-card:");
+    const shadowValue = rootBlock.match(/--shadow-card:\s*([^;]+)/)?.[1] ?? "";
+    expect(shadowValue).toContain("0 1px 2px");
+    expect(shadowValue).toContain("0 1px 3px");
+  });
+
+  it("styles comment rows as cards", () => {
+    const row = selectorBlock(commentsCss, ".comments-row");
+    expect(row).toContain("border: 1px solid var(--color-border)");
+    expect(row).toContain("border-radius: var(--radius-md)");
+    expect(row).toContain("background: var(--color-surface)");
+    expect(row).toContain("box-shadow: var(--shadow-card)");
+    expect(row).toContain("padding: var(--space-2)");
+    expect(row).not.toContain("border-left");
+    expect(row).not.toContain("var(--radius-sm)");
+    expect(commentsCss).not.toContain("border-left-color");
+  });
+
+  it("keeps hover and selected card states within the card surface", () => {
+    expect(selectorBlock(commentsCss, ".comments-row:hover")).toContain(
+      "border-color: var(--color-border-strong)",
+    );
+    const selected = selectorBlock(commentsCss, '.comments-row[data-selected="true"]');
+    expect(selected).toContain("border-color: var(--color-accent)");
+    expect(selected).toContain("background: var(--color-accent-subtle)");
+    expect(selected).toContain(
+      "box-shadow: 0 0 0 3px var(--color-accent-subtle), var(--shadow-card)",
+    );
+  });
+
+  it("only mutes resolved comment bodies", () => {
+    const resolvedBody = selectorBlock(
+      commentsCss,
+      '.comments-row[data-status="resolved"] .comments-row__body',
+    );
+    expect(resolvedBody).toContain("var(--color-text-muted)");
+    const resolvedSelectors = [...commentsCss.matchAll(/([^{}\n]*\.comments-row\[data-status="resolved"\][^{}\n]*)\s*\{/g)]
+      .map((match) => match[1]?.trim());
+    expect(resolvedSelectors).toEqual(['.comments-row[data-status="resolved"] .comments-row__body']);
+  });
+
+  it("keeps list and row controls aligned with the card", () => {
+    const list = selectorBlock(commentsCss, ".comments__list");
+    expect(list).toContain("gap: var(--space-2)");
+    expect(list).toContain("padding: var(--space-1)");
+    expect(list).not.toContain("padding: 0");
+    expect(selectorBlock(commentsCss, ".comments-row__select")).toContain("padding: 0");
+    expect(selectorBlock(commentsCss, ".comments-row__toggle")).toContain("margin: 0");
+  });
+
+  it("gives the composer the card shadow", () => {
+    const composer = selectorBlock(commentsCss, ".comments-composer");
+    expect(composer).toContain("box-shadow: var(--shadow-card)");
+    expect(composer).toContain("border: 1px solid var(--color-accent)");
+  });
+
+  it("preserves pin focus outline and panel background", () => {
+    expect(selectorBlock(commentsCss, ".comments-pin")).not.toContain("outline");
+    expect(selectorBlock(commentsCss, '.comments-pin[aria-pressed="true"]')).toContain("outline:");
+    expect(commentsCss.match(/outline:/g)).toHaveLength(1);
+    expect(selectorBlock(reviewCss, ".review-panel")).toContain(
+      "background: var(--color-surface-subtle)",
+    );
+  });
+
+  it("keeps raw colors out of feature styles and preserves TSX class names", () => {
+    const rawColor = /#[0-9a-f]{3,8}|\b(?:rgb|rgba|hsl)\(/i;
+    expect(commentsCss).not.toMatch(rawColor);
+    expect(reviewCss).not.toMatch(rawColor);
+    expect(commentList).toContain("comments-row");
+    expect(commentList).toContain("comments-row__select");
+    expect(commentList).toContain("comments-row__toggle");
+  });
+});
