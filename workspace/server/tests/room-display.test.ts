@@ -18,6 +18,7 @@ describe("room display state", () => {
       meshDisplay: null,
       meshCompare: null,
       jointDisplay: null,
+      motionTrail: null,
     });
     expect(second).toEqual({
       light: null,
@@ -26,6 +27,7 @@ describe("room display state", () => {
       meshDisplay: null,
       meshCompare: null,
       jointDisplay: null,
+      motionTrail: null,
     });
     expect(first.hiddenObjects).not.toBe(second.hiddenObjects);
     expect(first.hiddenParts).not.toBe(second.hiddenParts);
@@ -140,6 +142,25 @@ describe("room display state", () => {
     expect([...state.hiddenObjects]).toEqual(["v1"]);
   });
 
+  it("copies motion trail settings for state, relay, and welcome", () => {
+    const state = createRoomDisplayState();
+    const trail = { visible: true, target: { versionId: "v1", objectPath: "0/2" } };
+    const result = applyDisplayMessage(state, "u1", { type: "trail:display", trail });
+
+    expect(result).toEqual({ type: "trail:display", userId: "u1", trail });
+    expect(state.motionTrail).toEqual(trail);
+    if (result.type !== "trail:display" || state.motionTrail === null) throw new Error("expected motion trail");
+    expect(state.motionTrail).not.toBe(trail);
+    expect(state.motionTrail.target).not.toBe(trail.target);
+    expect(result.trail).not.toBe(state.motionTrail);
+    expect(result.trail).not.toBe(trail);
+    expect(result.trail.target).not.toBe(trail.target);
+    const fields = displayWelcomeFields(state);
+    expect(fields.motionTrail).toEqual(trail);
+    expect(fields.motionTrail).not.toBe(state.motionTrail);
+    expect(fields.motionTrail?.target).not.toBe(state.motionTrail.target);
+  });
+
   it("omits all unset welcome fields", () => {
     const fields = displayWelcomeFields(createRoomDisplayState());
 
@@ -150,6 +171,7 @@ describe("room display state", () => {
     expect("meshDisplay" in fields).toBe(false);
     expect("meshCompare" in fields).toBe(false);
     expect("jointDisplay" in fields).toBe(false);
+    expect("motionTrail" in fields).toBe(false);
   });
 
   it("restores all configured fields as copies", () => {
@@ -165,6 +187,9 @@ describe("room display state", () => {
       compare: { baseId: "v1", targetId: "v2", thresholdPermille: 5 },
     });
     applyDisplayMessage(state, "u1", { type: "joint:display", display: { visible: true, xray: false } });
+    applyDisplayMessage(state, "u1", {
+      type: "trail:display", trail: { visible: true, target: { versionId: "v1", objectPath: "0/2" } },
+    });
 
     const fields = displayWelcomeFields(state);
 
@@ -175,6 +200,7 @@ describe("room display state", () => {
       meshDisplay: "wireframe",
       meshCompare: { baseId: "v1", targetId: "v2", thresholdPermille: 5 },
       jointDisplay: { visible: true, xray: false },
+      motionTrail: { visible: true, target: { versionId: "v1", objectPath: "0/2" } },
     });
     if (!fields.light || !fields.meshCompare || !fields.hiddenObjectIds) {
       throw new Error("expected all display welcome fields");

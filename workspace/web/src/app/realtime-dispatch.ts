@@ -1,5 +1,6 @@
 import type { ServerMessage } from "@shared/protocol";
 import { DEFAULT_JOINT_DISPLAY, DEFAULT_MESH_COMPARE, DEFAULT_MESH_DISPLAY } from "@shared/types";
+import { DEFAULT_MOTION_TRAIL } from "@shared/trail";
 import { useAnnotationStore } from "../store/annotation";
 import { useCommentsStore } from "../store/comments";
 import { useDisplayStore } from "../store/display";
@@ -30,6 +31,7 @@ export function dispatchServerMessage(msg: ServerMessage): void {
       display.setMeshDisplay(msg.meshDisplay ?? DEFAULT_MESH_DISPLAY);
       display.setMeshCompare(msg.meshCompare ?? DEFAULT_MESH_COMPARE);
       display.setJointDisplay(msg.jointDisplay ?? DEFAULT_JOINT_DISPLAY);
+      display.setMotionTrail(msg.motionTrail ?? DEFAULT_MOTION_TRAIL);
       break;
     }
     case "user:joined":
@@ -74,6 +76,9 @@ export function dispatchServerMessage(msg: ServerMessage): void {
       break;
     case "joint:display":
       display.setJointDisplay(msg.display);
+      break;
+    case "trail:display":
+      display.setMotionTrail(msg.trail);
       break;
     case "error":
       session.setLastError(`${msg.code}: ${msg.message}`);
