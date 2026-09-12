@@ -15,7 +15,7 @@
 - UploadPage.tsx: `.glb`/`.gltf`/`.fbx`/`.obj` のアップロード画面。`accept` は `ALLOWED_MODEL_EXTENSIONS` 由来で、OBJ が材質なし表示になる注記を常時出す
 - upload-labels.ts: アップロード画面と NotFound の表示文言、OBJ 材質なし表示注記、ファイル検証・複数ファイル容量表示 helper の純粋関数
 - upload.css: アップロード画面と NotFound の狭い幅のレイアウト CSS
-- ReviewPage.tsx: プロジェクト取得、レビュー画面の骨格、ロード状態・エラーカード、`.review-stage` とビュー下部タイムラインを含むビューア／サイズ変更可能な左ドックとサイドパネルのレイアウトを担当する。左ドック `.review-outliner` に realtime の `send` を渡した `Outliner` を配置し、`outlinerWidth` を保存する。右パネル優先で幅を計算し、Canvas に RemoteCameras / RoomStrokes / ReplayStrokes / AnnotationLayer / CommentPickLayer / CommentPins / `SelectionRig` / `VisibilityRig` / `JointRig` / `TrailRig` を配置し、右ドックに PresenceList / ObjectList / `.review-panel__comments` を順に配置する。`.review-hud` を HUD 差し込み口、`.review-panel__comments` をコメント領域差し込み口として提供し、カメラとライトの変更を realtime 送信へ結線し、入室後だけショートカットを有効にする
+- ReviewPage.tsx: プロジェクト取得、レビュー画面の骨格、ロード状態・エラーカード、`.review-stage` とビュー下部タイムラインを含むビューア／サイズ変更可能な左ドックとサイドパネルのレイアウトを担当する。左ドック `.review-outliner` に realtime の `send` を渡した `Outliner` を配置し、`outlinerWidth` を保存する。右パネル優先で幅を計算し、Canvas に RemoteCameras / RoomStrokes / ReplayStrokes / AnnotationLayer / CommentPickLayer / CommentPins / `SelectionRig` / `VisibilityRig` / `JointRig` を配置し、右ドックに PresenceList / ObjectList / `.review-panel__comments` を順に配置する。`.review-hud` を HUD 差し込み口、`.review-panel__comments` をコメント領域差し込み口として提供し、カメラとライトの変更を realtime 送信へ結線し、入室後だけショートカットを有効にする
 - ReviewHeader.tsx: 接続状態バッジ、入室後の自分の表示名・色、レビュー URL のコピーと失敗時の手動コピー欄を表示し、入室後だけショートカット設定を開くボタンを表示する
 - review-labels.ts: 接続状態・コピー状態・ロード/エラー文言、サイドパネル幅ハンドルのラベルを定義する JSX 非依存の純粋関数と定数
 - review.css: レビュー画面のヘッダ、3列 grid の左ドック／`.review-stage` を含むビューア／右パネル、HUD、モデル読み込み失敗用の `.review-stage__error` オーバーレイ、入室 backdrop/dialog、境界ハンドル、ロード/エラー状態のプレーン CSS

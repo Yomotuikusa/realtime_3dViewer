@@ -30,4 +30,4 @@
 - tests/trail-target.test.ts: ObjectPartRef の生成・解決、重ね描き除外、往復変換を検証する
 - tests/trail-sample.test.ts: フレーム数、位置補間、root ローカル変換、ポーズ復元、Mixer 破棄を検証する
 - tests/trail-overlay.test.ts: 軌跡の3子構成、描画設定、現在位置更新、再生成、リソース破棄を検証する
-- tests/trail-rig.test.ts: TrailRig のストア購読、条件付き生成、cleanup、frame loop、ReviewPage 配置をソース検査する
+- tests/trail-rig.test.ts: TrailRig を React DOM へ実際にマウントし、条件付き生成、版・クリップ・FPS変更、cleanup、frame loop、ReviewPage 配置を検証する
