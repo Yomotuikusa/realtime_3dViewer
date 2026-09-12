@@ -7,6 +7,7 @@ import {
   APP_NAME,
   MODEL_FILE_LABEL,
   MODEL_FILES_HELP_SUFFIX,
+  OBJ_MATERIAL_NOTE,
   PROJECT_NAME_LABEL,
   SUBMIT_LABEL,
   SUBMITTING_LABEL,
@@ -76,7 +77,7 @@ export function UploadPage(): React.ReactElement {
             className="input"
             type="file"
             multiple
-            accept=".glb,.gltf"
+            accept={ALLOWED_MODEL_EXTENSIONS.join(",")}
             onChange={(event) => setFiles(Array.from(event.target.files ?? []))}
             disabled={submitting}
           />
@@ -85,6 +86,7 @@ export function UploadPage(): React.ReactElement {
               ? filesSummary(files)
               : `${fileHelp(ALLOWED_MODEL_EXTENSIONS, MAX_UPLOAD_BYTES_DEFAULT)}。${MODEL_FILES_HELP_SUFFIX}`}
           </span>
+          <span className="upload__help">{OBJ_MATERIAL_NOTE}</span>
         </label>
         {error && <p className="alert" role="alert">{error}</p>}
         <button className="btn btn--primary" type="submit" disabled={submitting}>
