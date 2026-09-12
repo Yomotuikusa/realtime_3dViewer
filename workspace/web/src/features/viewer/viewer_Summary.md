@@ -12,7 +12,7 @@ Canvas、モデル、カメラ、ライティング、焦点距離、内蔵ア�
 - FocalLengthSlider.tsx: HUD 内で焦点距離を 14〜300mm の範囲で変更するスライダー。ラベルと値を上段、入力を下段に配置する
 - focal-length.ts: 固定センサー高を使う焦点距離／垂直画角の換算と既定画角
 - CameraMenu.tsx: 焦点距離、枠と影を持つ十字配置の既定視点・全体表示・視点リセットを3ブロックに分けて描画するカメラメニュー本体。操作後もメニューを閉じない
-- ViewerHud.tsx: ペン／コメントの toggle ボタンとペン道具、常設のメッシュ表示モードバー、排他的に開閉する半透明のカメラメニュー、CameraMenu、LightGizmo、Follow 中の参加者色フレーム、描画基準、操作ヒントを各ストアと keymap に接続する。再生 UI はビュー下部の timeline 機能へ委譲する
+- ViewerHud.tsx: ペン／コメントの toggle ボタンとペン道具、常設のメッシュ表示モードバーとジョイント表示バー、排他的に開閉する半透明のカメラメニュー、CameraMenu、LightGizmo、Follow 中の参加者色フレーム、描画基準、操作ヒントを各ストアと keymap に接続する。再生 UI はビュー下部の timeline 機能へ委譲する
 - DisplayModeBar.tsx: `useDisplayStore` のメッシュ表示方法をアイコン3択バーへ反映し、選択時にローカル更新して `mesh:display` をルームへ送信する
 - display-icons.tsx: 共通の正六角形アイソメ立方体から、メッシュ・ワイヤフレーム・メッシュ+ワイヤのインライン SVG アイコンを描画する
 - HudMenu.tsx: カメラのトグルボタンと、開いているときだけ表示する `role="group"` パネルを描画する制御コンポーネント。開閉用の chevron を表示し、Escape の閉じ処理を親へ通知する
@@ -53,7 +53,7 @@ Canvas、モデル、カメラ、ライティング、焦点距離、内蔵ア�
 - FocalLengthSlider.tsx: `FocalLengthSlider()`。ラベル・値とスライダーを別段に描画する
 - CameraMenu.tsx: `CameraMenu()`。焦点距離、十字の既定視点／全体表示、視点リセットを描画し、操作後もカメラ要求だけを行う
 - focal-length.ts: `SENSOR_HEIGHT_MM`、`FOCAL_LENGTH_STEP_MM`、`fovFromFocalLength`、`focalLengthFromFov`、`DEFAULT_FOV`
-- ViewerHud.tsx: `ViewerHud({ send })`。常設メッシュ表示モードバーを `DisplayModeBar` に、カメラメニュー本体を `CameraMenu` に、ライト操作ギズモを `LightGizmo` に委譲する
+- ViewerHud.tsx: `ViewerHud({ send })`。常設メッシュ表示モードバーを `DisplayModeBar` に、ジョイント表示バーを `JointDisplayBar` に、カメラメニュー本体を `CameraMenu` に、ライト操作ギズモを `LightGizmo` に委譲する
 - DisplayModeBar.tsx: `DisplayModeBar({ send })`。メッシュ表示のアイコン3択を描画し、ローカルストア更新後に `mesh:display` を送信する
 - display-icons.tsx: `SolidIcon()`、`WireframeIcon()`、`SolidWireframeIcon()`、`MESH_DISPLAY_ICONS` と共通立方体パス定数
 - HudMenu.tsx: `HudMenu({ id, open, onToggle, onClose, children })`。カメラメニューの開閉 state を持たず、Escape を親へ通知する
@@ -88,7 +88,7 @@ Canvas、モデル、カメラ、ライティング、焦点距離、内蔵ア�
 `CameraRig` は Reset 発生時に未消費の `pendingCamera` も破棄し、Reset 後の古い再現要求が補間を開始しないようにする。`selfCamera` の派生 boolean で既定視点ちょうどの向きだけ `OrbitControls.enableRotate` を無効化する。Follow 中は、回転無効時には OrbitControls の `start` が発火せず操作で `presence.unfollow()` できなくなるためロックしない。
 CameraRig の毎フレーム処理は D27 の優先順位に従う。
 
-`ViewerHud` は右上のカメラメニューを単一のローカル state で排他的に管理し、常設のメッシュ表示モードバーをその左へ置く。初期状態では半透明のカメラパネルを展開して右下へ `LightGizmo` を常設する。
+`ViewerHud` は右上のカメラメニューを単一のローカル state で排他的に管理し、常設のメッシュ表示モードバーとジョイント表示バーをその左へ置く。初期状態では半透明のカメラパネルを展開して右下へ `LightGizmo` を常設する。
 3D ビューや他の HUD の pointerdown では閉じず、トグルボタンまたはメニュー内の Escape だけで折りたたむ。Escape はショートカットの
 `clearMode` へ伝播せずメニューだけを閉じる。
 `selfCamera` をクリック時に読み、`presetCamera` で注視点と距離を保った視点を作ってカメラストアの
