@@ -71,7 +71,9 @@ describe("layout resize styles and wiring", () => {
     expect(page.indexOf("<SelectionRig />")).toBeGreaterThan(page.indexOf("<CommentPins />"));
     expect(page.match(/<VisibilityRig \/>/g)).toHaveLength(1);
     expect(page.indexOf("<VisibilityRig />")).toBeGreaterThan(page.indexOf("<SelectionRig />"));
-    expect(page.indexOf("<VisibilityRig />")).toBeLessThan(page.indexOf("</ViewerCanvas>"));
+    expect(page.match(/<JointRig \/>/g)).toHaveLength(1);
+    expect(page.indexOf("<JointRig />")).toBeGreaterThan(page.indexOf("<VisibilityRig />"));
+    expect(page.indexOf("<JointRig />")).toBeLessThan(page.indexOf("</ViewerCanvas>"));
   });
 
   it("wires the horizontal handle and inline panel width", () => {
