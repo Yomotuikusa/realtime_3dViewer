@@ -80,7 +80,7 @@ describe("comments styles", () => {
     expect(list).toContain("align-content: start");
     expect(list).not.toMatch(/align-content:\s*(?:stretch|space)/);
 
-    const body = selectorBlock(commentsCss, ".comments-row__body");
+    const body = selectorBlock(commentsCss, "\n.comments-row__body");
     expect(body).toContain("-webkit-line-clamp: 2");
     expect(body).toContain("overflow: hidden");
     expect(body).toContain("overflow-wrap: anywhere");
