@@ -125,9 +125,11 @@ describe("outliner selection highlight", () => {
     expect((overlay.material as PointsMaterial).size).toBe(3);
     expect((overlay.material as PointsMaterial).sizeAttenuation).toBe(false);
     expect((overlay.material as PointsMaterial).depthTest).toBe(false);
+    expect((overlay.material as PointsMaterial).color.getHex()).toBe(SELECTION_COLOR);
 
     const fallback = new Points(new BoxGeometry(), new MeshBasicMaterial());
     const fallbackOverlay = createSelectionOverlay(fallback) as Points;
+    expect((fallbackOverlay.material as PointsMaterial).color.getHex()).toBe(SELECTION_COLOR);
     expect((fallbackOverlay.material as PointsMaterial).size).toBe(1);
     expect((fallbackOverlay.material as PointsMaterial).sizeAttenuation).toBe(true);
   });
