@@ -9,11 +9,15 @@ server の基盤。本番は `npm run build && npm run start` で起動する。
 - `src/config.ts`: 環境変数から `Config` を読み込む。`WEB_DIST_DIR` は web/dist のルートを
   指定し、既定値は `./web/dist` (相対パスは cwd 基準)。
 - `src/errors.ts`: `HttpError` と未知エラーを API エラー応答へ変換する。
-- `src/db/connection.ts`: `node:sqlite` の接続、PRAGMA、スキーマ適用、トランザクション。
+- `src/db/connection.ts`: `node:sqlite` の接続、PRAGMA、スキーマ適用、既存 DB への
+  `playback_json` 列追加移行、トランザクション。`migrate` は schema.sql を適用した後に
+  `addColumnIfMissing` で不足列だけを `ALTER TABLE` する。
 - `src/db/schema.sql`: projects、model_versions、comments とコメント検索用 index の DDL。
+  comments は `strokes_json` の後に nullable な `playback_json` を持つ。
 - `src/db/projects.ts`: projects / model_versions の登録、全版の番号順一覧と検索、および行の型変換。
 - `src/db/comments.ts`: コメントの登録、project 単位の一覧、status 更新。JSON 列と
-  shared の `Comment` の相互変換を担う。
+  shared の `Comment` の相互変換を担い、playback は `playback_json` へ nullable JSON として
+  保存して常に `playback` キーを返す。
 - `src/storage/files.ts`: `dataDir/uploads/<versionId>.glb` への一時ファイル経由の非同期保存・削除。
 - `src/routes/projects.ts`: multipart モデルアップロード、既存 project への版追加、project JSON
   の取得とモデル本体の配信を提供する。複数ファイルの保存と projects / model_versions 登録を
@@ -54,14 +58,17 @@ server の基盤。本番は `npm run build && npm run start` で起動する。
 - `tests/helpers/tmp.ts`: `server/.vite/test-tmp` 配下の一時ディレクトリ管理。
 - `tests/helpers/ws.ts`: ephemeral HTTP server と実 WebSocket を使う realtime テスト fixture。
 - `tests/helpers/app.ts`: 固定時刻・インメモリ DB・一時ファイルストレージを使う `TestApp` と
-  `makeTestApp` / `seedProject` / `seedComment`。
+  `makeTestApp` / `seedProject` / `seedComment`。`seedComment` は任意の `playback` をそのまま
+  保存でき、省略時は null として扱う。
 - `tests/config.test.ts`: 設定値と入力検証のテスト。
 - `tests/routes-static.test.ts`: Content-Type、静的ファイル、キャッシュ、SPA フォールバック、
   HEAD、API 非横取り、パストラバーサル、未存在 root のテスト。
 - `tests/errors.test.ts`: HTTP / Zod / 未知エラーの応答変換テスト。
 - `tests/db-projects.test.ts`: SQLite 接続、スキーマ、トランザクション、projects 層の全版一覧・検索テスト。
 - `tests/db-comments.test.ts`: comments 層の JSON 往復、FK、一覧順序・status 絞り込み、
-  project スコープ、status トグルのテスト。
+  project スコープ、status トグル、playback の保存・null・status 更新維持のテスト。
+- `tests/db-migrate.test.ts`: playback_json 列の新規作成、旧 comments 定義からの nullable 列移行、
+  旧行の null 読み出し、再移行の冪等性、汎用 `addColumnIfMissing` のテスト。
 - `tests/storage-files.test.ts`: ファイル保存、上書き、rename 失敗時の tmp 残留防止、削除のテスト。
 - `tests/app.test.ts`: JSON 404、未知エラーの 500 応答と `request_failed` ログ、
   期待される HTTP エラーのログ抑制のテスト。
@@ -76,6 +83,8 @@ server の基盤。本番は `npm run build && npm run start` で起動する。
   存在しない project、単一ファイル制約、形式不正、DB 失敗時の後始末のテスト。
 - `tests/routes-comments.test.ts`: コメント一覧の順序・絞り込み、投稿・status 更新、入力検証、
   project/version スコープ、publish 呼び出しのテスト。
+- `tests/routes-comments-playback.test.ts`: コメント投稿の playback 保存・応答・publish・一覧反映、
+  省略/null の既定値、入力検証、seed fixture の playback テスト。
 - `tests/realtime-ws.test.ts`: join、Presence、camera / stroke 配信、切断、入力検証、連続違反 close、
   REST publish 結線の実ソケットテスト。
 - `tests/realtime-hub-focal.test.ts`: RoomHub の camera `focalLength` の保持・中継、Presence への
@@ -93,9 +102,13 @@ server の基盤。本番は `npm run build && npm run start` で起動する。
 - `loadConfig`: `PORT`、`DATA_DIR`、`MAX_UPLOAD_BYTES`、`WEB_DIST_DIR` から `Config` を作る。
 - `HttpError` / `toErrorResponse`: API のエラーコード・HTTP ステータス・メッセージを統一する。
 - `openDb` / `migrate` / `withTransaction`: SQLite 接続とトランザクションを管理する。
+- `addColumnIfMissing`: 指定テーブルの PRAGMA 列一覧を確認し、列が無い場合だけ指定定義で
+  `ALTER TABLE ... ADD COLUMN` を実行する。`migrate` は schema.sql の後に comments の
+  `playback_json TEXT` 移行を適用する。
 - `insertProject` / `insertModelVersion`: プロジェクトと版を登録する。
 - `listModelVersions` / `findProject` / `findModelVersion`: 全版を番号昇順で列挙し、shared の `Project` / `ModelVersion` へ変換して検索する。
-- `insertComment`: `NewComment` を status `open` として登録し、`Comment` を返す。
+- `insertComment`: `NewComment` を status `open` として登録し、playback を nullable JSON として
+  保存した `Comment` を返す。未指定・null は `playback: null` になる。
 - `listComments`: project 単位でコメントを順序付き一覧する。
 - `updateCommentStatus`: project と comment を指定して status と更新時刻を変更する。
 - `Storage` / `createFileStorage`: モデルファイルを atomic rename で保存し、保存先を返す。
