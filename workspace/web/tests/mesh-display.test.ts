@@ -229,7 +229,7 @@ describe("mesh display", () => {
   });
 
   it("connects ModelMesh and ViewerCanvas to mesh display state", () => {
-    const modelMesh = readSource("features/viewer/ModelMesh.tsx");
+    const modelMesh = readSource("features/viewer/useModelScene.ts");
     const canvas = readSource("features/viewer/ViewerCanvas.tsx");
 
     expect(modelMesh).toContain("applyMeshDisplay(scene, meshDisplay)");

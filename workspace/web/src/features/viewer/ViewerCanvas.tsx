@@ -39,6 +39,7 @@ export function ViewerCanvas({ children }: { children?: ReactNode }): ReactEleme
             <Suspense key={version.id} fallback={null}>
               <ModelMesh
                 src={modelUrl(version.projectId, version.id)}
+                fileName={version.fileName}
                 versionId={version.id}
                 visible={isObjectVisible(hiddenIds, version.id)}
                 primary={version.id === primaryId}
