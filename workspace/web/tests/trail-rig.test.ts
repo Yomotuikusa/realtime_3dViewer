@@ -72,14 +72,17 @@ describe("trail rig", () => {
 
       await flush(() => useDisplayStore.getState().setMotionTrail({ visible: true, target: target("v1") }));
       expect(trailOverlayOf(scene)).toBeNull();
+      expect(testHooks.sampleTrail).not.toHaveBeenCalled();
 
       useModelScenesStore.getState().register("v1", scene);
       await flush(() => undefined);
       expect(trailOverlayOf(scene)).toBeNull();
+      expect(testHooks.sampleTrail).not.toHaveBeenCalled();
 
       useModelClipsStore.getState().register("v1", [clip]);
       await flush(() => useDisplayStore.getState().setMotionTrail({ visible: true, target: target("v1", "99") }));
       expect(trailOverlayOf(scene)).toBeNull();
+      expect(testHooks.sampleTrail).not.toHaveBeenCalled();
 
       usePlaybackStore.getState().setClips([
         { name: "first", duration: 1 },
@@ -88,9 +91,11 @@ describe("trail rig", () => {
       await flush(() => usePlaybackStore.getState().selectClip(1));
       await flush(() => useDisplayStore.getState().setMotionTrail({ visible: true, target: target("v1") }));
       expect(trailOverlayOf(scene)).toBeNull();
+      expect(testHooks.sampleTrail).not.toHaveBeenCalled();
 
       await flush(() => usePlaybackStore.getState().selectClip(0));
       expect(trailOverlayOf(scene)).not.toBeNull();
+      expect(testHooks.sampleTrail).toHaveBeenCalledOnce();
 
       await flush(() => useDisplayStore.getState().setMotionTrail({ visible: false, target: target("v1") }));
       expect(trailOverlayOf(scene)).toBeNull();
@@ -123,6 +128,7 @@ describe("trail rig", () => {
       { name: "first", duration: 1 },
       { name: "second", duration: 2 },
     ]);
+    usePlaybackStore.getState().seek(0.25);
     useDisplayStore.getState().setMotionTrail({ visible: true, target: target("v1") });
 
     try {
@@ -130,7 +136,7 @@ describe("trail rig", () => {
       const firstOverlay = trailOverlayOf(firstScene);
       expect(firstOverlay).not.toBeNull();
       expect(trailOverlayOf(secondScene)).toBeNull();
-      expect(testHooks.sampleTrail).toHaveBeenCalledWith(firstScene, firstObject, firstClip, 24, 0);
+      expect(testHooks.sampleTrail).toHaveBeenCalledWith(firstScene, firstObject, firstClip, 24, 0.25);
 
       usePlaybackStore.getState().seekFrame(1);
       testHooks.frameCallbacks[0]!();
@@ -141,10 +147,17 @@ describe("trail rig", () => {
       expect(trailOverlayOf(secondScene)).not.toBeNull();
 
       await flush(() => usePlaybackStore.getState().selectClip(1));
+      const secondOverlay = trailOverlayOf(secondScene);
+      expect(secondOverlay).not.toBeNull();
       expect(testHooks.sampleTrail).toHaveBeenLastCalledWith(secondScene, secondObject, secondClip, 24, 0);
 
       await flush(() => usePlaybackStore.getState().setFps(30));
       expect(testHooks.sampleTrail).toHaveBeenLastCalledWith(secondScene, secondObject, secondClip, 30, 0);
+      expect(trailOverlayOf(secondScene)).not.toBe(secondOverlay);
+
+      await flush(() => useDisplayStore.getState().setMotionTrail({ visible: false, target: target("v2") }));
+      expect(trailOverlayOf(firstScene)).toBeNull();
+      expect(trailOverlayOf(secondScene)).toBeNull();
     } finally {
       await flush(() => root.unmount());
       expect(trailOverlayOf(firstScene)).toBeNull();

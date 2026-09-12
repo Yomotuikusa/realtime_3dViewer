@@ -124,7 +124,7 @@ export function addTrailOverlay(
 export function setTrailCurrentFrame(overlay: TrailOverlay, frame: number): void {
   const frameCount = overlay.userData.frameCount;
   const lastFrame = Math.max(0, frameCount - 1);
-  const roundedFrame = Number.isFinite(frame) ? Math.round(frame) : 0;
+  const roundedFrame = Number.isNaN(frame) ? 0 : Math.round(frame);
   const currentFrame = Math.min(lastFrame, Math.max(0, roundedFrame));
   const offset = currentFrame * 3;
   const positions = overlay.userData.positions;
