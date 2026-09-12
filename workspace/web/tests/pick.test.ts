@@ -138,7 +138,7 @@ describe("viewer picking", () => {
   });
 
   it("keeps model size, fit, and clips work behind the primary guard", () => {
-    const source = readSource("features/viewer/ModelMesh.tsx");
+    const source = readSource("features/viewer/useModelScene.ts");
     const guardedEffects = [...source.matchAll(/useEffect\(\(\) => \{([\s\S]*?)\n  \}, \[[^\]]+\]\);/g)]
       .map((match) => match[1] ?? "")
       .filter((body) => body.includes("if (!primary) return;"));
