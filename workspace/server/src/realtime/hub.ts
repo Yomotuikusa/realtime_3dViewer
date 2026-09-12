@@ -1,7 +1,13 @@
 import { nanoid } from "nanoid";
 import type { ClientMessage, ServerMessage } from "@shared/protocol";
-import type { CameraState, MeshCompare, MeshDisplayMode, PresenceUser, Stroke } from "@shared/types";
-import { applyDisplayMessage, createRoomDisplayState, displayWelcomeFields, type RoomDisplayState } from "./room-display";
+import type { CameraState, MeshCompare, MeshDisplayMode, ObjectPartRef, PresenceUser, Stroke } from "@shared/types";
+import {
+  applyDisplayMessage,
+  createRoomDisplayState,
+  displayWelcomeFields,
+  hiddenPartsOf,
+  type RoomDisplayState,
+} from "./room-display";
 
 /** Colors are selected in room-local join order. */
 export const PRESENCE_PALETTE: readonly string[] = [
@@ -126,6 +132,7 @@ export class RoomHub {
       }
       case "light":
       case "object:visibility":
+      case "object:part-visibility":
       case "mesh:display":
       case "mesh:compare":
         return [{ target: "others", msg: applyDisplayMessage(room.display, connId, msg) }];
@@ -133,9 +140,6 @@ export class RoomHub {
         return this.addStroke(room, connId, msg.stroke);
       case "stroke:remove":
         return this.removeStroke(room, connId, msg.strokeId);
-      case "object:part-visibility":
-        // 仮の分岐。ルーム状態の保持と中継は 100 が実装する
-        return [];
       case "stroke:clear":
         for (const [strokeId, stroke] of room.strokes) {
           if (stroke.userId === connId) room.strokes.delete(strokeId);
@@ -166,6 +170,12 @@ export class RoomHub {
   hiddenObjectsIn(projectId: string): string[] {
     const room = this.rooms.get(projectId);
     return room ? [...room.display.hiddenObjects] : [];
+  }
+
+  /** ルームで非表示の部位(挿入順・複製)。ルームが無ければ [] */
+  hiddenObjectPartsIn(projectId: string): ObjectPartRef[] {
+    const room = this.rooms.get(projectId);
+    return room ? hiddenPartsOf(room.display) : [];
   }
 
   meshDisplayIn(projectId: string): MeshDisplayMode | null {
