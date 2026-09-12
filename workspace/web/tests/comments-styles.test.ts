@@ -13,6 +13,7 @@ const tokensCss = readFileSync(join(srcDir, "styles/tokens.css"), "utf8");
 const commentsCss = readFileSync(join(srcDir, "features/comments/comments.css"), "utf8");
 const reviewCss = readFileSync(join(srcDir, "app/review.css"), "utf8");
 const commentList = readFileSync(join(srcDir, "features/comments/CommentList.tsx"), "utf8");
+const commentComposer = readFileSync(join(srcDir, "features/comments/CommentComposer.tsx"), "utf8");
 
 function selectorBlock(css: string, selector: string): string {
   const index = css.indexOf(`${selector} {`);
@@ -101,6 +102,19 @@ describe("comments styles", () => {
     const composer = selectorBlock(commentsCss, ".comments-composer");
     expect(composer).toContain("box-shadow: var(--shadow-card)");
     expect(composer).toContain("border: 1px solid var(--color-accent)");
+  });
+
+  it("styles the frame switch and playback badge", () => {
+    const frameSwitch = selectorBlock(commentsCss, ".comments-composer__frame");
+    expect(frameSwitch).toContain("display: flex");
+    expect(frameSwitch).toContain("font-size: var(--text-sm)");
+    expect(selectorBlock(commentsCss, ".comments-row__frame")).toContain("white-space: nowrap");
+    expect(commentComposer).toContain("comments-composer__frame");
+    expect(commentComposer).toContain("loadRecordFrame");
+    expect(commentComposer).toContain("saveRecordFrame");
+    expect(commentComposer).toContain("commentPlaybackOf");
+    expect(commentList).toContain("comments-row__frame");
+    expect(commentList).toContain("playbackBadge");
   });
 
   it("preserves pin focus outline and panel background", () => {

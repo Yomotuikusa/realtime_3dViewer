@@ -4,8 +4,11 @@ import { useAnnotationStore } from "../../store/annotation";
 import { useCameraStore } from "../../store/camera";
 import { useCommentsStore } from "../../store/comments";
 import { useSessionStore } from "../../store/session";
-import { buildCommentInput } from "./compose";
-import { CANCEL_LABEL, COMPOSER_BODY_LABEL, COMPOSER_TITLE, SUBMIT_LABEL } from "./comment-labels";
+import { usePlaybackStore } from "../../store/playback";
+import { buildCommentInput, commentPlaybackOf } from "./compose";
+import { loadRecordFrame, saveRecordFrame } from "./frame-switch";
+import { frameOfTime } from "../viewer/playback-frames";
+import { CANCEL_LABEL, COMPOSER_BODY_LABEL, COMPOSER_TITLE, recordFrameLabel, SUBMIT_LABEL } from "./comment-labels";
 import "./comments.css";
 
 function errorMessage(error: unknown): string {
@@ -23,8 +26,13 @@ export function CommentComposer({ projectId, versionId }: {
   versionId: string;
 }): ReactElement | null {
   const anchor = useCommentsStore((state) => state.composerAnchor);
+  const clips = usePlaybackStore((state) => state.clips);
+  const clipIndex = usePlaybackStore((state) => state.clipIndex);
+  const time = usePlaybackStore((state) => state.time);
+  const fps = usePlaybackStore((state) => state.fps);
   const [body, setBody] = useState("");
   const [sending, setSending] = useState(false);
+  const [recordFrame, setRecordFrame] = useState(loadRecordFrame);
   const lifecycleRef = useRef<{ projectId: string; active: boolean } | null>(null);
 
   useLayoutEffect(() => {
@@ -55,6 +63,7 @@ export function CommentComposer({ projectId, versionId }: {
       camera,
       strokes: annotation.strokes,
       userId: session.selfId,
+      playback: commentPlaybackOf(usePlaybackStore.getState(), recordFrame),
     });
     if (input === null) {
       useCommentsStore.getState().setLastError("本文を入力してください。");
@@ -102,6 +111,20 @@ export function CommentComposer({ projectId, versionId }: {
           required
         />
       </label>
+      {clips.length > 0 && (
+        <label className="comments-composer__frame" data-clip-index={clipIndex}>
+          <input
+            type="checkbox"
+            checked={recordFrame}
+            disabled={sending}
+            onChange={(event) => {
+              setRecordFrame(event.target.checked);
+              saveRecordFrame(event.target.checked);
+            }}
+          />
+          {recordFrameLabel(frameOfTime(time, fps))}
+        </label>
+      )}
       <div className="comments-composer__actions">
         <button className="btn btn--primary" type="submit" disabled={sending}>
           {sending ? "投稿中…" : SUBMIT_LABEL}

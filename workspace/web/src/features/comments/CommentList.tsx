@@ -8,6 +8,8 @@ import {
   EMPTY_MESSAGE,
   FILTER_OPEN_ONLY,
   formatCommentTime,
+  playbackBadge,
+  playbackTitle,
   statusLabel,
   statusTone,
   toggleStatusLabel,
@@ -114,6 +116,7 @@ export function CommentList({ projectId }: { projectId: string }): ReactElement 
           const nextStatus: CommentStatus = comment.status === "open" ? "resolved" : "open";
           const isUpdating = updatingIds.has(comment.id);
           const selected = selectedId === comment.id;
+          const playback = comment.playback ?? null;
           return (
             <li
               key={comment.id}
@@ -133,6 +136,11 @@ export function CommentList({ projectId }: { projectId: string }): ReactElement 
                       {formatCommentTime(comment.createdAt, Date.now())}
                     </time>
                     <span className="badge" data-tone={statusTone(comment.status)}>{statusLabel(comment.status)}</span>
+                    {playback !== null && (
+                      <span className="badge comments-row__frame" data-tone="accent" title={playbackTitle(playback)}>
+                        {playbackBadge(playback)}
+                      </span>
+                    )}
                   </span>
                   <p className="comments-row__body">{comment.body}</p>
                 </button>

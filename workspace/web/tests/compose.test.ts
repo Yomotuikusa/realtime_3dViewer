@@ -5,6 +5,7 @@ import type { CameraState, Stroke, Vec3 } from "@shared/types";
 import {
   CLICK_MOVE_THRESHOLD_PX,
   buildCommentInput,
+  commentPlaybackOf,
   isClick,
   ownStrokesForComment,
 } from "../src/features/comments/compose";
@@ -17,6 +18,16 @@ function stroke(id: string, userId: string, createdAt: number): Stroke {
 }
 
 describe("comment composition", () => {
+  it("records the current playback frame only when enabled and clips exist", () => {
+    const playback = { clips: [{ name: "a", duration: 2 }], clipIndex: 0, time: 0.5, fps: 24 };
+    expect(commentPlaybackOf(playback, true)).toEqual({ clipIndex: 0, frame: 12 });
+    expect(commentPlaybackOf(playback, false)).toBeNull();
+    expect(commentPlaybackOf({ ...playback, clips: [] }, true)).toBeNull();
+    expect(commentPlaybackOf({ clips: [{ name: "a", duration: 2 }, { name: "b", duration: 4 }], clipIndex: 1, time: 1, fps: 30 }, true))
+      .toEqual({ clipIndex: 1, frame: 30 });
+    expect(commentPlaybackOf({ ...playback, time: 0.4999 }, true)).toEqual({ clipIndex: 0, frame: 12 });
+  });
+
   it("uses a five-pixel inclusive click threshold", () => {
     expect(CLICK_MOVE_THRESHOLD_PX).toBe(5);
     expect(isClick({ x: 0, y: 0 }, { x: 3, y: 4 })).toBe(true);
@@ -54,6 +65,7 @@ describe("comment composition", () => {
       camera,
       strokes: {},
       userId: null,
+      playback: { clipIndex: 0, frame: 7 },
     });
     expect(input).not.toBeNull();
     expect(input).toMatchObject({ versionId: "v1", authorName: "Rin", body: "hi" });
@@ -69,6 +81,7 @@ describe("comment composition", () => {
       camera,
       strokes: {},
       userId: "u1",
+      playback: null,
     })).toBeNull();
   });
 
@@ -82,6 +95,7 @@ describe("comment composition", () => {
       camera,
       strokes,
       userId: "u1",
+      playback: null,
     });
     expect(input).not.toBeNull();
     expect(cameraEquals(input!.camera, camera)).toBe(true);
@@ -92,5 +106,33 @@ describe("comment composition", () => {
     expect(input!.anchor).not.toBe(anchor);
     expect(input!.strokes).toEqual(ownStrokesForComment(strokes, "u1"));
     expect(CreateCommentInput.safeParse(input).success).toBe(true);
+  });
+
+  it("keeps playback in the input, including an explicit null", () => {
+    const withPlayback = buildCommentInput({
+      versionId: "v1",
+      authorName: "Rin",
+      body: "comment",
+      anchor,
+      camera,
+      strokes: {},
+      userId: null,
+      playback: { clipIndex: 0, frame: 7 },
+    });
+    expect(withPlayback?.playback).toEqual({ clipIndex: 0, frame: 7 });
+    expect(CreateCommentInput.safeParse(withPlayback).success).toBe(true);
+
+    const withoutPlayback = buildCommentInput({
+      versionId: "v1",
+      authorName: "Rin",
+      body: "comment",
+      anchor,
+      camera,
+      strokes: {},
+      userId: null,
+      playback: null,
+    });
+    expect(withoutPlayback).toHaveProperty("playback", null);
+    expect(CreateCommentInput.safeParse(withoutPlayback).success).toBe(true);
   });
 });

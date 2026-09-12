@@ -10,6 +10,10 @@ import {
   FILTER_OPEN_ONLY,
   formatCommentTime,
   pinLabel,
+  playbackBadge,
+  playbackTitle,
+  RECORD_FRAME_LABEL,
+  recordFrameLabel,
   SUBMIT_LABEL,
   statusLabel,
   statusTone,
@@ -17,6 +21,13 @@ import {
 } from "../src/features/comments/comment-labels";
 
 describe("comment labels", () => {
+  it("labels recorded playback frames", () => {
+    expect(recordFrameLabel(120)).toBe("フレーム 120 を記録");
+    expect(playbackBadge({ clipIndex: 0, frame: 120 })).toBe("F 120");
+    expect(playbackTitle({ clipIndex: 1, frame: 120 })).toBe("クリップ 2 / フレーム 120");
+    expect(RECORD_FRAME_LABEL).toBe("フレームを記録");
+  });
+
   it("labels counts, status, pins, and status actions", () => {
     expect(COMMENTS_HEADING).toBe("コメント");
     expect(FILTER_OPEN_ONLY).toBe("未解決のみ");
