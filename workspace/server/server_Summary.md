@@ -45,7 +45,7 @@ server の基盤。本番は `npm run build && npm run start` で起動する。
 - `src/realtime/hub.ts`: `ws` 非依存のインメモリ RoomHub。接続・join 済み Presence、カメラ、ルーム参照を project 単位で管理し、
   表示状態は `room-display.ts`、ストローク操作は `room-strokes.ts` に委譲する。camera メッセージの `focalLength` は参加者ごとに保持する。
   未指定の camera でも直前の値を保って中継し、`welcome` / `user:joined` / `usersIn` にも載せる。
-  `hiddenObjectPartsIn` で非表示部位の挿入順複製を返し、`jointDisplayIn` でジョイント表示設定を返す。接続ごとの配信先を `Outbound` で返す。
+  `hiddenObjectPartsIn` で非表示部位の挿入順複製を返し、`jointDisplayIn` / `motionTrailIn` で表示設定を返す。接続ごとの配信先を `Outbound` で返す。
 - `src/realtime/ws.ts`: `GET /ws?projectId=<id>` を既存の Node HTTP Server に接続する WebSocket
   アダプタ。`RealtimeOptions.projectExists` で project の存在を確認してから Hub に接続し、
   接続時は projectId、Origin (指定時は Host 一致)、project 存在、接続上限の順に検証する。
@@ -158,7 +158,8 @@ server の基盤。本番は `npm run build && npm run start` で起動する。
   camera の `focalLength` は参加者単位で最後に指定された値を保持し、未指定の camera 中継でも
   その値を維持する。未指定の参加者はキーを持たず、保持値は `welcome` / `user:joined` /
   `usersIn` の Presence に反映される。表示状態の更新・中継・welcome 復元は `room-display.ts` が担い、
-  `hiddenObjectsIn` / `hiddenObjectPartsIn` / `meshDisplayIn` / `meshCompareIn` / `jointDisplayIn` は現在値を参照する。
+  `hiddenObjectsIn` / `hiddenObjectPartsIn` / `meshDisplayIn` / `meshCompareIn` / `jointDisplayIn` / `motionTrailIn` は現在値を参照する。
+  `motionTrailIn` は未設定または存在しないルームでは `null`、設定済みの場合はルーム内の実体を複製して返す。
   `Outbound.target` は `self` (送信元のみ)、`others` (送信元以外)、`all` (ルーム全員) を表す。
   `PRESENCE_PALETTE` は8色で、ルーム内の未使用色をjoin順に割り当て、全色使用時はサイズの剰余で
   再利用する。`MAX_ROOM_STROKES = 2000` 本まで保持し、同じIDの追加は所有者自身による場合だけ
