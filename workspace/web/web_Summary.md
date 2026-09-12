@@ -23,6 +23,7 @@ glTF/GLB の 3D レビュー画面を提供する。レビュー画面は表示�
 - `src/features/comments/comments_Summary.md`
 - `src/features/presence/presence_Summary.md`
 - `src/features/objects/objects_Summary.md`
+- `src/features/outliner/outliner_Summary.md`
 - `src/features/shortcuts/shortcuts_Summary.md`
 - `src/features/layout/layout_Summary.md`
 
