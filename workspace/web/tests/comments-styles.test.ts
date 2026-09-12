@@ -13,6 +13,7 @@ const tokensCss = readFileSync(join(srcDir, "styles/tokens.css"), "utf8");
 const commentsCss = readFileSync(join(srcDir, "features/comments/comments.css"), "utf8");
 const reviewCss = readFileSync(join(srcDir, "app/review.css"), "utf8");
 const commentList = readFileSync(join(srcDir, "features/comments/CommentList.tsx"), "utf8");
+const commentCallout = readFileSync(join(srcDir, "features/comments/CommentCallout.tsx"), "utf8");
 const commentComposer = readFileSync(join(srcDir, "features/comments/CommentComposer.tsx"), "utf8");
 
 function selectorBlock(css: string, selector: string): string {
@@ -96,6 +97,37 @@ describe("comments styles", () => {
     expect(commentsCss.match(/-webkit-line-clamp:\s*2/g)).toHaveLength(1);
     expect(commentList).toContain("data-selected");
     expect(commentList).toContain("comments-row__body");
+  });
+
+  it("keeps unselected bodies at two lines and makes the callout close circular", () => {
+    const body = selectorBlock(commentsCss, "\n.comments-row__body");
+    expect(body).toContain("min-height: calc(var(--leading) * 2em)");
+    expect(body).toContain("-webkit-line-clamp: 2");
+    expect(body).toContain("overflow: hidden");
+
+    const selectedBody = selectorBlock(
+      commentsCss,
+      '.comments-row[data-selected="true"] .comments-row__body',
+    );
+    expect(selectedBody).not.toContain("min-height");
+    expect(commentsCss.match(/min-height:\s*calc\(var\(--leading\) \* 2em\)/g)).toHaveLength(1);
+
+    const close = selectorBlock(commentsCss, ".comments-callout__close");
+    expect(close).toContain("border-radius: 50%");
+    expect(close).toContain("width: 1.5rem");
+    expect(close).toContain("height: 1.5rem");
+    expect(close).toContain("min-height: 0");
+    expect(close).toContain("padding: 0");
+    expect(close).toContain("margin: 0");
+    expect(close).toContain("border: 1px solid var(--color-border-strong)");
+    expect(close).toContain("display: inline-flex");
+    expect(close).not.toContain("outline");
+    expect(commentsCss.match(/outline:/g)).toHaveLength(1);
+
+    expect(commentCallout).toContain("comments-callout__close");
+    expect(commentCallout).toContain("btn--quiet");
+    expect(commentList).toContain("comments-row__body");
+    expect(commentList).toContain("data-selected");
   });
 
   it("gives the composer the card shadow", () => {
