@@ -102,6 +102,18 @@ export interface PresenceUser {
   focalLength?: number;
 }
 
+/**
+ * 版内オブジェクト(部位)の共有鍵。版の scene ルートからの子インデックスを "/" で繋いだもの(例 "0/2/1")。
+ * ルート自身は表せない(空文字は不正)。
+ */
+export type ObjectPath = string;
+
+/** 版内の 1 つの部位を指す参照 */
+export interface ObjectPartRef {
+  versionId: string;
+  objectPath: ObjectPath;
+}
+
 export const MAX_ID_LENGTH = 64;
 export const MAX_FILE_NAME_LENGTH = 255;
 export const MAX_PROJECT_NAME_LENGTH = 100;
@@ -208,3 +220,13 @@ export const PresenceUserSchema = z.object({
   camera: CameraStateSchema.nullable(),
   focalLength: FocalLengthSchema.optional(),
 }) satisfies z.ZodType<PresenceUser>;
+
+export const MAX_OBJECT_PATH_LENGTH = 256;
+
+/** "0" や "0/2/1" の形。先頭・末尾の "/"、空要素、数字以外を認めない */
+export const ObjectPathSchema = z.string().min(1).max(MAX_OBJECT_PATH_LENGTH).regex(/^\d+(\/\d+)*$/) satisfies z.ZodType<ObjectPath>;
+
+export const ObjectPartRefSchema = z.object({
+  versionId: IdSchema,
+  objectPath: ObjectPathSchema,
+}) satisfies z.ZodType<ObjectPartRef>;
