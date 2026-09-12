@@ -74,12 +74,26 @@
 .review-body {
   position: relative;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) var(--panel-width);
+  grid-template-columns: var(--outliner-width) minmax(0, 1fr) var(--panel-width);
   min-height: 0;
 }
 
 .review-body__resize {
   right: calc(var(--panel-width) - 4px);
+}
+
+/* 左ドック境界のハンドル。.review-body__resize と併用し right を打ち消す */
+.review-body__resize--outliner {
+  right: auto;
+  left: calc(var(--outliner-width) - 4px);
+}
+
+.review-outliner {
+  min-width: 0;
+  min-height: 0;
+  overflow: auto;
+  border-right: 1px solid var(--color-border);
+  background: var(--color-surface-subtle);
 }
 
 .review-page:not(:has(.review-page__alert)) .review-body {

@@ -9,6 +9,9 @@ import { CommentPickLayer } from "../features/comments/CommentPickLayer";
 import { CommentPins } from "../features/comments/CommentPins";
 import { ReplayStrokes } from "../features/comments/ReplayStrokes";
 import { useCommentReplay } from "../features/comments/useCommentReplay";
+import { Outliner } from "../features/outliner/Outliner";
+import { SelectionRig } from "../features/outliner/SelectionRig";
+import { OUTLINER_RESIZE_LABEL } from "../features/outliner/outliner-labels";
 import { PresenceList } from "../features/presence/PresenceList";
 import { ObjectList } from "../features/objects/ObjectList";
 import { RemoteCameras } from "../features/presence/RemoteCameras";
@@ -24,8 +27,11 @@ import { useElementSize } from "../features/layout/useElementSize";
 import { useLayoutSize } from "../features/layout/useLayoutSize";
 import {
   clampSize,
+  OUTLINER_WIDTH_DEFAULT_PX,
+  OUTLINER_WIDTH_MIN_PX,
   PANEL_WIDTH_DEFAULT_PX,
   PANEL_WIDTH_MIN_PX,
+  outlinerWidthMax,
   panelWidthMax,
 } from "../features/layout/resize";
 import { useSessionStore } from "../store/session";
@@ -66,8 +72,15 @@ export function ReviewPage({ projectId }: { projectId: string }): ReactElement {
   const bodyRef = useRef<HTMLDivElement>(null);
   const bodySize = useElementSize(bodyRef);
   const [panelWidth, setPanelWidth] = useLayoutSize("panelWidth");
-  const maxPanelWidth = panelWidthMax(bodySize.width);
+  const [outlinerWidth, setOutlinerWidth] = useLayoutSize("outlinerWidth");
+  const maxPanelWidth = panelWidthMax(bodySize.width, OUTLINER_WIDTH_MIN_PX);
   const effectivePanelWidth = clampSize(panelWidth, PANEL_WIDTH_MIN_PX, maxPanelWidth);
+  const maxOutlinerWidth = outlinerWidthMax(bodySize.width, effectivePanelWidth);
+  const effectiveOutlinerWidth = clampSize(
+    outlinerWidth,
+    OUTLINER_WIDTH_MIN_PX,
+    maxOutlinerWidth,
+  );
   useCommentReplay();
   const realtime = useRealtime(projectId, joinName);
   useCameraBroadcast(realtime.send);
@@ -140,8 +153,25 @@ export function ReviewPage({ projectId }: { projectId: string }): ReactElement {
       <div
         ref={bodyRef}
         className="review-body"
-        style={{ "--panel-width": effectivePanelWidth + "px" } as CSSProperties}
+        style={{
+          "--outliner-width": effectiveOutlinerWidth + "px",
+          "--panel-width": effectivePanelWidth + "px",
+        } as CSSProperties}
       >
+        <aside className="review-outliner" aria-label="アウトライナドック">
+          <Outliner />
+        </aside>
+        <ResizeHandle
+          axis="x"
+          side="start"
+          className="review-body__resize review-body__resize--outliner"
+          value={effectiveOutlinerWidth}
+          min={OUTLINER_WIDTH_MIN_PX}
+          max={maxOutlinerWidth}
+          defaultValue={OUTLINER_WIDTH_DEFAULT_PX}
+          label={OUTLINER_RESIZE_LABEL}
+          onChange={setOutlinerWidth}
+        />
         <section className="review-viewer" aria-label="3D ビューア">
           <div className="review-stage">
             <div className="review-hud">
@@ -165,6 +195,7 @@ export function ReviewPage({ projectId }: { projectId: string }): ReactElement {
                 <AnnotationLayer send={realtime.send} />
                 <CommentPickLayer />
                 <CommentPins />
+                <SelectionRig />
               </ViewerCanvas>
             </ErrorBoundary>
           </div>

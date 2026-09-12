@@ -59,6 +59,7 @@ const tokenNames = [
   "--focus-ring-color",
   "--duration-fast",
   "--panel-width",
+  "--outliner-width",
   "--header-height",
   "--follow-frame-width",
 ];

@@ -7,8 +7,9 @@ import { useObjectsStore } from "../store/objects";
 import { usePlaybackStore } from "../store/playback";
 import { usePresenceStore } from "../store/presence";
 import { useSessionStore } from "../store/session";
+import { useSelectionStore } from "../features/outliner/selection";
 
-/** レビュー画面が持つ9つのストアをすべて初期状態へ戻す。 */
+/** レビュー画面が持つ10個のストアをすべて初期状態へ戻す。 */
 export function resetReviewStores(): void {
   useSessionStore.getState().reset();
   usePresenceStore.getState().reset();
@@ -19,4 +20,5 @@ export function resetReviewStores(): void {
   useObjectsStore.getState().reset();
   useDisplayStore.getState().reset();
   usePlaybackStore.getState().reset();
+  useSelectionStore.getState().reset();
 }
