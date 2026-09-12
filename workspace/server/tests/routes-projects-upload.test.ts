@@ -203,7 +203,7 @@ describe("POST /api/projects", () => {
 
   it("rejects unsupported models before creating database rows or files", async () => {
     const t = testApp();
-    const response = await post(t, "Robot", modelFile(glbBytes(), "a.fbx"));
+    const response = await post(t, "Robot", modelFile(glbBytes(), "a.stl"));
     expect(response.status).toBe(415);
     expect((await response.json()).error.code).toBe("UNSUPPORTED_FORMAT");
     expect(projectCount(t)).toBe(0);

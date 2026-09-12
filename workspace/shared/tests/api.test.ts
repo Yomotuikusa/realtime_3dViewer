@@ -6,6 +6,8 @@ import {
   ErrorCode,
   ListCommentsQuery,
   MAX_UPLOAD_BYTES_DEFAULT,
+  MODEL_CONTENT_TYPES,
+  modelFormat,
   ProjectNameSchema,
   UpdateCommentStatusInput,
 } from "../src/api";
@@ -62,7 +64,24 @@ describe("REST schemas", () => {
   it("trims project names and exposes upload constants", () => {
     expect(ProjectNameSchema.parse("  abc  ")).toBe("abc");
     expect(MAX_UPLOAD_BYTES_DEFAULT).toBe(100 * 1024 * 1024);
-    expect(ALLOWED_MODEL_EXTENSIONS).toEqual([".glb", ".gltf"]);
+    expect(ALLOWED_MODEL_EXTENSIONS).toEqual([".glb", ".gltf", ".fbx", ".obj"]);
+    expect(modelFormat("a.glb")).toBe("glb");
+    expect(modelFormat("a.gltf")).toBe("gltf");
+    expect(modelFormat("a.fbx")).toBe("fbx");
+    expect(modelFormat("a.obj")).toBe("obj");
+    expect(modelFormat("a.GLB")).toBe("glb");
+    expect(modelFormat("A.Fbx")).toBe("fbx");
+    expect(modelFormat("a.b.obj")).toBe("obj");
+    for (const name of ["noext", ".glb", "a.glb.zip", "a.stl", "", "a."]) {
+      expect(modelFormat(name)).toBeNull();
+    }
+    expect(Object.keys(MODEL_CONTENT_TYPES).sort()).toEqual(
+      ALLOWED_MODEL_EXTENSIONS.map((extension) => extension.slice(1)).sort(),
+    );
+    expect(MODEL_CONTENT_TYPES.glb).toBe("model/gltf-binary");
+    expect(MODEL_CONTENT_TYPES.gltf).toBe("model/gltf+json");
+    expect(MODEL_CONTENT_TYPES.fbx).toBe("application/octet-stream");
+    expect(MODEL_CONTENT_TYPES.obj).toBe("text/plain; charset=utf-8");
     expect(Object.values(ErrorCode)).toHaveLength(6);
   });
 });

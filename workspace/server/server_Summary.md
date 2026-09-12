@@ -18,18 +18,18 @@ server の基盤。本番は `npm run build && npm run start` で起動する。
 - `src/db/comments.ts`: コメントの登録、project 単位の一覧、status 更新。JSON 列と
   shared の `Comment` の相互変換を担い、playback は `playback_json` へ nullable JSON として
   保存して常に `playback` キーを返す。
-- `src/storage/files.ts`: `dataDir/uploads/<versionId>.glb` への一時ファイル経由の非同期保存・削除。
+- `src/storage/files.ts`: `dataDir/uploads/<versionId>.glb` への一時ファイル経由の非同期保存・削除。拡張子 `.glb` は内部名で、中身の形式とは無関係。
 - `src/routes/projects.ts`: multipart モデルアップロード、既存 project への版追加、project JSON
   の取得とモデル本体の配信を提供する。複数ファイルの保存と projects / model_versions 登録を
   同一処理で行い、失敗時は保存済みファイルを削除する。版追加成功後は `object:added` を publish
-  し、拡張子に応じた Content-Type と immutable キャッシュヘッダを設定する。
+  し、`MODEL_CONTENT_TYPES` 由来の Content-Type と immutable キャッシュヘッダを設定する。
 - `src/routes/project-upload.ts`: multipart の file フィールド(単一または配列)を全件検証し、
   検証済みのファイル名・バイト列へ変換する。File 以外、形式不正、サイズ超過を API エラーへ変換する。
 - `src/routes/comments.ts`: project 配下のコメント一覧、投稿、status 更新を提供する。
   一覧は `status` 絞り込みと `created_at` 昇順に対応し、投稿・更新は保存後にそれぞれ
   `comment:created` / `comment:updated` を `publish` へ渡す。project、version、comment の
   不在は `NOT_FOUND`、不正な JSON / 入力は `VALIDATION` を返す。
-- `src/routes/upload-validation.ts`: glTF/GLB の拡張子・マジックバイト/JSON 検査。
+- `src/routes/upload-validation.ts`: glTF/GLB/FBX/OBJ の拡張子・マジックバイト/JSON/頂点行の検査。
 - `src/routes/static.ts`: `WEB_DIST_DIR` 配下の GET / HEAD 静的ファイルを配信する。`/assets/`
   配下は immutable キャッシュ、それ以外は no-cache とし、拡張子なしの未知パスは
   `index.html` へ SPA フォールバックする。`/api/`、拡張子付きの不在ファイル、GET / HEAD
@@ -74,11 +74,12 @@ server の基盤。本番は `npm run build && npm run start` で起動する。
   期待される HTTP エラーのログ抑制のテスト。
 - `tests/app-body-limit.test.ts`: project 作成・版追加 multipart とコメント JSON の Content-Length /
   chunked 本体上限、本体なしのコメント一覧のテスト。
-- `tests/routes-projects-read.test.ts`: project 取得、モデル配信、Content-Type、キャッシュ、
+- `tests/routes-projects-read.test.ts`: project 取得、glTF/GLB/FBX/OBJ と未知拡張子のモデル配信、Content-Type、キャッシュ、
   project/version/file の NOT_FOUND のテスト。
-- `tests/upload-validation.test.ts`: モデル拡張子、GLB/glTF の内容検査のテスト。
+- `tests/upload-validation.test.ts`: モデル拡張子、GLB/glTF/FBX/OBJ の内容検査のテスト。
 - `tests/routes-projects-upload.test.ts`: multipart の単一・複数 POST、Project 応答、保存ファイル、
   入力検証、上限超過、全件事前検証、DB 失敗時の後始末のテスト。
+- `tests/routes-projects-formats.test.ts`: FBX / OBJ の作成・版追加、複数形式混在、内容不正の multipart テスト。
 - `tests/routes-project-versions.test.ts`: 既存 project への版追加、2回追加後の全版取得と採番、publish、
   存在しない project、単一ファイル制約、形式不正、DB 失敗時の後始末のテスト。
 - `tests/routes-comments.test.ts`: コメント一覧の順序・絞り込み、投稿・status 更新、入力検証、
@@ -122,7 +123,7 @@ server の基盤。本番は `npm run build && npm run start` で起動する。
   `POST /api/projects/:projectId/versions` を提供する。作成 POST は multipart の `name` と
   1件以上の `file` を送信順に受け、201 で全 `versions` を含む `Project` を返す。版追加 POST は
   1件の `file` を受け、採番済み `ModelVersion` を201で返し、DB反映後に `object:added` を publish
-  する。名前は trim して保存し、不正な入力は `VALIDATION`、非 glTF/GLB は
+  する。名前は trim して保存し、不正な入力は `VALIDATION`、非 glTF/GLB/FBX/OBJ は
   拡張子不正は HTTP 415 の `UNSUPPORTED_FORMAT`、内容不正は HTTP 400 の
   `UNSUPPORTED_FORMAT`、上限超過は `PAYLOAD_TOO_LARGE`、保存後の DB 失敗など予期しないエラーは
   `INTERNAL` を返す。
