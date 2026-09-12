@@ -35,7 +35,7 @@ server の基盤。本番は `npm run build && npm run start` で起動する。
   `index.html` へ SPA フォールバックする。`/api/`、拡張子付きの不在ファイル、GET / HEAD
   以外は後段へ渡し、字句解決と realpath の両方で root 外への traversal / symlink 脱出を拒否する。
 - `src/realtime/room-display.ts`: ルーム共有の表示状態はすべてここに置く(設計書 §13.5)。
-  ライト、非表示の版、非表示の部位集合、メッシュ表示方法、メッシュ比較設定、ジョイント表示設定を更新し、
+  ライト、非表示の版、非表示の部位集合、メッシュ表示方法、メッシュ比較設定、ジョイント表示設定、モーション軌跡表示設定を更新し、
   welcome 用に必要な値だけ複製して復元する。部位集合は `hiddenParts` として挿入順を保ち、
   `hiddenPartsOf` が部位参照も複製した配列を返す。
 - `src/realtime/room-state.ts`: ルームの `Connection` / `Room` データ構造、接続・ルーム・ストローク上限、Presence 色、`Outbound` 型、
@@ -101,7 +101,8 @@ server の基盤。本番は `npm run build && npm run start` で起動する。
 - `tests/realtime-hub-display.test.ts`: RoomHub のメッシュ表示方法の中継、後勝ち保持、welcome 反映、ルーム分離・削除、未参加接続の無視、他状態との独立性を検証する。
 - `tests/realtime-hub-compare.test.ts`: RoomHub のメッシュ比較設定の複製・中継、後勝ち保持、welcome 反映、既定値、ルーム分離・削除、未参加接続の無視、他状態との独立性を検証する。
 - `tests/realtime-hub-joint.test.ts`: RoomHub のジョイント表示設定の複製・中継、後勝ち保持、welcome 反映、ルーム分離・削除、未参加接続の無視、他状態との独立性を検証する。
-- `tests/room-display.test.ts`: ルーム共有表示状態の初期化、6種の更新・中継、値の複製、welcome 復元フィールドを検証する。
+- `tests/realtime-hub-trail.test.ts`: RoomHub のモーション軌跡表示設定の複製・中継、welcome 反映、未設定値の省略、未定義ルーム参照を検証する。
+- `tests/room-display.test.ts`: ルーム共有表示状態の初期化、7種の更新・中継、値の複製、welcome 復元フィールドを検証する。
 - `tests/realtime-guards.test.ts`: project / Origin / 接続数 / ルーム数 / payload の接続ガードと、
   stroke 所有者検証・上限内の大きな stroke のテスト。
 - `tests/room-state.test.ts`: `createRoom` の独立性、色割り当て、定数、camera / user / stroke の複製ヘルパを検証する。

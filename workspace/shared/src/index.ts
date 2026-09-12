@@ -6,3 +6,4 @@ export * from "./stroke";
 export * from "./compare";
 export * from "./object-part";
 export * from "./joint";
+export * from "./trail";

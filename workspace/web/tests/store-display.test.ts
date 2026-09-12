@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it } from "vitest";
 import { DEFAULT_JOINT_DISPLAY, DEFAULT_MESH_COMPARE, DEFAULT_MESH_DISPLAY } from "@shared/types";
+import { DEFAULT_MOTION_TRAIL } from "@shared/trail";
 import { useDisplayStore } from "../src/store/display";
 
 afterEach(() => useDisplayStore.getState().reset());
@@ -12,6 +13,8 @@ describe("display store", () => {
     expect(useDisplayStore.getState().meshCompare).not.toBe(DEFAULT_MESH_COMPARE);
     expect(useDisplayStore.getState().jointDisplay).toEqual(DEFAULT_JOINT_DISPLAY);
     expect(useDisplayStore.getState().jointDisplay).not.toBe(DEFAULT_JOINT_DISPLAY);
+    expect(useDisplayStore.getState().motionTrail).toEqual(DEFAULT_MOTION_TRAIL);
+    expect(useDisplayStore.getState().motionTrail).not.toBe(DEFAULT_MOTION_TRAIL);
   });
 
   it("sets a mode and resets it to solid", () => {
@@ -79,6 +82,25 @@ describe("display store", () => {
     expect(useDisplayStore.getState().meshCompare).toEqual(DEFAULT_MESH_COMPARE);
     useDisplayStore.getState().reset();
     expect(useDisplayStore.getState().jointDisplay).toEqual(DEFAULT_JOINT_DISPLAY);
+    unsubscribe();
+  });
+
+  it("sets a copied motion trail, suppresses equal updates, and resets it", () => {
+    const trail = { visible: true, target: { versionId: "v1", objectPath: "0/2" } };
+    useDisplayStore.getState().setMotionTrail(trail);
+    expect(useDisplayStore.getState().motionTrail).toEqual(trail);
+    expect(useDisplayStore.getState().motionTrail).not.toBe(trail);
+    expect(useDisplayStore.getState().motionTrail.target).not.toBe(trail.target);
+    const before = useDisplayStore.getState();
+    let calls = 0;
+    const unsubscribe = useDisplayStore.subscribe(() => { calls += 1; });
+    useDisplayStore.getState().setMotionTrail({ visible: true, target: { ...trail.target } });
+    expect(useDisplayStore.getState()).toBe(before);
+    expect(calls).toBe(0);
+    useDisplayStore.getState().setMotionTrail({ visible: false, target: null });
+    expect(useDisplayStore.getState().motionTrail).toEqual(DEFAULT_MOTION_TRAIL);
+    useDisplayStore.getState().reset();
+    expect(useDisplayStore.getState().motionTrail).toEqual(DEFAULT_MOTION_TRAIL);
     unsubscribe();
   });
 });

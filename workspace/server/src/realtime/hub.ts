@@ -1,6 +1,7 @@
 import { nanoid } from "nanoid";
 import type { ClientMessage } from "@shared/protocol";
 import type { CameraState, JointDisplay, MeshCompare, MeshDisplayMode, ObjectPartRef, PresenceUser, Stroke } from "@shared/types";
+import { cloneMotionTrail, type MotionTrail } from "@shared/trail";
 import {
   applyDisplayMessage,
   displayWelcomeFields,
@@ -99,6 +100,7 @@ export class RoomHub {
       case "mesh:display":
       case "mesh:compare":
       case "joint:display":
+      case "trail:display":
         return [{ target: "others", msg: applyDisplayMessage(room.display, connId, msg) }];
       case "stroke:add":
         return addStroke(room, connId, msg.stroke, this.now());
@@ -152,6 +154,12 @@ export class RoomHub {
   jointDisplayIn(projectId: string): JointDisplay | null {
     const display = this.rooms.get(projectId)?.display.jointDisplay;
     return display ? { ...display } : null;
+  }
+
+  /** ルームの軌跡表示設定(複製)。ルームが無い・未設定なら null */
+  motionTrailIn(projectId: string): MotionTrail | null {
+    const trail = this.rooms.get(projectId)?.display.motionTrail;
+    return trail ? cloneMotionTrail(trail) : null;
   }
 
   private join(connId: string, connection: Connection, name: string): Outbound[] {

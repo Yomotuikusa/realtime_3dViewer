@@ -2,6 +2,7 @@ import type { ClientMessage, ServerMessage } from "@shared/protocol";
 import { objectPartKey } from "@shared/object-part";
 import type { JointDisplay, LightAngles, MeshCompare, MeshDisplayMode } from "@shared/types";
 import type { ObjectPartRef } from "@shared/types";
+import { cloneMotionTrail, type MotionTrail } from "@shared/trail";
 
 /**
  * ルームで共有する「3D ビューの見え方」の状態(設計書 §13.5)。
@@ -20,12 +21,14 @@ export interface RoomDisplayState {
   meshCompare: MeshCompare | null;
   /** ルームで共有するジョイントの表示設定。誰も変えていなければ null */
   jointDisplay: JointDisplay | null;
+  /** ルームで共有する軌跡の表示設定。誰も変えていなければ null */
+  motionTrail: MotionTrail | null;
 }
 
 /** 表示状態を変える ClientMessage */
 export type DisplayClientMessage = Extract<
   ClientMessage,
-  { type: "light" | "object:visibility" | "object:part-visibility" | "mesh:display" | "mesh:compare" | "joint:display" }
+  { type: "light" | "object:visibility" | "object:part-visibility" | "mesh:display" | "mesh:compare" | "joint:display" | "trail:display" }
 >;
 
 export type WelcomeMessage = Extract<ServerMessage, { type: "welcome" }>;
@@ -33,7 +36,7 @@ export type WelcomeMessage = Extract<ServerMessage, { type: "welcome" }>;
 /** 表示状態の welcome 復元フィールド(未設定・空のキーは含まれない) */
 export type DisplayWelcomeFields = Pick<
   WelcomeMessage,
-  "light" | "hiddenObjectIds" | "hiddenObjectParts" | "meshDisplay" | "meshCompare" | "jointDisplay"
+  "light" | "hiddenObjectIds" | "hiddenObjectParts" | "meshDisplay" | "meshCompare" | "jointDisplay" | "motionTrail"
 >;
 
 /** すべて未設定の初期状態を作る(Set は呼び出しごとに新しいインスタンス) */
@@ -45,6 +48,7 @@ export function createRoomDisplayState(): RoomDisplayState {
     meshDisplay: null,
     meshCompare: null,
     jointDisplay: null,
+    motionTrail: null,
   };
 }
 
@@ -78,6 +82,10 @@ export function applyDisplayMessage(
     case "joint:display":
       state.jointDisplay = { ...msg.display };
       return { type: "joint:display", userId, display: { ...state.jointDisplay } };
+    case "trail:display": {
+      state.motionTrail = cloneMotionTrail(msg.trail);
+      return { type: "trail:display", userId, trail: cloneMotionTrail(state.motionTrail) };
+    }
   }
 }
 
@@ -90,6 +98,7 @@ export function displayWelcomeFields(state: RoomDisplayState): DisplayWelcomeFie
   if (state.meshDisplay !== null) fields.meshDisplay = state.meshDisplay;
   if (state.meshCompare !== null) fields.meshCompare = { ...state.meshCompare };
   if (state.jointDisplay !== null) fields.jointDisplay = { ...state.jointDisplay };
+  if (state.motionTrail !== null) fields.motionTrail = cloneMotionTrail(state.motionTrail);
   return fields;
 }
 

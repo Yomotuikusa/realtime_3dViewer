@@ -24,6 +24,7 @@ import {
   type PresenceUser,
   type Stroke,
 } from "./types";
+import { MotionTrailSchema, type MotionTrail } from "./trail";
 
 export const MAX_NAME_LENGTH = 50;
 export const CAMERA_SEND_INTERVAL_MS = 50;
@@ -46,7 +47,9 @@ export type ClientMessage =
   /** 自分がメッシュ比較の設定を変えた(値全体を送る) */
   | { type: "mesh:compare"; compare: MeshCompare }
   /** 自分がジョイントの表示設定を変えた(値全体を送る) */
-  | { type: "joint:display"; display: JointDisplay };
+  | { type: "joint:display"; display: JointDisplay }
+  /** 自分が軌跡の表示設定を変えた(値全体を送る) */
+  | { type: "trail:display"; trail: MotionTrail };
 
 export type ServerMessage =
   | {
@@ -65,6 +68,8 @@ export type ServerMessage =
       meshCompare?: MeshCompare;
       /** ルームのジョイント表示設定。誰も変えていなければ省略される */
       jointDisplay?: JointDisplay;
+      /** ルームの軌跡表示設定。誰も変えていなければ省略される */
+      motionTrail?: MotionTrail;
     }
   | { type: "user:joined"; user: PresenceUser }
   | { type: "user:left"; userId: string }
@@ -87,6 +92,8 @@ export type ServerMessage =
   | { type: "mesh:compare"; userId: string; compare: MeshCompare }
   /** userId がジョイントの表示設定を変えた(送信元以外へ中継) */
   | { type: "joint:display"; userId: string; display: JointDisplay }
+  /** userId が軌跡の表示設定を変えた(送信元以外へ中継) */
+  | { type: "trail:display"; userId: string; trail: MotionTrail }
   | { type: "error"; code: string; message: string };
 
 const IdSchema = z.string().min(1);
@@ -103,6 +110,7 @@ export const ClientMessageSchema = z.discriminatedUnion("type", [
   z.object({ type: z.literal("mesh:display"), mode: MeshDisplayModeSchema }),
   z.object({ type: z.literal("mesh:compare"), compare: MeshCompareSchema }),
   z.object({ type: z.literal("joint:display"), display: JointDisplaySchema }),
+  z.object({ type: z.literal("trail:display"), trail: MotionTrailSchema }),
 ]) satisfies z.ZodType<ClientMessage>;
 
 export const ServerMessageSchema = z.discriminatedUnion("type", [
@@ -117,6 +125,7 @@ export const ServerMessageSchema = z.discriminatedUnion("type", [
     meshDisplay: MeshDisplayModeSchema.optional(),
     meshCompare: MeshCompareSchema.optional(),
     jointDisplay: JointDisplaySchema.optional(),
+    motionTrail: MotionTrailSchema.optional(),
   }),
   z.object({ type: z.literal("user:joined"), user: PresenceUserSchema }),
   z.object({ type: z.literal("user:left"), userId: IdSchema }),
@@ -138,6 +147,7 @@ export const ServerMessageSchema = z.discriminatedUnion("type", [
   z.object({ type: z.literal("mesh:display"), userId: IdSchema, mode: MeshDisplayModeSchema }),
   z.object({ type: z.literal("mesh:compare"), userId: IdSchema, compare: MeshCompareSchema }),
   z.object({ type: z.literal("joint:display"), userId: IdSchema, display: JointDisplaySchema }),
+  z.object({ type: z.literal("trail:display"), userId: IdSchema, trail: MotionTrailSchema }),
   z.object({ type: z.literal("error"), code: z.string(), message: z.string() }),
 ]) satisfies z.ZodType<ServerMessage>;
 

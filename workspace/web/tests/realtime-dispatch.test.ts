@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import type { ServerMessage } from "@shared/protocol";
 import { DEFAULT_JOINT_DISPLAY, DEFAULT_MESH_COMPARE } from "@shared/types";
+import { DEFAULT_MOTION_TRAIL } from "@shared/trail";
 import { dispatchServerMessage } from "../src/app/realtime-dispatch";
 import { useAnnotationStore } from "../src/store/annotation";
 import { useCommentsStore } from "../src/store/comments";
@@ -189,6 +190,20 @@ describe("realtime dispatch", () => {
     dispatchServerMessage({ type: "error", code: "BAD_REQUEST", message: "x" });
     expect(useDisplayStore.getState().meshDisplay).toBe("wireframe");
     expect(useDisplayStore.getState().meshCompare).toEqual(compare);
+  });
+
+  it("restores motion trail from welcome and replaces it with the default when omitted", () => {
+    const trail = { visible: true, target: { versionId: "v1", objectPath: "0/2" } };
+    dispatchServerMessage({ type: "welcome", selfId: "u1", users: [], strokes: [], motionTrail: trail });
+    expect(useDisplayStore.getState().motionTrail).toEqual(trail);
+    dispatchServerMessage({ type: "welcome", selfId: "u1", users: [], strokes: [] });
+    expect(useDisplayStore.getState().motionTrail).toEqual(DEFAULT_MOTION_TRAIL);
+  });
+
+  it("dispatches received motion trail display events", () => {
+    const trail = { visible: true, target: { versionId: "v1", objectPath: "0/2" } };
+    dispatchServerMessage({ type: "trail:display", userId: "u2", trail });
+    expect(useDisplayStore.getState().motionTrail).toEqual(trail);
   });
 
   it("has the documented initial state and resets to it", () => {

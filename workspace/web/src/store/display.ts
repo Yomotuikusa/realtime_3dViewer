@@ -1,6 +1,7 @@
 import { cloneJointDisplay, jointDisplayEquals } from "@shared/joint";
 import { cloneMeshCompare, meshCompareEquals } from "@shared/compare";
 import { DEFAULT_JOINT_DISPLAY, DEFAULT_MESH_COMPARE, DEFAULT_MESH_DISPLAY, type JointDisplay, type MeshCompare, type MeshDisplayMode } from "@shared/types";
+import { cloneMotionTrail, DEFAULT_MOTION_TRAIL, motionTrailEquals, type MotionTrail } from "@shared/trail";
 import { create, type StoreApi, type UseBoundStore } from "zustand";
 
 export interface DisplayStoreState {
@@ -16,6 +17,10 @@ export interface DisplayStoreState {
   jointDisplay: JointDisplay;
   /** jointDisplayEquals で同値なら state を更新しない。複製して保持する */
   setJointDisplay(display: JointDisplay): void;
+  /** 軌跡の表示設定。初期値は DEFAULT_MOTION_TRAIL の複製 */
+  motionTrail: MotionTrail;
+  /** motionTrailEquals で同値なら state を更新しない。複製して保持する */
+  setMotionTrail(trail: MotionTrail): void;
   reset(): void;
 }
 
@@ -23,6 +28,7 @@ export const useDisplayStore: UseBoundStore<StoreApi<DisplayStoreState>> = creat
   meshDisplay: DEFAULT_MESH_DISPLAY,
   meshCompare: cloneMeshCompare(DEFAULT_MESH_COMPARE),
   jointDisplay: cloneJointDisplay(DEFAULT_JOINT_DISPLAY),
+  motionTrail: cloneMotionTrail(DEFAULT_MOTION_TRAIL),
 
   setMeshDisplay(mode) {
     if (get().meshDisplay === mode) return;
@@ -39,11 +45,17 @@ export const useDisplayStore: UseBoundStore<StoreApi<DisplayStoreState>> = creat
     set({ jointDisplay: cloneJointDisplay(display) });
   },
 
+  setMotionTrail(trail) {
+    if (motionTrailEquals(get().motionTrail, trail)) return;
+    set({ motionTrail: cloneMotionTrail(trail) });
+  },
+
   reset() {
     set({
       meshDisplay: DEFAULT_MESH_DISPLAY,
       meshCompare: cloneMeshCompare(DEFAULT_MESH_COMPARE),
       jointDisplay: cloneJointDisplay(DEFAULT_JOINT_DISPLAY),
+      motionTrail: cloneMotionTrail(DEFAULT_MOTION_TRAIL),
     });
   },
 }));
