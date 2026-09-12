@@ -15,10 +15,10 @@
 - UploadPage.tsx: `.glb`/`.gltf`/`.fbx`/`.obj` のアップロード画面。`accept` は `ALLOWED_MODEL_EXTENSIONS` 由来で、OBJ が材質なし表示になる注記を常時出す
 - upload-labels.ts: アップロード画面と NotFound の表示文言、OBJ 材質なし表示注記、ファイル検証・複数ファイル容量表示 helper の純粋関数
 - upload.css: アップロード画面と NotFound の狭い幅のレイアウト CSS
-- ReviewPage.tsx: プロジェクト取得、レビュー画面の骨格、ロード状態・エラーカード、`.review-stage` とビュー下部タイムラインを含むビューア／サイズ変更可能なサイドパネルのレイアウトを担当する。Canvas に RemoteCameras / RoomStrokes / ReplayStrokes / AnnotationLayer / CommentPickLayer / CommentPins を配置し、右ドックに PresenceList / ObjectList / `.review-panel__comments` を順に配置する。`.review-hud` を HUD 差し込み口、`.review-panel__comments` をコメント領域差し込み口として提供し、カメラとライトの変更を realtime 送信へ結線し、入室後だけショートカットを有効にする
+- ReviewPage.tsx: プロジェクト取得、レビュー画面の骨格、ロード状態・エラーカード、`.review-stage` とビュー下部タイムラインを含むビューア／サイズ変更可能なサイドパネルのレイアウトを担当する。モデル読み込み失敗のエラーカードを `.review-stage` 全面の中央寄せオーバーレイ (`.review-stage__error`) で HUD より前に出す。Canvas に RemoteCameras / RoomStrokes / ReplayStrokes / AnnotationLayer / CommentPickLayer / CommentPins を配置し、右ドックに PresenceList / ObjectList / `.review-panel__comments` を順に配置する。`.review-hud` を HUD 差し込み口、`.review-panel__comments` をコメント領域差し込み口として提供し、カメラとライトの変更を realtime 送信へ結線し、入室後だけショートカットを有効にする
 - ReviewHeader.tsx: 接続状態バッジ、入室後の自分の表示名・色、レビュー URL のコピーと失敗時の手動コピー欄を表示し、入室後だけショートカット設定を開くボタンを表示する
 - review-labels.ts: 接続状態・コピー状態・ロード/エラー文言、サイドパネル幅ハンドルのラベルを定義する JSX 非依存の純粋関数と定数
-- review.css: レビュー画面のヘッダ、`.review-stage` を含むビューア/HUD、入室 backdrop/dialog、サイドパネルと境界ハンドル、ロード/エラー状態のプレーン CSS
+- review.css: レビュー画面のヘッダ、`.review-stage` を含むビューア/HUD、モデル読み込み失敗用の `.review-stage__error` オーバーレイ、入室 backdrop/dialog、サイドパネルと境界ハンドル、ロード/エラー状態のプレーン CSS
 - ErrorBoundary.tsx: React/three の描画例外を捕捉し、フォールバックを表示
 
 ## 公開インターフェイス
@@ -53,6 +53,7 @@ annotation ストアへ、`light` を lighting ストアへ、`comment:created` 
 - tests/realtime-dispatch.test.ts: welcome の session / presence / annotation / light / objects / display 反映、焦点距離を含む presence/stroke/comment イベント、object 追加・可視性、mesh:display / mesh:compare、error、未対応イベント、reset のテスト
 - tests/review-labels.test.ts: 接続状態・コピー状態・ロード/エラー文言のテスト
 - tests/review-stores.test.ts: 9つのレビュー用ストアをまとめて初期化する reset の検証
+- tests/review-styles.test.ts: モデル読み込み失敗オーバーレイのCSS配置・重なり順・操作性と、ErrorBoundary フォールバックのJSX配置をソース検査
 - tests/routes.test.ts: ルート解析と履歴遷移テスト
 - tests/upload-labels.test.ts: 4形式のアップロード/NotFound 文言、OBJ 材質注記、対応形式の accept とヘルプ、容量エラー定数、複数ファイル検証とファイル helper の単位・丸め結果を検証
 - tests/use-realtime.test.ts: 接続状態、open 時のエラー解除と join、closed 時の非送信を検証

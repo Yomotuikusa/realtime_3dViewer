@@ -157,6 +157,22 @@
   min-height: 0;
 }
 
+.review-stage__error {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: grid;
+  place-items: center;
+  padding: var(--space-4);
+  pointer-events: none;
+}
+
+.review-stage__error .review-error {
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-overlay);
+  pointer-events: auto;
+}
+
 .review-error {
   display: grid;
   gap: var(--space-3);
