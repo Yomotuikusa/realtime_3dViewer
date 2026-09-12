@@ -1,5 +1,7 @@
 import type { ClientMessage, ServerMessage } from "@shared/protocol";
+import { objectPartKey } from "@shared/object-part";
 import type { LightAngles, MeshCompare, MeshDisplayMode } from "@shared/types";
+import type { ObjectPartRef } from "@shared/types";
 
 /**
  * ルームで共有する「3D ビューの見え方」の状態(設計書 §13.5)。
@@ -10,6 +12,8 @@ export interface RoomDisplayState {
   light: LightAngles | null;
   /** 非表示にされた版の versionId。挿入順を保つ */
   hiddenObjects: Set<string>;
+  /** 非表示にされた部位。キーは objectPartKey(part)。挿入順を保つ */
+  hiddenParts: Map<string, ObjectPartRef>;
   /** ルームで共有するメッシュの表示方法。誰も切り替えていなければ null */
   meshDisplay: MeshDisplayMode | null;
   /** ルームで共有するメッシュ比較の設定。誰も変えていなければ null */
@@ -19,19 +23,23 @@ export interface RoomDisplayState {
 /** 表示状態を変える ClientMessage */
 export type DisplayClientMessage = Extract<
   ClientMessage,
-  { type: "light" | "object:visibility" | "mesh:display" | "mesh:compare" }
+  { type: "light" | "object:visibility" | "object:part-visibility" | "mesh:display" | "mesh:compare" }
 >;
 
 export type WelcomeMessage = Extract<ServerMessage, { type: "welcome" }>;
 
 /** 表示状態の welcome 復元フィールド(未設定・空のキーは含まれない) */
-export type DisplayWelcomeFields = Pick<WelcomeMessage, "light" | "hiddenObjectIds" | "meshDisplay" | "meshCompare">;
+export type DisplayWelcomeFields = Pick<
+  WelcomeMessage,
+  "light" | "hiddenObjectIds" | "hiddenObjectParts" | "meshDisplay" | "meshCompare"
+>;
 
 /** すべて未設定の初期状態を作る(Set は呼び出しごとに新しいインスタンス) */
 export function createRoomDisplayState(): RoomDisplayState {
   return {
     light: null,
     hiddenObjects: new Set<string>(),
+    hiddenParts: new Map<string, ObjectPartRef>(),
     meshDisplay: null,
     meshCompare: null,
   };
@@ -51,6 +59,13 @@ export function applyDisplayMessage(
       if (msg.visible) state.hiddenObjects.delete(msg.versionId);
       else state.hiddenObjects.add(msg.versionId);
       return { type: "object:visibility", userId, versionId: msg.versionId, visible: msg.visible };
+    case "object:part-visibility": {
+      const part = { versionId: msg.versionId, objectPath: msg.objectPath };
+      const key = objectPartKey(part);
+      if (msg.visible) state.hiddenParts.delete(key);
+      else if (!state.hiddenParts.has(key)) state.hiddenParts.set(key, part);
+      return { type: "object:part-visibility", userId, ...part, visible: msg.visible };
+    }
     case "mesh:display":
       state.meshDisplay = msg.mode;
       return { type: "mesh:display", userId, mode: msg.mode };
@@ -65,7 +80,13 @@ export function displayWelcomeFields(state: RoomDisplayState): DisplayWelcomeFie
   const fields: DisplayWelcomeFields = {};
   if (state.light !== null) fields.light = { ...state.light };
   if (state.hiddenObjects.size > 0) fields.hiddenObjectIds = [...state.hiddenObjects];
+  if (state.hiddenParts.size > 0) fields.hiddenObjectParts = hiddenPartsOf(state);
   if (state.meshDisplay !== null) fields.meshDisplay = state.meshDisplay;
   if (state.meshCompare !== null) fields.meshCompare = { ...state.meshCompare };
   return fields;
+}
+
+/** hiddenParts の挿入順の複製配列を返す。各部位参照も複製する。 */
+export function hiddenPartsOf(state: RoomDisplayState): ObjectPartRef[] {
+  return [...state.hiddenParts.values()].map((part) => ({ ...part }));
 }

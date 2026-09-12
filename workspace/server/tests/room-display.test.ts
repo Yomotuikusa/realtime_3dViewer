@@ -3,6 +3,7 @@ import {
   applyDisplayMessage,
   createRoomDisplayState,
   displayWelcomeFields,
+  hiddenPartsOf,
 } from "../src/realtime/room-display";
 
 describe("room display state", () => {
@@ -10,9 +11,22 @@ describe("room display state", () => {
     const first = createRoomDisplayState();
     const second = createRoomDisplayState();
 
-    expect(first).toEqual({ light: null, hiddenObjects: new Set(), meshDisplay: null, meshCompare: null });
-    expect(second).toEqual({ light: null, hiddenObjects: new Set(), meshDisplay: null, meshCompare: null });
+    expect(first).toEqual({
+      light: null,
+      hiddenObjects: new Set(),
+      hiddenParts: new Map(),
+      meshDisplay: null,
+      meshCompare: null,
+    });
+    expect(second).toEqual({
+      light: null,
+      hiddenObjects: new Set(),
+      hiddenParts: new Map(),
+      meshDisplay: null,
+      meshCompare: null,
+    });
     expect(first.hiddenObjects).not.toBe(second.hiddenObjects);
+    expect(first.hiddenParts).not.toBe(second.hiddenParts);
   });
 
   it("copies light angles into state and the relay message", () => {
@@ -45,6 +59,39 @@ describe("room display state", () => {
     expect([...state.hiddenObjects]).toEqual([]);
   });
 
+  it("keeps hidden parts keyed by version and path in insertion order", () => {
+    const state = createRoomDisplayState();
+    const hidden = (versionId: string, objectPath: string, visible: boolean) => ({
+      type: "object:part-visibility" as const,
+      versionId,
+      objectPath,
+      visible,
+    });
+
+    expect(applyDisplayMessage(state, "u1", hidden("v1", "0/1", false))).toEqual({
+      type: "object:part-visibility", userId: "u1", versionId: "v1", objectPath: "0/1", visible: false,
+    });
+    expect(hiddenPartsOf(state)).toEqual([{ versionId: "v1", objectPath: "0/1" }]);
+    expect(applyDisplayMessage(state, "u1", hidden("v1", "0/1", false))).toEqual({
+      type: "object:part-visibility", userId: "u1", versionId: "v1", objectPath: "0/1", visible: false,
+    });
+    expect(hiddenPartsOf(state)).toEqual([{ versionId: "v1", objectPath: "0/1" }]);
+
+    expect(applyDisplayMessage(state, "u1", hidden("v1", "2", false))).toHaveProperty("type", "object:part-visibility");
+    expect(hiddenPartsOf(state)).toEqual([
+      { versionId: "v1", objectPath: "0/1" },
+      { versionId: "v1", objectPath: "2" },
+    ]);
+    expect(applyDisplayMessage(state, "u1", hidden("v1", "0/1", true))).toHaveProperty("type", "object:part-visibility");
+    expect(hiddenPartsOf(state)).toEqual([{ versionId: "v1", objectPath: "2" }]);
+
+    applyDisplayMessage(state, "u1", hidden("v2", "0/1", false));
+    expect(hiddenPartsOf(state)).toEqual([
+      { versionId: "v1", objectPath: "2" },
+      { versionId: "v2", objectPath: "0/1" },
+    ]);
+  });
+
   it("stores and relays mesh display mode", () => {
     const state = createRoomDisplayState();
 
@@ -73,6 +120,7 @@ describe("room display state", () => {
     expect(fields).toEqual({});
     expect("light" in fields).toBe(false);
     expect("hiddenObjectIds" in fields).toBe(false);
+    expect("hiddenObjectParts" in fields).toBe(false);
     expect("meshDisplay" in fields).toBe(false);
     expect("meshCompare" in fields).toBe(false);
   });
@@ -81,6 +129,9 @@ describe("room display state", () => {
     const state = createRoomDisplayState();
     applyDisplayMessage(state, "u1", { type: "light", angles: { yaw: 1, pitch: 0.5 } });
     applyDisplayMessage(state, "u1", { type: "object:visibility", versionId: "v1", visible: false });
+    applyDisplayMessage(state, "u1", {
+      type: "object:part-visibility", versionId: "v1", objectPath: "0/1", visible: false,
+    });
     applyDisplayMessage(state, "u1", { type: "mesh:display", mode: "wireframe" });
     applyDisplayMessage(state, "u1", {
       type: "mesh:compare",
@@ -92,6 +143,7 @@ describe("room display state", () => {
     expect(fields).toEqual({
       light: { yaw: 1, pitch: 0.5 },
       hiddenObjectIds: ["v1"],
+      hiddenObjectParts: [{ versionId: "v1", objectPath: "0/1" }],
       meshDisplay: "wireframe",
       meshCompare: { baseId: "v1", targetId: "v2", thresholdPermille: 5 },
     });
@@ -103,5 +155,14 @@ describe("room display state", () => {
     expect(fields.hiddenObjectIds).not.toBe(state.hiddenObjects);
     fields.hiddenObjectIds.push("v2");
     expect([...state.hiddenObjects]).toEqual(["v1"]);
+    if (!fields.hiddenObjectParts) throw new Error("expected hidden object parts");
+    fields.hiddenObjectParts.push({ versionId: "v2", objectPath: "2" });
+    fields.hiddenObjectParts[0]!.objectPath = "caller-only";
+    expect(hiddenPartsOf(state)).toEqual([{ versionId: "v1", objectPath: "0/1" }]);
+
+    const parts = hiddenPartsOf(state);
+    parts.push({ versionId: "v3", objectPath: "3" });
+    parts[0]!.objectPath = "caller-only";
+    expect(hiddenPartsOf(state)).toEqual([{ versionId: "v1", objectPath: "0/1" }]);
   });
 });
