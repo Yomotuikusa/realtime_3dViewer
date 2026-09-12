@@ -68,4 +68,12 @@ describe("model scene loader selection", () => {
     expect(source).toContain("fileName={version.fileName}");
     expect(source.match(/<ModelMesh/g)).toHaveLength(1);
   });
+
+  it("installs the FBX skin compatibility before configuring the manager", () => {
+    const source = readSource("features/viewer/ModelMesh.tsx");
+    expect(source).toContain('from "./fbx-compat"');
+    expect(source).toMatch(
+      /function extendLoader\(loader: Loader\): void \{\s*installFbxSkinCompat\(\);\s*loader\.manager = createModelLoadingManager\(location\.origin\);/,
+    );
+  });
 });
