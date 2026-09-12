@@ -1,6 +1,6 @@
 import { nanoid } from "nanoid";
 import type { ClientMessage, ServerMessage } from "@shared/protocol";
-import type { CameraState, MeshCompare, MeshDisplayMode, ObjectPartRef, PresenceUser, Stroke } from "@shared/types";
+import type { CameraState, JointDisplay, MeshCompare, MeshDisplayMode, ObjectPartRef, PresenceUser, Stroke } from "@shared/types";
 import {
   applyDisplayMessage,
   createRoomDisplayState,
@@ -135,6 +135,7 @@ export class RoomHub {
       case "object:part-visibility":
       case "mesh:display":
       case "mesh:compare":
+      case "joint:display":
         return [{ target: "others", msg: applyDisplayMessage(room.display, connId, msg) }];
       case "stroke:add":
         return this.addStroke(room, connId, msg.stroke);
@@ -185,6 +186,12 @@ export class RoomHub {
   meshCompareIn(projectId: string): MeshCompare | null {
     const compare = this.rooms.get(projectId)?.display.meshCompare;
     return compare ? { ...compare } : null;
+  }
+
+  /** ルームのジョイント表示設定(複製)。ルームが無い・未設定なら null */
+  jointDisplayIn(projectId: string): JointDisplay | null {
+    const display = this.rooms.get(projectId)?.display.jointDisplay;
+    return display ? { ...display } : null;
   }
 
   private join(connId: string, connection: Connection, name: string): Outbound[] {

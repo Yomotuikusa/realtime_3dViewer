@@ -1,6 +1,6 @@
 import type { ClientMessage, ServerMessage } from "@shared/protocol";
 import { objectPartKey } from "@shared/object-part";
-import type { LightAngles, MeshCompare, MeshDisplayMode } from "@shared/types";
+import type { JointDisplay, LightAngles, MeshCompare, MeshDisplayMode } from "@shared/types";
 import type { ObjectPartRef } from "@shared/types";
 
 /**
@@ -18,12 +18,14 @@ export interface RoomDisplayState {
   meshDisplay: MeshDisplayMode | null;
   /** ルームで共有するメッシュ比較の設定。誰も変えていなければ null */
   meshCompare: MeshCompare | null;
+  /** ルームで共有するジョイントの表示設定。誰も変えていなければ null */
+  jointDisplay: JointDisplay | null;
 }
 
 /** 表示状態を変える ClientMessage */
 export type DisplayClientMessage = Extract<
   ClientMessage,
-  { type: "light" | "object:visibility" | "object:part-visibility" | "mesh:display" | "mesh:compare" }
+  { type: "light" | "object:visibility" | "object:part-visibility" | "mesh:display" | "mesh:compare" | "joint:display" }
 >;
 
 export type WelcomeMessage = Extract<ServerMessage, { type: "welcome" }>;
@@ -31,7 +33,7 @@ export type WelcomeMessage = Extract<ServerMessage, { type: "welcome" }>;
 /** 表示状態の welcome 復元フィールド(未設定・空のキーは含まれない) */
 export type DisplayWelcomeFields = Pick<
   WelcomeMessage,
-  "light" | "hiddenObjectIds" | "hiddenObjectParts" | "meshDisplay" | "meshCompare"
+  "light" | "hiddenObjectIds" | "hiddenObjectParts" | "meshDisplay" | "meshCompare" | "jointDisplay"
 >;
 
 /** すべて未設定の初期状態を作る(Set は呼び出しごとに新しいインスタンス) */
@@ -42,6 +44,7 @@ export function createRoomDisplayState(): RoomDisplayState {
     hiddenParts: new Map<string, ObjectPartRef>(),
     meshDisplay: null,
     meshCompare: null,
+    jointDisplay: null,
   };
 }
 
@@ -72,6 +75,9 @@ export function applyDisplayMessage(
     case "mesh:compare":
       state.meshCompare = { ...msg.compare };
       return { type: "mesh:compare", userId, compare: { ...state.meshCompare } };
+    case "joint:display":
+      state.jointDisplay = { ...msg.display };
+      return { type: "joint:display", userId, display: { ...state.jointDisplay } };
   }
 }
 
@@ -83,6 +89,7 @@ export function displayWelcomeFields(state: RoomDisplayState): DisplayWelcomeFie
   if (state.hiddenParts.size > 0) fields.hiddenObjectParts = hiddenPartsOf(state);
   if (state.meshDisplay !== null) fields.meshDisplay = state.meshDisplay;
   if (state.meshCompare !== null) fields.meshCompare = { ...state.meshCompare };
+  if (state.jointDisplay !== null) fields.jointDisplay = { ...state.jointDisplay };
   return fields;
 }
 

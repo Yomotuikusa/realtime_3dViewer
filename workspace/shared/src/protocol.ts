@@ -3,6 +3,7 @@ import {
   CameraStateSchema,
   CommentSchema,
   FocalLengthSchema,
+  JointDisplaySchema,
   LightAnglesSchema,
   MeshCompareSchema,
   MeshDisplayModeSchema,
@@ -14,6 +15,7 @@ import {
   type CameraState,
   type Comment,
   type LightAngles,
+  type JointDisplay,
   type MeshCompare,
   type MeshDisplayMode,
   type ModelVersion,
@@ -42,7 +44,9 @@ export type ClientMessage =
   /** 自分がメッシュの表示方法を切り替えた */
   | { type: "mesh:display"; mode: MeshDisplayMode }
   /** 自分がメッシュ比較の設定を変えた(値全体を送る) */
-  | { type: "mesh:compare"; compare: MeshCompare };
+  | { type: "mesh:compare"; compare: MeshCompare }
+  /** 自分がジョイントの表示設定を変えた(値全体を送る) */
+  | { type: "joint:display"; display: JointDisplay };
 
 export type ServerMessage =
   | {
@@ -59,6 +63,8 @@ export type ServerMessage =
       meshDisplay?: MeshDisplayMode;
       /** ルームのメッシュ比較設定。誰も変えていなければ省略される */
       meshCompare?: MeshCompare;
+      /** ルームのジョイント表示設定。誰も変えていなければ省略される */
+      jointDisplay?: JointDisplay;
     }
   | { type: "user:joined"; user: PresenceUser }
   | { type: "user:left"; userId: string }
@@ -79,6 +85,8 @@ export type ServerMessage =
   | { type: "mesh:display"; userId: string; mode: MeshDisplayMode }
   /** userId がメッシュ比較の設定を変えた(送信元以外へ中継) */
   | { type: "mesh:compare"; userId: string; compare: MeshCompare }
+  /** userId がジョイントの表示設定を変えた(送信元以外へ中継) */
+  | { type: "joint:display"; userId: string; display: JointDisplay }
   | { type: "error"; code: string; message: string };
 
 const IdSchema = z.string().min(1);
@@ -94,6 +102,7 @@ export const ClientMessageSchema = z.discriminatedUnion("type", [
   z.object({ type: z.literal("object:part-visibility"), versionId: IdSchema, objectPath: ObjectPathSchema, visible: z.boolean() }),
   z.object({ type: z.literal("mesh:display"), mode: MeshDisplayModeSchema }),
   z.object({ type: z.literal("mesh:compare"), compare: MeshCompareSchema }),
+  z.object({ type: z.literal("joint:display"), display: JointDisplaySchema }),
 ]) satisfies z.ZodType<ClientMessage>;
 
 export const ServerMessageSchema = z.discriminatedUnion("type", [
@@ -107,6 +116,7 @@ export const ServerMessageSchema = z.discriminatedUnion("type", [
     hiddenObjectParts: z.array(ObjectPartRefSchema).optional(),
     meshDisplay: MeshDisplayModeSchema.optional(),
     meshCompare: MeshCompareSchema.optional(),
+    jointDisplay: JointDisplaySchema.optional(),
   }),
   z.object({ type: z.literal("user:joined"), user: PresenceUserSchema }),
   z.object({ type: z.literal("user:left"), userId: IdSchema }),
@@ -127,6 +137,7 @@ export const ServerMessageSchema = z.discriminatedUnion("type", [
   z.object({ type: z.literal("object:added"), version: ModelVersionSchema }),
   z.object({ type: z.literal("mesh:display"), userId: IdSchema, mode: MeshDisplayModeSchema }),
   z.object({ type: z.literal("mesh:compare"), userId: IdSchema, compare: MeshCompareSchema }),
+  z.object({ type: z.literal("joint:display"), userId: IdSchema, display: JointDisplaySchema }),
   z.object({ type: z.literal("error"), code: z.string(), message: z.string() }),
 ]) satisfies z.ZodType<ServerMessage>;
 

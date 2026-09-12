@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from "vitest";
-import { DEFAULT_MESH_COMPARE, DEFAULT_MESH_DISPLAY } from "@shared/types";
+import { DEFAULT_JOINT_DISPLAY, DEFAULT_MESH_COMPARE, DEFAULT_MESH_DISPLAY } from "@shared/types";
 import { useDisplayStore } from "../src/store/display";
 
 afterEach(() => useDisplayStore.getState().reset());
@@ -10,6 +10,8 @@ describe("display store", () => {
     expect(useDisplayStore.getState().meshDisplay).toBe("solid");
     expect(useDisplayStore.getState().meshCompare).toEqual(DEFAULT_MESH_COMPARE);
     expect(useDisplayStore.getState().meshCompare).not.toBe(DEFAULT_MESH_COMPARE);
+    expect(useDisplayStore.getState().jointDisplay).toEqual(DEFAULT_JOINT_DISPLAY);
+    expect(useDisplayStore.getState().jointDisplay).not.toBe(DEFAULT_JOINT_DISPLAY);
   });
 
   it("sets a mode and resets it to solid", () => {
@@ -58,5 +60,25 @@ describe("display store", () => {
     useDisplayStore.getState().reset();
     expect(useDisplayStore.getState().meshCompare).toEqual(DEFAULT_MESH_COMPARE);
     expect(useDisplayStore.getState().meshDisplay).toBe("solid");
+  });
+
+  it("sets a copied joint display, suppresses equal updates, and resets it", () => {
+    const display = { visible: true, xray: false };
+    useDisplayStore.getState().setJointDisplay(display);
+    expect(useDisplayStore.getState().jointDisplay).toEqual(display);
+    expect(useDisplayStore.getState().jointDisplay).not.toBe(display);
+    const before = useDisplayStore.getState();
+    let calls = 0;
+    const unsubscribe = useDisplayStore.subscribe(() => { calls += 1; });
+    useDisplayStore.getState().setJointDisplay({ ...display });
+    expect(useDisplayStore.getState()).toBe(before);
+    expect(calls).toBe(0);
+    useDisplayStore.getState().setJointDisplay({ visible: true, xray: true });
+    expect(useDisplayStore.getState().jointDisplay).toEqual({ visible: true, xray: true });
+    expect(useDisplayStore.getState().meshDisplay).toBe("solid");
+    expect(useDisplayStore.getState().meshCompare).toEqual(DEFAULT_MESH_COMPARE);
+    useDisplayStore.getState().reset();
+    expect(useDisplayStore.getState().jointDisplay).toEqual(DEFAULT_JOINT_DISPLAY);
+    unsubscribe();
   });
 });

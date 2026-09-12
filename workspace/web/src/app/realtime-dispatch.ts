@@ -1,5 +1,5 @@
 import type { ServerMessage } from "@shared/protocol";
-import { DEFAULT_MESH_COMPARE, DEFAULT_MESH_DISPLAY } from "@shared/types";
+import { DEFAULT_JOINT_DISPLAY, DEFAULT_MESH_COMPARE, DEFAULT_MESH_DISPLAY } from "@shared/types";
 import { useAnnotationStore } from "../store/annotation";
 import { useCommentsStore } from "../store/comments";
 import { useDisplayStore } from "../store/display";
@@ -29,6 +29,7 @@ export function dispatchServerMessage(msg: ServerMessage): void {
       objects.applyWelcome(msg.hiddenObjectIds ?? [], msg.hiddenObjectParts ?? []);
       display.setMeshDisplay(msg.meshDisplay ?? DEFAULT_MESH_DISPLAY);
       display.setMeshCompare(msg.meshCompare ?? DEFAULT_MESH_COMPARE);
+      display.setJointDisplay(msg.jointDisplay ?? DEFAULT_JOINT_DISPLAY);
       break;
     }
     case "user:joined":
@@ -70,6 +71,9 @@ export function dispatchServerMessage(msg: ServerMessage): void {
       break;
     case "mesh:compare":
       display.setMeshCompare(msg.compare);
+      break;
+    case "joint:display":
+      display.setJointDisplay(msg.display);
       break;
     case "error":
       session.setLastError(`${msg.code}: ${msg.message}`);

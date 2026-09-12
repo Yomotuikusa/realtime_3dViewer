@@ -35,13 +35,13 @@ server の基盤。本番は `npm run build && npm run start` で起動する。
   `index.html` へ SPA フォールバックする。`/api/`、拡張子付きの不在ファイル、GET / HEAD
   以外は後段へ渡し、字句解決と realpath の両方で root 外への traversal / symlink 脱出を拒否する。
 - `src/realtime/room-display.ts`: ルーム共有の表示状態はすべてここに置く(設計書 §13.5)。
-  ライト、非表示の版、非表示の部位集合、メッシュ表示方法、メッシュ比較設定を更新し、
+  ライト、非表示の版、非表示の部位集合、メッシュ表示方法、メッシュ比較設定、ジョイント表示設定を更新し、
   welcome 用に必要な値だけ複製して復元する。部位集合は `hiddenParts` として挿入順を保ち、
   `hiddenPartsOf` が部位参照も複製した配列を返す。
 - `src/realtime/hub.ts`: `ws` 非依存のインメモリ RoomHub。接続・join 済み Presence、カメラ、線の状態を
   project 単位で保持し、表示状態は `room-display.ts` に委譲する。camera メッセージの `focalLength` は参加者ごとに保持する。
   未指定の camera でも直前の値を保って中継し、`welcome` / `user:joined` / `usersIn` にも載せる。
-  `hiddenObjectPartsIn` で非表示部位の挿入順複製を返す。接続ごとの配信先を `Outbound` で返す。接続数は
+  `hiddenObjectPartsIn` で非表示部位の挿入順複製を返し、`jointDisplayIn` でジョイント表示設定を返す。接続ごとの配信先を `Outbound` で返す。接続数は
   `MAX_CONNECTIONS = 1000`、ルーム数は `MAX_ROOMS = 200`、線は1ルームあたり
   `MAX_ROOM_STROKES = 2000` に制限し、既存線の更新は所有者だけに許可する。
 - `src/realtime/ws.ts`: `GET /ws?projectId=<id>` を既存の Node HTTP Server に接続する WebSocket
@@ -98,7 +98,8 @@ server の基盤。本番は `npm run build && npm run start` で起動する。
 - `tests/realtime-hub-parts.test.ts`: RoomHub の版内部位可視性のルーム単位保持、版・パス単位の挿入順、welcome と読み取り口の複製、版単位可視性との独立性、ルーム分離・削除、未参加接続の無視、他状態との独立性を検証する。
 - `tests/realtime-hub-display.test.ts`: RoomHub のメッシュ表示方法の中継、後勝ち保持、welcome 反映、ルーム分離・削除、未参加接続の無視、他状態との独立性を検証する。
 - `tests/realtime-hub-compare.test.ts`: RoomHub のメッシュ比較設定の複製・中継、後勝ち保持、welcome 反映、既定値、ルーム分離・削除、未参加接続の無視、他状態との独立性を検証する。
-- `tests/room-display.test.ts`: ルーム共有表示状態の初期化、5種の更新・中継、値の複製、welcome 復元フィールドを検証する。
+- `tests/realtime-hub-joint.test.ts`: RoomHub のジョイント表示設定の複製・中継、後勝ち保持、welcome 反映、ルーム分離・削除、未参加接続の無視、他状態との独立性を検証する。
+- `tests/room-display.test.ts`: ルーム共有表示状態の初期化、6種の更新・中継、値の複製、welcome 復元フィールドを検証する。
 - `tests/realtime-guards.test.ts`: project / Origin / 接続数 / ルーム数 / payload の接続ガードと、
   stroke 所有者検証・上限内の大きな stroke のテスト。
 - `tsconfig.json`: 型検査設定(../tsconfig.base.json を継承。`@shared/*` は shared/src を指す)。
@@ -147,7 +148,8 @@ server の基盤。本番は `npm run build && npm run start` で起動する。
   camera の `focalLength` は参加者単位で最後に指定された値を保持し、未指定の camera 中継でも
   その値を維持する。未指定の参加者はキーを持たず、保持値は `welcome` / `user:joined` /
   `usersIn` の Presence に反映される。表示状態の更新・中継・welcome 復元は `room-display.ts` が担い、
-  `hiddenObjectsIn` / `hiddenObjectPartsIn` / `meshDisplayIn` / `meshCompareIn` は現在値を参照する。
+  `hiddenObjectsIn` / `hiddenObjectPartsIn` / `meshDisplayIn` / `meshCompareIn` / `jointDisplayIn` は現在値を参照する。
+  申し送り: `hub.ts` は本タスク後も300行上限に近いため、今後の追加時は責務単位の分割を先に検討する。
   `Outbound.target` は `self` (送信元のみ)、`others` (送信元以外)、`all` (ルーム全員) を表す。
   `PRESENCE_PALETTE` は8色で、ルーム内の未使用色をjoin順に割り当て、全色使用時はサイズの剰余で
   再利用する。`MAX_ROOM_STROKES = 2000` 本まで保持し、同じIDの追加は所有者自身による場合だけ

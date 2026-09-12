@@ -93,6 +93,16 @@ export const DEFAULT_MESH_COMPARE: MeshCompare = {
   thresholdPermille: DEFAULT_COMPARE_THRESHOLD_PERMILLE,
 };
 
+/** ルームで共有するジョイント(ボーン)の表示設定 */
+export interface JointDisplay {
+  /** ジョイントを描くなら true */
+  visible: boolean;
+  /** メッシュに隠さず常に手前へ描くなら true */
+  xray: boolean;
+}
+/** 誰も切り替えていないルームの値 */
+export const DEFAULT_JOINT_DISPLAY: JointDisplay = { visible: false, xray: true };
+
 export interface PresenceUser {
   id: string;
   name: string;
@@ -162,6 +172,11 @@ export const MeshCompareSchema = z.object({
   targetId: IdSchema.nullable(),
   thresholdPermille: z.number().int().min(MIN_COMPARE_THRESHOLD_PERMILLE).max(MAX_COMPARE_THRESHOLD_PERMILLE),
 }) satisfies z.ZodType<MeshCompare>;
+
+export const JointDisplaySchema = z.object({
+  visible: z.boolean(),
+  xray: z.boolean(),
+}) satisfies z.ZodType<JointDisplay>;
 
 export const StrokeSchema = z.object({
   id: IdSchema,
