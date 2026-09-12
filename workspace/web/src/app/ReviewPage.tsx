@@ -150,10 +150,12 @@ export function ReviewPage({ projectId }: { projectId: string }): ReactElement {
             <ErrorBoundary
               key={projectId}
               fallback={(
-                <ErrorCard
-                  message={MODEL_LOAD_FAILED}
-                  onRetry={() => window.location.reload()}
-                />
+                <div className="review-stage__error">
+                  <ErrorCard
+                    message={MODEL_LOAD_FAILED}
+                    onRetry={() => window.location.reload()}
+                  />
+                </div>
               )}
             >
               <ViewerCanvas>
