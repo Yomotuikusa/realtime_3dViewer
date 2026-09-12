@@ -11,6 +11,7 @@ import { ReplayStrokes } from "../features/comments/ReplayStrokes";
 import { useCommentReplay } from "../features/comments/useCommentReplay";
 import { Outliner } from "../features/outliner/Outliner";
 import { SelectionRig } from "../features/outliner/SelectionRig";
+import { SelectionPickLayer } from "../features/outliner/SelectionPickLayer";
 import { VisibilityRig } from "../features/outliner/VisibilityRig";
 import { OUTLINER_RESIZE_LABEL } from "../features/outliner/outliner-labels";
 import { PresenceList } from "../features/presence/PresenceList";
@@ -195,6 +196,7 @@ export function ReviewPage({ projectId }: { projectId: string }): ReactElement {
                 <ReplayStrokes />
                 <AnnotationLayer send={realtime.send} />
                 <CommentPickLayer />
+                <SelectionPickLayer />
                 <CommentPins />
                 <SelectionRig />
                 <VisibilityRig />
