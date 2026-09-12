@@ -11,7 +11,7 @@
 - VisibilityRig.tsx: objects ストアの `hiddenParts` と model-scenes ストアを購読し、版ごとの scene へ部位表示状態を同期する Canvas 用 Rig
 - selection.ts: 選択中の版と Object3D uuid を保持する Zustand ストアと選択判定を提供する
 - pick-selection.ts: 3D ビューのレイキャスト交点から、登録済み scene の版全体に対応する選択を解決する純粋関数を提供する
-- SelectionPickLayer.tsx: annotation が通常モードのとき、Canvas の左クリックを版全体の選択または空クリックの解除へ結び付ける描画なし部品
+- SelectionPickLayer.tsx: annotation が通常モードのとき、Canvas の左クリックをジョイント優先の選択、版全体の選択、または空クリックの解除へ結び付ける描画なし部品
 - selection-highlight.ts: 選択対象と子孫へオレンジ(0xf97316、不透明度 0.6)の選択重ね描きを付け外しする純粋関数を提供する
 - SelectionRig.tsx: 選択ストアと scene レジストリを購読し、選択重ね描きを管理する Canvas 用 Rig
 - outliner-labels.ts: 見出し、表示列、状態、種別、名前、展開操作の表示文言を提供する
@@ -37,7 +37,7 @@
 
 ## 他機能との関係
 
-版一覧は objects ストア、scene は compare の model-scenes ストア、選択は selection ストアで SelectionRig が読む。3D クリック選択は ReviewPage(105) の ViewerCanvas 内に配置する。
+版一覧は objects ストア、scene は compare の model-scenes ストア、選択は selection ストアで SelectionRig が読む。3D クリック選択は ReviewPage(105) の ViewerCanvas 内に配置し、ジョイントが見えているときは画面上の近さで Bone を優先選択する。
 選択重ね描きは `VIEWER_OVERLAY_KEY` を持つので表示モード・比較・アウトライナ木から除外される。Rig の配置は ReviewPage(096)。
 ビューア重ね描きの除外判定とメッシュアイコンの図案は viewer の既存公開インターフェイスを利用する。選択・展開状態はルームへ送信しない。表示・非表示は送信する(設計書 §13.5)。
 部位の表示・非表示はルーム共有(設計書 §13.5)。鍵は uuid ではなく `path`(重ね描きを数えない子インデックス)。Rig は objects ストアの `hiddenParts` を読む。配置は ReviewPage(102)。
