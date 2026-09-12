@@ -34,9 +34,10 @@ server の基盤。本番は `npm run build && npm run start` で起動する。
   配下は immutable キャッシュ、それ以外は no-cache とし、拡張子なしの未知パスは
   `index.html` へ SPA フォールバックする。`/api/`、拡張子付きの不在ファイル、GET / HEAD
   以外は後段へ渡し、字句解決と realpath の両方で root 外への traversal / symlink 脱出を拒否する。
-- `src/realtime/hub.ts`: `ws` 非依存のインメモリ RoomHub。接続・join 済み Presence、カメラ、
-  ルーム共有ライト・メッシュ表示方法・メッシュ比較設定、非表示オブジェクト、線の状態を project 単位で保持し、camera メッセージの `focalLength` は参加者ごとに保持する。
-  `object:visibility` は非表示の `versionId` 集合をルーム単位で保持し、送信元以外へ中継する。
+- `src/realtime/room-display.ts`: ルーム共有の表示状態はすべてここに置く(設計書 §13.5)。
+  ライト、非表示の版、メッシュ表示方法、メッシュ比較設定を更新し、welcome 用に必要な値だけ複製して復元する。
+- `src/realtime/hub.ts`: `ws` 非依存のインメモリ RoomHub。接続・join 済み Presence、カメラ、線の状態を
+  project 単位で保持し、表示状態は `room-display.ts` に委譲する。camera メッセージの `focalLength` は参加者ごとに保持する。
   未指定の camera でも直前の値を保って中継し、`welcome` / `user:joined` / `usersIn` にも載せる。
   接続ごとの配信先を `Outbound` で返す。接続数は
   `MAX_CONNECTIONS = 1000`、ルーム数は `MAX_ROOMS = 200`、線は1ルームあたり
@@ -94,6 +95,7 @@ server の基盤。本番は `npm run build && npm run start` で起動する。
 - `tests/realtime-hub-objects.test.ts`: RoomHub のオブジェクト可視性のルーム単位保持、Set の挿入順、welcome 反映と配列複製、ルーム分離・削除、未参加接続の無視、他状態との独立性を検証する。
 - `tests/realtime-hub-display.test.ts`: RoomHub のメッシュ表示方法の中継、後勝ち保持、welcome 反映、ルーム分離・削除、未参加接続の無視、他状態との独立性を検証する。
 - `tests/realtime-hub-compare.test.ts`: RoomHub のメッシュ比較設定の複製・中継、後勝ち保持、welcome 反映、既定値、ルーム分離・削除、未参加接続の無視、他状態との独立性を検証する。
+- `tests/room-display.test.ts`: ルーム共有表示状態の初期化、4種の更新・中継、値の複製、welcome 復元フィールドを検証する。
 - `tests/realtime-guards.test.ts`: project / Origin / 接続数 / ルーム数 / payload の接続ガードと、
   stroke 所有者検証・上限内の大きな stroke のテスト。
 - `tsconfig.json`: 型検査設定(../tsconfig.base.json を継承。`@shared/*` は shared/src を指す)。
@@ -135,15 +137,14 @@ server の基盤。本番は `npm run build && npm run start` で起動する。
   いずれも対象 project が無ければ `NOT_FOUND`、入力不正なら `VALIDATION` を返す。
 - `contentTypeFor` / `resolveStaticPath` / `staticRoutes`: 静的ファイルの Content-Type 判定、
   root 配下の安全なパス解決、`index.html` を使った SPA フォールバック付き配信を提供する。
+- `RoomDisplayState` / `createRoomDisplayState` / `applyDisplayMessage` / `displayWelcomeFields`:
+  ルーム共有の表示状態を更新・中継し、welcome の復元フィールドを複製して作る。
 - `RoomHub`: `connect` / `disconnect` / `handle` で接続とルーム状態を操作し、
   `connectionsIn` / `projectOf` / `usersIn` / `strokesIn` / `hiddenObjectsIn` で結線側やテストから状態を参照する。
   camera の `focalLength` は参加者単位で最後に指定された値を保持し、未指定の camera 中継でも
   その値を維持する。未指定の参加者はキーを持たず、保持値は `welcome` / `user:joined` /
-  `usersIn` の Presence に反映される。`light` はルーム単位で最後に受けた有限角度を保持し、
-  `welcome` に任意で載せ、light イベントとして送信元以外へ中継する。`object:visibility` は
-  `visible: false` の id を Set の挿入順で保持し、表示に戻すと削除する。非表示 id がある場合だけ
-  `welcome.hiddenObjectIds` に複製して載せ、イベントは状態が変わらなくても送信元以外へ中継する。
-  `mesh:display` は mode をルーム単位で最後に受けた値として保持し、送信元以外へ中継し、値が存在する場合だけ `welcome.meshDisplay` に載せる。`meshDisplayIn` で現在値を参照できる。`mesh:compare` は設定全体を複製してルーム単位で最後に受けた値として保持し、送信元以外へ中継し、値が存在する場合だけ `welcome.meshCompare` に載せる。`meshCompareIn` で複製された現在値を参照できる。
+  `usersIn` の Presence に反映される。表示状態の更新・中継・welcome 復元は `room-display.ts` が担い、
+  `hiddenObjectsIn` / `meshDisplayIn` / `meshCompareIn` は現在値を参照する。
   `Outbound.target` は `self` (送信元のみ)、`others` (送信元以外)、`all` (ルーム全員) を表す。
   `PRESENCE_PALETTE` は8色で、ルーム内の未使用色をjoin順に割り当て、全色使用時はサイズの剰余で
   再利用する。`MAX_ROOM_STROKES = 2000` 本まで保持し、同じIDの追加は所有者自身による場合だけ
