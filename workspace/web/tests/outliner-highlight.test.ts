@@ -48,10 +48,10 @@ function selectionOverlays(object: { children: Array<{ userData: Record<string, 
 }
 
 describe("outliner selection highlight", () => {
-  it("exports the accent constants", () => {
+  it("exports the selection highlight constants", () => {
     expect(SELECTION_OVERLAY_KEY).toBe("outlinerSelectionOverlay");
-    expect(SELECTION_COLOR).toBe(0x175cd3);
-    expect(SELECTION_MESH_OPACITY).toBe(0.35);
+    expect(SELECTION_COLOR).toBe(0x60a5fa);
+    expect(SELECTION_MESH_OPACITY).toBe(0.6);
   });
 
   it("creates a configured mesh overlay with shared geometry", () => {
