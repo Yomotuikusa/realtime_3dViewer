@@ -2,6 +2,7 @@ import { Html } from "@react-three/drei";
 import type { ReactElement } from "react";
 import { selectVisible, useCommentsStore } from "../../store/comments";
 import type { CommentStatus } from "@shared/types";
+import { CommentCallout } from "./CommentCallout";
 import { pinLabel } from "./comment-labels";
 import "./comments.css";
 
@@ -33,6 +34,7 @@ export function CommentPins(): ReactElement {
   const showOnlyOpen = useCommentsStore((state) => state.showOnlyOpen);
   const selectedId = useCommentsStore((state) => state.selectedId);
   const visibleItems = selectVisible(items, showOnlyOpen);
+  const selected = visibleItems.find((comment) => comment.id === selectedId);
 
   return (
     <>
@@ -46,6 +48,7 @@ export function CommentPins(): ReactElement {
           status={comment.status}
         />
       ))}
+      {selected !== undefined && <CommentCallout comment={selected} />}
     </>
   );
 }

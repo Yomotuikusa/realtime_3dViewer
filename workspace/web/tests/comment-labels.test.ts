@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   CANCEL_LABEL,
+  CLOSE_CALLOUT_LABEL,
   commentsHeading,
   COMMENTS_HEADING,
   COMPOSER_BODY_LABEL,
@@ -35,6 +36,7 @@ describe("comment labels", () => {
     expect(COMPOSER_BODY_LABEL).toBe("本文");
     expect(SUBMIT_LABEL).toBe("投稿する");
     expect(CANCEL_LABEL).toBe("キャンセル");
+    expect(CLOSE_CALLOUT_LABEL).toBe("コメントを閉じる");
     expect(EMPTY_MESSAGE).toBe("コメントはまだありません。「コメント」モードでモデルをクリックすると投稿できます。");
     expect(EMPTY_FILTERED_MESSAGE).toBe("未解決のコメントはありません。");
     expect(commentsHeading(5)).toBe("コメント (5)");
