@@ -5,3 +5,4 @@ export * from "./camera";
 export * from "./stroke";
 export * from "./compare";
 export * from "./object-part";
+export * from "./joint";

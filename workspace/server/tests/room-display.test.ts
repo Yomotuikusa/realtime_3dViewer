@@ -17,6 +17,7 @@ describe("room display state", () => {
       hiddenParts: new Map(),
       meshDisplay: null,
       meshCompare: null,
+      jointDisplay: null,
     });
     expect(second).toEqual({
       light: null,
@@ -24,6 +25,7 @@ describe("room display state", () => {
       hiddenParts: new Map(),
       meshDisplay: null,
       meshCompare: null,
+      jointDisplay: null,
     });
     expect(first.hiddenObjects).not.toBe(second.hiddenObjects);
     expect(first.hiddenParts).not.toBe(second.hiddenParts);
@@ -114,6 +116,30 @@ describe("room display state", () => {
     expect(result.compare).not.toBe(state.meshCompare);
   });
 
+  it("copies joint display settings, applies the latest value, and preserves other state", () => {
+    const state = createRoomDisplayState();
+    const display = { visible: true, xray: false };
+    applyDisplayMessage(state, "u1", { type: "mesh:display", mode: "wireframe" });
+    applyDisplayMessage(state, "u1", { type: "mesh:compare", compare: { baseId: "v1", targetId: "v2", thresholdPermille: 5 } });
+    applyDisplayMessage(state, "u1", { type: "light", angles: { yaw: 1, pitch: 0.5 } });
+    applyDisplayMessage(state, "u1", { type: "object:visibility", versionId: "v1", visible: false });
+
+    const result = applyDisplayMessage(state, "u1", { type: "joint:display", display });
+    expect(result).toEqual({ type: "joint:display", userId: "u1", display });
+    expect(state.jointDisplay).toEqual(display);
+    expect(state.jointDisplay).not.toBe(display);
+    if (result.type !== "joint:display") throw new Error("expected joint display message");
+    expect(result.display).not.toBe(state.jointDisplay);
+
+    const next = { visible: false, xray: true };
+    applyDisplayMessage(state, "u1", { type: "joint:display", display: next });
+    expect(state.jointDisplay).toEqual(next);
+    expect(state.meshDisplay).toBe("wireframe");
+    expect(state.meshCompare).toEqual({ baseId: "v1", targetId: "v2", thresholdPermille: 5 });
+    expect(state.light).toEqual({ yaw: 1, pitch: 0.5 });
+    expect([...state.hiddenObjects]).toEqual(["v1"]);
+  });
+
   it("omits all unset welcome fields", () => {
     const fields = displayWelcomeFields(createRoomDisplayState());
 
@@ -123,6 +149,7 @@ describe("room display state", () => {
     expect("hiddenObjectParts" in fields).toBe(false);
     expect("meshDisplay" in fields).toBe(false);
     expect("meshCompare" in fields).toBe(false);
+    expect("jointDisplay" in fields).toBe(false);
   });
 
   it("restores all configured fields as copies", () => {
@@ -137,6 +164,7 @@ describe("room display state", () => {
       type: "mesh:compare",
       compare: { baseId: "v1", targetId: "v2", thresholdPermille: 5 },
     });
+    applyDisplayMessage(state, "u1", { type: "joint:display", display: { visible: true, xray: false } });
 
     const fields = displayWelcomeFields(state);
 
@@ -146,12 +174,14 @@ describe("room display state", () => {
       hiddenObjectParts: [{ versionId: "v1", objectPath: "0/1" }],
       meshDisplay: "wireframe",
       meshCompare: { baseId: "v1", targetId: "v2", thresholdPermille: 5 },
+      jointDisplay: { visible: true, xray: false },
     });
     if (!fields.light || !fields.meshCompare || !fields.hiddenObjectIds) {
       throw new Error("expected all display welcome fields");
     }
     expect(fields.light).not.toBe(state.light);
     expect(fields.meshCompare).not.toBe(state.meshCompare);
+    expect(fields.jointDisplay).not.toBe(state.jointDisplay);
     expect(fields.hiddenObjectIds).not.toBe(state.hiddenObjects);
     fields.hiddenObjectIds.push("v2");
     expect([...state.hiddenObjects]).toEqual(["v1"]);

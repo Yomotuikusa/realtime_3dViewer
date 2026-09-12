@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import type { ServerMessage } from "@shared/protocol";
-import { DEFAULT_MESH_COMPARE } from "@shared/types";
+import { DEFAULT_JOINT_DISPLAY, DEFAULT_MESH_COMPARE } from "@shared/types";
 import { dispatchServerMessage } from "../src/app/realtime-dispatch";
 import { useAnnotationStore } from "../src/store/annotation";
 import { useCommentsStore } from "../src/store/comments";
@@ -159,6 +159,8 @@ describe("realtime dispatch", () => {
     const compare = { baseId: "v1", targetId: "v2", thresholdPermille: 10 };
     dispatchServerMessage({ type: "mesh:compare", userId: "u2", compare });
     expect(useDisplayStore.getState().meshCompare).toEqual(compare);
+    dispatchServerMessage({ type: "joint:display", userId: "u2", display: { visible: true, xray: false } });
+    expect(useDisplayStore.getState().jointDisplay).toEqual({ visible: true, xray: false });
 
     dispatchServerMessage({ type: "mesh:display", userId: "u2", mode: "wireframe" });
     expect(useDisplayStore.getState().meshDisplay).toBe("wireframe");
@@ -170,14 +172,17 @@ describe("realtime dispatch", () => {
       strokes: [],
       meshDisplay: "solid-wireframe",
       meshCompare: compare,
+      jointDisplay: { visible: true, xray: true },
     });
     expect(useDisplayStore.getState().meshDisplay).toBe("solid-wireframe");
     expect(useDisplayStore.getState().meshCompare).toEqual(compare);
+    expect(useDisplayStore.getState().jointDisplay).toEqual({ visible: true, xray: true });
 
     useDisplayStore.getState().setMeshDisplay("wireframe");
     dispatchServerMessage({ type: "welcome", selfId: "u1", users: [user], strokes: [] });
     expect(useDisplayStore.getState().meshDisplay).toBe("solid");
     expect(useDisplayStore.getState().meshCompare).toEqual(DEFAULT_MESH_COMPARE);
+    expect(useDisplayStore.getState().jointDisplay).toEqual(DEFAULT_JOINT_DISPLAY);
 
     dispatchServerMessage({ type: "mesh:display", userId: "u2", mode: "wireframe" });
     dispatchServerMessage({ type: "mesh:compare", userId: "u2", compare });

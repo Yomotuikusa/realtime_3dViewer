@@ -1,5 +1,6 @@
+import { cloneJointDisplay, jointDisplayEquals } from "@shared/joint";
 import { cloneMeshCompare, meshCompareEquals } from "@shared/compare";
-import { DEFAULT_MESH_COMPARE, DEFAULT_MESH_DISPLAY, type MeshCompare, type MeshDisplayMode } from "@shared/types";
+import { DEFAULT_JOINT_DISPLAY, DEFAULT_MESH_COMPARE, DEFAULT_MESH_DISPLAY, type JointDisplay, type MeshCompare, type MeshDisplayMode } from "@shared/types";
 import { create, type StoreApi, type UseBoundStore } from "zustand";
 
 export interface DisplayStoreState {
@@ -11,12 +12,17 @@ export interface DisplayStoreState {
   meshCompare: MeshCompare;
   /** meshCompareEquals で同値なら state を更新しない。複製して保持する */
   setMeshCompare(compare: MeshCompare): void;
+  /** ジョイントの表示設定。初期値は DEFAULT_JOINT_DISPLAY の複製 */
+  jointDisplay: JointDisplay;
+  /** jointDisplayEquals で同値なら state を更新しない。複製して保持する */
+  setJointDisplay(display: JointDisplay): void;
   reset(): void;
 }
 
 export const useDisplayStore: UseBoundStore<StoreApi<DisplayStoreState>> = create<DisplayStoreState>((set, get) => ({
   meshDisplay: DEFAULT_MESH_DISPLAY,
   meshCompare: cloneMeshCompare(DEFAULT_MESH_COMPARE),
+  jointDisplay: cloneJointDisplay(DEFAULT_JOINT_DISPLAY),
 
   setMeshDisplay(mode) {
     if (get().meshDisplay === mode) return;
@@ -28,7 +34,16 @@ export const useDisplayStore: UseBoundStore<StoreApi<DisplayStoreState>> = creat
     set({ meshCompare: cloneMeshCompare(compare) });
   },
 
+  setJointDisplay(display) {
+    if (jointDisplayEquals(get().jointDisplay, display)) return;
+    set({ jointDisplay: cloneJointDisplay(display) });
+  },
+
   reset() {
-    set({ meshDisplay: DEFAULT_MESH_DISPLAY, meshCompare: cloneMeshCompare(DEFAULT_MESH_COMPARE) });
+    set({
+      meshDisplay: DEFAULT_MESH_DISPLAY,
+      meshCompare: cloneMeshCompare(DEFAULT_MESH_COMPARE),
+      jointDisplay: cloneJointDisplay(DEFAULT_JOINT_DISPLAY),
+    });
   },
 }));
