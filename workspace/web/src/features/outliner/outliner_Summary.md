@@ -2,7 +2,7 @@
 
 ## 目的
 
-読み込み済みモデルの scene 階層を、版ごとのルート行と種別アイコン付きの折りたたみツリーとして表示する。各ノードは重ね描きを数えない部位 path を持ち、行選択はローカルの selection ストアで管理する。
+読み込み済みモデルの scene 階層を、版ごとのルート行と種別アイコン付きの折りたたみツリーとして表示する。各ノードは重ね描きを数えない部位 path を持ち、行ごとの表示・非表示をルームへ共有する。行選択はローカルの selection ストアで管理する。
 
 ## ファイル一覧と役割
 
@@ -12,11 +12,11 @@
 - selection.ts: 選択中の版と Object3D uuid を保持する Zustand ストアと選択判定を提供する
 - selection-highlight.ts: 選択対象と子孫へ明るい青(0x60a5fa、不透明度 0.6)の選択重ね描きを付け外しする純粋関数を提供する
 - SelectionRig.tsx: 選択ストアと scene レジストリを購読し、選択重ね描きを管理する Canvas 用 Rig
-- outliner-labels.ts: 見出し、状態、種別、名前、展開操作の表示文言を提供する
-- outliner-icons.tsx: 7 種別のインライン SVG アイコンと展開用山形を提供する
-- OutlinerRow.tsx: 1 行と再帰的なノード枝を treeitem/group として描画する
-- Outliner.tsx: objects / model-scenes / selection ストアを購読し、版と scene 木を描画する
-- outliner.css: アウトライナのレイアウト、インデント、展開、選択、非表示状態を定義する
+- outliner-labels.ts: 見出し、表示列、状態、種別、名前、展開操作の表示文言を提供する
+- outliner-icons.tsx: 7 種別のインライン SVG アイコン、表示列の瞳、展開用山形を提供する
+- OutlinerRow.tsx: 1 行と再帰的なノード枝を treeitem/group として描画し、行ごとの表示チェックボックスを提供する
+- Outliner.tsx: objects / model-scenes / selection ストアを購読し、版と scene 木を描画する。`send` で `object:visibility` と `object:part-visibility` を共有する
+- outliner.css: アウトライナのレイアウト、インデント、展開、選択、非表示状態、表示列とチェックボックスを定義する
 
 ## 公開インターフェイス
 
@@ -26,8 +26,8 @@
 - SelectionRig.tsx: `SelectionRig`
 - visibility.ts: `applyPartVisibility`
 - VisibilityRig.tsx: `VisibilityRig`
-- outliner-labels.ts: アウトライナ文言定数、`KIND_LABELS`、`nodeLabel`、`expandAriaLabel`
-- outliner-icons.tsx: `OUTLINER_ICON_VIEW_BOX`、各種アイコン、`OUTLINER_KIND_ICONS`、`OutlinerKindIcon`
+- outliner-labels.ts: アウトライナ文言定数、`KIND_LABELS`、`nodeLabel`、`expandAriaLabel`、`visibilityAriaLabel`
+- outliner-icons.tsx: `OUTLINER_ICON_VIEW_BOX`、各種アイコン、`EyeIcon`、`OUTLINER_KIND_ICONS`、`OutlinerKindIcon`
 - OutlinerRow.tsx: `OutlinerRowProps`、`OutlinerRow`、`OutlinerBranchProps`、`OutlinerBranch`
 - Outliner.tsx: `Outliner`
 
@@ -35,7 +35,7 @@
 
 版一覧は objects ストア、scene は compare の model-scenes ストア、選択は selection ストアで 095 の Rig が読む、配置は 096 の ReviewPage。
 選択重ね描きは `VIEWER_OVERLAY_KEY` を持つので表示モード・比較・アウトライナ木から除外される。Rig の配置は ReviewPage(096)。
-ビューア重ね描きの除外判定とメッシュアイコンの図案は viewer の既存公開インターフェイスを利用する。選択・展開状態はルームへ送信しない。
+ビューア重ね描きの除外判定とメッシュアイコンの図案は viewer の既存公開インターフェイスを利用する。選択・展開状態はルームへ送信しない。表示・非表示は送信する(設計書 §13.5)。
 部位の表示・非表示はルーム共有(設計書 §13.5)。鍵は uuid ではなく `path`(重ね描きを数えない子インデックス)。Rig は objects ストアの `hiddenParts` を読む。配置は ReviewPage(102)。
 既知の制限として、Rig は hidden path にない部位を一律 `visible = true` に戻すため、読み込み時点で `visible = false` だったオブジェクトの状態は保持しない。
 

@@ -4,6 +4,15 @@ import type { OutlinerNodeKind } from "./outliner-tree";
 
 export const OUTLINER_ICON_VIEW_BOX = "0 0 16 16";
 
+export function EyeIcon(): ReactElement {
+  return (
+    <svg className="outliner__eye-icon" viewBox={OUTLINER_ICON_VIEW_BOX} aria-hidden="true" focusable="false" fill="none" stroke="currentColor" strokeWidth="1.25">
+      <path d="M1.5 8C3 4.5 5.5 3 8 3s5 1.5 6.5 5C13 11.5 10.5 13 8 13S3 11.5 1.5 8Z" />
+      <circle cx="8" cy="8" r="2.25" />
+    </svg>
+  );
+}
+
 export function MeshIcon(): ReactElement {
   return (
     <svg className="outliner__icon" viewBox={OUTLINER_ICON_VIEW_BOX} aria-hidden="true" focusable="false" data-kind="mesh" fill="none" stroke="currentColor" strokeWidth="1" strokeLinejoin="round">

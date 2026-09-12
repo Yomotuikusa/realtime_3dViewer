@@ -1,6 +1,7 @@
 import type { OutlinerNodeKind } from "./outliner-tree";
 
 export const OUTLINER_HEADING = "アウトライナ";
+export const OUTLINER_VISIBILITY_HEADING = "表示";
 export const OUTLINER_RESIZE_LABEL = "アウトライナの幅";
 export const OUTLINER_EMPTY = "オブジェクトがありません";
 export const OUTLINER_LOADING = "読み込み中…";
@@ -23,4 +24,8 @@ export function nodeLabel(name: string): string {
 
 export function expandAriaLabel(label: string, expanded: boolean): string {
   return `${label} を${expanded ? "折りたたむ" : "展開"}`;
+}
+
+export function visibilityAriaLabel(label: string): string {
+  return `${label} の表示を切り替え`;
 }

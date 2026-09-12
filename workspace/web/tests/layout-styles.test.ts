@@ -66,7 +66,7 @@ describe("layout resize styles and wiring", () => {
     expect(page.indexOf('className="review-outliner"')).toBeLessThan(page.indexOf('side="start"'));
     expect(page.indexOf('side="start"')).toBeLessThan(page.indexOf('className="review-viewer"'));
     expect(page.indexOf('className="review-viewer"')).toBeLessThan(page.indexOf('className="review-panel"'));
-    expect(page.match(/<Outliner \/>/g)).toHaveLength(1);
+    expect(page.match(/<Outliner send=\{realtime\.send\} \/>/g)).toHaveLength(1);
     expect(page.match(/<SelectionRig \/>/g)).toHaveLength(1);
     expect(page.indexOf("<SelectionRig />")).toBeGreaterThan(page.indexOf("<CommentPins />"));
     expect(page.match(/<VisibilityRig \/>/g)).toHaveLength(1);

@@ -1,5 +1,11 @@
 import { useMemo, useState, type ReactElement } from "react";
-import { isObjectVisible, useObjectsStore } from "../../store/objects";
+import type { ClientMessage } from "@shared/protocol";
+import {
+  hiddenObjectPaths,
+  isObjectPartVisible,
+  isObjectVisible,
+  useObjectsStore,
+} from "../../store/objects";
 import { versionTag } from "../objects/objects-labels";
 import { useModelScenesStore } from "../compare/model-scenes";
 import { buildOutlinerTree, toggleId, type OutlinerNode } from "./outliner-tree";
@@ -7,14 +13,19 @@ import { OutlinerBranch, OutlinerRow } from "./OutlinerRow";
 import {
   OUTLINER_EMPTY,
   OUTLINER_HEADING,
+  OUTLINER_VISIBILITY_HEADING,
   nodeLabel,
 } from "./outliner-labels";
+import { EyeIcon } from "./outliner-icons";
 import { isSelected, useSelectionStore } from "./selection";
 import "./outliner.css";
 
-export function Outliner(): ReactElement {
+export function Outliner({ send }: { send: (msg: ClientMessage) => boolean }): ReactElement {
   const objects = useObjectsStore((state) => state.objects);
   const hiddenIds = useObjectsStore((state) => state.hiddenIds);
+  const hiddenParts = useObjectsStore((state) => state.hiddenParts);
+  const setVisible = useObjectsStore((state) => state.setVisible);
+  const setPartVisible = useObjectsStore((state) => state.setPartVisible);
   const scenes = useModelScenesStore((state) => state.scenes);
   const selected = useSelectionStore((state) => state.selected);
   const toggleSelection = useSelectionStore((state) => state.toggleSelection);
@@ -29,9 +40,26 @@ export function Outliner(): ReactElement {
     setExpandedIds((ids) => toggleId(ids, id));
   };
 
+  const handleVersionToggle = (versionId: string): void => {
+    const visible = isObjectVisible(useObjectsStore.getState().hiddenIds, versionId);
+    setVisible(versionId, !visible);
+    send({ type: "object:visibility", versionId, visible: !visible });
+  };
+
+  const handlePartToggle = (versionId: string, objectPath: string): void => {
+    const visible = isObjectPartVisible(useObjectsStore.getState().hiddenParts, versionId, objectPath);
+    setPartVisible(versionId, objectPath, !visible);
+    send({ type: "object:part-visibility", versionId, objectPath, visible: !visible });
+  };
+
   return (
     <section className="outliner" aria-label={OUTLINER_HEADING}>
-      <h2 className="outliner__heading">{OUTLINER_HEADING}</h2>
+      <div className="outliner__head">
+        <h2 className="outliner__heading">{OUTLINER_HEADING}</h2>
+        <span className="outliner__eye" role="img" aria-label={OUTLINER_VISIBILITY_HEADING} title={OUTLINER_VISIBILITY_HEADING}>
+          <EyeIcon />
+        </span>
+      </div>
       {objects.length === 0 ? (
         <p className="outliner__empty">{OUTLINER_EMPTY}</p>
       ) : (
@@ -47,7 +75,8 @@ export function Outliner(): ReactElement {
                 label={version.fileName}
                 kind={root?.kind ?? null}
                 badge={versionTag(version)}
-                hidden={!isObjectVisible(hiddenIds, version.id)}
+                visible={isObjectVisible(hiddenIds, version.id)}
+                ancestorHidden={false}
                 loading={root === null}
                 hasChildren={root !== null && root.children.length > 0}
                 expanded={expandedIds.includes(rootId)}
@@ -56,6 +85,7 @@ export function Outliner(): ReactElement {
                 onSelect={() => {
                   if (root !== null) toggleSelection({ versionId: version.id, objectId: root.id });
                 }}
+                onToggleVisible={() => handleVersionToggle(version.id)}
               >
                 {root?.children.map((child) => (
                   <OutlinerBranch
@@ -65,8 +95,11 @@ export function Outliner(): ReactElement {
                     depth={1}
                     expandedIds={expandedIds}
                     selected={selected}
+                    hiddenPaths={hiddenObjectPaths(hiddenParts, version.id)}
+                    ancestorHidden={!isObjectVisible(hiddenIds, version.id)}
                     onToggleExpand={toggleExpand}
                     onSelect={toggleSelection}
+                    onToggleVisible={handlePartToggle}
                   />
                 ))}
               </OutlinerRow>
