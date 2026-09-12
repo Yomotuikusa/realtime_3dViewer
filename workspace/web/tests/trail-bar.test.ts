@@ -144,19 +144,28 @@ describe("trail display bar", () => {
       await act(async () => button().click());
       const target = { versionId: "v1", objectPath: "0/1" };
       expect(useDisplayStore.getState().motionTrail).toEqual({ visible: true, target });
+      expect(button().disabled).toBe(false);
+      expect(button().getAttribute("aria-pressed")).toBe("true");
       expect(send).toHaveBeenCalledWith({ type: "trail:display", trail: { visible: true, target } });
       expect(order).toEqual(["set", "send"]);
       expect(setMotionTrail).toHaveBeenCalledOnce();
 
       useSelectionStore.getState().select({ versionId: "v1", objectId: otherBone.uuid });
       await act(async () => undefined);
+      expect(button().disabled).toBe(false);
+      expect(button().getAttribute("aria-pressed")).toBe("true");
       await act(async () => button().click());
       expect(useDisplayStore.getState().motionTrail).toEqual({ visible: true, target: { versionId: "v1", objectPath: "0/2" } });
 
       useSelectionStore.getState().clear();
       await act(async () => undefined);
+      expect(button().disabled).toBe(false);
+      expect(button().title).toBe(TRAIL_VISIBLE_LABEL);
+      expect(button().getAttribute("aria-label")).toBe(TRAIL_VISIBLE_LABEL);
+      expect(button().getAttribute("aria-pressed")).toBe("true");
       await act(async () => button().click());
       expect(useDisplayStore.getState().motionTrail).toEqual({ visible: false, target: { versionId: "v1", objectPath: "0/2" } });
+      expect(button().getAttribute("aria-pressed")).toBe("false");
     } finally {
       await act(async () => root.unmount());
       host.remove();
@@ -177,6 +186,7 @@ describe("trail display bar", () => {
       expect(button.getAttribute("aria-pressed")).toBe("true");
       await act(async () => button.click());
       expect(useDisplayStore.getState().motionTrail).toEqual({ visible: false, target });
+      expect(button.getAttribute("aria-pressed")).toBe("false");
       expect(send).toHaveBeenCalledWith({ type: "trail:display", trail: { visible: false, target } });
     } finally {
       await act(async () => root.unmount());
@@ -198,6 +208,7 @@ describe("trail display bar", () => {
       expect(button.getAttribute("aria-pressed")).toBe("true");
       await act(async () => button.click());
       expect(useDisplayStore.getState().motionTrail).toEqual({ visible: false, target });
+      expect(button.getAttribute("aria-pressed")).toBe("false");
       expect(send).toHaveBeenCalledWith({ type: "trail:display", trail: { visible: false, target } });
     } finally {
       await act(async () => root.unmount());
@@ -217,6 +228,7 @@ describe("trail display bar", () => {
         visible: true,
         target: { versionId: "v1", objectPath: "0/1" },
       });
+      expect((host.querySelector("button") as HTMLButtonElement).getAttribute("aria-pressed")).toBe("true");
       expect(send).toHaveBeenCalledOnce();
     } finally {
       await act(async () => root.unmount());
