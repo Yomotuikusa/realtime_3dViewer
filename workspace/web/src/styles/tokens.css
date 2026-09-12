@@ -44,6 +44,7 @@
   --focus-ring-color: var(--color-accent);
   --duration-fast: 120ms;
   --panel-width: 22rem;
+  --outliner-width: 16rem;
   --header-height: 3rem;
   --follow-frame-width: 4px;
 }

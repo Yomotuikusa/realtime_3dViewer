@@ -10,6 +10,7 @@ import { useObjectsStore } from "../src/store/objects";
 import { usePlaybackStore } from "../src/store/playback";
 import { usePresenceStore } from "../src/store/presence";
 import { useSessionStore } from "../src/store/session";
+import { useSelectionStore } from "../src/features/outliner/selection";
 
 const user = { id: "u1", name: "Alice", color: "#112233", camera: null };
 const stroke = {
@@ -47,6 +48,7 @@ describe("resetReviewStores", () => {
     usePlaybackStore.getState().setClips([{ name: "walk", duration: 3 }]);
     usePlaybackStore.getState().play();
     usePlaybackStore.getState().seek(1);
+    useSelectionStore.getState().toggleSelection({ versionId: "v1", objectId: "o1" });
 
     resetReviewStores();
 
@@ -70,5 +72,6 @@ describe("resetReviewStores", () => {
     expect(useDisplayStore.getState().meshDisplay).toBe("solid");
     expect(useDisplayStore.getState().meshCompare).toEqual(DEFAULT_MESH_COMPARE);
     expect(usePlaybackStore.getState()).toMatchObject({ clips: [], clipIndex: 0, playing: false, time: 0, fps: 24 });
+    expect(useSelectionStore.getState().selected).toBeNull();
   });
 });

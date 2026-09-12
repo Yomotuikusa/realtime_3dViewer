@@ -108,7 +108,7 @@ describe("layout resize math", () => {
     expect(handle).toContain("side?: ResizeSide");
     expect(handle).toMatch(/resizeDragValue\([\s\S]*?side,?\s*\)/);
     expect(handle).toMatch(/resizeKeyValue\([\s\S]*?side,?\s*\)/);
-    expect(page).not.toContain('side="start"');
+    expect(page).toContain('side="start"');
     expect(timeline).not.toContain('side="start"');
   });
 });
