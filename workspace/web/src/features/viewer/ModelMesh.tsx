@@ -7,6 +7,7 @@ import type { AnimationClip, Loader, Object3D } from "three";
 import { modelFormat, type ModelFormat } from "@shared/api";
 import type { MeshDisplayMode } from "@shared/types";
 import { createModelLoadingManager } from "./model-loading";
+import { installFbxSkinCompat } from "./fbx-compat";
 import { PlaybackRig } from "./PlaybackRig";
 import { useModelScene, type ModelSceneOptions } from "./useModelScene";
 
@@ -15,6 +16,7 @@ const NO_ANIMATIONS: readonly AnimationClip[] = [];
 
 /** 読み込み時の外部リソース取得を同一オリジンへ制限する */
 function extendLoader(loader: Loader): void {
+  installFbxSkinCompat();
   loader.manager = createModelLoadingManager(location.origin);
 }
 
