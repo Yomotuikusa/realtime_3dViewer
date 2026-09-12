@@ -133,6 +133,9 @@ export class RoomHub {
         return this.addStroke(room, connId, msg.stroke);
       case "stroke:remove":
         return this.removeStroke(room, connId, msg.strokeId);
+      case "object:part-visibility":
+        // 仮の分岐。ルーム状態の保持と中継は 100 が実装する
+        return [];
       case "stroke:clear":
         for (const [strokeId, stroke] of room.strokes) {
           if (stroke.userId === connId) room.strokes.delete(strokeId);
