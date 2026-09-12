@@ -14,6 +14,7 @@ import { SelectionRig } from "../features/outliner/SelectionRig";
 import { SelectionPickLayer } from "../features/outliner/SelectionPickLayer";
 import { VisibilityRig } from "../features/outliner/VisibilityRig";
 import { JointRig } from "../features/joint/JointRig";
+import { TrailRig } from "../features/trail/TrailRig";
 import { OUTLINER_RESIZE_LABEL } from "../features/outliner/outliner-labels";
 import { PresenceList } from "../features/presence/PresenceList";
 import { ObjectList } from "../features/objects/ObjectList";
@@ -202,6 +203,7 @@ export function ReviewPage({ projectId }: { projectId: string }): ReactElement {
                 <SelectionRig />
                 <VisibilityRig />
                 <JointRig />
+                <TrailRig />
               </ViewerCanvas>
             </ErrorBoundary>
           </div>
