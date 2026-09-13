@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  DARK_LUMINANCE_THRESHOLD,
   hexToHsv,
   hexToRgb,
   hsvToHex,
@@ -44,5 +45,8 @@ describe("color conversion", () => {
     expect(isDarkColor("#101828")).toBe(true);
     expect(isDarkColor("#f5f7fa")).toBe(false);
     expect(isDarkColor("#f97316")).toBe(false);
+    expect(isDarkColor("#808080")).toBe(false);
+    expect(isDarkColor("#6b7280")).toBe(true);
+    expect(DARK_LUMINANCE_THRESHOLD).toBe(0.179);
   });
 });

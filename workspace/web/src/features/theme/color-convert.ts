@@ -14,7 +14,7 @@ export interface Rgb {
   b: number;
 }
 
-/** 正規化できない値は黒として扱う。 */
+/** 正規化できない値は { r: 0, g: 0, b: 0 } とする。 */
 export function hexToRgb(hex: string): Rgb {
   const trimmed = hex.trim();
   if (!trimmed.startsWith("#") && trimmed.length !== 6) return { r: 0, g: 0, b: 0 };
@@ -41,7 +41,7 @@ export function rgbToHex(rgb: Rgb): string {
   return numberToHex(r * 0x10000 + g * 0x100 + b);
 }
 
-/** #rrggbb を HSV へ変換する。 */
+/** 無彩色の色相を 0 として #rrggbb を HSV へ変換する。 */
 export function hexToHsv(hex: string): Hsv {
   const { r, g, b } = hexToRgb(hex);
   const red = r / 255;
@@ -70,7 +70,7 @@ function clampUnit(value: number): number {
   return Math.min(1, Math.max(0, value));
 }
 
-/** HSV を #rrggbb へ変換する。 */
+/** HSV の色相を 360 で正規化し、彩度と明度をクランプして #rrggbb へ変換する。 */
 export function hsvToHex(hsv: Hsv): string {
   const hue = Number.isFinite(hsv.h) ? ((hsv.h % 360) + 360) % 360 : 0;
   const saturation = clampUnit(hsv.s);
@@ -118,7 +118,9 @@ export function relativeLuminance(hex: string): number {
   return 0.2126 * linearize(rgb.r) + 0.7152 * linearize(rgb.g) + 0.0722 * linearize(rgb.b);
 }
 
-/** 相対輝度が 0.35 未満かを返す。 */
+export const DARK_LUMINANCE_THRESHOLD = 0.179;
+
+/** 相対輝度が閾値未満かを返す。 */
 export function isDarkColor(hex: string): boolean {
-  return relativeLuminance(hex) < 0.3;
+  return relativeLuminance(hex) < DARK_LUMINANCE_THRESHOLD;
 }

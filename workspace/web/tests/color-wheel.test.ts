@@ -2,7 +2,7 @@ import { act, createElement } from "react";
 import { createRoot } from "react-dom/client";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { ColorWheel } from "../src/features/theme/ColorWheel";
-import { hexToHsv } from "../src/features/theme/color-convert";
+import { hexToHsv, hsvToHex } from "../src/features/theme/color-convert";
 import {
   colorAtPoint,
   hueAtPoint,
@@ -180,6 +180,47 @@ describe("ColorWheel", () => {
       expect(onChange).toHaveBeenCalledTimes(2);
       wheel.dispatchEvent(pointEvent("pointerdown", 0, 0));
       expect(onChange).toHaveBeenCalledTimes(2);
+    } finally {
+      await act(async () => root.unmount());
+    }
+  });
+
+  it("keeps the last chromatic hue for achromatic values", async () => {
+    const onChange = vi.fn();
+    const { root, wheel } = await renderWheel("#f97316", onChange);
+    try {
+      const hue = hexToHsv("#f97316").h;
+      await act(async () => root.render(createElement(ColorWheel, { value: "#ffffff", onChange, label: "色" })));
+      const marker = wheel.querySelector(".theme-wheel__marker--hue") as HTMLElement;
+      const point = pointAtHue(hue);
+      expect(marker.style.getPropertyValue("--marker-x")).toBe(`${point.x}px`);
+      expect(marker.style.getPropertyValue("--marker-y")).toBe(`${point.y}px`);
+
+      wheel.dispatchEvent(pointEvent("pointerdown", 88, 88));
+      expect(onChange).toHaveBeenCalledWith(hsvToHex({ h: hue, s: 0.5, v: 0.5 }));
+    } finally {
+      await act(async () => root.unmount());
+    }
+  });
+
+  it("retains the grabbed hue while an SV drag crosses achromatic values", async () => {
+    const onChange = vi.fn();
+    const { root, wheel } = await renderWheel("#22d3ee", onChange);
+    try {
+      const hue = hexToHsv("#22d3ee").h;
+      wheel.dispatchEvent(pointEvent("pointerdown", 42, 42));
+      expect(onChange).toHaveBeenLastCalledWith("#ffffff");
+      await act(async () => root.render(createElement(ColorWheel, { value: "#ffffff", onChange, label: "色" })));
+      onChange.mockClear();
+      wheel.dispatchEvent(pointEvent("pointermove", 88, 88));
+      expect(onChange).toHaveBeenCalledWith(hsvToHex({ h: hue, s: 0.5, v: 0.5 }));
+      wheel.dispatchEvent(pointEvent("pointerup", 88, 88));
+
+      wheel.dispatchEvent(pointEvent("pointerdown", 88, 134));
+      await act(async () => root.render(createElement(ColorWheel, { value: "#000000", onChange, label: "色" })));
+      onChange.mockClear();
+      wheel.dispatchEvent(pointEvent("pointermove", 134, 42));
+      expect(onChange).toHaveBeenCalledWith(hsvToHex({ h: hue, s: 1, v: 1 }));
     } finally {
       await act(async () => root.unmount());
     }

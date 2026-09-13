@@ -23,10 +23,12 @@ export interface ColorWheelProps {
 }
 
 type DragState = {
-  kind: "hue" | "sv";
-  h: number;
+  kind: "hue";
   s: number;
   v: number;
+} | {
+  kind: "sv";
+  h: number;
 } | null;
 
 function pointFromEvent(event: PointerEvent<HTMLDivElement>): WheelPoint {
@@ -37,8 +39,11 @@ function pointFromEvent(event: PointerEvent<HTMLDivElement>): WheelPoint {
 export function ColorWheel({ value, onChange, label }: ColorWheelProps): ReactElement {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const dragRef = useRef<DragState>(null);
+  const lastHueRef = useRef(0);
   const hsv = hexToHsv(value);
-  const huePoint = pointAtHue(hsv.h);
+  if (hsv.s > 0 && hsv.v > 0) lastHueRef.current = hsv.h;
+  const displayHue = lastHueRef.current;
+  const huePoint = pointAtHue(displayHue);
   const svPoint = pointAtSaturationValue(hsv.s, hsv.v);
 
   useEffect(() => {
@@ -46,18 +51,24 @@ export function ColorWheel({ value, onChange, label }: ColorWheelProps): ReactEl
     const context = canvas?.getContext("2d");
     if (context === null || context === undefined) return;
     const image = context.createImageData(WHEEL_SIZE, WHEEL_SIZE);
-    image.data.set(renderWheelImage(hsv.h));
+    image.data.set(renderWheelImage(displayHue));
     context.putImageData(image, 0, 0);
-  }, [hsv.h]);
+  }, [displayHue]);
 
   function handlePointerDown(event: PointerEvent<HTMLDivElement>): void {
     const point = pointFromEvent(event);
-    const nextColor = colorAtPoint(point, value);
-    if (nextColor === null) return;
-    const nextHsv = hexToHsv(nextColor);
     const kind = isInRing(point) ? "hue" : isInSquare(point) ? "sv" : null;
     if (kind === null) return;
-    dragRef.current = { kind, h: nextHsv.h, s: nextHsv.s, v: nextHsv.v };
+    const nextColor = kind === "hue"
+      ? colorAtPoint(point, value)
+      : kind === "sv"
+        ? hsvToHex({ h: displayHue, ...saturationValueAtPoint(point) })
+        : null;
+    if (nextColor === null) return;
+    const nextHsv = hexToHsv(nextColor);
+    dragRef.current = kind === "hue"
+      ? { kind, s: nextHsv.s, v: nextHsv.v }
+      : { kind, h: displayHue };
     onChange(nextColor);
     event.currentTarget.setPointerCapture?.(event.pointerId);
   }
@@ -68,10 +79,7 @@ export function ColorWheel({ value, onChange, label }: ColorWheelProps): ReactEl
     const point = pointFromEvent(event);
     const nextColor = drag.kind === "hue"
       ? hsvToHex({ h: hueAtPoint(point), s: drag.s, v: drag.v })
-      : (() => {
-          const { s, v } = saturationValueAtPoint(point);
-          return hsvToHex({ h: drag.h, s, v });
-        })();
+      : hsvToHex({ h: drag.h, ...saturationValueAtPoint(point) });
     onChange(nextColor);
   }
 
