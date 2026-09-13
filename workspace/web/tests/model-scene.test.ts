@@ -70,8 +70,8 @@ describe("model scene loader selection", () => {
       expect(meshSource).not.toContain(name);
     }
     for (const name of [
-      "applyMeshDisplay(scene, meshDisplay)",
-      'applyMeshDisplay(scene, "solid")',
+      "applyMeshDisplay(scene, meshDisplay,",
+      'applyMeshDisplay(scene, "solid",',
       "setModelSize",
       "requestFit()",
       "setClips",

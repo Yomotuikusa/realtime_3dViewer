@@ -55,6 +55,8 @@ function expectRgba(geometry: Mesh["geometry"], vertex: number, expected: number
   rgba(geometry, vertex).forEach((value, component) => expect(value).toBeCloseTo(expected[component]!, 6));
 }
 
+const DEFAULT_COLORS = { outside: COMPARE_OUTSIDE_COLOR, inside: COMPARE_INSIDE_COLOR };
+
 describe("compare overlay", () => {
   it("creates a separate geometry with shared deformation attributes", () => {
     const source = mesh();
@@ -130,7 +132,7 @@ describe("compare overlay", () => {
     const color = geometry.getAttribute("color") as Float32BufferAttribute;
     const version = color.version;
     const distances = new Float32Array([0.2, -0.2, 0.05, -0.05, 0.1, -0.1, NaN, Infinity, -Infinity]);
-    colorizeDeviation(geometry, distances, 0.1);
+    colorizeDeviation(geometry, distances, 0.1, DEFAULT_COLORS);
     const outside = new Color(COMPARE_OUTSIDE_COLOR);
     const inside = new Color(COMPARE_INSIDE_COLOR);
 
@@ -143,20 +145,20 @@ describe("compare overlay", () => {
     expectRgba(geometry, 6, [0, 0, 0, 0]);
     expect(color.version).toBeGreaterThan(version);
 
-    colorizeDeviation(geometry, new Float32Array([0.2, -0.2, 0]), 0);
+    colorizeDeviation(geometry, new Float32Array([0.2, -0.2, 0]), 0, DEFAULT_COLORS);
     expectRgba(geometry, 0, [outside.r, outside.g, outside.b, COMPARE_OVERLAY_OPACITY]);
     expectRgba(geometry, 1, [inside.r, inside.g, inside.b, COMPARE_OVERLAY_OPACITY]);
     expectRgba(geometry, 2, [0, 0, 0, 0]);
-    colorizeDeviation(geometry, new Float32Array([0.01]), 0.1);
+    colorizeDeviation(geometry, new Float32Array([0.01]), 0.1, DEFAULT_COLORS);
     expectRgba(geometry, 0, [0, 0, 0, 0]);
   });
 
   it("limits coloring to the shorter of the two arrays", () => {
     const geometry = createCompareOverlayGeometry(mesh());
-    expect(() => colorizeDeviation(geometry, new Float32Array([1]), 0)).not.toThrow();
+    expect(() => colorizeDeviation(geometry, new Float32Array([1]), 0, DEFAULT_COLORS)).not.toThrow();
     expect(rgba(geometry, 0)[3]).toBeCloseTo(COMPARE_OVERLAY_OPACITY, 6);
     expectRgba(geometry, 1, [0, 0, 0, 0]);
-    expect(() => colorizeDeviation(geometry, new Float32Array(100).fill(-1), 0)).not.toThrow();
+    expect(() => colorizeDeviation(geometry, new Float32Array(100).fill(-1), 0, DEFAULT_COLORS)).not.toThrow();
   });
 
   it("adds one reusable overlay and preserves parent picking", () => {
@@ -168,8 +170,8 @@ describe("compare overlay", () => {
     raycaster.ray.origin.set(0, 0, 5);
     raycaster.ray.direction.set(0, 0, -1);
     const before = raycaster.intersectObject(source, true).length;
-    const first = applyCompareOverlay(source, new Float32Array(24).fill(1), 0.5);
-    const second = applyCompareOverlay(source, new Float32Array(24).fill(0), 0.5);
+    const first = applyCompareOverlay(source, new Float32Array(24).fill(1), 0.5, DEFAULT_COLORS);
+    const second = applyCompareOverlay(source, new Float32Array(24).fill(0), 0.5, DEFAULT_COLORS);
 
     expect(second).toBe(first);
     expect(source.children.filter(isMeshCompareOverlay)).toHaveLength(1);
@@ -181,8 +183,8 @@ describe("compare overlay", () => {
     const root = new Group();
     const first = mesh();
     const second = mesh();
-    const firstOverlay = applyCompareOverlay(first, new Float32Array(24), 0.1);
-    const secondOverlay = applyCompareOverlay(second, new Float32Array(24), 0.1);
+    const firstOverlay = applyCompareOverlay(first, new Float32Array(24), 0.1, DEFAULT_COLORS);
+    const secondOverlay = applyCompareOverlay(second, new Float32Array(24), 0.1, DEFAULT_COLORS);
     const wireframe = createWireframeOverlay(first);
     first.add(wireframe);
     root.add(first, second);
@@ -211,7 +213,7 @@ describe("compare overlay", () => {
   it("coexists with mesh display without being restyled or removed", () => {
     const root = new Group();
     const source = mesh();
-    const comparison = applyCompareOverlay(source, new Float32Array(24).fill(1), 0.1);
+    const comparison = applyCompareOverlay(source, new Float32Array(24).fill(1), 0.1, DEFAULT_COLORS);
     root.add(source);
 
     applyMeshDisplay(root, "solid-wireframe");
