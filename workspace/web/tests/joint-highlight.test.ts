@@ -28,7 +28,7 @@ describe("joint highlight", () => {
     const bone = new Bone();
     root.add(bone);
     const radius = jointRadius(root);
-    const marker = addSelectedJointMarker(root, bone);
+    const marker = addSelectedJointMarker(root, bone, SELECTED_JOINT_COLOR);
     const material = marker.material as MeshBasicMaterial;
 
     expect(root.children).toContain(marker);
@@ -50,11 +50,12 @@ describe("joint highlight", () => {
 
   it("is idempotent and replaces only the selected bone", () => {
     const { root, first, second } = scene();
-    const marker = addSelectedJointMarker(root, first);
-    expect(addSelectedJointMarker(root, second)).toBe(marker);
+    const marker = addSelectedJointMarker(root, first, SELECTED_JOINT_COLOR);
+    expect(addSelectedJointMarker(root, second, 0xff0000)).toBe(marker);
     expect(root.children).toHaveLength(3);
     expect(selectedJointMarkerOf(root)).toBe(marker);
     expect(marker.userData.bone).toBe(second);
+    expect((marker.material as MeshBasicMaterial).color.getHex()).toBe(0xff0000);
   });
 
   it("updates to root-local bone coordinates and disposes resources", () => {
@@ -66,7 +67,7 @@ describe("joint highlight", () => {
     root.rotation.z = Math.PI / 2;
     root.updateMatrixWorld(true);
     bone.updateMatrixWorld(true);
-    const marker = addSelectedJointMarker(root, bone);
+    const marker = addSelectedJointMarker(root, bone, SELECTED_JOINT_COLOR);
     updateSelectedJointMarker(marker, root);
     expect(marker.position.x).toBeCloseTo(1);
     expect(marker.position.y).toBeCloseTo(0);

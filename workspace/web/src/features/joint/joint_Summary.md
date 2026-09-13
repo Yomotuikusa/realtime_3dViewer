@@ -6,19 +6,19 @@
 
 ## ファイル一覧と役割
 
-- joint-display.ts: Bone の収集、親子リンクの生成、球と線の overlay の作成・更新・x-ray 切り替え・破棄を提供する
+- joint-display.ts: Bone の収集、親子リンクの生成、表示色設定由来の色による球と線の overlay の作成・更新・x-ray 切り替え・破棄を提供する
 - joint-pick.ts: overlay 内の Bone を画面座標へ投影し、クリック位置に最も近いジョイントのピック結果を選択へ変換する
-- joint-highlight.ts: 選択中 Bone のワールド位置へ追従するオレンジのマーカーを作成・更新・破棄する
-- JointRig.tsx: display・selection ストアと各版 scene を購読し、overlay と選択マーカーのライフサイクルおよび毎フレーム更新を管理する
+- joint-highlight.ts: 表示色設定由来の色で、選択中 Bone のワールド位置へ追従するマーカーを作成・更新・破棄する
+- JointRig.tsx: display・selection・theme ストアと各版 scene を購読し、overlay と選択マーカーのライフサイクルおよび毎フレーム更新を管理する
 - JointDisplayBar.tsx: ジョイント表示と x-ray 表示を常設アイコンバーで切り替え、display ストアを更新して `joint:display` を送信する
 - joint-icons.tsx: ジョイントの骨と x-ray 面を表すインライン SVG アイコンと形状定数を提供する
 - joint-labels.ts: ジョイント表示バーの日本語 aria-label / title 定数を提供する
 
 ## 公開インターフェイス
 
-- joint-display.ts: `JOINT_OVERLAY_KEY`、色・サイズ・x-ray 定数、`JointLink`、`JointOverlay`、`collectJoints`、`jointLinks`、`jointRadius`、`addJointOverlay`、`jointOverlayOf`、`updateJointOverlay`、`setJointOverlayXray`、`removeJointOverlay`
+- joint-display.ts: `JOINT_OVERLAY_KEY`、色・サイズ・x-ray 定数、`JointLink`、`JointColors`、`JointOverlay`、`collectJoints`、`jointLinks`、`jointRadius`、`addJointOverlay(root, colors)`、`jointOverlayOf`、`updateJointOverlay`、`setJointOverlayXray`、`removeJointOverlay`
 - joint-pick.ts: `JOINT_PICK_RADIUS_PX`、`JointHit`、`pickJoint`、`jointSelectionOf`
-- joint-highlight.ts: 選択マーカー定数、`SelectedJointMarker`、`addSelectedJointMarker`、`selectedJointMarkerOf`、`updateSelectedJointMarker`、`removeSelectedJointMarker`
+- joint-highlight.ts: 選択マーカー定数、`SelectedJointMarker`、`addSelectedJointMarker(root, bone, color)`、`selectedJointMarkerOf`、`updateSelectedJointMarker`、`removeSelectedJointMarker`
 - JointRig.tsx: `JointRig`
 - JointDisplayBar.tsx: `JointDisplayBar({ send })`
 - joint-icons.tsx: `JOINT_VIEW_BOX`、`JOINT_POINTS`、`JOINT_DOT_RADIUS`、`JOINT_LINK_PATH`、`JOINT_XRAY_SURFACE`、`JointIcon()`、`JointXrayIcon()`
@@ -26,7 +26,7 @@
 
 ## 他フォルダとの関係
 
-表示設定は display ストアの `jointDisplay`(ルーム共有・設計書 §13.5)。可視化と選択マーカーは `VIEWER_OVERLAY_KEY` を持つためアウトライナ・部位パス・表示モード・比較の対象にならない。配置は ReviewPage(107)。HUD への設置は `features/viewer/ViewerHud.tsx`。スタイルは viewer.css の `.hud-display` を再利用する。scene は compare の `useModelScenesStore` から取得し、描画更新は React Three Fiber の `useFrame` で行う。クリック選択は outliner の SelectionPickLayer から画面距離方式の joint-pick を先に試す。
+表示設定は display ストアの `jointDisplay`(ルーム共有・設計書 §13.5)。ジョイント球・リンク・選択マーカーの色は theme ストアの `selectViewerColor` から JointRig が購読し、色変更時に該当 overlay を再生成する。可視化と選択マーカーは `VIEWER_OVERLAY_KEY` を持つためアウトライナ・部位パス・表示モード・比較の対象にならない。配置は ReviewPage(107)。HUD への設置は `features/viewer/ViewerHud.tsx`。スタイルは viewer.css の `.hud-display` を再利用する。scene は compare の `useModelScenesStore` から取得し、描画更新は React Three Fiber の `useFrame` で行う。クリック選択は outliner の SelectionPickLayer から画面距離方式の joint-pick を先に試す。
 
 ## テスト
 

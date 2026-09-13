@@ -14,14 +14,13 @@ import {
   SphereGeometry,
   Vector3,
 } from "three";
+import { VIEWER_COLOR_DEFAULTS, hexToNumber } from "../theme/viewer-colors";
 import { VIEWER_OVERLAY_KEY, isViewerOverlay } from "../viewer/mesh-display";
 
 /** ジョイント可視化グループの userData キー。値は true */
 export const JOINT_OVERLAY_KEY = "jointOverlay";
-/** ジョイント球の色 */
-export const JOINT_COLOR = 0x22d3ee;
-/** 親子リンク線の色 */
-export const JOINT_LINK_COLOR = 0x0e7490;
+export const JOINT_COLOR = hexToNumber(VIEWER_COLOR_DEFAULTS.light.joint);
+export const JOINT_LINK_COLOR = hexToNumber(VIEWER_COLOR_DEFAULTS.light.jointLink);
 /** ジョイント球の半径 = モデルの最大辺長 * この比 */
 export const JOINT_RADIUS_RATIO = 0.008;
 /** 最大辺長が 0 のときに使う半径 */
@@ -40,6 +39,14 @@ export interface JointOverlay extends Group {
     joints: Bone[];
     links: JointLink[];
   };
+}
+
+/** ジョイント可視化の色。値は 0xrrggbb */
+export interface JointColors {
+  /** 関節の球 */
+  joint: number;
+  /** 親子リンクの線 */
+  link: number;
 }
 
 const inverseRoot = new Matrix4();
@@ -118,7 +125,7 @@ function markOverlay(object: Object3D): void {
 }
 
 /** root 配下のボーンを可視化し、root へ追加する。 */
-export function addJointOverlay(root: Object3D): JointOverlay | null {
+export function addJointOverlay(root: Object3D, colors: JointColors): JointOverlay | null {
   const existing = jointOverlayOf(root);
   if (existing !== null) return existing;
 
@@ -128,7 +135,7 @@ export function addJointOverlay(root: Object3D): JointOverlay | null {
 
   const spheres = new InstancedMesh(
     new SphereGeometry(jointRadius(root), 8, 6),
-    new MeshBasicMaterial({ color: JOINT_COLOR, depthWrite: false, toneMapped: false }),
+    new MeshBasicMaterial({ color: colors.joint, depthWrite: false, toneMapped: false }),
     joints.length,
   );
   spheres.instanceMatrix.setUsage(DynamicDrawUsage);
@@ -140,7 +147,7 @@ export function addJointOverlay(root: Object3D): JointOverlay | null {
   lineGeometry.setAttribute("position", positions);
   const lines = new LineSegments(
     lineGeometry,
-    new LineBasicMaterial({ color: JOINT_LINK_COLOR, depthWrite: false, toneMapped: false }),
+    new LineBasicMaterial({ color: colors.link, depthWrite: false, toneMapped: false }),
   );
   lines.frustumCulled = false;
 

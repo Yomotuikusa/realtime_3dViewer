@@ -1,5 +1,7 @@
 import { useEffect } from "react";
 import { selectModelScene, useModelScenesStore } from "../compare/model-scenes";
+import { hexToNumber } from "../theme/viewer-colors";
+import { selectViewerColor, useThemeStore } from "../../store/theme";
 import { applySelectionHighlight, clearSelectionHighlight } from "./selection-highlight";
 import { useSelectionStore } from "./selection";
 
@@ -8,14 +10,15 @@ export function SelectionRig(): null {
   const selected = useSelectionStore((state) => state.selected);
   const scenes = useModelScenesStore((state) => state.scenes);
   const scene = selectModelScene(scenes, selected?.versionId ?? null);
+  const color = useThemeStore(selectViewerColor("selection"));
 
   useEffect(() => {
     if (scene === null || selected === null) return;
     const target = scene.getObjectByProperty("uuid", selected.objectId);
     if (target === undefined) return;
-    applySelectionHighlight(target);
+    applySelectionHighlight(target, hexToNumber(color));
     return () => clearSelectionHighlight(scene);
-  }, [scene, selected]);
+  }, [scene, selected, color]);
 
   return null;
 }

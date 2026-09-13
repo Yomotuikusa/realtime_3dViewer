@@ -11,12 +11,13 @@ import {
   SkinnedMesh,
 } from "three";
 import type { Object3D } from "three";
+import { VIEWER_COLOR_DEFAULTS, hexToNumber } from "../theme/viewer-colors";
 import { VIEWER_OVERLAY_KEY, isViewerOverlay } from "../viewer/mesh-display";
 
 /** 選択重ね描きの userData キー。値は true */
 export const SELECTION_OVERLAY_KEY = "outlinerSelectionOverlay";
-/** 選択重ね描きの色。UI の accent(青)や比較の重ね描きと区別できるオレンジ */
-export const SELECTION_COLOR = 0xf97316;
+/** 選択重ね描きの既定色。UI の accent(青)や比較の重ね描きと区別できるオレンジ */
+export const SELECTION_COLOR = hexToNumber(VIEWER_COLOR_DEFAULTS.light.selection);
 /** Mesh 重ね描きの不透明度 */
 export const SELECTION_MESH_OPACITY = 0.6;
 
@@ -33,9 +34,9 @@ function configureOverlay<T extends Object3D>(overlay: T): T {
   return overlay;
 }
 
-function createMeshOverlay(mesh: Mesh): Mesh {
+function createMeshOverlay(mesh: Mesh, color: number): Mesh {
   const material = new MeshBasicMaterial({
-    color: SELECTION_COLOR,
+    color,
     transparent: true,
     opacity: SELECTION_MESH_OPACITY,
     depthWrite: false,
@@ -57,9 +58,9 @@ function createMeshOverlay(mesh: Mesh): Mesh {
   return configureOverlay(overlay);
 }
 
-function createLineOverlay(line: Line): Line {
+function createLineOverlay(line: Line, color: number): Line {
   const material = new LineBasicMaterial({
-    color: SELECTION_COLOR,
+    color,
     depthTest: false,
     toneMapped: false,
   });
@@ -68,10 +69,10 @@ function createLineOverlay(line: Line): Line {
   return configureOverlay(new Line(line.geometry, material));
 }
 
-function createPointsOverlay(points: Points): Points {
+function createPointsOverlay(points: Points, color: number): Points {
   const sourceMaterial = points.material instanceof PointsMaterial ? points.material : null;
   return configureOverlay(new Points(points.geometry, new PointsMaterial({
-    color: SELECTION_COLOR,
+    color,
     size: sourceMaterial?.size ?? 1,
     sizeAttenuation: sourceMaterial?.sizeAttenuation ?? true,
     depthTest: false,
@@ -79,16 +80,16 @@ function createPointsOverlay(points: Points): Points {
   })));
 }
 
-/** object と同じ geometry を共有する選択重ね描きを作る。 */
-export function createSelectionOverlay(object: Object3D): Object3D | null {
-  if (object instanceof Mesh && !(object instanceof InstancedMesh)) return createMeshOverlay(object);
-  if (object instanceof Line) return createLineOverlay(object);
-  if (object instanceof Points) return createPointsOverlay(object);
+/** object と同じ geometry を共有する選択重ね描きを作る。color は 0xrrggbb */
+export function createSelectionOverlay(object: Object3D, color: number): Object3D | null {
+  if (object instanceof Mesh && !(object instanceof InstancedMesh)) return createMeshOverlay(object, color);
+  if (object instanceof Line) return createLineOverlay(object, color);
+  if (object instanceof Points) return createPointsOverlay(object, color);
   return null;
 }
 
-/** target 配下の描画対象へ選択重ね描きを追加する。 */
-export function applySelectionHighlight(target: Object3D): void {
+/** target 配下の描画対象へ選択重ね描きを追加する。color は 0xrrggbb */
+export function applySelectionHighlight(target: Object3D, color: number): void {
   const objects: Object3D[] = [];
   target.traverse((object) => {
     if (!isViewerOverlay(object)) objects.push(object);
@@ -96,7 +97,7 @@ export function applySelectionHighlight(target: Object3D): void {
 
   for (const object of objects) {
     if (object.children.some(isSelectionOverlay)) continue;
-    const overlay = createSelectionOverlay(object);
+    const overlay = createSelectionOverlay(object, color);
     if (overlay !== null) object.add(overlay);
   }
 }
