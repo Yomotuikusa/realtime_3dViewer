@@ -25,7 +25,7 @@ describe("joint rig", () => {
     expect(source).toContain("updateJointOverlay(");
     expect(source).not.toContain("send");
     expect(source).not.toContain("props");
-    expect(source).toContain("}, [scenes, jointDisplay.visible]);");
+    expect(source).toContain("}, [scenes, jointDisplay.visible, jointColor, linkColor]);");
     expect(source).toContain("}, [scenes, jointDisplay.visible, jointDisplay.xray]);");
   });
 

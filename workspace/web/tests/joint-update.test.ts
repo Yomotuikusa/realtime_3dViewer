@@ -11,8 +11,12 @@ import {
 import { describe, expect, it } from "vitest";
 import {
   addJointOverlay,
+  JOINT_COLOR,
+  JOINT_LINK_COLOR,
   updateJointOverlay,
 } from "../src/features/joint/joint-display";
+
+const DEFAULT_JOINT_COLORS = { joint: JOINT_COLOR, link: JOINT_LINK_COLOR };
 
 function skeleton() {
   const root = new Group();
@@ -33,7 +37,7 @@ describe("joint display updates", () => {
     const scene = skeleton();
     scene.hip.position.set(0, 1, 0);
     scene.spine.position.set(0, 2, 0);
-    const overlay = addJointOverlay(scene.root)!;
+    const overlay = addJointOverlay(scene.root, DEFAULT_JOINT_COLORS)!;
     scene.root.updateMatrixWorld(true);
     updateJointOverlay(overlay, scene.root);
 
@@ -58,7 +62,7 @@ describe("joint display updates", () => {
     scene.spine.position.set(0, 2, 0);
     scene.root.position.set(10, 0, 0);
     scene.root.scale.setScalar(2);
-    const overlay = addJointOverlay(scene.root)!;
+    const overlay = addJointOverlay(scene.root, DEFAULT_JOINT_COLORS)!;
     scene.root.updateMatrixWorld(true);
     updateJointOverlay(overlay, scene.root);
     const spheres = overlay.children[0] as InstancedMesh;
@@ -76,7 +80,7 @@ describe("joint display updates", () => {
 
   it("updates moved bones repeatedly and supports a single bone", () => {
     const scene = skeleton();
-    const overlay = addJointOverlay(scene.root)!;
+    const overlay = addJointOverlay(scene.root, DEFAULT_JOINT_COLORS)!;
     scene.hip.position.set(1, 0, 0);
     scene.spine.position.set(0, 1, 0);
     scene.root.updateMatrixWorld(true);
@@ -96,7 +100,7 @@ describe("joint display updates", () => {
 
     const singleRoot = new Group();
     singleRoot.add(new Bone());
-    const singleOverlay = addJointOverlay(singleRoot)!;
+    const singleOverlay = addJointOverlay(singleRoot, DEFAULT_JOINT_COLORS)!;
     singleRoot.updateMatrixWorld(true);
     expect(() => updateJointOverlay(singleOverlay, singleRoot)).not.toThrow();
     expect((singleOverlay.children[0] as InstancedMesh).count).toBe(1);

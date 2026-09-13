@@ -1,12 +1,21 @@
 import type React from "react";
-import { navigate, useRoute } from "./routes";
+import { navigate, useRoute, type Route } from "./routes";
 import { ReviewPage } from "./ReviewPage";
 import { UploadPage } from "./UploadPage";
 import { NOT_FOUND_HOME, NOT_FOUND_TITLE } from "./upload-labels";
+import { ThemeEffect } from "../features/theme/ThemeEffect";
 
 export function App(): React.ReactElement {
   const route = useRoute();
+  return (
+    <>
+      <ThemeEffect />
+      {routeContent(route)}
+    </>
+  );
+}
 
+function routeContent(route: Route): React.ReactElement {
   if (route.name === "upload") {
     return <UploadPage />;
   }

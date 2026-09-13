@@ -12,8 +12,8 @@
 - selection.ts: 選択中の版と Object3D uuid を保持する Zustand ストアと選択判定を提供する
 - pick-selection.ts: 3D ビューのレイキャスト交点から、登録済み scene の版全体に対応する選択を解決する純粋関数を提供する
 - SelectionPickLayer.tsx: annotation が通常モードのとき、Canvas の左クリックをジョイント優先の選択、版全体の選択、または空クリックの解除へ結び付ける描画なし部品
-- selection-highlight.ts: 選択対象と子孫へオレンジ(0xf97316、不透明度 0.6)の選択重ね描きを付け外しする純粋関数を提供する
-- SelectionRig.tsx: 選択ストアと scene レジストリを購読し、選択重ね描きを管理する Canvas 用 Rig
+- selection-highlight.ts: 表示色設定由来の選択色(不透明度 0.6)で選択対象と子孫へ重ね描きを付け外しする純粋関数を提供する
+- SelectionRig.tsx: 選択ストア・scene レジストリ・theme ストアを購読し、選択重ね描きを管理する Canvas 用 Rig
 - outliner-labels.ts: 見出し、表示列、状態、種別、名前、展開操作の表示文言を提供する
 - outliner-icons.tsx: 7 種別のインライン SVG アイコン、表示列の瞳、展開用山形を提供する
 - OutlinerRow.tsx: 1 行と再帰的なノード枝を treeitem/group として描画し、行ごとの表示チェックボックスを提供する
@@ -26,7 +26,7 @@
 - selection.ts: `OutlinerSelection`、`SelectionStoreState`、`useSelectionStore`、`isSelected`。`select` は同じ選択の再設定で state を更新しない
 - pick-selection.ts: `versionOfObject`、`pickSelection`
 - SelectionPickLayer.tsx: `SelectionPickLayer`
-- selection-highlight.ts: `SELECTION_OVERLAY_KEY`、`SELECTION_COLOR`、`SELECTION_MESH_OPACITY`、`isSelectionOverlay`、`createSelectionOverlay`、`applySelectionHighlight`、`clearSelectionHighlight`
+- selection-highlight.ts: `SELECTION_OVERLAY_KEY`、`SELECTION_COLOR`、`SELECTION_MESH_OPACITY`、`isSelectionOverlay`、`createSelectionOverlay(object, color)`、`applySelectionHighlight(target, color)`、`clearSelectionHighlight`
 - SelectionRig.tsx: `SelectionRig`
 - visibility.ts: `applyPartVisibility`
 - VisibilityRig.tsx: `VisibilityRig`
@@ -38,7 +38,7 @@
 ## 他機能との関係
 
 版一覧は objects ストア、scene は compare の model-scenes ストア、選択は selection ストアで SelectionRig が読む。3D クリック選択は ReviewPage(105) の ViewerCanvas 内に配置し、ジョイントが見えているときは画面上の近さで Bone を優先選択する。
-選択重ね描きは `VIEWER_OVERLAY_KEY` を持つので表示モード・比較・アウトライナ木から除外される。Rig の配置は ReviewPage(096)。
+選択重ね描きは `VIEWER_OVERLAY_KEY` を持つので表示モード・比較・アウトライナ木から除外される。選択色は theme ストアの `selectViewerColor("selection")` から SelectionRig が購読し、色変更時に重ね描きを再生成する。Rig の配置は ReviewPage(096)。
 ビューア重ね描きの除外判定とメッシュアイコンの図案は viewer の既存公開インターフェイスを利用する。選択・展開状態はルームへ送信しない。表示・非表示は送信する(設計書 §13.5)。
 部位の表示・非表示はルーム共有(設計書 §13.5)。鍵は uuid ではなく `path`(重ね描きを数えない子インデックス)。Rig は objects ストアの `hiddenParts` を読む。配置は ReviewPage(102)。
 既知の制限として、Rig は hidden path にない部位を一律 `visible = true` に戻すため、読み込み時点で `visible = false` だったオブジェクトの状態は保持しない。
@@ -51,4 +51,5 @@
 - tests/outliner-labels.test.ts: 表示文言、種別ラベル、名前整形、展開 aria ラベルを検証する
 - tests/outliner-styles.test.ts: アイコンの SVG 属性、CSS 状態規則、コンポーネントの構造を検証する
 - tests/outliner-highlight.test.ts: 選択重ね描きの生成、適用、解除、Rig のソース契約を検証する
+- tests/outliner-highlight-color.test.ts: 選択重ね描きへ指定色が適用されることを検証する
 - tests/outliner-visibility.test.ts: 部位 path による可視性適用、重ね描き・root の保持、VisibilityRig のソース契約を検証する

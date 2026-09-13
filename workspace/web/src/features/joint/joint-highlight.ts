@@ -1,11 +1,11 @@
 import { Bone, Mesh, MeshBasicMaterial, Object3D, SphereGeometry, Vector3 } from "three";
+import { VIEWER_COLOR_DEFAULTS, hexToNumber } from "../theme/viewer-colors";
 import { VIEWER_OVERLAY_KEY } from "../viewer/mesh-display";
 import { jointRadius } from "./joint-display";
 
 /** 選択ジョイントのマーカーの userData キー。値は true */
 export const SELECTED_JOINT_MARKER_KEY = "selectedJointMarker";
-/** マーカーの色。outliner の選択重ね描きと同じオレンジ */
-export const SELECTED_JOINT_COLOR = 0xf97316;
+export const SELECTED_JOINT_COLOR = hexToNumber(VIEWER_COLOR_DEFAULTS.light.jointSelected);
 /** マーカーの半径 = jointRadius(root) * この倍率 */
 export const SELECTED_JOINT_RADIUS_SCALE = 1.8;
 /** ジョイントの x-ray(999)より手前へ描く */
@@ -30,16 +30,17 @@ export function selectedJointMarkerOf(root: Object3D): SelectedJointMarker | nul
   return root.children.find(isSelectedJointMarker) ?? null;
 }
 
-/** root 直下へマーカーを追加して返す。 */
-export function addSelectedJointMarker(root: Object3D, bone: Bone): SelectedJointMarker {
+/** root 直下へマーカーを追加して返す。color は 0xrrggbb */
+export function addSelectedJointMarker(root: Object3D, bone: Bone, color: number): SelectedJointMarker {
   const existing = selectedJointMarkerOf(root);
   if (existing !== null) {
     existing.userData.bone = bone;
+    (existing.material as MeshBasicMaterial).color.setHex(color);
     return existing;
   }
 
   const material = new MeshBasicMaterial({
-    color: SELECTED_JOINT_COLOR,
+    color,
     depthTest: false,
     depthWrite: false,
     toneMapped: false,
