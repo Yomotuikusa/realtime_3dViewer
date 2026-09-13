@@ -8,13 +8,22 @@ import {
   SkinnedMesh,
 } from "three";
 import { VIEWER_OVERLAY_KEY } from "../viewer/mesh-display";
+import { VIEWER_COLOR_DEFAULTS, hexToNumber } from "../theme/viewer-colors";
 
 /** 比較重ね描き Mesh の userData キー。値は true */
 export const MESH_COMPARE_OVERLAY_KEY = "meshCompareOverlay";
 /** 飛び出し(正の距離)の色。赤 */
-export const COMPARE_OUTSIDE_COLOR = 0xdc2626;
+export const COMPARE_OUTSIDE_COLOR = hexToNumber(VIEWER_COLOR_DEFAULTS.light.compareOutside);
 /** へこみ(負の距離)の色。青 */
-export const COMPARE_INSIDE_COLOR = 0x2563eb;
+export const COMPARE_INSIDE_COLOR = hexToNumber(VIEWER_COLOR_DEFAULTS.light.compareInside);
+
+/** 比較の色。値は 0xrrggbb */
+export interface CompareColors {
+  /** 飛び出し(正の距離) */
+  outside: number;
+  /** へこみ(負の距離) */
+  inside: number;
+}
 /** 着色部分の不透明度 */
 export const COMPARE_OVERLAY_OPACITY = 0.85;
 
@@ -81,10 +90,13 @@ export function colorizeDeviation(
   geometry: BufferGeometry,
   signedDistance: Float32Array,
   threshold: number,
+  colors: CompareColors,
 ): void {
   const color = geometry.getAttribute("color");
   if (!color || color.itemSize !== 4) return;
 
+  outsideColor.setHex(colors.outside);
+  insideColor.setHex(colors.inside);
   for (let vertex = 0; vertex < color.count; vertex += 1) color.setXYZW(vertex, 0, 0, 0, 0);
   const count = Math.min(color.count, signedDistance.length);
   for (let vertex = 0; vertex < count; vertex += 1) {
@@ -104,6 +116,7 @@ export function applyCompareOverlay(
   mesh: Mesh,
   signedDistance: Float32Array,
   threshold: number,
+  colors: CompareColors,
 ): Mesh {
   let overlay = mesh.children.find(
     (child): child is Mesh => child instanceof Mesh && isMeshCompareOverlay(child),
@@ -112,7 +125,7 @@ export function applyCompareOverlay(
     overlay = createCompareOverlay(mesh);
     mesh.add(overlay);
   }
-  colorizeDeviation(overlay.geometry, signedDistance, threshold);
+  colorizeDeviation(overlay.geometry, signedDistance, threshold, colors);
   return overlay;
 }
 

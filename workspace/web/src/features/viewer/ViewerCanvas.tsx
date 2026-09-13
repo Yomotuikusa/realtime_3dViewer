@@ -6,6 +6,7 @@ import type { Group } from "three";
 import { modelUrl } from "../../api/client";
 import { isObjectVisible, primaryObjectId, useObjectsStore } from "../../store/objects";
 import { useDisplayStore } from "../../store/display";
+import { selectViewerColor, useThemeStore } from "../../store/theme";
 import { CameraRig } from "./CameraRig";
 import { DEFAULT_FOV } from "./focal-length";
 import { FocalLengthRig } from "./FocalLengthRig";
@@ -19,6 +20,7 @@ export function ViewerCanvas({ children }: { children?: ReactNode }): ReactEleme
   const objects = useObjectsStore((state) => state.objects);
   const hiddenIds = useObjectsStore((state) => state.hiddenIds);
   const meshDisplay = useDisplayStore((state) => state.meshDisplay);
+  const background = useThemeStore(selectViewerColor("background"));
   const primaryId = primaryObjectId(objects);
   const registerModelTarget = useCallback((group: Group | null) => {
     setModelTarget(group);
@@ -29,7 +31,7 @@ export function ViewerCanvas({ children }: { children?: ReactNode }): ReactEleme
       camera={{ fov: DEFAULT_FOV, position: DEFAULT_CAMERA.position }}
       style={{ width: "100%", height: "100%" }}
     >
-      <color attach="background" args={["#f5f7fa"]} />
+      <color attach="background" args={[background]} />
       <SceneLights />
       <FocalLengthRig />
       <Bounds fit={false} clip>

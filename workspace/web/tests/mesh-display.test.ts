@@ -232,8 +232,8 @@ describe("mesh display", () => {
     const modelMesh = readSource("features/viewer/useModelScene.ts");
     const canvas = readSource("features/viewer/ViewerCanvas.tsx");
 
-    expect(modelMesh).toContain("applyMeshDisplay(scene, meshDisplay)");
-    expect(modelMesh).toContain('applyMeshDisplay(scene, "solid")');
+    expect(modelMesh).toContain("applyMeshDisplay(scene, meshDisplay,");
+    expect(modelMesh).toContain('applyMeshDisplay(scene, "solid",');
     expect(canvas).toContain("useDisplayStore");
     expect(canvas).toContain("meshDisplay={meshDisplay}");
   });
