@@ -2,8 +2,10 @@ import { useEffect } from "react";
 import { useFrame } from "@react-three/fiber";
 import { Bone } from "three";
 import { useDisplayStore } from "../../store/display";
+import { selectViewerColor, useThemeStore } from "../../store/theme";
 import { useModelScenesStore } from "../compare/model-scenes";
 import { useSelectionStore } from "../outliner/selection";
+import { hexToNumber } from "../theme/viewer-colors";
 import {
   addJointOverlay,
   jointOverlayOf,
@@ -23,14 +25,19 @@ export function JointRig(): null {
   const jointDisplay = useDisplayStore((state) => state.jointDisplay);
   const scenes = useModelScenesStore((state) => state.scenes);
   const selected = useSelectionStore((state) => state.selected);
+  const jointColor = useThemeStore(selectViewerColor("joint"));
+  const linkColor = useThemeStore(selectViewerColor("jointLink"));
+  const selectedColor = useThemeStore(selectViewerColor("jointSelected"));
 
   useEffect(() => {
     if (!jointDisplay.visible) return;
-    for (const scene of Object.values(scenes)) addJointOverlay(scene);
+    for (const scene of Object.values(scenes)) {
+      addJointOverlay(scene, { joint: hexToNumber(jointColor), link: hexToNumber(linkColor) });
+    }
     return () => {
       for (const scene of Object.values(scenes)) removeJointOverlay(scene);
     };
-  }, [scenes, jointDisplay.visible]);
+  }, [scenes, jointDisplay.visible, jointColor, linkColor]);
 
   useEffect(() => {
     for (const scene of Object.values(scenes)) {
@@ -46,12 +53,12 @@ export function JointRig(): null {
     const scene = scenes[selected.versionId];
     const target = scene?.getObjectByProperty("uuid", selected.objectId);
     if (!(target instanceof Bone) || scene === undefined) return;
-    addSelectedJointMarker(scene, target);
+    addSelectedJointMarker(scene, target, hexToNumber(selectedColor));
 
     return () => {
       for (const current of Object.values(scenes)) removeSelectedJointMarker(current);
     };
-  }, [scenes, jointDisplay.visible, selected]);
+  }, [scenes, jointDisplay.visible, selected, selectedColor]);
 
   useFrame(() => {
     if (!jointDisplay.visible) return;

@@ -26,6 +26,8 @@ import {
   setJointOverlayXray,
 } from "../src/features/joint/joint-display";
 
+const DEFAULT_JOINT_COLORS = { joint: JOINT_COLOR, link: JOINT_LINK_COLOR };
+
 function createScene() {
   const root = new Group();
   const body = new Mesh(new BoxGeometry(2, 2, 2), new MeshBasicMaterial());
@@ -69,9 +71,9 @@ describe("joint display", () => {
   it("creates an idempotent, marked two-child overlay", () => {
     const scene = createScene();
     scene.root.updateMatrixWorld(true);
-    const overlay = addJointOverlay(scene.root)!;
+    const overlay = addJointOverlay(scene.root, DEFAULT_JOINT_COLORS)!;
     expect(scene.root.children).toHaveLength(4);
-    expect(addJointOverlay(scene.root)).toBe(overlay);
+    expect(addJointOverlay(scene.root, DEFAULT_JOINT_COLORS)).toBe(overlay);
     expect(scene.root.children).toHaveLength(4);
     expect(jointOverlayOf(scene.root)).toBe(overlay);
     expect(overlay.userData[JOINT_OVERLAY_KEY]).toBe(true);
@@ -108,14 +110,14 @@ describe("joint display", () => {
     const root = new Group();
     const bone = new Bone();
     root.add(bone);
-    const overlay = addJointOverlay(root)!;
+    const overlay = addJointOverlay(root, DEFAULT_JOINT_COLORS)!;
     const spheres = overlay.children[0] as InstancedMesh;
     expect((spheres.geometry as SphereGeometry).parameters.radius).toBe(JOINT_FALLBACK_RADIUS);
   });
 
   it("starts in x-ray mode and switches depth testing and order", () => {
     const scene = createScene();
-    const overlay = addJointOverlay(scene.root)!;
+    const overlay = addJointOverlay(scene.root, DEFAULT_JOINT_COLORS)!;
     const spheres = overlay.children[0] as InstancedMesh;
     const lines = overlay.children[1] as LineSegments;
     expect((spheres.material as MeshBasicMaterial).depthTest).toBe(false);
@@ -137,12 +139,12 @@ describe("joint display", () => {
 
   it("does not add overlays without bones and disposes created resources", () => {
     const root = new Group();
-    expect(addJointOverlay(root)).toBeNull();
+    expect(addJointOverlay(root, DEFAULT_JOINT_COLORS)).toBeNull();
     expect(root.children).toHaveLength(0);
     expect(jointOverlayOf(root)).toBeNull();
 
     const scene = createScene();
-    const overlay = addJointOverlay(scene.root)!;
+    const overlay = addJointOverlay(scene.root, DEFAULT_JOINT_COLORS)!;
     const spheres = overlay.children[0] as InstancedMesh;
     const lines = overlay.children[1] as LineSegments;
     const sphereGeometry = vi.spyOn(spheres.geometry, "dispose");
@@ -156,6 +158,16 @@ describe("joint display", () => {
     expect(lineGeometry).toHaveBeenCalledOnce();
     expect(lineMaterial).toHaveBeenCalledOnce();
     expect(() => removeJointOverlay(scene.root)).not.toThrow();
-    expect(addJointOverlay(scene.root)).not.toBe(overlay);
+    expect(addJointOverlay(scene.root, DEFAULT_JOINT_COLORS)).not.toBe(overlay);
+  });
+
+  it("uses the requested colors for spheres and links", () => {
+    const scene = createScene();
+    const overlay = addJointOverlay(scene.root, { joint: 0xff0000, link: 0x00ff00 })!;
+    const spheres = overlay.children[0] as InstancedMesh;
+    const lines = overlay.children[1] as LineSegments;
+
+    expect((spheres.material as MeshBasicMaterial).color.getHex()).toBe(0xff0000);
+    expect((lines.material as MeshBasicMaterial).color.getHex()).toBe(0x00ff00);
   });
 });

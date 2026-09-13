@@ -56,7 +56,7 @@ describe("outliner selection highlight", () => {
 
   it("creates a configured mesh overlay with shared geometry", () => {
     const mesh = new Mesh(new BoxGeometry(), new MeshStandardMaterial());
-    const overlay = createSelectionOverlay(mesh);
+    const overlay = createSelectionOverlay(mesh, SELECTION_COLOR);
     expect(overlay).toBeInstanceOf(Mesh);
     expect((overlay as Mesh).geometry).toBe(mesh.geometry);
     const material = (overlay as Mesh).material as MeshBasicMaterial;
@@ -85,7 +85,7 @@ describe("outliner selection highlight", () => {
     mesh.bind(skeleton);
     mesh.morphTargetInfluences = [0.25];
     mesh.morphTargetDictionary = { shape: 0 };
-    const overlay = createSelectionOverlay(mesh) as SkinnedMesh;
+    const overlay = createSelectionOverlay(mesh, SELECTION_COLOR) as SkinnedMesh;
 
     expect(overlay).toBeInstanceOf(SkinnedMesh);
     expect(overlay.skeleton).toBe(mesh.skeleton);
@@ -97,7 +97,7 @@ describe("outliner selection highlight", () => {
 
   it("does not create an InstancedMesh overlay", () => {
     const object = new InstancedMesh(new BoxGeometry(), new MeshStandardMaterial(), 2);
-    expect(createSelectionOverlay(object)).toBeNull();
+    expect(createSelectionOverlay(object, SELECTION_COLOR)).toBeNull();
   });
 
   it("creates matching line classes with shared geometry", () => {
@@ -106,7 +106,7 @@ describe("outliner selection highlight", () => {
       new LineSegments(new BoxGeometry(), new LineBasicMaterial()),
       new LineLoop(new BoxGeometry(), new LineBasicMaterial()),
     ]) {
-      const overlay = createSelectionOverlay(source);
+      const overlay = createSelectionOverlay(source, SELECTION_COLOR);
       expect(overlay?.constructor).toBe(source.constructor);
       expect((overlay as Line).geometry).toBe(source.geometry);
       expect((overlay as Line).material).toBeInstanceOf(LineBasicMaterial);
@@ -118,7 +118,7 @@ describe("outliner selection highlight", () => {
 
   it("copies point size settings only from PointsMaterial", () => {
     const points = new Points(new BoxGeometry(), new PointsMaterial({ size: 3, sizeAttenuation: false }));
-    const overlay = createSelectionOverlay(points) as Points;
+    const overlay = createSelectionOverlay(points, SELECTION_COLOR) as Points;
     expect(overlay).toBeInstanceOf(Points);
     expect(overlay.geometry).toBe(points.geometry);
     expect(overlay.material).toBeInstanceOf(PointsMaterial);
@@ -128,17 +128,17 @@ describe("outliner selection highlight", () => {
     expect((overlay.material as PointsMaterial).color.getHex()).toBe(SELECTION_COLOR);
 
     const fallback = new Points(new BoxGeometry(), new MeshBasicMaterial());
-    const fallbackOverlay = createSelectionOverlay(fallback) as Points;
+    const fallbackOverlay = createSelectionOverlay(fallback, SELECTION_COLOR) as Points;
     expect((fallbackOverlay.material as PointsMaterial).color.getHex()).toBe(SELECTION_COLOR);
     expect((fallbackOverlay.material as PointsMaterial).size).toBe(1);
     expect((fallbackOverlay.material as PointsMaterial).sizeAttenuation).toBe(true);
   });
 
   it("returns null for non-renderable objects", () => {
-    expect(createSelectionOverlay(new Group())).toBeNull();
-    expect(createSelectionOverlay(new Bone())).toBeNull();
-    expect(createSelectionOverlay(new DirectionalLight())).toBeNull();
-    expect(createSelectionOverlay(new PerspectiveCamera())).toBeNull();
+    expect(createSelectionOverlay(new Group(), SELECTION_COLOR)).toBeNull();
+    expect(createSelectionOverlay(new Bone(), SELECTION_COLOR)).toBeNull();
+    expect(createSelectionOverlay(new DirectionalLight(), SELECTION_COLOR)).toBeNull();
+    expect(createSelectionOverlay(new PerspectiveCamera(), SELECTION_COLOR)).toBeNull();
   });
 
   it("adds overlays to renderable descendants and skips viewer overlays", () => {
@@ -152,7 +152,7 @@ describe("outliner selection highlight", () => {
     meshA.add(meshB, viewerOverlay);
     root.add(meshA, line, bone);
 
-    applySelectionHighlight(root);
+    applySelectionHighlight(root, SELECTION_COLOR);
 
     expect(selectionOverlays(meshA)).toHaveLength(1);
     expect(selectionOverlays(meshB)).toHaveLength(1);
@@ -164,8 +164,8 @@ describe("outliner selection highlight", () => {
 
   it("is idempotent and applies to a mesh target itself", () => {
     const mesh = new Mesh(new BoxGeometry(), new MeshStandardMaterial());
-    applySelectionHighlight(mesh);
-    applySelectionHighlight(mesh);
+    applySelectionHighlight(mesh, SELECTION_COLOR);
+    applySelectionHighlight(mesh, SELECTION_COLOR);
     expect(selectionOverlays(mesh)).toHaveLength(1);
   });
 
@@ -176,7 +176,7 @@ describe("outliner selection highlight", () => {
     viewerOverlay.userData[VIEWER_OVERLAY_KEY] = true;
     mesh.add(viewerOverlay);
     root.add(mesh, new Line(new BoxGeometry(), new LineBasicMaterial()));
-    applySelectionHighlight(root);
+    applySelectionHighlight(root, SELECTION_COLOR);
     const selectionMaterial = (selectionOverlays(mesh)[0] as Mesh).material as Material;
     const dispose = vi.spyOn(selectionMaterial, "dispose");
     const originalDispose = vi.spyOn(mesh.material as Material, "dispose");
@@ -199,7 +199,7 @@ describe("outliner selection highlight", () => {
 
   it("survives mesh display changes without touching selection overlays", () => {
     const mesh = new Mesh(new BoxGeometry(), new MeshStandardMaterial());
-    applySelectionHighlight(mesh);
+    applySelectionHighlight(mesh, SELECTION_COLOR);
     const selection = selectionOverlays(mesh)[0] as Mesh;
 
     applyMeshDisplay(mesh, "wireframe");

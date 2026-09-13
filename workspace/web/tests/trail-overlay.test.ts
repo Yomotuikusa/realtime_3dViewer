@@ -31,13 +31,18 @@ const sample = {
   positions: new Float32Array([0, 1, 2, 3, 4, 5, 6, 7, 8]),
   frameCount: 3,
 };
+const defaultColors = {
+  line: TRAIL_LINE_COLOR,
+  point: TRAIL_POINT_COLOR,
+  current: TRAIL_CURRENT_COLOR,
+};
 
 describe("trail overlay", () => {
   it("creates a marked line, points, and current marker", () => {
     const root = new Group();
     const visibleJoint = new Bone();
     root.add(visibleJoint);
-    const overlay = addTrailOverlay(root, sample, 2);
+    const overlay = addTrailOverlay(root, sample, 2, defaultColors);
     const line = overlay.children[0] as Line;
     const points = overlay.children[1] as Points;
     const marker = overlay.children[2] as Mesh;
@@ -84,8 +89,21 @@ describe("trail overlay", () => {
     expect(collectJoints(root)).toEqual([visibleJoint]);
   });
 
+  it("uses the supplied color for each overlay child", () => {
+    const overlay = addTrailOverlay(new Group(), sample, 2, {
+      line: 0xff0000,
+      point: 0x00ff00,
+      current: 0x0000ff,
+    });
+
+    expect(((overlay.children[0] as Line).material as LineBasicMaterial).color.getHex()).toBe(0xff0000);
+    expect(((overlay.children[1] as Points).material as PointsMaterial).color.getHex()).toBe(0x00ff00);
+    expect(((overlay.children[2] as Mesh).material as MeshBasicMaterial).color.getHex()).toBe(0x0000ff);
+    expect(overlay.children).toHaveLength(3);
+  });
+
   it("updates and clamps the current marker frame", () => {
-    const overlay = addTrailOverlay(new Group(), sample, 1);
+    const overlay = addTrailOverlay(new Group(), sample, 1, defaultColors);
     setTrailCurrentFrame(overlay, 1.6);
     expect(overlay.children[2]!.position.toArray()).toEqual([6, 7, 8]);
     setTrailCurrentFrame(overlay, -5);
@@ -100,7 +118,7 @@ describe("trail overlay", () => {
 
   it("replaces an existing overlay and disposes resources", () => {
     const root = new Group();
-    const first = addTrailOverlay(root, sample, 1);
+    const first = addTrailOverlay(root, sample, 1, defaultColors);
     const firstLine = first.children[0] as Line;
     const firstPoints = first.children[1] as Points;
     const firstMarker = first.children[2] as Mesh;
@@ -113,7 +131,12 @@ describe("trail overlay", () => {
       vi.spyOn(firstMarker.material as { dispose: () => void }, "dispose"),
     ];
 
-    const second = addTrailOverlay(root, { ...sample, frameCount: 1, positions: sample.positions.slice(0, 3) }, 1);
+    const second = addTrailOverlay(
+      root,
+      { ...sample, frameCount: 1, positions: sample.positions.slice(0, 3) },
+      1,
+      defaultColors,
+    );
     expect(root.children).toEqual([second]);
     expect(trailOverlayOf(root)).toBe(second);
     for (const disposal of disposals) expect(disposal).toHaveBeenCalledOnce();
@@ -136,7 +159,12 @@ describe("trail overlay", () => {
   });
 
   it("handles a single-frame sample", () => {
-    const overlay = addTrailOverlay(new Group(), { frameCount: 1, positions: new Float32Array([4, 5, 6]) }, 1);
+    const overlay = addTrailOverlay(
+      new Group(),
+      { frameCount: 1, positions: new Float32Array([4, 5, 6]) },
+      1,
+      defaultColors,
+    );
     expect(overlay.children).toHaveLength(3);
     expect(() => setTrailCurrentFrame(overlay, 999)).not.toThrow();
     expect(overlay.children[2]!.position.toArray()).toEqual([4, 5, 6]);
