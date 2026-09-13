@@ -20,7 +20,7 @@
 - model-clips.ts: `ModelClipsState`、`useModelClipsStore`、`selectModelClips`
 - trail-target.ts: `ResolvedTrailTarget`、`objectPartRefOf`、`resolveTrailTarget`
 - trail-sample.ts: `MAX_TRAIL_FRAMES`、`TrailSample`、`sampleTrail`
-- trail-overlay.ts: `TRAIL_OVERLAY_KEY`、色・倍率・描画順定数、`TrailOverlay`、`addTrailOverlay`、`trailOverlayOf`、`setTrailCurrentFrame`、`removeTrailOverlay`
+- trail-overlay.ts: `TRAIL_OVERLAY_KEY`、既定色・倍率・描画順定数、`TrailColors`、`TrailOverlay`、`addTrailOverlay(root, sample, markerRadius, colors)`、`trailOverlayOf`、`setTrailCurrentFrame`、`removeTrailOverlay`
 - TrailRig.tsx: `TrailRig`
 - TrailBar.tsx: `TrailBar({ send })`
 - trail-icons.tsx: `TRAIL_VIEW_BOX`、`TRAIL_ARC_PATH`、`TRAIL_DOTS`、`TRAIL_DOT_RADIUS`、`TrailIcon`
@@ -28,7 +28,7 @@
 
 ## 他フォルダとの関係
 
-`useModelScene` が各版の loader から受け取った AnimationClip 配列を登録する。`trail-target` は compare の scene レジストリと outliner の plain tree / path 解決を利用する。`trail-sample` は viewer の秒・フレーム変換を利用し、描画や再生用 Rig には依存しない。`TrailRig` は display / compare / playback ストアと joint の半径計算を利用し、`ReviewPage` の `ViewerCanvas` 内で `JointRig` の後に配置される。オーバーレイは `VIEWER_OVERLAY_KEY` を持つため、アウトライナ・表示モード・比較・部位可視・選択・ジョイント収集から除外される。
+`useModelScene` が各版の loader から受け取った AnimationClip 配列を登録する。`trail-target` は compare の scene レジストリと outliner の plain tree / path 解決を利用する。`trail-sample` は viewer の秒・フレーム変換を利用し、描画や再生用 Rig には依存しない。`TrailRig` は display / compare / playback ストア、theme ストアの軌跡3色、joint の半径計算を利用し、`ReviewPage` の `ViewerCanvas` 内で `JointRig` の後に配置される。オーバーレイは `VIEWER_OVERLAY_KEY` を持つため、アウトライナ・表示モード・比較・部位可視・選択・ジョイント収集から除外される。
 `TrailBar` は outliner の選択と compare の scene レジストリを使い、選択された `Bone` だけを `objectPartRefOf` で共有鍵へ変換する。表示設定は display store を先に更新してから `trail:display` を送信する。HUD では DisplayModeBar、JointDisplayBar に続いて常設する。
 
 ## テスト

@@ -5,9 +5,10 @@ import { join } from "node:path";
 import { act, createElement } from "react";
 import { createRoot } from "react-dom/client";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { AnimationClip, Group, Object3D } from "three";
+import { AnimationClip, Group, Line, LineBasicMaterial, Mesh, MeshBasicMaterial, Object3D } from "three";
 import { useDisplayStore } from "../src/store/display";
 import { usePlaybackStore } from "../src/store/playback";
+import { useThemeStore } from "../src/store/theme";
 import { useModelScenesStore } from "../src/features/compare/model-scenes";
 import { useModelClipsStore } from "../src/features/trail/model-clips";
 import { TrailRig } from "../src/features/trail/TrailRig";
@@ -52,6 +53,7 @@ async function flush(callback: () => void): Promise<void> {
 afterEach(() => {
   useDisplayStore.getState().reset();
   usePlaybackStore.getState().reset();
+  useThemeStore.setState({ mode: "system", prefersDark: false, colors: {} });
   useModelScenesStore.getState().reset();
   useModelClipsStore.getState().reset();
   testHooks.frameCallbacks.length = 0;
@@ -138,9 +140,22 @@ describe("trail rig", () => {
       expect(trailOverlayOf(secondScene)).toBeNull();
       expect(testHooks.sampleTrail).toHaveBeenCalledWith(firstScene, firstObject, firstClip, 24, 0.25);
 
+      await flush(() => useThemeStore.getState().setColor("trailLine", "#ff0000"));
+      const recoloredLineOverlay = trailOverlayOf(firstScene);
+      expect(recoloredLineOverlay).not.toBe(firstOverlay);
+      expect((recoloredLineOverlay!.children[0] as Line).material as LineBasicMaterial).toMatchObject({
+        color: expect.objectContaining({ r: 1, g: 0, b: 0 }),
+      });
+
+      await flush(() => useThemeStore.getState().setColor("trailCurrent", "#0000ff"));
+      const recoloredCurrentOverlay = trailOverlayOf(firstScene);
+      expect((recoloredCurrentOverlay!.children[2] as Mesh).material as MeshBasicMaterial).toMatchObject({
+        color: expect.objectContaining({ r: 0, g: 0, b: 1 }),
+      });
+
       usePlaybackStore.getState().seekFrame(1);
       testHooks.frameCallbacks[0]!();
-      expect(firstOverlay!.children[2]!.position.toArray()).toEqual([3, 4, 5]);
+      expect(recoloredCurrentOverlay!.children[2]!.position.toArray()).toEqual([3, 4, 5]);
 
       await flush(() => useDisplayStore.getState().setMotionTrail({ visible: true, target: target("v2") }));
       expect(trailOverlayOf(firstScene)).toBeNull();
@@ -174,8 +189,9 @@ describe("trail rig", () => {
     expect(source).toContain("useModelClipsStore(");
     expect(source).toContain("usePlaybackStore(");
     expect(source).toContain("useFrame(");
-    expect(source).toContain("}, [scenes, clips, motionTrail, clipIndex, fps]);");
+    expect(source).toContain("}, [scenes, clips, motionTrail, clipIndex, fps, lineColor, pointColor, currentColor]);");
     expect(source).not.toMatch(/\[[^\]]*\btime\b[^\]]*\]/);
+    expect(source).toContain("useThemeStore(");
   });
 
   it("places TrailRig after JointRig inside ViewerCanvas", () => {

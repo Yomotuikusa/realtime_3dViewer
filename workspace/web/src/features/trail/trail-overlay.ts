@@ -12,16 +12,17 @@ import {
   SphereGeometry,
 } from "three";
 import { VIEWER_OVERLAY_KEY } from "../viewer/mesh-display";
+import { VIEWER_COLOR_DEFAULTS, hexToNumber } from "../theme/viewer-colors";
 import type { TrailSample } from "./trail-sample";
 
 /** 軌跡グループの userData キー。値は true */
 export const TRAIL_OVERLAY_KEY = "motionTrailOverlay";
 /** 軌跡の折れ線の色 */
-export const TRAIL_LINE_COLOR = 0xfacc15;
+export const TRAIL_LINE_COLOR = hexToNumber(VIEWER_COLOR_DEFAULTS.light.trailLine);
 /** 各フレームの点の色 */
-export const TRAIL_POINT_COLOR = 0xfef3c7;
+export const TRAIL_POINT_COLOR = hexToNumber(VIEWER_COLOR_DEFAULTS.light.trailPoint);
 /** 現在フレームのマーカーの色 */
-export const TRAIL_CURRENT_COLOR = 0xf97316;
+export const TRAIL_CURRENT_COLOR = hexToNumber(VIEWER_COLOR_DEFAULTS.light.trailCurrent);
 /** フレーム点の大きさ = markerRadius * この倍率 */
 export const TRAIL_POINT_SIZE_SCALE = 1.6;
 /** 現在フレームのマーカーの半径 = markerRadius * この倍率 */
@@ -39,6 +40,16 @@ export interface TrailOverlay extends Group {
     /** サンプルの root ローカル座標。長さは frameCount * 3 */
     positions: Float32Array;
   };
+}
+
+/** 軌跡の色。値は 0xrrggbb */
+export interface TrailColors {
+  /** 折れ線 */
+  line: number;
+  /** 各フレームの点 */
+  point: number;
+  /** 現在フレームのマーカー */
+  current: number;
 }
 
 function markOverlay(object: Object3D): void {
@@ -71,13 +82,14 @@ export function addTrailOverlay(
   root: Object3D,
   sample: TrailSample,
   markerRadius: number,
+  colors: TrailColors,
 ): TrailOverlay {
   removeTrailOverlay(root);
 
   const line = new Line(
     trailGeometry(sample.positions),
     new LineBasicMaterial({
-      color: TRAIL_LINE_COLOR,
+      color: colors.line,
       depthTest: false,
       depthWrite: false,
       toneMapped: false,
@@ -86,7 +98,7 @@ export function addTrailOverlay(
   const points = new Points(
     trailGeometry(sample.positions),
     new PointsMaterial({
-      color: TRAIL_POINT_COLOR,
+      color: colors.point,
       size: markerRadius * TRAIL_POINT_SIZE_SCALE,
       depthTest: false,
       depthWrite: false,
@@ -96,7 +108,7 @@ export function addTrailOverlay(
   const marker = new Mesh(
     new SphereGeometry(markerRadius * TRAIL_CURRENT_RADIUS_SCALE, 12, 8),
     new MeshBasicMaterial({
-      color: TRAIL_CURRENT_COLOR,
+      color: colors.current,
       depthTest: false,
       depthWrite: false,
       toneMapped: false,
