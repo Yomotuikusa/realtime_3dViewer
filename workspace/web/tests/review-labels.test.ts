@@ -9,6 +9,11 @@ import {
   PANEL_RESIZE_LABEL,
   PROJECT_LOAD_FAILED,
   RELOAD_LABEL,
+  CLOSE_LABEL,
+  SETTINGS_DIALOG_TITLE,
+  SETTINGS_OPEN_LABEL,
+  SETTINGS_TAB_ORDER,
+  SETTINGS_TABS_LABEL,
 } from "../src/app/review-labels";
 
 describe("review labels", () => {
@@ -55,5 +60,13 @@ describe("review labels", () => {
     expect(MODEL_LOAD_FAILED).toBe("モデルの読み込みに失敗しました。");
     expect(RELOAD_LABEL).toBe("再読み込み");
     expect(PANEL_RESIZE_LABEL).toBe("サイドパネルの幅");
+  });
+
+  it("exposes settings dialog labels and tab order", () => {
+    expect(SETTINGS_OPEN_LABEL).toBe("設定");
+    expect(CLOSE_LABEL).not.toBe("");
+    expect(SETTINGS_DIALOG_TITLE).not.toBe("");
+    expect(SETTINGS_TABS_LABEL).not.toBe("");
+    expect(SETTINGS_TAB_ORDER).toEqual(["shortcuts", "theme"]);
   });
 });

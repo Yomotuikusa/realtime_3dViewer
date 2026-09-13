@@ -24,7 +24,6 @@ import { ViewerHud } from "../features/viewer/ViewerHud";
 import { PlaybackTimeline } from "../features/timeline/PlaybackTimeline";
 import { useCameraBroadcast } from "../features/viewer/useCameraBroadcast";
 import { useLightBroadcast } from "../features/viewer/useLightBroadcast";
-import { ShortcutSettings } from "../features/shortcuts/ShortcutSettings";
 import { useShortcuts } from "../features/shortcuts/useShortcuts";
 import { ResizeHandle } from "../features/layout/ResizeHandle";
 import { useElementSize } from "../features/layout/useElementSize";
@@ -43,6 +42,7 @@ import { useObjectsStore } from "../store/objects";
 import { ErrorBoundary } from "./ErrorBoundary";
 import { JoinDialog } from "./JoinDialog";
 import { ReviewHeader } from "./ReviewHeader";
+import { SettingsDialog } from "./SettingsDialog";
 import { resetReviewStores } from "./review-stores";
 import { useRealtime } from "./useRealtime";
 import {
@@ -209,7 +209,7 @@ export function ReviewPage({ projectId }: { projectId: string }): ReactElement {
           </div>
           <PlaybackTimeline />
           {joinName === null && <JoinDialog onJoin={handleJoin} />}
-          {settingsOpen && <ShortcutSettings onClose={() => setSettingsOpen(false)} />}
+          {settingsOpen && <SettingsDialog onClose={() => setSettingsOpen(false)} />}
         </section>
         <ResizeHandle
           axis="x"

@@ -1,5 +1,18 @@
 import type { ConnectionStatus } from "../store/session";
 
+/** ヘッダの設定ボタン。 */
+export const SETTINGS_OPEN_LABEL = "設定";
+/** ダイアログのフッタ。 */
+export const CLOSE_LABEL = "閉じる";
+/** ダイアログの見出し。 */
+export const SETTINGS_DIALOG_TITLE = "設定";
+/** タブの分類を示す role="group" の aria-label。 */
+export const SETTINGS_TABS_LABEL = "設定の分類";
+
+/** タブの識別子。並べる順。 */
+export type SettingsTab = "shortcuts" | "theme";
+export const SETTINGS_TAB_ORDER: readonly SettingsTab[] = ["shortcuts", "theme"];
+
 export type ConnectionTone = "neutral" | "success" | "warning" | "danger";
 
 export function connectionLabel(status: ConnectionStatus, joined: boolean): string {
