@@ -1,3 +1,5 @@
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 import { act, createElement } from "react";
 import { createRoot } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -57,8 +59,8 @@ describe("SettingsDialog", () => {
       expect(host.querySelector(".shortcut-settings")).not.toBeNull();
       expect(host.querySelector(".theme-settings")).toBeNull();
       expect(host.querySelectorAll(`.settings-dialog__footer .btn--primary`)).toHaveLength(1);
-      expect((host.querySelector(".settings-dialog__footer .btn--primary") as HTMLButtonElement).textContent)
-        .toBe(CLOSE_LABEL);
+      const closeButton = host.querySelector(".settings-dialog__footer .btn--primary") as HTMLButtonElement;
+      expect(closeButton.textContent).toBe(CLOSE_LABEL);
     } finally {
       await act(async () => root.unmount());
     }
@@ -102,6 +104,54 @@ describe("SettingsDialog", () => {
       expect(useShortcutsStore.getState().keymap).toEqual(DEFAULT_KEYMAP);
     } finally {
       await act(async () => root.unmount());
+    }
+  });
+});
+
+describe("settings dialog source and style contracts", () => {
+  const read = (path: string): string => readFileSync(join(process.cwd(), path), "utf8");
+
+  it("wires ReviewPage and ReviewHeader to the shared settings entry point", () => {
+    const reviewPage = read("web/src/app/ReviewPage.tsx");
+    const reviewHeader = read("web/src/app/ReviewHeader.tsx");
+    const settingsDialog = read("web/src/app/SettingsDialog.tsx");
+
+    expect(reviewPage).toContain('import { SettingsDialog } from "./SettingsDialog";');
+    expect(reviewPage).not.toContain("ShortcutSettings");
+    expect(reviewPage.match(/<SettingsDialog onClose=/g)).toHaveLength(1);
+    expect(reviewPage).toContain("useShortcuts(joinName !== null && !settingsOpen)");
+    expect(reviewHeader).toMatch(/SETTINGS_OPEN_LABEL,\s*type CopyState,\s*\} from "\.\/review-labels"/s);
+    expect(settingsDialog).toContain("onClick={onClose} autoFocus");
+  });
+
+  it("keeps moved labels out of shortcut-labels and exposes them from review-labels", () => {
+    const shortcutLabels = read("web/src/features/shortcuts/shortcut-labels.ts");
+    const reviewLabels = read("web/src/app/review-labels.ts");
+
+    expect(shortcutLabels).not.toMatch(/export (?:const|function) SETTINGS_OPEN_LABEL/);
+    expect(shortcutLabels).not.toMatch(/export (?:const|function) CLOSE_LABEL/);
+    expect(reviewLabels).toContain('export const SETTINGS_OPEN_LABEL = "設定"');
+    expect(reviewLabels).toContain('export const CLOSE_LABEL = "閉じる"');
+    expect(reviewLabels).toContain('export const SETTINGS_DIALOG_TITLE = "設定"');
+    expect(reviewLabels).toContain('export const SETTINGS_TABS_LABEL = "設定の分類"');
+    expect(reviewLabels).toContain('export const SETTINGS_TAB_ORDER: readonly SettingsTab[] = ["shortcuts", "theme"]');
+  });
+
+  it("defines the settings selectors in review.css and removes the old shortcut shell", () => {
+    const reviewCss = read("web/src/app/review.css");
+    const shortcutsCss = read("web/src/features/shortcuts/shortcuts.css");
+
+    expect(reviewCss).toContain(".review-dialog.settings-dialog");
+    expect(reviewCss).toContain(".settings-tabs");
+    expect(reviewCss).toContain('.settings-tab[aria-pressed="true"]');
+    expect(reviewCss).toContain(".settings-dialog__footer");
+    expect(reviewCss).toContain("@media (max-width: 24rem)");
+    expect(shortcutsCss).toContain(".shortcut-settings");
+    expect(shortcutsCss).toContain(".shortcut-settings__footer");
+    expect(shortcutsCss).not.toContain(".shortcut-dialog");
+    for (const css of [reviewCss, shortcutsCss]) {
+      expect(css).not.toMatch(/#[0-9a-f]{3,8}\b|\b(?:rgb|rgba|hsl)\(/i);
+      expect(css).not.toContain("!important");
     }
   });
 });

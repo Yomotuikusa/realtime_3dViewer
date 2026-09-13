@@ -16,7 +16,7 @@
 - upload.css: アップロード画面と NotFound の狭い幅のレイアウト CSS
 - ReviewPage.tsx: プロジェクト取得、レビュー画面の骨格、ロード状態・エラーカード、`.review-stage` とビュー下部タイムラインを含むビューア／サイズ変更可能な左ドックとサイドパネルのレイアウトを担当する。左ドック `.review-outliner` に realtime の `send` を渡した `Outliner` を配置し、`outlinerWidth` を保存する。右パネル優先で幅を計算し、Canvas に RemoteCameras / RoomStrokes / ReplayStrokes / AnnotationLayer / CommentPickLayer / CommentPins / `SelectionRig` / `VisibilityRig` / `JointRig` を配置し、右ドックに PresenceList / ObjectList / `.review-panel__comments` を順に配置する。`.review-hud` を HUD 差し込み口、`.review-panel__comments` をコメント領域差し込み口として提供し、カメラとライトの変更を realtime 送信へ結線し、入室後だけショートカットを有効にする。設定表示中は `SettingsDialog` を表示する
 - ReviewHeader.tsx: 接続状態バッジ、入室後の自分の表示名・色、レビュー URL のコピーと失敗時の手動コピー欄を表示し、入室後だけ設定ダイアログを開くボタンを表示する
-- app/SettingsDialog.tsx: `ShortcutSettings` と `ThemeSettings` をキー操作／表示色タブで切り替える設定ダイアログの枠を担当する
+- SettingsDialog.tsx: `ShortcutSettings` と `ThemeSettings` をキー操作／表示色タブで切り替える設定ダイアログの枠を担当する
 - review-labels.ts: 接続状態・コピー状態・ロード/エラー文言、設定ダイアログとタブのラベル、サイドパネル幅ハンドルのラベルを定義する JSX 非依存の純粋関数と定数
 - review.css: レビュー画面のヘッダ、3列 grid の左ドック／`.review-stage` を含むビューア／右パネル、HUD、モデル読み込み失敗用の `.review-stage__error` オーバーレイ、設定／入室 backdrop/dialog、境界ハンドル、ロード/エラー状態のプレーン CSS
 - ErrorBoundary.tsx: React/three の描画例外を捕捉し、フォールバックを表示
