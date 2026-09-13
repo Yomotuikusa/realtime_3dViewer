@@ -1,6 +1,6 @@
 import { Bone, Group, PerspectiveCamera } from "three";
 import { describe, expect, it } from "vitest";
-import { addJointOverlay } from "../src/features/joint/joint-display";
+import { addJointOverlay, JOINT_COLOR, JOINT_LINK_COLOR } from "../src/features/joint/joint-display";
 import {
   JOINT_PICK_RADIUS_PX,
   jointSelectionOf,
@@ -19,11 +19,12 @@ function sceneAt(x: number, z = -1): { root: Group; bone: Bone } {
   bone.position.set(x, 0, z);
   root.add(bone);
   root.updateMatrixWorld(true);
-  addJointOverlay(root);
+  addJointOverlay(root, DEFAULT_JOINT_COLORS);
   return { root, bone };
 }
 
 const viewport = { width: 100, height: 100 };
+const DEFAULT_JOINT_COLORS = { joint: JOINT_COLOR, link: JOINT_LINK_COLOR };
 
 describe("joint pick", () => {
   it("requires a visible overlay and ignores points outside the camera depth", () => {
