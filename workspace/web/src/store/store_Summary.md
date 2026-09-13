@@ -14,6 +14,7 @@
 - annotation.ts: ルーム全員分のライブ線、annotation mode・色・描画中 draft・コメント再現用線・メッシュに埋もれた線の透過表示設定・ペンの描画基準を保持し、welcome/線操作・draft・表示設定・reset を提供する zustand ストア
 - comments.ts: コメント一覧、Open フィルタ、選択中コメント、投稿アンカー、API エラーを保持し、`setAll` / `upsert` / `select` / `setFilter` / `setComposerAnchor` / `setLastError` / `reset` を提供する zustand ストア
 - shortcuts.ts: `useShortcutsStore` として永続化された `keymap` を保持し、`setBinding` / `resetKeymap` を提供する。`resetReviewStores()` の対象外
+- theme.ts: `useThemeStore` として端末ローカルの UI テーマ、OS の配色状態、3D ビュー色の override を保持し、テーマ・色の変更と reset、実効値セレクタを提供する。`resetReviewStores()` の対象外
 
 ## 公開インターフェイス
 - camera.ts: `useCameraStore`、`CameraStoreState`（`focalLength`、`setFocalLength` を含む）
@@ -26,6 +27,7 @@
 - playback.ts: `usePlaybackStore`、`PlaybackStoreState`
 - objects.ts: `useObjectsStore`、`ObjectsStoreState`、`isObjectVisible`、`isObjectPartVisible`、`hiddenObjectPaths`、`primaryObjectId`
 - display.ts: `useDisplayStore`、`DisplayStoreState`（`meshDisplay` / `meshCompare` / `jointDisplay` / `motionTrail` と各 setter、reset）
+- theme.ts: `useThemeStore`、`ThemeStoreState`、`selectResolvedTheme`、`selectViewerColor`、`selectViewerColors`
 
 ## 他フォルダとの関係
 カメラストアの `selfCamera` は `DEFAULT_CAMERA`、`focalLength` は 50mm を初期値とし、`setSelfCamera(camera, exact?)` は
@@ -59,3 +61,4 @@ comments ストアは `items`（常に `createdAt` 昇順、同値なら `id` �
 - tests/store-shortcuts.test.ts: shortcuts ストアの割り当て・永続化・既定値復元とレビュー reset 非対象のテスト
 - tests/store-objects.test.ts: 版のソート・複製・追加、可視性、welcome、primary ヘルパー、reset のテスト
 - tests/store-display.test.ts: メッシュ表示方法、比較設定、ジョイント表示設定、モーション軌跡表示設定の初期値、切替、複製、同値更新抑止、購読通知、reset のテスト
+- tests/store-theme.test.ts: テーマストアの初期値、テーマ・色の永続化、同値更新抑止、色 reset、実効値セレクタ、`resetReviewStores()` 非対象のテスト
