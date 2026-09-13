@@ -108,6 +108,37 @@ describe("web style rules", () => {
     }
   });
 
+  it("overrides the dark palette without touching derived tokens", () => {
+    const tokens = cssFiles.find(({ relativePath }) => relativePath === "styles/tokens.css");
+    expect(tokens).toBeDefined();
+    const lightBlock = tokens?.text.match(/:root\s*\{([\s\S]*?)\}/)?.[1] ?? "";
+    const darkBlocks = [...(tokens?.text.matchAll(/:root\[data-theme="dark"\]\s*\{([\s\S]*?)\}/g) ?? [])];
+    expect(darkBlocks).toHaveLength(1);
+    const darkBlock = darkBlocks[0]?.[1] ?? "";
+    expect(lightBlock).toContain("color-scheme: light");
+    expect(darkBlock).toContain("color-scheme: dark");
+
+    const darkColors = [
+      "--color-bg", "--color-surface", "--color-surface-subtle", "--color-surface-muted",
+      "--color-text", "--color-text-muted", "--color-border", "--color-border-strong",
+      "--color-accent", "--color-accent-subtle", "--color-on-accent", "--color-danger",
+      "--color-danger-subtle", "--color-danger-border", "--color-success", "--color-success-subtle",
+      "--color-warning", "--color-warning-subtle",
+    ];
+    const darkShadows = ["--shadow-overlay", "--shadow-control", "--shadow-card"];
+    for (const name of [...darkColors, ...darkShadows]) {
+      expect(darkBlock).toMatch(new RegExp(`${name.replaceAll("-", "\\-")}\\s*:`));
+    }
+    for (const name of darkColors) {
+      const value = darkBlock.match(new RegExp(`${name.replaceAll("-", "\\-")}\\s*:\\s*([^;]+);`))?.[1]?.trim();
+      const lightValue = lightBlock.match(new RegExp(`${name.replaceAll("-", "\\-")}\\s*:\\s*([^;]+);`))?.[1]?.trim();
+      expect(value).toMatch(/^#[0-9a-f]{6}$/);
+      expect(value).not.toBe(lightValue);
+    }
+    expect(darkBlock).not.toContain("--color-surface-translucent");
+    expect(darkBlock).not.toContain("--focus-ring-color");
+  });
+
   it("keeps raw colors in tokens.css only", () => {
     const rawColor = /#[0-9a-f]{3,8}(?![0-9a-f])|\b(?:rgb|rgba|hsl)\(/i;
     for (const file of cssFiles) {

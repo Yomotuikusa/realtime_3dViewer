@@ -4,7 +4,7 @@
 ブラウザ履歴による入口ルーティング、モデルのアップロード画面、WebSocket の接続状態と受信イベントをレビュー画面へ反映する。
 
 ## ファイル一覧と役割
-- App.tsx: 現在のルートに応じた画面分岐。NotFound はパスと `/` へ戻る履歴遷移を表示する
+- App.tsx: `ThemeEffect` を全ルートの外側に配置し、`routeContent` で現在のルートに応じた画面分岐を行う。NotFound はパスと `/` へ戻る履歴遷移を表示する
 - routes.ts: `/` と `/p/<projectId>` のルート解析、遷移、popstate フック
 - display-name.ts: localStorage による表示名の保存、Guest 名生成、入室名の解決
 - JoinDialog.tsx: 保存済み表示名を初期値にした入室フォーム
@@ -23,7 +23,7 @@
 
 ## 公開インターフェイス
 - routes.ts: `Route`、`parseRoute`、`projectPath`、`navigate`、`useRoute`
-- App.tsx: `App`
+- App.tsx: `App`。内部の `routeContent` がルート別の画面を返し、`App` は `ThemeEffect` を全ルートへ適用する
 - UploadPage.tsx: `UploadPage`
 - upload-labels.ts: `APP_NAME` など画面文言、`FILE_TOO_LARGE`、`NO_FILE_SELECTED`、`UNSUPPORTED_EXTENSION`、`OBJ_MATERIAL_NOTE`、`FileLike`、`fileHelp`、`fileSummary`、`validateModelFiles`、`filesSummary`
 - ReviewPage.tsx: `ReviewPage({ projectId })`。`features/layout` の `ResizeHandle` と `useLayoutSize` を使い左ドックの `outlinerWidth` とサイドパネル幅を保存し、右パネル優先でレイアウト幅を計算する

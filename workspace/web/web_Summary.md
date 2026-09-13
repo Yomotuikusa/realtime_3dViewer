@@ -37,7 +37,7 @@ glTF/GLB の 3D レビュー画面を提供する。レビュー画面は表示�
 - src/api/client.ts: REST の URL（各パスセグメントを URI エンコード）、JSON/FormData リクエスト、プロジェクトの複数ファイル作成・版追加、レスポンス検証、`ApiClientError`
 - src/api/ws.ts: `WsClient`、WebSocket URL、接続状態通知、指数バックオフによる再接続
 - src/main.tsx: React アプリのエントリーポイント。tokens → base → controls の順で全体スタイルを読み込む
-- src/styles/tokens.css: 色・文字・間隔・角丸・動き・レイアウトのセマンティックトークン。既存 inline 値を引き継ぎ、`:root` に定義する
+- src/styles/tokens.css: 色・文字・間隔・角丸・動き・レイアウトのセマンティックトークン。既存 inline 値を引き継ぎ、`:root` にライト値を定義し、`:root[data-theme="dark"]` にダーク値の上書きブロックを持つ
 - src/styles/base.css: 全画面共通のリセット、既定の本文、可視フォーカスリング、reduced-motion。クラスは定義しない
 - src/styles/controls.css: `.btn` / `.field` / `.input` / `.alert` / `.badge` の共通コントロール。状態は属性セレクタで表現する
 - スタイル規約(D35)はプレーン CSS とし、全体共通のトークン・ベース・コントロールを `src/styles/` に置く。色は `tokens.css` のセマンティック変数経由、状態はクラスの付け替えではなく `aria-*` / `disabled` / `data-*` で表現し、画面固有の CSS は各機能フォルダ側に置く。
