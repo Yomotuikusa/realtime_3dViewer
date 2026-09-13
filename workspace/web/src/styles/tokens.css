@@ -1,4 +1,6 @@
 :root {
+  color-scheme: light;
+
   --font-ui: system-ui, -apple-system, "Segoe UI", "Hiragino Sans", "Noto Sans JP", sans-serif;
   --text-xs: 0.75rem;
   --text-sm: 0.8125rem;
@@ -47,4 +49,31 @@
   --outliner-width: 16rem;
   --header-height: 3rem;
   --follow-frame-width: 4px;
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+
+  --color-bg: #0f1218;
+  --color-surface: #171b23;
+  --color-surface-subtle: #1e232d;
+  --color-surface-muted: #272d39;
+  --color-text: #e7eaf0;
+  --color-text-muted: #9aa4b5;
+  --color-border: #333b49;
+  --color-border-strong: #4c566a;
+  --color-accent: #7aa7ff;
+  --color-accent-subtle: #1c2740;
+  --color-on-accent: #0f1218;
+  --color-danger: #f87171;
+  --color-danger-subtle: #2a1616;
+  --color-danger-border: #6b2b2b;
+  --color-success: #4ade80;
+  --color-success-subtle: #10261a;
+  --color-warning: #fbbf24;
+  --color-warning-subtle: #2a2010;
+
+  --shadow-overlay: 0 4px 16px rgba(0, 0, 0, 0.55);
+  --shadow-control: 1px 2px 3px rgba(0, 0, 0, 0.45);
+  --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.35), 0 1px 3px rgba(0, 0, 0, 0.45);
 }
