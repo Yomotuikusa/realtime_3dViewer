@@ -2,8 +2,10 @@ import { useEffect } from "react";
 import { useFrame } from "@react-three/fiber";
 import { useDisplayStore } from "../../store/display";
 import { usePlaybackStore } from "../../store/playback";
+import { selectViewerColor, useThemeStore } from "../../store/theme";
 import { useModelScenesStore } from "../compare/model-scenes";
 import { jointRadius } from "../joint/joint-display";
+import { hexToNumber } from "../theme/viewer-colors";
 import { frameOfTime } from "../viewer/playback-frames";
 import { useModelClipsStore, selectModelClips } from "./model-clips";
 import { resolveTrailTarget } from "./trail-target";
@@ -22,6 +24,9 @@ export function TrailRig(): null {
   const clips = useModelClipsStore((state) => state.clips);
   const clipIndex = usePlaybackStore((state) => state.clipIndex);
   const fps = usePlaybackStore((state) => state.fps);
+  const lineColor = useThemeStore(selectViewerColor("trailLine"));
+  const pointColor = useThemeStore(selectViewerColor("trailPoint"));
+  const currentColor = useThemeStore(selectViewerColor("trailCurrent"));
 
   useEffect(() => {
     for (const scene of Object.values(scenes)) removeTrailOverlay(scene);
@@ -39,12 +44,16 @@ export function TrailRig(): null {
       fps,
       usePlaybackStore.getState().time,
     );
-    addTrailOverlay(target.root, sample, jointRadius(target.root));
+    addTrailOverlay(target.root, sample, jointRadius(target.root), {
+      line: hexToNumber(lineColor),
+      point: hexToNumber(pointColor),
+      current: hexToNumber(currentColor),
+    });
 
     return () => {
       for (const scene of Object.values(scenes)) removeTrailOverlay(scene);
     };
-  }, [scenes, clips, motionTrail, clipIndex, fps]);
+  }, [scenes, clips, motionTrail, clipIndex, fps, lineColor, pointColor, currentColor]);
 
   useFrame(() => {
     const frame = frameOfTime(usePlaybackStore.getState().time, fps);
