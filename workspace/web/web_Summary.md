@@ -28,6 +28,7 @@ glTF/GLB の 3D レビュー画面を提供する。レビュー画面は表示�
 - `src/features/trail/trail_Summary.md`
 - `src/features/shortcuts/shortcuts_Summary.md`
 - `src/features/layout/layout_Summary.md`
+- `src/features/theme/theme_Summary.md`
 
 ソースの追加時は、最も近い Summary の「ファイル一覧と役割」と「公開インターフェイス」を更新し、
 対応するテストの追加時は同じ Summary の「テスト」を更新する。
