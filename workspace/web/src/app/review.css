@@ -156,6 +156,33 @@
   font-size: var(--text-sm);
 }
 
+.review-dialog.settings-dialog {
+  width: min(32rem, 92%);
+}
+
+.settings-tabs {
+  display: flex;
+  gap: var(--space-2);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.settings-tab[aria-pressed="true"] {
+  border-bottom: 2px solid var(--color-accent);
+  border-radius: 0;
+  color: var(--color-accent);
+}
+
+.settings-dialog__footer {
+  display: flex;
+  justify-content: flex-end;
+}
+
+@media (max-width: 24rem) {
+  .review-dialog.settings-dialog {
+    padding: var(--space-3);
+  }
+}
+
 .review-panel {
   display: grid;
   grid-template-rows: auto auto minmax(0, 1fr);

@@ -5,14 +5,13 @@ import {
   CANCEL_CAPTURE_LABEL,
   CAPTURING_MESSAGE,
   CHANGE_LABEL,
-  CLOSE_LABEL,
   rejectionMessage,
   RESET_KEYMAP_LABEL,
   SETTINGS_HELP,
-  SETTINGS_OPEN_LABEL,
   SETTINGS_TITLE,
   UNBIND_LABEL,
 } from "../src/features/shortcuts/shortcut-labels";
+import { CLOSE_LABEL, SETTINGS_OPEN_LABEL } from "../src/app/review-labels";
 import { FIT_LABEL, MODE_LABELS, RESET_LABEL } from "../src/features/viewer/hud-labels";
 
 describe("shortcut labels", () => {

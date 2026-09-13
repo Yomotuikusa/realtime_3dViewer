@@ -1,5 +1,6 @@
-.review-dialog.shortcut-dialog {
-  width: min(30rem, 92%);
+.shortcut-settings {
+  display: grid;
+  gap: var(--space-3);
 }
 
 .shortcut-row {
@@ -29,17 +30,13 @@
   white-space: nowrap;
 }
 
-.shortcut-dialog__footer {
+.shortcut-settings__footer {
   display: flex;
   justify-content: flex-end;
   gap: var(--space-2);
 }
 
 @media (max-width: 24rem) {
-  .review-dialog.shortcut-dialog {
-    padding: var(--space-3);
-  }
-
   .shortcut-row {
     gap: var(--space-1);
   }

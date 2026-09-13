@@ -5,9 +5,9 @@ import {
   connectionTone,
   copyLabel,
   copyText,
+  SETTINGS_OPEN_LABEL,
   type CopyState,
 } from "./review-labels";
-import { SETTINGS_OPEN_LABEL } from "../features/shortcuts/shortcut-labels";
 
 export function ReviewHeader({ projectName, joined, onOpenSettings }: {
   projectName: string;
