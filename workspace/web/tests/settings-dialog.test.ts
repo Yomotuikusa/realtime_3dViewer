@@ -61,6 +61,9 @@ describe("SettingsDialog", () => {
       expect(host.querySelectorAll(`.settings-dialog__footer .btn--primary`)).toHaveLength(1);
       const closeButton = host.querySelector(".settings-dialog__footer .btn--primary") as HTMLButtonElement;
       expect(closeButton.textContent).toBe(CLOSE_LABEL);
+      expect(document.activeElement).toBe(closeButton);
+      expect([...host.querySelectorAll("button")].filter((button) => button.textContent === CLOSE_LABEL)).toHaveLength(1);
+      expect(host.querySelectorAll('[role="tab"]').length).toBe(0);
     } finally {
       await act(async () => root.unmount());
     }
@@ -95,12 +98,28 @@ describe("SettingsDialog", () => {
     }
   });
 
+  it("keeps the dialog shell and footer while switching only the tab content", async () => {
+    const { root, host } = await render(createElement(SettingsDialog, { onClose: vi.fn() }));
+    try {
+      const dialog = host.querySelector(".settings-dialog");
+      const footer = host.querySelector(".settings-dialog__footer");
+      expect(dialog?.querySelectorAll("h2")).toHaveLength(1);
+      expect(footer?.querySelectorAll("button")).toHaveLength(1);
+      await act(async () => (host.querySelectorAll(".settings-tabs button")[1] as HTMLButtonElement).click());
+      expect(host.querySelector(".review-backdrop > .review-dialog.settings-dialog")).toBe(dialog);
+      expect(host.querySelector(".settings-dialog__footer")).toBe(footer);
+      expect(host.querySelectorAll(".settings-tabs button")).toHaveLength(SETTINGS_TAB_ORDER.length);
+    } finally {
+      await act(async () => root.unmount());
+    }
+  });
+
   it("does not capture shortcut keys while the theme tab is shown", async () => {
     const { root, host } = await render(createElement(SettingsDialog, { onClose: vi.fn() }));
     try {
-      const tabs = host.querySelectorAll(".settings-tabs button");
-      await act(async () => (tabs[1] as HTMLButtonElement).click());
-      window.dispatchEvent(new KeyboardEvent("keydown", { code: "KeyQ" }));
+      await act(async () => (host.querySelector(".shortcut-row .btn") as HTMLButtonElement).click());
+      await act(async () => (host.querySelectorAll(".settings-tabs button")[1] as HTMLButtonElement).click());
+      await act(async () => window.dispatchEvent(new KeyboardEvent("keydown", { code: "KeyQ" })));
       expect(useShortcutsStore.getState().keymap).toEqual(DEFAULT_KEYMAP);
     } finally {
       await act(async () => root.unmount());
@@ -115,13 +134,20 @@ describe("settings dialog source and style contracts", () => {
     const reviewPage = read("web/src/app/ReviewPage.tsx");
     const reviewHeader = read("web/src/app/ReviewHeader.tsx");
     const settingsDialog = read("web/src/app/SettingsDialog.tsx");
+    const shortcutSettings = read("web/src/features/shortcuts/ShortcutSettings.tsx");
 
     expect(reviewPage).toContain('import { SettingsDialog } from "./SettingsDialog";');
     expect(reviewPage).not.toContain("ShortcutSettings");
     expect(reviewPage.match(/<SettingsDialog onClose=/g)).toHaveLength(1);
     expect(reviewPage).toContain("useShortcuts(joinName !== null && !settingsOpen)");
     expect(reviewHeader).toMatch(/SETTINGS_OPEN_LABEL,\s*type CopyState,\s*\} from "\.\/review-labels"/s);
+    expect(reviewHeader).not.toContain("shortcut-labels");
     expect(settingsDialog).toContain("onClick={onClose} autoFocus");
+    expect(settingsDialog).toContain('useState<SettingsTab>("shortcuts")');
+    expect(settingsDialog).not.toContain('role="tab"');
+    expect(shortcutSettings).not.toContain("useId");
+    expect(shortcutSettings).not.toContain("onClose");
+    expect(shortcutSettings).not.toContain("shortcut-dialog");
   });
 
   it("keeps moved labels out of shortcut-labels and exposes them from review-labels", () => {
@@ -135,6 +161,9 @@ describe("settings dialog source and style contracts", () => {
     expect(reviewLabels).toContain('export const SETTINGS_DIALOG_TITLE = "設定"');
     expect(reviewLabels).toContain('export const SETTINGS_TABS_LABEL = "設定の分類"');
     expect(reviewLabels).toContain('export const SETTINGS_TAB_ORDER: readonly SettingsTab[] = ["shortcuts", "theme"]');
+    expect(SETTINGS_TITLE).toBe("ショートカットキー");
+    expect(SETTINGS_HELP).toBe("「変更」を押してから割り当てたいキーを押してください。Shift との組み合わせだけが使えます。Esc で中止します。");
+    expect(RESET_KEYMAP_LABEL).toBe("既定に戻す");
   });
 
   it("defines the settings selectors in review.css and removes the old shortcut shell", () => {
@@ -166,7 +195,9 @@ describe("ShortcutSettings", () => {
       expect(host.querySelector("h2")).toBeNull();
       expect(host.querySelector(".review-dialog__help")?.textContent).toBe(SETTINGS_HELP);
       expect(host.querySelectorAll(".shortcut-row")).toHaveLength(ACTION_ORDER.length);
-      expect(host.querySelector(".shortcut-settings__footer")?.textContent).toContain(RESET_KEYMAP_LABEL);
+      const footer = host.querySelector(".shortcut-settings__footer");
+      expect(footer?.textContent).toContain(RESET_KEYMAP_LABEL);
+      expect(footer?.querySelectorAll("button")).toHaveLength(1);
 
       const change = host.querySelector(".shortcut-row .btn") as HTMLButtonElement;
       await act(async () => change.click());
@@ -188,7 +219,7 @@ describe("ShortcutSettings", () => {
       await act(async () => {
         window.dispatchEvent(new KeyboardEvent("keydown", { code: "KeyQ", ctrlKey: true }));
       });
-      expect(host.querySelector('[role="alert"]')).not.toBeNull();
+      expect(host.querySelector('[role="alert"]')?.textContent).toBe("Ctrl / Cmd / Alt との組み合わせは使えません");
 
       const reset = [...host.querySelectorAll("button")]
         .find((button) => button.textContent === RESET_KEYMAP_LABEL) as HTMLButtonElement;
