@@ -39,6 +39,6 @@ describe("mesh compare rig", () => {
     expect(calculationEffect?.[1]).toContain("computeDeviation(target, base)");
     expect(calculationEffect?.[1]).not.toContain("thresholdPermille");
     expect(source).toContain("}, [base, target]);");
-    expect(source).toContain("}, [result, compare.thresholdPermille]);");
+    expect(source).toContain("}, [result, compare.thresholdPermille, outsideColor, insideColor]);");
   });
 });

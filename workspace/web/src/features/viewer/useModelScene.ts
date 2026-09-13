@@ -6,9 +6,11 @@ import { useCameraStore } from "../../store/camera";
 import { usePlaybackStore } from "../../store/playback";
 import { useModelScenesStore } from "../compare/model-scenes";
 import { useModelClipsStore } from "../trail/model-clips";
+import { selectViewerColor, useThemeStore } from "../../store/theme";
 import { applyMeshDisplay } from "./mesh-display";
 import { clipSummaries } from "./playback";
 import { detectFps } from "./playback-frames";
+import { hexToNumber } from "../theme/viewer-colors";
 
 export interface ModelSceneOptions {
   versionId: string;
@@ -26,6 +28,7 @@ export function useModelScene(
   options: ModelSceneOptions,
 ): void {
   const { versionId, primary, meshDisplay } = options;
+  const wireframeColor = useThemeStore(selectViewerColor("wireframe"));
 
   useEffect(() => {
     if (!primary) return;
@@ -43,8 +46,8 @@ export function useModelScene(
   }, [animations, primary]);
 
   useEffect(() => {
-    applyMeshDisplay(scene, meshDisplay);
-  }, [meshDisplay, scene]);
+    applyMeshDisplay(scene, meshDisplay, hexToNumber(wireframeColor));
+  }, [meshDisplay, scene, wireframeColor]);
 
   useEffect(() => {
     useModelScenesStore.getState().register(versionId, scene);
@@ -56,5 +59,5 @@ export function useModelScene(
     return () => useModelClipsStore.getState().unregister(versionId, animations);
   }, [animations, versionId]);
 
-  useEffect(() => () => applyMeshDisplay(scene, "solid"), [scene]);
+  useEffect(() => () => applyMeshDisplay(scene, "solid", hexToNumber(wireframeColor)), [scene, wireframeColor]);
 }
