@@ -108,7 +108,7 @@ function binaryFbx(version: number, compressed = false): ArrayBuffer {
   return body.buffer as ArrayBuffer;
 }
 
-function binaryFbxWithExtras(version: number): ArrayBuffer {
+function binaryFbxWithExtras(version: number, secondAttrType = "NurbsCurve"): ArrayBuffer {
   const wide = version >= 7500;
   const headerLength = wide ? 25 : 13;
   const objectsStart = 27;
@@ -124,7 +124,7 @@ function binaryFbxWithExtras(version: number): ArrayBuffer {
   const geometry = node("Geometry", geometryProperties, [vertices, polygon], objectsPrefix, wide);
   const nonMeshStart = objectsPrefix + geometry.length;
   const nonMesh = node("Geometry", [
-    { type: "L", value: 12 }, { type: "S", value: "Geometry::curve" }, { type: "S", value: "NurbsCurve" },
+    { type: "L", value: 12 }, { type: "S", value: "Geometry::curve" }, { type: "S", value: secondAttrType },
   ], [], nonMeshStart, wide);
   const modelStart = nonMeshStart + nonMesh.length;
   const model = node("Model", [
@@ -190,11 +190,12 @@ describe("FBX polygon readers", () => {
   it("keeps non-Mesh Geometry IDs in binary Model connections", () => {
     const result = readFbxBinaryPolygons(binaryFbxWithExtras(7400));
     expect(result.geometries).toEqual(new Map([[11, [4, 4]]]));
-    expect(result.modelToGeometry.has(22)).toBe(true);
+    expect(result.modelToGeometry).toEqual(new Map([[22, 12]]));
   });
 
   it("uses the later binary Geometry connection", () => {
-    expect(readFbxBinaryPolygons(binaryFbxWithExtras(7400)).modelToGeometry).toEqual(new Map([[22, 12]]));
+    expect(readFbxBinaryPolygons(binaryFbxWithExtras(7400, "Mesh")).modelToGeometry)
+      .toEqual(new Map([[22, 12]]));
   });
 
   it("skips mixed binary Objects nodes and Geometry children", () => {
@@ -202,16 +203,19 @@ describe("FBX polygon readers", () => {
   });
 
   it("reads ASCII arrays across lines, ignores comments, and filters non-Mesh geometry", () => {
-    expect(readFbxAsciiPolygons(`; comment\n${asciiFbx()}`)).toEqual({
+    expect(readFbxAsciiPolygons(`; comment\n\n${asciiFbx()}`)).toEqual({
       geometries: new Map([[11, [4, 4]]]), modelToGeometry: new Map([[22, 11]]),
     });
     expect(readFbxAsciiPolygons(asciiFbx("NurbsCurve")).geometries).toEqual(new Map());
+    expect(readFbxAsciiPolygons(asciiFbx().replaceAll("    ", "\t")).geometries)
+      .toEqual(new Map([[11, [4, 4]]]));
   });
 
   it("dispatches strings and UTF-8 ArrayBuffers", () => {
     expect(fbxPolygons.readFbxPolygons(asciiFbx()).geometries).toEqual(new Map([[11, [4, 4]]]));
     expect(fbxPolygons.readFbxPolygons(new TextEncoder().encode(asciiFbx()).buffer as ArrayBuffer).modelToGeometry)
       .toEqual(new Map([[22, 11]]));
+    expect(fbxPolygons.readFbxPolygons(binaryFbx(7400)).geometries).toEqual(new Map([[11, [4, 4]]]));
   });
 });
 
@@ -242,13 +246,13 @@ describe("PolygonEdgeFBXLoader", () => {
     const invalid = meshWithId(22, 3);
     const group = new Group(); group.add(unmatched, invalid);
     vi.spyOn(FBXLoader.prototype, "parse").mockReturnValue(group);
-    vi.spyOn(fbxPolygons, "readFbxPolygons").mockImplementation(() => { throw new Error("bad"); });
-    expect(new PolygonEdgeFBXLoader().parse("ignored", "")).toBe(group);
-    expect(hasPolygonEdges(unmatched.geometry)).toBe(false);
-    vi.mocked(fbxPolygons.readFbxPolygons).mockReturnValue({
+    vi.spyOn(fbxPolygons, "readFbxPolygons").mockReturnValue({
       geometries: new Map([[11, [4]]]), modelToGeometry: new Map([[22, 11]]),
     });
-    new PolygonEdgeFBXLoader().parse("ignored", "");
+    expect(new PolygonEdgeFBXLoader().parse("ignored", "")).toBe(group);
+    expect(hasPolygonEdges(unmatched.geometry)).toBe(false);
     expect(hasPolygonEdges(invalid.geometry)).toBe(false);
+    vi.mocked(fbxPolygons.readFbxPolygons).mockImplementation(() => { throw new Error("bad"); });
+    expect(new PolygonEdgeFBXLoader().parse("ignored", "")).toBe(group);
   });
 });

@@ -4,7 +4,7 @@ import { readFbxAsciiPolygons } from "./fbx-ascii";
 export interface FbxPolygonInfo {
   /** Geometry ノード id → 多角形ごとの頂点数(file 順) */
   geometries: Map<number, number[]>;
-  /** Model ノード id → 接続された Geometry ノード id */
+  /** Model ノード id → 接続された Geometry ノード id(接続の並び順で後勝ち) */
   modelToGeometry: Map<number, number>;
 }
 
