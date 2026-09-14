@@ -1,8 +1,10 @@
 import { describe, expect, it } from "vitest";
 import {
+  tickLength,
   frameAtX,
   frameToX,
   fpsOptions,
+  rulerTicks,
   tickFrames,
   timelineKeyFrame,
   timelineTicks,
@@ -30,6 +32,35 @@ describe("timeline calculations", () => {
     expect(tickFrames(0, 10)).toEqual([0]);
     expect(tickFrames(48, 0)).toEqual([0]);
     expect(tickFrames(-1, 10)).toEqual([0]);
+  });
+
+  it("classifies ruler ticks by label and accent intervals", () => {
+    expect(rulerTicks(24, { labelStep: 10, tickStep: 1 })).toHaveLength(25);
+    expect(rulerTicks(24, { labelStep: 10, tickStep: 1 }).filter(({ kind }) => kind === "label").map(({ frame }) => frame))
+      .toEqual([0, 10, 20]);
+    expect(rulerTicks(24, { labelStep: 10, tickStep: 1 }).filter(({ kind }) => kind === "accent").map(({ frame }) => frame))
+      .toEqual([5, 15]);
+    expect(rulerTicks(24, { labelStep: 10, tickStep: 1 }).filter(({ kind }) => kind === "minor").map(({ frame }) => frame))
+      .toEqual([1, 2, 3, 4, 6, 7, 8, 9, 11, 12, 13, 14, 16, 17, 18, 19, 21, 22, 23, 24]);
+    expect(rulerTicks(240, { labelStep: 20, tickStep: 2 })).toHaveLength(121);
+    expect(rulerTicks(240, { labelStep: 20, tickStep: 2 }).at(-1)).toEqual({ frame: 240, kind: "label" });
+    expect(rulerTicks(240, { labelStep: 20, tickStep: 2 }).find(({ frame }) => frame === 10)?.kind).toBe("accent");
+    expect(rulerTicks(240, { labelStep: 20, tickStep: 2 }).find(({ frame }) => frame === 2)?.kind).toBe("minor");
+    expect(rulerTicks(10, { labelStep: 5, tickStep: 1 }).filter(({ kind }) => kind === "accent")).toEqual([]);
+    expect(rulerTicks(4, { labelStep: 1, tickStep: 1 }).every(({ kind }) => kind === "label")).toBe(true);
+    expect(rulerTicks(0, { labelStep: 1, tickStep: 1 })).toEqual([{ frame: 0, kind: "label" }]);
+  });
+
+  it("scales tick lengths from the ruler height", () => {
+    expect(tickLength("label", 32)).toBe(16);
+    expect(tickLength("accent", 32)).toBeCloseTo(9.6);
+    expect(tickLength("minor", 32)).toBeCloseTo(5.6);
+    expect(tickLength("label", 240)).toBe(224);
+    expect(tickLength("accent", 240)).toBeCloseTo(134.4);
+    expect(tickLength("minor", 240)).toBeCloseTo(78.4);
+    expect(tickLength("label", 16)).toBe(0);
+    expect(tickLength("minor", 10)).toBe(0);
+    expect(tickLength("accent", Number.NaN)).toBe(0);
   });
 
   it("maps between frames and ruler coordinates", () => {
