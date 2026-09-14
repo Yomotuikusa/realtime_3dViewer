@@ -99,10 +99,17 @@ function endOfContent(reader: Reader): boolean {
   return reader.offset + 176 >= reader.buffer.byteLength;
 }
 
-function readGeometry(reader: Reader, node: Header, wide: boolean, geometries: Map<number, number[]>): void {
+function readGeometry(
+  reader: Reader,
+  node: Header,
+  wide: boolean,
+  geometries: Map<number, number[]>,
+  geometryIds: Set<number>,
+): void {
   const values = Array.from({ length: node.properties }, () => property(reader));
   const id = typeof values[0] === "number" ? values[0] : undefined;
   const attrType = typeof values[2] === "string" ? values[2] : undefined;
+  if (id !== undefined) geometryIds.add(id);
   let sizes: number[] | undefined;
   while (reader.offset < node.end) {
     const child = header(reader, wide);
@@ -116,11 +123,17 @@ function readGeometry(reader: Reader, node: Header, wide: boolean, geometries: M
   if (id !== undefined && attrType === "Mesh" && sizes !== undefined) geometries.set(id, sizes);
 }
 
-function readObjects(reader: Reader, node: Header, wide: boolean, geometries: Map<number, number[]>): void {
+function readObjects(
+  reader: Reader,
+  node: Header,
+  wide: boolean,
+  geometries: Map<number, number[]>,
+  geometryIds: Set<number>,
+): void {
   while (reader.offset < node.end) {
     const child = header(reader, wide);
     if (child === null) continue;
-    if (child.name === "Geometry") readGeometry(reader, child, wide, geometries);
+    if (child.name === "Geometry") readGeometry(reader, child, wide, geometries, geometryIds);
     else skip(reader, child);
   }
 }
@@ -148,17 +161,18 @@ export function readFbxBinaryPolygons(buffer: ArrayBuffer): FbxPolygonInfo {
   if (version < 6400) throw new Error(`Unsupported FBX version: ${version}`);
   const wide = version >= 7500;
   const geometries = new Map<number, number[]>();
+  const geometryIds = new Set<number>();
   const connections: Array<[number, number]> = [];
   while (reader.offset < buffer.byteLength && !endOfContent(reader)) {
     const node = header(reader, wide);
     if (node === null) continue;
-    if (node.name === "Objects") readObjects(reader, node, wide, geometries);
+    if (node.name === "Objects") readObjects(reader, node, wide, geometries, geometryIds);
     else if (node.name === "Connections") readConnections(reader, node, wide, connections);
     else skip(reader, node);
   }
   const modelToGeometry = new Map<number, number>();
   for (const [geometryId, modelId] of connections) {
-    if (geometries.has(geometryId)) modelToGeometry.set(modelId, geometryId);
+    if (geometryIds.has(geometryId)) modelToGeometry.set(modelId, geometryId);
   }
   return { geometries, modelToGeometry };
 }

@@ -58,6 +58,7 @@ export function readFbxAsciiPolygons(text: string): FbxPolygonInfo {
   }
 
   const geometries = new Map<number, number[]>();
+  const geometryIds = new Set<number>();
   const connections: Array<[number, number]> = [];
   const stack: StackNode[] = [];
   for (const rawLine of text.replaceAll("\r\n", "\n").split("\n")) {
@@ -95,7 +96,10 @@ export function readFbxAsciiPolygons(text: string): FbxPolygonInfo {
       let geometry: GeometryState | undefined;
       if (start.name === "Geometry") {
         const id = Number.parseInt(attrs[0] ?? "", 10);
-        if (Number.isFinite(id)) geometry = { id, attrType: attrs[2] ?? "" };
+        if (Number.isFinite(id)) {
+          geometryIds.add(id);
+          geometry = { id, attrType: attrs[2] ?? "" };
+        }
       }
       stack.push({
         name: start.name,
@@ -109,7 +113,7 @@ export function readFbxAsciiPolygons(text: string): FbxPolygonInfo {
 
   const modelToGeometry = new Map<number, number>();
   for (const [geometryId, modelId] of connections) {
-    if (geometries.has(geometryId)) modelToGeometry.set(modelId, geometryId);
+    if (geometryIds.has(geometryId)) modelToGeometry.set(modelId, geometryId);
   }
   return { geometries, modelToGeometry };
 }

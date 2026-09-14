@@ -108,6 +108,45 @@ function binaryFbx(version: number, compressed = false): ArrayBuffer {
   return body.buffer as ArrayBuffer;
 }
 
+function binaryFbxWithExtras(version: number): ArrayBuffer {
+  const wide = version >= 7500;
+  const headerLength = wide ? 25 : 13;
+  const objectsStart = 27;
+  const objectsPrefix = objectsStart + headerLength + "Objects".length;
+  const geometryProperties = [
+    { type: "L", value: 11 }, { type: "S", value: "Geometry::quad" }, { type: "S", value: "Mesh" },
+  ] as Property[];
+  const propertyLength = geometryProperties.reduce((sum, item) => sum + property(item).length, 0);
+  const verticesStart = objectsPrefix + headerLength + "Geometry".length + propertyLength;
+  const vertices = node("Vertices", [{ type: "i", value: [0, 1, 2] }], [], verticesStart, wide);
+  const polygonStart = verticesStart + vertices.length;
+  const polygon = node("PolygonVertexIndex", [{ type: "i", value: [0, 1, 3, -3, 2, 3, 5, -5] }], [], polygonStart, wide);
+  const geometry = node("Geometry", geometryProperties, [vertices, polygon], objectsPrefix, wide);
+  const nonMeshStart = objectsPrefix + geometry.length;
+  const nonMesh = node("Geometry", [
+    { type: "L", value: 12 }, { type: "S", value: "Geometry::curve" }, { type: "S", value: "NurbsCurve" },
+  ], [], nonMeshStart, wide);
+  const modelStart = nonMeshStart + nonMesh.length;
+  const model = node("Model", [
+    { type: "L", value: 22 }, { type: "S", value: "Model::quad" }, { type: "S", value: "Mesh" },
+  ], [], modelStart, wide);
+  const materialStart = modelStart + model.length;
+  const material = node("Material", [{ type: "L", value: 33 }, { type: "S", value: "Material::red" }], [], materialStart, wide);
+  const objects = node("Objects", [], [geometry, nonMesh, model, material], objectsStart, wide);
+  const connectionsStart = objectsStart + objects.length;
+  const connectionPrefix = connectionsStart + headerLength + "Connections".length;
+  const firstConnection = node("C", [
+    { type: "S", value: "OO" }, { type: "L", value: 11 }, { type: "L", value: 22 },
+  ], [], connectionPrefix, wide);
+  const secondConnection = node("C", [
+    { type: "S", value: "OO" }, { type: "L", value: 12 }, { type: "L", value: 22 },
+  ], [], connectionPrefix + firstConnection.length, wide);
+  const connections = node("Connections", [], [firstConnection, secondConnection], connectionsStart, wide);
+  const body = join([new TextEncoder().encode(MAGIC), bytes([0, 0]), bytes([0, 0, 0, 0]), objects, connections, new Uint8Array(176)]);
+  new DataView(body.buffer).setUint32(23, version, true);
+  return body.buffer as ArrayBuffer;
+}
+
 function asciiFbx(attrType = "Mesh"): string {
   return `FBXHeaderExtension:  {
   FBXVersion: 7400
@@ -132,6 +171,7 @@ describe("FBX polygon readers", () => {
 
   it("counts only terminated PolygonVertexIndex faces", () => {
     expect(fbxPolygons.polygonSizesFromVertexIndex([0, 1, 3, -3, 2, 3, 5, -5])).toEqual([4, 4]);
+    expect(fbxPolygons.polygonSizesFromVertexIndex([0, 1, -3, 0, 1, 2, -4])).toEqual([3, 4]);
     expect(fbxPolygons.polygonSizesFromVertexIndex([0, 1, 2])).toEqual([]);
     expect(fbxPolygons.polygonSizesFromVertexIndex([])).toEqual([]);
   });
@@ -145,6 +185,20 @@ describe("FBX polygon readers", () => {
   it("reads compressed binary arrays and rejects non-binary signatures", () => {
     expect(readFbxBinaryPolygons(binaryFbx(7400, true)).geometries.get(11)).toEqual([4, 4]);
     expect(isFbxBinary(new TextEncoder().encode("ASCII").buffer)).toBe(false);
+  });
+
+  it("keeps non-Mesh Geometry IDs in binary Model connections", () => {
+    const result = readFbxBinaryPolygons(binaryFbxWithExtras(7400));
+    expect(result.geometries).toEqual(new Map([[11, [4, 4]]]));
+    expect(result.modelToGeometry.has(22)).toBe(true);
+  });
+
+  it("uses the later binary Geometry connection", () => {
+    expect(readFbxBinaryPolygons(binaryFbxWithExtras(7400)).modelToGeometry).toEqual(new Map([[22, 12]]));
+  });
+
+  it("skips mixed binary Objects nodes and Geometry children", () => {
+    expect(readFbxBinaryPolygons(binaryFbxWithExtras(7400)).geometries.get(11)).toEqual([4, 4]);
   });
 
   it("reads ASCII arrays across lines, ignores comments, and filters non-Mesh geometry", () => {
