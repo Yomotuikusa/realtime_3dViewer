@@ -207,7 +207,7 @@ export function ReviewPage({ projectId }: { projectId: string }): ReactElement {
               </ViewerCanvas>
             </ErrorBoundary>
           </div>
-          <PlaybackTimeline />
+          <PlaybackTimeline send={realtime.send} />
           {joinName === null && <JoinDialog onJoin={handleJoin} />}
           {settingsOpen && <SettingsDialog onClose={() => setSettingsOpen(false)} />}
         </section>

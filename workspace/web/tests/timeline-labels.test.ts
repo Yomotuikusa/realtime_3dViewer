@@ -8,6 +8,7 @@ import {
   lastFrameText,
   PAUSE_LABEL,
   PLAY_LABEL,
+  SOURCE_LABEL,
   TIMELINE_LABEL,
   TIMELINE_RESIZE_LABEL,
   TRANSPORT_LABEL,
@@ -23,6 +24,7 @@ describe("timeline labels", () => {
     expect(GO_TO_START_LABEL).toBe("先頭へ");
     expect(GO_TO_END_LABEL).toBe("最終へ");
     expect(CLIP_LABEL).toBe("クリップ");
+    expect(SOURCE_LABEL).toBe("再生オブジェクト");
     expect(FRAME_LABEL).toBe("フレーム");
     expect(FPS_LABEL).toBe("fps");
     expect(TIMELINE_RESIZE_LABEL).toBe("タイムラインの高さ");
