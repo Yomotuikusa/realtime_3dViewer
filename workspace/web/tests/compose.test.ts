@@ -19,13 +19,13 @@ function stroke(id: string, userId: string, createdAt: number): Stroke {
 
 describe("comment composition", () => {
   it("records the current playback frame only when enabled and clips exist", () => {
-    const playback = { clips: [{ name: "a", duration: 2 }], clipIndex: 0, time: 0.5, fps: 24 };
-    expect(commentPlaybackOf(playback, true)).toEqual({ clipIndex: 0, frame: 12 });
+    const playback = { clips: [{ name: "a", duration: 2 }], clipIndex: 0, time: 0.5, fps: 24, sourceId: "v2" };
+    expect(commentPlaybackOf(playback, true)).toEqual({ clipIndex: 0, frame: 12, versionId: "v2" });
     expect(commentPlaybackOf(playback, false)).toBeNull();
     expect(commentPlaybackOf({ ...playback, clips: [] }, true)).toBeNull();
-    expect(commentPlaybackOf({ clips: [{ name: "a", duration: 2 }, { name: "b", duration: 4 }], clipIndex: 1, time: 1, fps: 30 }, true))
-      .toEqual({ clipIndex: 1, frame: 30 });
-    expect(commentPlaybackOf({ ...playback, time: 0.4999 }, true)).toEqual({ clipIndex: 0, frame: 12 });
+    expect(commentPlaybackOf({ clips: [{ name: "a", duration: 2 }, { name: "b", duration: 4 }], clipIndex: 1, time: 1, fps: 30, sourceId: "v2" }, true))
+      .toEqual({ clipIndex: 1, frame: 30, versionId: "v2" });
+    expect(commentPlaybackOf({ ...playback, sourceId: null, time: 0.4999 }, true)).toEqual({ clipIndex: 0, frame: 12 });
   });
 
   it("uses a five-pixel inclusive click threshold", () => {

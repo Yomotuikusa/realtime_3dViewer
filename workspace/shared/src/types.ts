@@ -24,6 +24,8 @@ export interface CommentPlayback {
   clipIndex: number;
   /** 表示フレーム(fps 換算後の整数)。0 以上 */
   frame: number;
+  /** 投稿時に再生していたオブジェクトの versionId。省略は記録なし(古いデータ) */
+  versionId?: string;
 }
 
 export interface Comment {
@@ -191,6 +193,7 @@ export const CommentStatusSchema = z.enum(["open", "resolved"]) satisfies z.ZodT
 export const CommentPlaybackSchema = z.object({
   clipIndex: z.number().int().min(0),
   frame: z.number().int().min(0),
+  versionId: IdSchema.optional(),
 }) satisfies z.ZodType<CommentPlayback>;
 
 export const CommentSchema = z.object({

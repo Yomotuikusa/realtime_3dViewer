@@ -85,8 +85,8 @@ export function ReviewPage({ projectId }: { projectId: string }): ReactElement {
     OUTLINER_WIDTH_MIN_PX,
     maxOutlinerWidth,
   );
-  useCommentReplay();
   const realtime = useRealtime(projectId, joinName);
+  useCommentReplay(realtime.send);
   useCameraBroadcast(realtime.send);
   useLightBroadcast(realtime.send);
   useShortcuts(joinName !== null && !settingsOpen);
