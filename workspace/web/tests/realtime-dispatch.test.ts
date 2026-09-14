@@ -113,7 +113,6 @@ describe("realtime dispatch", () => {
       camera: { position: [0, 0, 0], target: [0, 0, 0] },
     };
     expect(() => dispatchServerMessage(message)).not.toThrow();
-    expect(() => dispatchServerMessage({ type: "object:removed", versionId: "v1" })).not.toThrow();
     expect(useSessionStore.getState().selfId).toBeNull();
   });
 

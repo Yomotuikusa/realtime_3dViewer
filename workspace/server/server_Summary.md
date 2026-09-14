@@ -86,7 +86,8 @@ server の基盤。本番は `npm run build && npm run start` で起動する。
   入力検証、上限超過、全件事前検証、DB 失敗時の後始末のテスト。
 - `tests/routes-projects-formats.test.ts`: FBX / OBJ の作成・版追加、複数形式混在、内容不正の multipart テスト。
 - `tests/routes-project-versions.test.ts`: 既存 project への版追加、2回追加後の全版取得と採番、publish、
-  存在しない project、単一ファイル制約、形式不正、DB 失敗時の後始末のテスト。
+  空 project への版追加、存在しない project、単一ファイル制約、形式不正、DB 失敗時の後始末のテスト。
+- `tests/routes-project-delete.test.ts`: 版削除時のコメント・モデルファイル・project 状態・publish、存在しない対象、二重削除のテスト。
 - `tests/routes-comments.test.ts`: コメント一覧の順序・絞り込み、投稿・status 更新、入力検証、
   project/version スコープ、publish 呼び出しのテスト。
 - `tests/routes-comments-playback.test.ts`: コメント投稿の playback 保存・応答・publish・一覧反映、
@@ -104,6 +105,7 @@ server の基盤。本番は `npm run build && npm run start` で起動する。
 - `tests/realtime-hub-trail.test.ts`: RoomHub のモーション軌跡表示設定の複製・中継、welcome 反映、未設定値の省略、未定義ルーム参照を検証する。
 - `tests/realtime-hub-playback.test.ts`: RoomHub と表示状態の再生対象 versionId の初期値、中継、後勝ち保持、welcome 反映、ルーム分離・削除、未定義ルーム参照を検証する。
 - `tests/room-display.test.ts`: ルーム共有表示状態の初期化、8種の更新・中継、値の複製、welcome 復元フィールドを検証する。
+- `tests/realtime-hub-forget.test.ts`: 削除版に対する表示状態の参照掃除と、RoomHub の welcome 復元・未存在ルーム処理を検証する。
 - `tests/realtime-guards.test.ts`: project / Origin / 接続数 / ルーム数 / payload の接続ガードと、
   stroke 所有者検証・上限内の大きな stroke のテスト。
 - `tests/room-state.test.ts`: `createRoom` の独立性、色割り当て、定数、camera / user / stroke の複製ヘルパを検証する。

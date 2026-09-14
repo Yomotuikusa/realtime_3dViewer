@@ -92,7 +92,7 @@ describe("ClientMessageSchema", () => {
 });
 
 describe("ServerMessageSchema", () => {
-  it("accepts all server message variants", () => {
+  it("accepts all fifteen server message variants", () => {
     const messages = [
       { type: "welcome", selfId: "user-1", users: [user], strokes: [stroke] },
       { type: "user:joined", user },
@@ -106,7 +106,6 @@ describe("ServerMessageSchema", () => {
       { type: "object:visibility", userId: "user-1", versionId: "version-1", visible: false },
       { type: "object:part-visibility", userId: "user-1", versionId: "version-1", objectPath: "0/2", visible: true },
       { type: "object:added", version },
-      { type: "object:removed", versionId: "version-1" },
       { type: "mesh:display", userId: "user-1", mode: "solid-wireframe" },
       { type: "mesh:compare", userId: "user-1", compare: { baseId: "version-1", targetId: "version-2", thresholdPermille: 5 } },
       { type: "error", code: "X", message: "bad request" },
@@ -144,8 +143,6 @@ describe("ServerMessageSchema", () => {
     expect(ServerMessageSchema.safeParse({ type: "welcome", selfId: "user-1", users: [], strokes: [], hiddenObjectIds: [""] }).success).toBe(false);
     expect(ServerMessageSchema.safeParse({ type: "object:visibility", userId: "user-1", versionId: "", visible: true }).success).toBe(false);
     expect(ServerMessageSchema.safeParse({ type: "object:added", version: { ...version, number: 0 } }).success).toBe(false);
-    expect(ServerMessageSchema.safeParse({ type: "object:removed", versionId: "" }).success).toBe(false);
-    expect(ServerMessageSchema.safeParse({ type: "object:removed" }).success).toBe(false);
   });
 
   it("validates mesh display messages and optional welcome state", () => {
@@ -244,12 +241,6 @@ describe("protocol parsers", () => {
       ok: true,
       msg: { type: "object:added", version },
     });
-    expect(parseServerMessage(JSON.stringify({ type: "object:removed", versionId: "version-1" }))).toEqual({
-      ok: true,
-      msg: { type: "object:removed", versionId: "version-1" },
-    });
-    expect(parseServerMessage(JSON.stringify({ type: "object:removed" })).ok).toBe(false);
-    expect(parseServerMessage(JSON.stringify({ type: "object:removed", versionId: "" })).ok).toBe(false);
   });
 
   it("exposes the protocol limits", () => {
