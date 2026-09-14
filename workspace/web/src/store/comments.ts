@@ -13,6 +13,8 @@ export interface CommentsStoreState {
   setFilter(showOnlyOpen: boolean): void;
   setComposerAnchor(anchor: Vec3 | null): void;
   setLastError(message: string | null): void;
+  /** versionId のコメントを items から除去する。選択中なら null にする */
+  removeByVersion(versionId: string): void;
   reset(): void;
 }
 
@@ -89,6 +91,15 @@ export const useCommentsStore = create<CommentsStoreState>((set, get) => ({
 
   setLastError(message) {
     set({ lastError: message });
+  },
+
+  removeByVersion(versionId) {
+    const { items, selectedId } = get();
+    const nextItems = items.filter((item) => item.versionId !== versionId);
+    if (nextItems.length === items.length) return;
+    const selectedRemoved = selectedId !== null
+      && items.some((item) => item.versionId === versionId && item.id === selectedId);
+    set({ items: nextItems, ...(selectedRemoved ? { selectedId: null } : {}) });
   },
 
   reset() {

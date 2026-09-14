@@ -8,7 +8,8 @@
 - routes.ts: `/` と `/p/<projectId>` のルート解析、遷移、popstate フック
 - display-name.ts: localStorage による表示名の保存、Guest 名生成、入室名の解決
 - JoinDialog.tsx: 保存済み表示名を初期値にした、入室前にビューアを覆うモーダルフォーム。表示名の解決・保存・入室コールバックは display-name と呼び出し側へ委譲する
-- realtime-dispatch.ts: `ServerMessage` を session / presence / annotation / comments / lighting / objects / display ストアへ振り分ける入口。`welcome` の共有ライト・メッシュ表示方法・メッシュ比較設定・ジョイント表示設定・モーション軌跡表示設定・再生対象・非表示版・`hiddenObjectParts`、presence 更新（camera の焦点距離を含む）、light、stroke、`comment:created` / `comment:updated`、オブジェクト可視性・部位の `object:part-visibility`・追加・削除、`mesh:display` / `mesh:compare` / `joint:display` / `trail:display` / `playback:source`、`error` を扱い、削除反映は後続タスクへ委譲し、未知の型はコンパイル時に検出する
+- realtime-dispatch.ts: `ServerMessage` を session / presence / annotation / comments / lighting / objects / display ストアへ振り分ける入口。`welcome` の共有ライト・メッシュ表示方法・メッシュ比較設定・ジョイント表示設定・モーション軌跡表示設定・再生対象・非表示版・`hiddenObjectParts`、presence 更新（camera の焦点距離を含む）、light、stroke、`comment:created` / `comment:updated`、オブジェクト可視性・部位の `object:part-visibility`・追加・削除、`mesh:display` / `mesh:compare` / `joint:display` / `trail:display` / `playback:source`、`error` を扱い、未知の型はコンパイル時に検出する
+- object-removal.ts: 削除された versionId を objects / comments / selection / compare / playback の各ストアへ冪等に反映し、最後の版ならコメント投稿アンカーも解除する
 - useRealtime.ts: 名前決定後の `WsClient` 接続と、open ごとの `join` 送信。`onRealtimeStatus` は session の接続状態を更新し、open 時に lastError を解除する
 - review-stores.ts: レビュー画面のアンマウント時に session / presence / annotation / comments / camera / lighting / objects / display / playback / selection の10ストアをまとめて初期化する reset 関数（shortcuts ストアは対象外）
 - UploadPage.tsx: `.glb`/`.gltf`/`.fbx`/`.obj` のアップロード画面。`accept` は `ALLOWED_MODEL_EXTENSIONS` 由来で、OBJ が材質なし表示になる注記を常時出す
@@ -35,6 +36,7 @@
 - useRealtime.ts: `useRealtime(projectId, name)`、`onRealtimeStatus`、`Realtime`
 - review-stores.ts: `resetReviewStores()`
 - realtime-dispatch.ts: `dispatchServerMessage`
+- object-removal.ts: `applyObjectRemoved`
 - ErrorBoundary.tsx: `ErrorBoundary`
 
 ## 他フォルダとの関係
@@ -47,12 +49,15 @@
 失敗回数をリセットする。明示的な `close` 後は再接続しない。
 `dispatchServerMessage` は `welcome` で session の self ID/色、presence の参加者一覧、annotation のライブ線、任意の共有ライト・メッシュ表示方法・メッシュ比較設定・ジョイント表示設定・モーション軌跡表示設定・再生対象、非表示オブジェクト一覧と `welcome.hiddenObjectParts` を確定し、
 `user:joined` / `user:left` / `camera` を presence ストアへ、`stroke:add` / `stroke:remove` / `stroke:clear` を
-  annotation ストアへ、`light` を lighting ストアへ、`comment:created` / `comment:updated` を comments ストアへ、`object:visibility` / `object:part-visibility` / `object:added` を objects ストアへ、`object:removed` は現段階では無処理として、`mesh:display` / `mesh:compare` / `joint:display` / `trail:display` / `playback:source` を display ストアへ反映し、`error` を `CODE: message` として保存する。welcome に比較設定、ジョイント表示設定、軌跡表示設定、または再生対象がない場合は既定値または null へ戻す。空 project では latestVersion が null のためコメント投稿欄を表示しない。
+  annotation ストアへ、`light` を lighting ストアへ、`comment:created` / `comment:updated` を comments ストアへ、`object:visibility` / `object:part-visibility` / `object:added` を objects ストアへ、`object:removed` は `applyObjectRemoved` へ委譲して全ストアの参照を掃除し、`mesh:display` / `mesh:compare` / `joint:display` / `trail:display` / `playback:source` を display ストアへ反映し、`error` を `CODE: message` として保存する。welcome に比較設定、ジョイント表示設定、軌跡表示設定、または再生対象がない場合は既定値または null へ戻す。空 project では latestVersion が null のためコメント投稿欄を表示しない。
 
 ## テスト
+- tests/api-delete-version.test.ts: 版削除 API の204成功、エンコード、構造化エラー、非JSONエラー、通信失敗のテスト
 - tests/display-name.test.ts: 表示名の trim、保存、Guest 名、localStorage 例外のテスト
 - tests/realtime-dispatch.test.ts: welcome の session / presence / annotation / light / objects / display 反映、`welcome.hiddenObjectParts` と welcome の `jointDisplay` / `motionTrail`、焦点距離を含む presence/stroke/comment イベント、object 追加・可視性・`object:part-visibility`、mesh:display / mesh:compare / `joint:display` / `trail:display`、error、未対応イベント、reset のテスト
 - tests/realtime-dispatch-playback.test.ts: `playback:source` の welcome/event 反映と、display ストアの再生対象初期値・null・同値更新抑止・reset のテスト
+- tests/realtime-dispatch-object-removal.test.ts: `object:removed` の受信を全ストア削除反映へ結線するテスト
+- tests/object-removal.test.ts: 選択・比較・再生対象・投稿アンカーを含む削除反映の冪等性テスト
 - tests/review-labels.test.ts: 接続状態・コピー状態・ロード/エラー文言のテスト
 - tests/review-stores.test.ts: 10個のレビュー用ストアをまとめて初期化する reset の検証
 - tests/review-styles.test.ts: モデル読み込み失敗オーバーレイのCSS配置・重なり順・操作性と、ErrorBoundary フォールバックのJSX配置をソース検査

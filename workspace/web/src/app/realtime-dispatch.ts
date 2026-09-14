@@ -8,6 +8,7 @@ import { useLightingStore } from "../store/lighting";
 import { useObjectsStore } from "../store/objects";
 import { usePresenceStore } from "../store/presence";
 import { useSessionStore } from "../store/session";
+import { applyObjectRemoved } from "./object-removal";
 
 export function dispatchServerMessage(msg: ServerMessage): void {
   const session = useSessionStore.getState();
@@ -70,6 +71,7 @@ export function dispatchServerMessage(msg: ServerMessage): void {
       objects.append(msg.version);
       break;
     case "object:removed":
+      applyObjectRemoved(msg.versionId);
       break;
     case "mesh:display":
       display.setMeshDisplay(msg.mode);
