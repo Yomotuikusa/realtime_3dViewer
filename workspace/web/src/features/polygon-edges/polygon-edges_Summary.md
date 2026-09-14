@@ -22,4 +22,5 @@ three の `OBJLoader` が返す非インデックス Mesh geometry と OBJ の f
 
 ## テスト
 
-- tests/polygon-edges.test.ts: polygon edge 属性生成、OBJ 面読み取り、PolygonEdgeOBJLoader の Mesh 結線を検証する
+- tests/polygon-edges.test.ts: polygon edge 属性生成、PolygonEdgeOBJLoader の Mesh 結線を検証する
+- tests/obj-polygons.test.ts: OBJ のオブジェクト区切り、プリミティブ種別、面頂点数の読み取りを検証する

@@ -5,6 +5,7 @@ import {
   MeshBasicMaterial,
   type Float32BufferAttribute as Float32BufferAttributeType,
 } from "three";
+import { OBJLoader } from "three/examples/jsm/loaders/OBJLoader.js";
 import { describe, expect, it, vi } from "vitest";
 import {
   applyPolygonEdges,
@@ -85,37 +86,21 @@ describe("polygon edge attributes", () => {
     expect(geometry.getAttribute(POLYGON_EDGE_BARYCENTRIC_ATTRIBUTE)).toBe(barycentric);
     expect(geometry.getAttribute(POLYGON_EDGE_MASK_ATTRIBUTE)).toBe(mask);
   });
-});
 
-describe("OBJ polygon sizes", () => {
-  it("returns Mesh faces in object order and ignores primitive objects", () => {
-    const text = `
-      v 0 0 0
-      v 1 0 0
-      v 1 1 0
-      v 0 1 0
-      v 0 0 1
-      o a
-      f 1/1/1 2/2/2 3/3/3 4/4/4
-      f 1 2 3 4
-      o line
-      l 1 2
-      f 1 2 3
-      o empty
-      f 1 2
-      o points
-      p 1 2 3
-      f 1 2 3
-      o final
-      f 1 2 3
-    `;
-    expect(objPolygons.readObjPolygonSizes(text)).toEqual([[4, 4], [3]]);
-  });
+  it("requires both attributes for hasPolygonEdges", () => {
+    const geometry = geometryForPolygons([[0, 0, 0], [1, 0, 0], [0, 1, 0]]);
+    geometry.setAttribute(
+      POLYGON_EDGE_BARYCENTRIC_ATTRIBUTE,
+      new Float32BufferAttribute([1, 0, 0, 0, 1, 0, 0, 0, 1], 3),
+    );
+    expect(hasPolygonEdges(geometry)).toBe(false);
 
-  it("does not create an empty object for the first declaration", () => {
-    expect(objPolygons.readObjPolygonSizes("o a\nf 1 2 3\no b\nf 1 2 3 4")).toEqual([[3], [4]]);
-    expect(objPolygons.readObjPolygonSizes("f 1 2\nf 1 2 3")).toEqual([[3]]);
-    expect(objPolygons.readObjPolygonSizes("g\nf 1 2 3")).toEqual([[3]]);
+    geometry.deleteAttribute(POLYGON_EDGE_BARYCENTRIC_ATTRIBUTE);
+    geometry.setAttribute(
+      POLYGON_EDGE_MASK_ATTRIBUTE,
+      new Float32BufferAttribute([1, 1, 1, 1, 1, 1, 1, 1, 1], 3),
+    );
+    expect(hasPolygonEdges(geometry)).toBe(false);
   });
 });
 
@@ -126,15 +111,38 @@ describe("PolygonEdgeOBJLoader", () => {
       v 1 0 0
       v 1 1 0
       v 0 1 0
-      o quad
+      v 0 0 1
+      v 1 0 1
+      v 1 1 1
+      v 0 1 1
+      o cube
       f 1 2 3 4
+      f 5 8 7 6
+      f 1 5 6 2
+      f 2 6 7 3
+      f 3 7 8 4
+      f 5 1 4 8
     `;
     const result = new PolygonEdgeOBJLoader().parse(text);
+    const ordinaryResult = new OBJLoader().parse(text);
     const mesh = result.children[0] as Mesh;
+    const ordinaryMesh = ordinaryResult.children[0] as Mesh;
     expect(mesh).toBeInstanceOf(Mesh);
-    expect(mesh.name).toBe("quad");
-    expect(mesh.geometry.getAttribute("position").count).toBe(6);
+    expect(result.children).toHaveLength(1);
+    expect(ordinaryResult.children).toHaveLength(1);
+    expect(mesh.name).toBe(ordinaryMesh.name);
+    expect(Array.from(mesh.geometry.getAttribute("position").array)).toEqual(
+      Array.from(ordinaryMesh.geometry.getAttribute("position").array),
+    );
     expect(hasPolygonEdges(mesh.geometry)).toBe(true);
+
+    const mask = values(mesh.geometry, POLYGON_EDGE_MASK_ATTRIBUTE);
+    for (let triangle = 0; triangle < mask.length; triangle += 9) {
+      const triangleMask = mask.slice(triangle, triangle + 3);
+      expect(triangleMask.filter((value) => value === 0)).toHaveLength(1);
+      expect(mask.slice(triangle, triangle + 3)).toEqual(mask.slice(triangle + 3, triangle + 6));
+      expect(mask.slice(triangle, triangle + 3)).toEqual(mask.slice(triangle + 6, triangle + 9));
+    }
   });
 
   it("does not add attributes when the Mesh count does not match", () => {
