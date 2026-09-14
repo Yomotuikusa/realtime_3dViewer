@@ -52,6 +52,7 @@
   annotation ストアへ、`light` を lighting ストアへ、`comment:created` / `comment:updated` を comments ストアへ、`object:visibility` / `object:part-visibility` / `object:added` を objects ストアへ、`object:removed` は `applyObjectRemoved` へ委譲して全ストアの参照を掃除し、`mesh:display` / `mesh:compare` / `joint:display` / `trail:display` / `playback:source` を display ストアへ反映し、`error` を `CODE: message` として保存する。welcome に比較設定、ジョイント表示設定、軌跡表示設定、または再生対象がない場合は既定値または null へ戻す。空 project では latestVersion が null のためコメント投稿欄を表示しない。
 
 ## テスト
+- tests/api-delete-version.test.ts: 版削除 API の204成功、エンコード、構造化エラー、非JSONエラー、通信失敗のテスト
 - tests/display-name.test.ts: 表示名の trim、保存、Guest 名、localStorage 例外のテスト
 - tests/realtime-dispatch.test.ts: welcome の session / presence / annotation / light / objects / display 反映、`welcome.hiddenObjectParts` と welcome の `jointDisplay` / `motionTrail`、焦点距離を含む presence/stroke/comment イベント、object 追加・可視性・`object:part-visibility`、mesh:display / mesh:compare / `joint:display` / `trail:display`、error、未対応イベント、reset のテスト
 - tests/realtime-dispatch-playback.test.ts: `playback:source` の welcome/event 反映と、display ストアの再生対象初期値・null・同値更新抑止・reset のテスト
