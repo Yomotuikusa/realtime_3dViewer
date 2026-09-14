@@ -19,6 +19,8 @@ export interface ObjectsStoreState {
   setPartVisible(versionId: string, objectPath: ObjectPath, visible: boolean): void;
   /** welcome の hiddenObjectIds / hiddenObjectParts で両方を全置換する */
   applyWelcome(hiddenIds: readonly string[], hiddenParts?: readonly ObjectPartRef[]): void;
+  /** objects・hiddenIds・hiddenParts から versionId を除去する。どこにも無ければ state を更新しない */
+  remove(versionId: string): void;
   reset(): void;
 }
 
@@ -102,6 +104,19 @@ export const useObjectsStore: UseBoundStore<StoreApi<ObjectsStoreState>> = creat
     set({ hiddenIds: nextIds, hiddenParts: nextParts });
   },
 
+  remove(versionId) {
+    const { objects, hiddenIds, hiddenParts } = get();
+    const nextObjects = objects.filter((object) => object.id !== versionId);
+    const nextHiddenIds = hiddenIds.filter((id) => id !== versionId);
+    const nextHiddenParts = hiddenParts.filter((part) => part.versionId !== versionId);
+    if (
+      nextObjects.length === objects.length
+      && nextHiddenIds.length === hiddenIds.length
+      && nextHiddenParts.length === hiddenParts.length
+    ) return;
+    set({ objects: nextObjects, hiddenIds: nextHiddenIds, hiddenParts: nextHiddenParts });
+  },
+
   reset() {
     set({ objects: [], hiddenIds: [], hiddenParts: [] });
   },
@@ -133,4 +148,13 @@ export function primaryObjectId(objects: readonly ModelVersion[]): string | null
     if (primary === undefined || object.number < primary.number) primary = object;
   }
   return primary?.id ?? null;
+}
+
+/** number が最大の版の id を返す。空なら null。 */
+export function latestObjectId(objects: readonly ModelVersion[]): string | null {
+  let latest: ModelVersion | undefined;
+  for (const object of objects) {
+    if (latest === undefined || object.number > latest.number) latest = object;
+  }
+  return latest?.id ?? null;
 }

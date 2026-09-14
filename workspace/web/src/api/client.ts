@@ -86,6 +86,38 @@ export function addModelVersion(projectId: string, file: File): Promise<ModelVer
   );
 }
 
+/** DELETE /api/projects/:projectId/versions/:versionId。成功時の本文は読まない。 */
+export async function deleteModelVersion(projectId: string, versionId: string): Promise<void> {
+  let response: Response;
+  try {
+    response = await fetch(
+      `${API_BASE}/api/projects/${encodeURIComponent(projectId)}/versions/${encodeURIComponent(versionId)}`,
+      { method: "DELETE" },
+    );
+  } catch (error) {
+    const message = error instanceof Error && error.message ? error.message : "Network request failed";
+    throw new ApiClientError(0, "INTERNAL", message);
+  }
+
+  if (response.status >= 200 && response.status < 300) return;
+
+  let body: unknown;
+  try {
+    body = await response.json();
+  } catch {
+    throw new ApiClientError(response.status, "INTERNAL", statusErrorMessage(response.status));
+  }
+  const parsedError = ApiErrorSchema.safeParse(body);
+  if (parsedError.success) {
+    throw new ApiClientError(
+      response.status,
+      parsedError.data.error.code,
+      parsedError.data.error.message,
+    );
+  }
+  throw new ApiClientError(response.status, "INTERNAL", statusErrorMessage(response.status));
+}
+
 export function getProject(projectId: string): Promise<Project> {
   return requestJson(`/api/projects/${encodeURIComponent(projectId)}`, { method: "GET" }, ProjectSchema);
 }
