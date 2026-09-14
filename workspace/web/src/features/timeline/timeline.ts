@@ -8,7 +8,9 @@ export const TICK_LABEL_BAND_PX = 16;
 /** tickStep の何倍ごとにアクセント目盛りにするか */
 export const ACCENT_TICK_MULTIPLE = 5;
 /** (高さ - TICK_LABEL_BAND_PX) に掛ける長さの比率 */
-export const TICK_LENGTH_RATIO = { label: 1, accent: 0.6, minor: 0.35 } as const;
+export const TICK_LENGTH_RATIO = { label: 0.3, accent: 0.18, minor: 0.105 } as const;
+/** 目盛りの種類ごとの最小の長さ(px)。ただし利用可能な高さを超えない */
+export const TICK_MIN_LENGTH_PX = { label: 6, accent: 4, minor: 3 } as const;
 
 export type TickKind = "label" | "accent" | "minor";
 
@@ -56,7 +58,8 @@ export function rulerTicks(lastFrame: number, ticks: TimelineTicks): RulerTick[]
 
 export function tickLength(kind: TickKind, heightPx: number): number {
   if (!Number.isFinite(heightPx)) return 0;
-  return Math.max(0, (heightPx - TICK_LABEL_BAND_PX) * TICK_LENGTH_RATIO[kind]);
+  const available = Math.max(0, heightPx - TICK_LABEL_BAND_PX);
+  return Math.min(available, Math.max(TICK_MIN_LENGTH_PX[kind], available * TICK_LENGTH_RATIO[kind]));
 }
 
 export function frameToX(frame: number, lastFrame: number, widthPx: number): number {
