@@ -9,7 +9,7 @@
 - vitest.config.ts: テスト設定(tests/**/*.test.ts、cacheDir は .vite)
 - src/types.ts: Vec3、CameraState、Stroke、Comment(`CommentPlayback` による任意のクリップ添字・フレーム位置を含む)、ModelVersion、Project(全 versions と latestVersion の整合性を含む)、LightAngles、MeshDisplayMode、MeshCompare、JointDisplay、PresenceUser、ObjectPath、ObjectPartRef の型と、識別子・ファイル名・自由文字列・焦点距離・ライト角度・メッシュ表示方法・比較設定・ジョイント表示設定・コメント再生位置・版内オブジェクトパスを検証する zod スキーマ
 - src/api.ts: REST のエラー、プロジェクト名、コメント入出力スキーマ(`CreateCommentInput` は任意の `CommentPlayback` を含む)、`ModelFormat` / `modelFormat` / `MODEL_CONTENT_TYPES` と upload 定数
-- src/protocol.ts: WS の ClientMessage/ServerMessage 型(カメラの focalLength、ルーム共有 light / mesh display / mesh compare / joint:display / trail:display、オブジェクト可視性・部位可視性・版追加を含む)、送信間隔定数、discriminated union スキーマ、JSON フレーム parse 関数
+- src/protocol.ts: WS の ClientMessage/ServerMessage 型(カメラの focalLength、ルーム共有 light / mesh display / mesh compare / joint:display / trail:display / playback:source、オブジェクト可視性・部位可視性・版追加を含む)、送信間隔定数、discriminated union スキーマ、JSON フレーム parse 関数
 - src/camera.ts: three.js に依存しない CameraState/Vec3 の比較、補間、複製(NaN は補間開始点として処理)、焦点距離(mm)のクランプ
 - src/stroke.ts: 反復処理による3D Ramer–Douglas–Peucker の点列間引きと送信可否判定
 - src/compare.ts: `MeshCompare` の active 判定、全フィールド比較、浅い複製を行う three.js 非依存の純粋関数
@@ -32,12 +32,13 @@
 - tests/object-part.test.ts: `ObjectPath` / `ObjectPartRef` のスキーマ、部位参照ヘルパー、公開面のテスト
 - tests/trail.test.ts: モーション軌跡の比較、複製、既定値、スキーマ境界のテスト
 - tests/protocol-trail.test.ts: `trail:display` の Client/Server variant、welcome optional、parse のテスト
+- tests/protocol-playback.test.ts: `playback:source` の Client/Server variant、welcome optional、必須 ID の検証テスト
 
 ## 公開インターフェイス
 - 型: `Vec3`, `CameraState`, `Stroke`, `CommentStatus`, `CommentPlayback`, `Comment`(`playback` は任意・null 許容), `ModelVersion`, `Project`(`versions` と `latestVersion` を含む), `LightAngles`, `MeshDisplayMode`, `MeshCompare`, `JointDisplay`, `MotionTrail`, `ActiveMeshCompare`, `PresenceUser`(`focalLength` は任意), `ObjectPath`, `ObjectPartRef`
 - スキーマ: `Vec3Schema`, `ColorSchema`, `CameraStateSchema`, `FocalLengthSchema`, `LightAnglesSchema`, `MeshDisplayModeSchema`, `MeshCompareSchema`, `JointDisplaySchema`, `MotionTrailSchema`, `StrokeSchema`, `CommentStatusSchema`, `CommentPlaybackSchema`, `CommentSchema`, `ModelVersionSchema`, `ProjectSchema`, `PresenceUserSchema`, `ObjectPathSchema`, `ObjectPartRefSchema`
 - api: `ErrorCode`, `ApiError`, `ApiErrorSchema`, `MAX_UPLOAD_BYTES_DEFAULT`, `ALLOWED_MODEL_EXTENSIONS`, `ModelFormat`, `modelFormat`, `MODEL_CONTENT_TYPES`, `ProjectNameSchema`, `CreateCommentInput`, `UpdateCommentStatusInput`, `ListCommentsQuery`
-- protocol: `ClientMessage`, `ServerMessage`, `ClientMessageSchema`, `ServerMessageSchema`, `ParseResult`, `parseClientMessage`, `parseServerMessage`, `MAX_NAME_LENGTH`, `CAMERA_SEND_INTERVAL_MS`, `LIGHT_SEND_INTERVAL_MS`; Client の `object:visibility` / `object:part-visibility` / `mesh:display` / `mesh:compare` / `joint:display` / `trail:display`、Server の `welcome.hiddenObjectIds` / `welcome.hiddenObjectParts` / `meshDisplay` / `meshCompare` / `jointDisplay` / `motionTrail`、各表示イベントを含む
+- protocol: `ClientMessage`, `ServerMessage`, `ClientMessageSchema`, `ServerMessageSchema`, `ParseResult`, `parseClientMessage`, `parseServerMessage`, `MAX_NAME_LENGTH`, `CAMERA_SEND_INTERVAL_MS`, `LIGHT_SEND_INTERVAL_MS`; Client の `object:visibility` / `object:part-visibility` / `mesh:display` / `mesh:compare` / `joint:display` / `trail:display` / `playback:source`、Server の `welcome.hiddenObjectIds` / `welcome.hiddenObjectParts` / `meshDisplay` / `meshCompare` / `jointDisplay` / `motionTrail` / `playbackSource`、各表示イベントを含む
 - types の定数: `MAX_ID_LENGTH`, `MAX_FILE_NAME_LENGTH`, `MAX_PROJECT_NAME_LENGTH`, `MAX_AUTHOR_NAME_LENGTH`, `MAX_COMMENT_BODY_LENGTH`, `MAX_OBJECT_PATH_LENGTH`, `MIN_FOCAL_LENGTH_MM`, `MAX_FOCAL_LENGTH_MM`, `DEFAULT_FOCAL_LENGTH_MM`, `DEFAULT_MESH_DISPLAY`, `MIN_COMPARE_THRESHOLD_PERMILLE`, `MAX_COMPARE_THRESHOLD_PERMILLE`, `DEFAULT_COMPARE_THRESHOLD_PERMILLE`, `DEFAULT_MESH_COMPARE`, `DEFAULT_JOINT_DISPLAY`
 - types の入力スキーマ: `IdSchema`, `FileNameSchema`
 - camera: `DEFAULT_CAMERA`, `vec3Equals`, `lerpVec3`, `cameraEquals`, `lerpCamera`, `cloneCamera`, `clampFocalLength`

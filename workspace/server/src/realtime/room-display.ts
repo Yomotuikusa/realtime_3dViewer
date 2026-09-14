@@ -23,12 +23,14 @@ export interface RoomDisplayState {
   jointDisplay: JointDisplay | null;
   /** ルームで共有する軌跡の表示設定。誰も変えていなければ null */
   motionTrail: MotionTrail | null;
+  /** ルームで共有する再生対象の versionId。誰も選んでいなければ null */
+  playbackSource: string | null;
 }
 
 /** 表示状態を変える ClientMessage */
 export type DisplayClientMessage = Extract<
   ClientMessage,
-  { type: "light" | "object:visibility" | "object:part-visibility" | "mesh:display" | "mesh:compare" | "joint:display" | "trail:display" }
+  { type: "light" | "object:visibility" | "object:part-visibility" | "mesh:display" | "mesh:compare" | "joint:display" | "trail:display" | "playback:source" }
 >;
 
 export type WelcomeMessage = Extract<ServerMessage, { type: "welcome" }>;
@@ -36,7 +38,7 @@ export type WelcomeMessage = Extract<ServerMessage, { type: "welcome" }>;
 /** 表示状態の welcome 復元フィールド(未設定・空のキーは含まれない) */
 export type DisplayWelcomeFields = Pick<
   WelcomeMessage,
-  "light" | "hiddenObjectIds" | "hiddenObjectParts" | "meshDisplay" | "meshCompare" | "jointDisplay" | "motionTrail"
+  "light" | "hiddenObjectIds" | "hiddenObjectParts" | "meshDisplay" | "meshCompare" | "jointDisplay" | "motionTrail" | "playbackSource"
 >;
 
 /** すべて未設定の初期状態を作る(Set は呼び出しごとに新しいインスタンス) */
@@ -49,6 +51,7 @@ export function createRoomDisplayState(): RoomDisplayState {
     meshCompare: null,
     jointDisplay: null,
     motionTrail: null,
+    playbackSource: null,
   };
 }
 
@@ -86,6 +89,9 @@ export function applyDisplayMessage(
       state.motionTrail = cloneMotionTrail(msg.trail);
       return { type: "trail:display", userId, trail: cloneMotionTrail(state.motionTrail) };
     }
+    case "playback:source":
+      state.playbackSource = msg.versionId;
+      return { type: "playback:source", userId, versionId: msg.versionId };
   }
 }
 
@@ -99,6 +105,7 @@ export function displayWelcomeFields(state: RoomDisplayState): DisplayWelcomeFie
   if (state.meshCompare !== null) fields.meshCompare = { ...state.meshCompare };
   if (state.jointDisplay !== null) fields.jointDisplay = { ...state.jointDisplay };
   if (state.motionTrail !== null) fields.motionTrail = cloneMotionTrail(state.motionTrail);
+  if (state.playbackSource !== null) fields.playbackSource = state.playbackSource;
   return fields;
 }
 

@@ -19,6 +19,7 @@ describe("room display state", () => {
       meshCompare: null,
       jointDisplay: null,
       motionTrail: null,
+      playbackSource: null,
     });
     expect(second).toEqual({
       light: null,
@@ -28,6 +29,7 @@ describe("room display state", () => {
       meshCompare: null,
       jointDisplay: null,
       motionTrail: null,
+      playbackSource: null,
     });
     expect(first.hiddenObjects).not.toBe(second.hiddenObjects);
     expect(first.hiddenParts).not.toBe(second.hiddenParts);

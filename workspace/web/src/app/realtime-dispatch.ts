@@ -32,6 +32,7 @@ export function dispatchServerMessage(msg: ServerMessage): void {
       display.setMeshCompare(msg.meshCompare ?? DEFAULT_MESH_COMPARE);
       display.setJointDisplay(msg.jointDisplay ?? DEFAULT_JOINT_DISPLAY);
       display.setMotionTrail(msg.motionTrail ?? DEFAULT_MOTION_TRAIL);
+      display.setPlaybackSource(msg.playbackSource ?? null);
       break;
     }
     case "user:joined":
@@ -79,6 +80,9 @@ export function dispatchServerMessage(msg: ServerMessage): void {
       break;
     case "trail:display":
       display.setMotionTrail(msg.trail);
+      break;
+    case "playback:source":
+      display.setPlaybackSource(msg.versionId);
       break;
     case "error":
       session.setLastError(`${msg.code}: ${msg.message}`);
