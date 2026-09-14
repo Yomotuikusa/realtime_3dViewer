@@ -1,11 +1,10 @@
 import { type ComponentType, type ReactElement } from "react";
 import { useGLTF } from "@react-three/drei";
 import { useLoader } from "@react-three/fiber";
-import { FBXLoader } from "three/examples/jsm/loaders/FBXLoader.js";
-import { OBJLoader } from "three/examples/jsm/loaders/OBJLoader.js";
 import type { AnimationClip, Loader, Object3D } from "three";
 import { modelFormat, type ModelFormat } from "@shared/api";
 import type { MeshDisplayMode } from "@shared/types";
+import { PolygonEdgeFBXLoader, PolygonEdgeOBJLoader } from "../polygon-edges/polygon-edge-loaders";
 import { createModelLoadingManager } from "./model-loading";
 import { installFbxSkinCompat } from "./fbx-compat";
 import { PlaybackRig } from "./PlaybackRig";
@@ -49,12 +48,12 @@ function GltfModel({ src, ...rest }: ModelSourceProps): ReactElement {
 }
 
 function FbxModel({ src, ...rest }: ModelSourceProps): ReactElement {
-  const group = useLoader(FBXLoader, src, extendLoader);
+  const group = useLoader(PolygonEdgeFBXLoader, src, extendLoader);
   return <ModelScene scene={group} animations={group.animations} {...rest} />;
 }
 
 function ObjModel({ src, ...rest }: ModelSourceProps): ReactElement {
-  const group = useLoader(OBJLoader, src, extendLoader);
+  const group = useLoader(PolygonEdgeOBJLoader, src, extendLoader);
   return <ModelScene scene={group} animations={NO_ANIMATIONS} {...rest} />;
 }
 

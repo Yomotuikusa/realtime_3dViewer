@@ -35,17 +35,20 @@ afterEach(() => {
 });
 
 describe("model scene loader selection", () => {
-  it("imports the FBX and OBJ loaders", () => {
+  it("imports the polygon-edge FBX and OBJ loaders", () => {
     const source = readSource("features/viewer/ModelMesh.tsx");
-    expect(source).toContain('from "three/examples/jsm/loaders/FBXLoader.js"');
-    expect(source).toContain('from "three/examples/jsm/loaders/OBJLoader.js"');
+    expect(source).toContain("PolygonEdgeFBXLoader");
+    expect(source).toContain("PolygonEdgeOBJLoader");
+    expect(source).toContain('from "../polygon-edges/polygon-edge-loaders"');
+    expect(source).not.toContain('from "three/examples/jsm/loaders/FBXLoader.js"');
+    expect(source).not.toContain('from "three/examples/jsm/loaders/OBJLoader.js"');
   });
 
   it("uses the configurable loader for each supported format", () => {
     const source = readSource("features/viewer/ModelMesh.tsx");
     expect(source).not.toContain("useFBX");
-    expect(source).toContain("useLoader(FBXLoader, src, extendLoader)");
-    expect(source).toContain("useLoader(OBJLoader, src, extendLoader)");
+    expect(source).toContain("useLoader(PolygonEdgeFBXLoader, src, extendLoader)");
+    expect(source).toContain("useLoader(PolygonEdgeOBJLoader, src, extendLoader)");
     expect(source).toContain("useGLTF(src, true, true, extendLoader)");
   });
 
