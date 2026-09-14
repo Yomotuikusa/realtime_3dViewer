@@ -49,11 +49,19 @@
   white-space: nowrap;
 }
 
-.objects__delete {
+.btn.objects__delete {
   flex: 0 0 auto;
   padding-inline: var(--space-2);
   font-size: var(--text-sm);
   white-space: nowrap;
+  border-color: var(--color-danger-border);
+  background: var(--color-danger-subtle);
+  color: var(--color-danger);
+}
+
+.btn.objects__delete:hover {
+  border-color: var(--color-danger);
+  background: var(--color-danger-subtle);
 }
 
 .objects__add {
