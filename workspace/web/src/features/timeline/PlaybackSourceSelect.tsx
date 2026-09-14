@@ -9,14 +9,17 @@ export function PlaybackSourceSelect({ send }: { send: (msg: ClientMessage) => b
   if (animated.length < 2) return null;
 
   return (
-    <select
-      className="input timeline__source"
-      aria-label={SOURCE_LABEL}
-      title={SOURCE_LABEL}
-      value={sourceId ?? ""}
-      onChange={(event) => switchPlaybackSource(event.target.value, send)}
-    >
-      {animated.map((version) => <option key={version.id} value={version.id}>{version.fileName}</option>)}
-    </select>
+    <label className="timeline__field">
+      <span>{SOURCE_LABEL}</span>
+      <select
+        className="input timeline__source"
+        aria-label={SOURCE_LABEL}
+        title={SOURCE_LABEL}
+        value={sourceId ?? ""}
+        onChange={(event) => switchPlaybackSource(event.target.value, send)}
+      >
+        {animated.map((version) => <option key={version.id} value={version.id}>{version.fileName}</option>)}
+      </select>
+    </label>
   );
 }

@@ -23,8 +23,8 @@ describe("timeline labels", () => {
     expect(PAUSE_LABEL).toBe("一時停止");
     expect(GO_TO_START_LABEL).toBe("先頭へ");
     expect(GO_TO_END_LABEL).toBe("最終へ");
-    expect(CLIP_LABEL).toBe("クリップ");
-    expect(SOURCE_LABEL).toBe("再生オブジェクト");
+    expect(CLIP_LABEL).toBe("アニメーション");
+    expect(SOURCE_LABEL).toBe("対象オブジェクト");
     expect(FRAME_LABEL).toBe("フレーム");
     expect(FPS_LABEL).toBe("fps");
     expect(TIMELINE_RESIZE_LABEL).toBe("タイムラインの高さ");

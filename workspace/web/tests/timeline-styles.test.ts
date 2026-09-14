@@ -60,11 +60,21 @@ describe("timeline layout styles", () => {
     expect(ruleBody(timelineCss, ".timeline")).toContain("position: relative");
     expect(ruleBody(timelineCss, ".timeline__resize")).toContain("top: -4px");
     expect(ruleBody(timelineCss, ".timeline__transport")).toContain("margin-inline: auto");
+    expect(ruleBody(timelineCss, ".timeline__controls")).toContain("gap: var(--space-5)");
+    expect(ruleBody(timelineCss, ".timeline__field")).toContain("gap: var(--space-1)");
     expect(playbackTimeline).toContain('import "./timeline.css"');
+    const resizeIndex = playbackTimeline.indexOf("<ResizeHandle");
+    const controlsIndex = playbackTimeline.indexOf('className="timeline__controls"');
+    const rulerIndex = playbackTimeline.indexOf("<TimelineRuler");
+    expect(resizeIndex).toBeLessThan(controlsIndex);
+    expect(controlsIndex).toBeLessThan(rulerIndex);
     const sourceIndex = playbackTimeline.indexOf("<PlaybackSourceSelect send={send} />");
+    const labelIndex = playbackTimeline.indexOf("<span>{CLIP_LABEL}</span>");
     const clipIndex = playbackTimeline.indexOf("timeline__clip");
     expect(sourceIndex).toBeGreaterThan(-1);
     expect(sourceIndex).toBeLessThan(clipIndex);
+    expect(labelIndex).toBeGreaterThan(sourceIndex);
+    expect(labelIndex).toBeLessThan(clipIndex);
   });
 
   it("places and sizes the timeline resize handle", () => {
