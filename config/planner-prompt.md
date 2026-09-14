@@ -44,6 +44,13 @@ codexはフェーズ間でコンテキストを共有しない。引き継ぎは
   呼び出す既存モジュールのパスを書く
 - 既存コードをタスクmdに大量にコピペしない。劣化コピーになり、かえってブレる。
   貼るのは変更しない側のシグネチャ数行までとし、実装本体は reads: のパスで指す
+- **shared/src/protocol.ts の `ClientMessage` / `ServerMessage` に variant を足すタスクは、
+  server/src/realtime/hub.ts と web/src/app/realtime-dispatch.ts を必ず owns に含める**。
+  両ファイルの switch が union の網羅性検査になっており、shared だけ変えると
+  `npm run typecheck` が必ず落ちる(060 で実測、098 で分割して失敗)。server / web の本実装を
+  別タスクにする場合でも、shared 側のタスクに「仮の最小分岐」を契約として書き、
+  「server / web は変更しない」という否定形の断言は書かない。任意フィールドの追加だけなら
+  この制約はない(038 の例)
 
 ## 起票前のセルフチェック
 起票案を人間に提示する前に、各タスクについて
