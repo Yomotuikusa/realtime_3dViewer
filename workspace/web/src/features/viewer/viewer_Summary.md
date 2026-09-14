@@ -19,15 +19,19 @@ Canvas、モデル、カメラ、ライティング、焦点距離、内蔵ア�
 - hud-menu.ts: HUD のカメラメニューの ID・順序・表示名、初期状態と排他的トグルの純粋な状態遷移
 - playback.ts: AnimationClip の名前・長さの要約、選択クリップ長、時刻の clamp とループ前進を提供する純粋関数
 - playback-frames.ts: glTF のキー時刻から fps を判定し、秒と表示フレームを変換する純粋関数
-- playback-driver.ts: AnimationMixer の単一クリップ action の切替、絶対時刻適用、停止と破棄を担う Three.js ドライバ
+- playback-driver.ts: AnimationMixer の単一クリップ action の切替、絶対時刻適用、対象外の停止と破棄を担う Three.js ドライバ
+- playback-source.ts: 登録済みクリップからアニメーション付き版を number 順に抽出し、ルーム指定を優先して再生対象を解決する純粋関数
+- playback-source-sync.ts: 解決した実 AnimationClip の要約・fps・sourceId を playback ストアへ同期し、利用者操作の source 切替を送信する処理
+- usePlaybackSource.ts: objects、model-clips、display の購読から再生対象、対象クリップ、アニメーション付き版一覧を useMemo で解決する hook
+- PlaybackSourceSync.tsx: Canvas 内で解決済みの再生対象を playback ストアへ同期する描画なしの部品
 - PlaybackClock.tsx: Canvas に一つだけ配置し、再生中の playback 時刻を毎フレーム一度だけ進める描画なしの部品
-- PlaybackRig.tsx: 各モデルの playback ストアの clipIndex と time を AnimationMixer へ毎フレーム反映する描画なしの Rig。時刻は進めない
+- PlaybackRig.tsx: 各モデルの playback ストアの sourceId が一致するときだけ clipIndex と time を AnimationMixer へ反映し、それ以外を初期ポーズへ戻す描画なしの Rig。時刻は進めない
 - hud-labels.ts: HUD のモード、カメラ／ライト、メッシュ表示、Follow、透過表示、描画基準、ヒントの日本語文言と純粋な判定関数
 - view-presets.ts: 正面／背面／右／左の向き、十字セルと並び順、距離を保ったプリセットカメラ計算、既定視点一致判定と回転ロック判定
 - lighting.ts: `@shared/types` 由来の `LightAngles` を再エクスポートし、ワールド固定ライトの角度の正規化・クランプ・ドラッグ回転と主／補助ライト座標を提供する
 - ModelMesh.tsx: 拡張子から形式を判別して glTF / FBX / OBJ のローダーへ割り、`useModelScene` で共通接続する。形式ごとに同一オリジン用の LoadingManager を指定し、読み込み前に `installFbxSkinCompat()` を呼び、`visible` を scene に反映する。OBJ は材質なしの単色表示、FBX はスケール補正なしとする。Draco 圧縮時のデコーダ取得（`https://www.gstatic.com/...`）は drei の別 manager による外部依存として残る
 - fbx-compat.ts: FBXLoader が未対応の Model を Group または Bone にしてスキンを適用しようとする場合に、no-op の `bind` で該当ノードのスキン適用だけを読み飛ばす
-- useModelScene.ts: 読み込み済みの glTF / FBX / OBJ の scene を共通処理へ接続する。primary のモデルだけバウンディングボックスからモデルサイズを記録して初回 Fit を要求し、内蔵 `animations` を playback ストアへ登録する。全版の `animations` を trail のクリップレジストリへ登録する。theme ストアの `wireframe` を数値化して `meshDisplay` を全 Mesh へ適用し、アンマウント時は solid に戻す。`versionId` と scene を比較用レジストリへ登録し、アンマウント時は同じ参照だけを解除する
+- useModelScene.ts: 読み込み済みの glTF / FBX / OBJ の scene を共通処理へ接続する。primary のモデルだけバウンディングボックスからモデルサイズを記録して初回 Fit を要求し、全版の `animations` を trail のクリップレジストリへ登録する。theme ストアの `wireframe` を数値化して `meshDisplay` を全 Mesh へ適用し、アンマウント時は solid に戻す。`versionId` と scene を比較用レジストリへ登録し、アンマウント時に同じ参照だけを解除する
 - mesh-display.ts: MeshDisplayMode に応じた材質の wireframe / polygon offset 切替と、通常メッシュへ追従する raycast 無効のワイヤフレーム重ね描きを冪等に管理する。ワイヤフレーム色は既定値または呼び出し側の `0xrrggbb` を受け取る。ワイヤフレームと比較重ね描きを共通の `VIEWER_OVERLAY_KEY` で識別し、表示方法の走査から除外する
 - model-loading.ts: glTF の `buffers` / `images` などが参照する data/blob URI と同一オリジン URL だけを許可する LoadingManager を作り、外部 URL を `about:blank` に置換する
 - model-target.ts: React や Zustand に依存せず、現在のレイキャスト対象 `Object3D` を保持する `setModelTarget` / `getModelTarget`
@@ -69,7 +73,11 @@ Canvas、モデル、カメラ、ライティング、焦点距離、内蔵ア�
 - playback.ts: `PlaybackClip`、`clipSummaries`、`currentDuration`、`clampTime`、`advanceTime`
 - playback-frames.ts: `DEFAULT_FPS`、fps 判定・clamp・秒／フレーム変換関数
 - playback-driver.ts: `PlaybackDriver`、`createPlaybackDriver`
-- PlaybackRig.tsx: `PlaybackRig({ root, clips })`
+- playback-source.ts: `ClipRegistry`、`animatedObjects`、`resolvePlaybackSource`
+- playback-source-sync.ts: `syncPlaybackClips`、`switchPlaybackSource`
+- usePlaybackSource.ts: `usePlaybackSource`
+- PlaybackSourceSync.tsx: `PlaybackSourceSync`
+- PlaybackRig.tsx: `PlaybackRig({ root, clips, versionId })`
 - camera-throttle.ts: `CameraPayload`、`payloadEquals`、`CameraThrottleDeps`、`CameraThrottle`、`createCameraThrottle`
 - send-throttle.ts: `SendThrottleDeps<T>`、`SendThrottle<T>`、`createSendThrottle<T>`
 - useLightBroadcast.ts: `lightAnglesEqual`、`LightingChange`、`onLightingChange`、`useLightBroadcast`
@@ -128,7 +136,7 @@ AnnotationLayer などのレイヤーを追加する。`ModelMesh` が登録す�
 Canvas のクライアント座標を NDC 化して再帰的にモデルをレイキャストでき、交点法線はヒットした
 オブジェクトの `matrixWorld` の逆転置法線行列でワールド系へ変換して正規化される。
 
-`ModelMesh` は拡張子から glTF / FBX / OBJ のローダーを選び、`useModelScene` は形式によらず primary のモデルサイズ・Fit・アニメーション・表示モード・比較レジストリを接続する。OBJ は材質なしで単色表示され、FBX のスケールは補正しない。`ModelMesh` は primary の `animations` を playback ストアへ要約して登録し、キー時刻から fps を自動判定する。`PlaybackClock` が Canvas で一度だけ時刻を進め、各 `PlaybackRig` がローカルだけで選択中クリップを LoopRepeat 再生する。`ViewerCanvas` の背景と `useModelScene` のワイヤフレーム重ね描きは theme ストアの実効色を購読して反映する。`meshDisplay` は `applyMeshDisplay` で各モデルへ適用され、`VIEWER_OVERLAY_KEY` を持つビューアの重ね描きを走査対象から除外する。solid-wireframe の重ね描きは skeleton / morph の参照を共有し、raycast を無効にしてコメントのピンや表面ペンの判定を二重化しない。コメントのピンや表面ペンの線はアニメーションに追従せず、作成時のワールド座標に留まる。
+`ModelMesh` は拡張子から glTF / FBX / OBJ のローダーを選び、`useModelScene` は形式によらず primary のモデルサイズ・Fit・表示モード・比較レジストリと全版のクリップ登録を接続する。OBJ は材質なしで単色表示され、FBX のスケールは補正しない。`usePlaybackSource` は room の playbackSource を優先し、未指定または対象外ならアニメーションを持つ number 最小の版を選ぶ。`PlaybackSourceSync` はその版のクリップ要約と fps を playback ストアへ登録し、`PlaybackClock` が Canvas で一度だけ時刻を進める。各 `PlaybackRig` は一致する sourceId のモデルだけを LoopRepeat 再生し、対象外の action は初期ポーズへ戻す。`ViewerCanvas` の背景と `useModelScene` のワイヤフレーム重ね描きは theme ストアの実効色を購読して反映する。`meshDisplay` は `applyMeshDisplay` で各モデルへ適用され、`VIEWER_OVERLAY_KEY` を持つビューアの重ね描きを走査対象から除外する。solid-wireframe の重ね描きは skeleton / morph の参照を共有し、raycast を無効にしてコメントのピンや表面ペンの判定を二重化しない。コメントのピンや表面ペンの線はアニメーションに追従せず、作成時のワールド座標に留まる。
 `three` の FBXLoader が未対応の attrType(NurbsSurface / Line)を Group にするため、そこへ繋がったスキンは読み飛ばす。NURBS サーフェスは描画されない。
 
 ## テスト
@@ -145,7 +153,9 @@ Canvas のクライアント座標を NDC 化して再帰的にモデルをレ�
 - tests/display-mode-bar.test.ts: 共通立方体パス、3種類の SVG アイコン、アイコン対応表、表示モードバーのソース構造と旧表示メニュー削除のテスト
 - tests/hud-menu.test.ts: HUD カメラメニューの初期表示、順序・表示名、排他的トグルの純粋関数テスト
 - tests/playback.test.ts: クリップ要約、選択中クリップ長、時刻 clamp、ループ前進のテスト
-- tests/playback-driver.test.ts: AnimationMixer の絶対時刻適用、action 切替、無効 index、破棄のテスト
+- tests/playback-driver.test.ts: AnimationMixer の絶対時刻適用、action 切替、停止と再開、無効 index、破棄のテスト
+- tests/playback-source.test.ts: アニメーション付き版の抽出・優先解決、source 切替、クリップ要約同期のテスト
+- tests/playback-source-sync.test.ts: PlaybackSourceSync の実マウントによる後登録、source 切替、登録解除と fallback のテスト
 - tests/light-gizmo.test.ts: ライトギズモの定数、回転、カメラ視野、座標・入力・表示の純粋関数テスト
 - tests/lighting.test.ts: ライト角度の正規化・クランプ・ドラッグ回転・主／補助ライト座標を検証
 - tests/model-loading.test.ts: 埋め込み・同一オリジン URL の許可、外部 URL の遮断、LoadingManager の URL modifier のテスト

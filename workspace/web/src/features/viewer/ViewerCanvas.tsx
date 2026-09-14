@@ -13,6 +13,7 @@ import { FocalLengthRig } from "./FocalLengthRig";
 import { ModelMesh } from "./ModelMesh";
 import { MeshCompareRig } from "../compare/MeshCompareRig";
 import { PlaybackClock } from "./PlaybackClock";
+import { PlaybackSourceSync } from "./PlaybackSourceSync";
 import { setModelTarget } from "./model-target";
 import { SceneLights } from "./SceneLights";
 
@@ -51,6 +52,7 @@ export function ViewerCanvas({ children }: { children?: ReactNode }): ReactEleme
           ))}
         </group>
         <PlaybackClock />
+        <PlaybackSourceSync />
         <MeshCompareRig />
         {children}
       </Bounds>

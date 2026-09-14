@@ -3,13 +3,10 @@ import type { AnimationClip, Object3D } from "three";
 import { Box3, Vector3 } from "three";
 import type { MeshDisplayMode } from "@shared/types";
 import { useCameraStore } from "../../store/camera";
-import { usePlaybackStore } from "../../store/playback";
 import { useModelScenesStore } from "../compare/model-scenes";
 import { useModelClipsStore } from "../trail/model-clips";
 import { selectViewerColor, useThemeStore } from "../../store/theme";
 import { applyMeshDisplay } from "./mesh-display";
-import { clipSummaries } from "./playback";
-import { detectFps } from "./playback-frames";
 import { hexToNumber } from "../theme/viewer-colors";
 
 export interface ModelSceneOptions {
@@ -38,12 +35,6 @@ export function useModelScene(
     if (modelSize > 0) useCameraStore.getState().setModelSize(modelSize);
     useCameraStore.getState().requestFit();
   }, [primary, scene]);
-
-  useEffect(() => {
-    if (!primary) return;
-    usePlaybackStore.getState().setClips(clipSummaries(animations), detectFps(animations));
-    return () => usePlaybackStore.getState().setClips([]);
-  }, [animations, primary]);
 
   useEffect(() => {
     applyMeshDisplay(scene, meshDisplay, hexToNumber(wireframeColor));

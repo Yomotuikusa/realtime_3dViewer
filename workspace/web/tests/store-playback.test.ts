@@ -10,12 +10,12 @@ describe("playback store", () => {
   beforeEach(() => usePlaybackStore.getState().reset());
 
   it("starts and resets at its initial state", () => {
-    expect(usePlaybackStore.getState()).toMatchObject({ clips: [], clipIndex: 0, playing: false, time: 0, fps: 24 });
+    expect(usePlaybackStore.getState()).toMatchObject({ clips: [], clipIndex: 0, playing: false, time: 0, fps: 24, sourceId: null });
     usePlaybackStore.getState().setClips(clips);
     usePlaybackStore.getState().play();
     usePlaybackStore.getState().seek(1);
     usePlaybackStore.getState().reset();
-    expect(usePlaybackStore.getState()).toMatchObject({ clips: [], clipIndex: 0, playing: false, time: 0, fps: 24 });
+    expect(usePlaybackStore.getState()).toMatchObject({ clips: [], clipIndex: 0, playing: false, time: 0, fps: 24, sourceId: null });
   });
 
   it("clones clips and resets selection when clips are replaced", () => {
@@ -118,5 +118,14 @@ describe("playback store", () => {
     expect(usePlaybackStore.getState().fps).toBe(240);
     usePlaybackStore.getState().reset();
     expect(usePlaybackStore.getState()).toMatchObject({ clips: [], playing: false, time: 0, fps: 24 });
+  });
+
+  it("stores the playback source and defaults it to null", () => {
+    usePlaybackStore.getState().setClips(clips, 30, "v2");
+    expect(usePlaybackStore.getState().sourceId).toBe("v2");
+    usePlaybackStore.getState().setClips(clips);
+    expect(usePlaybackStore.getState().sourceId).toBeNull();
+    usePlaybackStore.getState().reset();
+    expect(usePlaybackStore.getState().sourceId).toBeNull();
   });
 });

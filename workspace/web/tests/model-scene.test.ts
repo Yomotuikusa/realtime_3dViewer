@@ -66,6 +66,7 @@ describe("model scene loader selection", () => {
   it("keeps scene side effects in the shared hook", () => {
     const meshSource = readSource("features/viewer/ModelMesh.tsx");
     const sceneSource = readSource("features/viewer/useModelScene.ts");
+    expect(meshSource).toContain("<PlaybackRig root={scene} clips={animations} versionId={options.versionId} />");
     for (const name of ["applyMeshDisplay", "setModelSize", "requestFit", "setClips", "useModelScenesStore"]) {
       expect(meshSource).not.toContain(name);
     }
@@ -74,7 +75,6 @@ describe("model scene loader selection", () => {
       'applyMeshDisplay(scene, "solid",',
       "setModelSize",
       "requestFit()",
-      "setClips",
       "register(versionId, scene)",
       "unregister(versionId, scene)",
     ]) {
@@ -85,7 +85,11 @@ describe("model scene loader selection", () => {
     expect(sceneSource).toContain("unregister(versionId, animations)");
     expect(sceneSource).toContain("const { versionId, primary, meshDisplay } = options;");
     expect(sceneSource).not.toMatch(/useGLTF|useLoader|FBXLoader|OBJLoader/);
-    expect(sceneSource.match(/useEffect\(/g)).toHaveLength(6);
+    expect(sceneSource).not.toContain("setClips");
+    expect(sceneSource).not.toContain('from "../../store/playback"');
+    expect(sceneSource).not.toContain('from "./playback"');
+    expect(sceneSource).not.toContain('from "./playback-frames"');
+    expect(sceneSource.match(/useEffect\(/g)).toHaveLength(5);
   });
 
   it("registers and unregisters clips through a mounted non-primary hook", async () => {

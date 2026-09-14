@@ -137,19 +137,16 @@ describe("viewer picking", () => {
     expect(isVisibleInScene(mesh)).toBe(false);
   });
 
-  it("keeps model size, fit, and clips work behind the primary guard", () => {
+  it("keeps model size and fit behind the primary guard", () => {
     const source = readSource("features/viewer/useModelScene.ts");
     const guardedEffects = [...source.matchAll(/useEffect\(\(\) => \{([\s\S]*?)\n  \}, \[[^\]]+\]\);/g)]
       .map((match) => match[1] ?? "")
       .filter((body) => body.includes("if (!primary) return;"));
 
-    expect(guardedEffects).toHaveLength(2);
-    expect(guardedEffects.some((body) => (
-      body.includes("setModelSize") && body.includes("requestFit()") && !body.includes("setClips")
-    ))).toBe(true);
-    expect(guardedEffects.some((body) => (
-      body.includes("setClips") && !body.includes("setModelSize") && !body.includes("requestFit()")
-    ))).toBe(true);
+    expect(guardedEffects).toHaveLength(1);
+    expect(guardedEffects[0]).toContain("setModelSize");
+    expect(guardedEffects[0]).toContain("requestFit()");
+    expect(guardedEffects[0]).not.toContain("setClips");
   });
 
   it("places one playback clock in the canvas and leaves time advancement out of each rig", () => {
@@ -158,9 +155,13 @@ describe("viewer picking", () => {
     const rig = readSource("features/viewer/PlaybackRig.tsx");
 
     expect(canvas.match(/<PlaybackClock\s*\/>/g)).toHaveLength(1);
+    expect(canvas.match(/<PlaybackSourceSync\s*\/>/g)).toHaveLength(1);
+    expect(canvas.indexOf("<PlaybackSourceSync />")).toBeGreaterThan(canvas.indexOf("<PlaybackClock />"));
     expect(clock).toContain("seek(advanceTime(");
     expect(rig).not.toContain("seek(");
     expect(rig).not.toContain("advanceTime(");
+    expect(rig).toContain("sourceId");
+    expect(rig).toContain("stop()");
   });
 
   it("uses the object store canvas API and project-scoped error boundary key", () => {
