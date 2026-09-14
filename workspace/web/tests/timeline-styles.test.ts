@@ -38,7 +38,7 @@ describe("timeline layout styles", () => {
   it("places the timeline between the stage and modal backdrops", () => {
     const stageIndex = reviewPage.indexOf('className="review-stage"');
     const hudIndex = reviewPage.indexOf('className="review-hud"');
-    const timelineIndex = reviewPage.indexOf("<PlaybackTimeline />");
+    const timelineIndex = reviewPage.indexOf("<PlaybackTimeline send={realtime.send} />");
     const dialogIndex = reviewPage.indexOf("<JoinDialog");
     expect(stageIndex).toBeGreaterThan(-1);
     expect(hudIndex).toBeGreaterThan(stageIndex);
@@ -61,6 +61,10 @@ describe("timeline layout styles", () => {
     expect(ruleBody(timelineCss, ".timeline__resize")).toContain("top: -4px");
     expect(ruleBody(timelineCss, ".timeline__transport")).toContain("margin-inline: auto");
     expect(playbackTimeline).toContain('import "./timeline.css"');
+    const sourceIndex = playbackTimeline.indexOf("<PlaybackSourceSelect send={send} />");
+    const clipIndex = playbackTimeline.indexOf("timeline__clip");
+    expect(sourceIndex).toBeGreaterThan(-1);
+    expect(sourceIndex).toBeLessThan(clipIndex);
   });
 
   it("places and sizes the timeline resize handle", () => {
@@ -75,5 +79,9 @@ describe("timeline layout styles", () => {
     expect(timelineRuler).not.toContain("new ResizeObserver");
     expect(timelineRuler).toContain('"0 0 " + width + " " + height');
     expect(timelineRuler).not.toContain('"0 0 " + width + " " + RULER_HEIGHT_PX');
+  });
+
+  it("sizes the playback source select", () => {
+    expect(ruleBody(timelineCss, ".timeline__source")).toContain("max-width: 12rem");
   });
 });

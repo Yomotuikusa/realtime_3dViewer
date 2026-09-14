@@ -1,4 +1,5 @@
 import type { CSSProperties, ReactElement } from "react";
+import type { ClientMessage } from "@shared/protocol";
 import { ResizeHandle } from "../layout/ResizeHandle";
 import { clampSize, TIMELINE_TRACK_DEFAULT_PX, TIMELINE_TRACK_MAX_PX, TIMELINE_TRACK_MIN_PX } from "../layout/resize";
 import { useLayoutSize } from "../layout/useLayoutSize";
@@ -6,6 +7,7 @@ import { usePlaybackStore } from "../../store/playback";
 import { currentDuration } from "../viewer/playback";
 import { frameOfTime, lastFrameOf } from "../viewer/playback-frames";
 import { TimelineRuler } from "./TimelineRuler";
+import { PlaybackSourceSelect } from "./PlaybackSourceSelect";
 import { PauseIcon, PlayIcon, SkipEndIcon, SkipStartIcon } from "./transport-icons";
 import {
   CLIP_LABEL,
@@ -23,7 +25,7 @@ import {
 import { fpsOptions } from "./timeline";
 import "./timeline.css";
 
-export function PlaybackTimeline(): ReactElement | null {
+export function PlaybackTimeline({ send }: { send: (msg: ClientMessage) => boolean }): ReactElement | null {
   const clips = usePlaybackStore((state) => state.clips);
   const clipIndex = usePlaybackStore((state) => state.clipIndex);
   const playing = usePlaybackStore((state) => state.playing);
@@ -58,6 +60,7 @@ export function PlaybackTimeline(): ReactElement | null {
       />
       <TimelineRuler frame={frame} lastFrame={lastFrame} onSeek={seekFrame} />
       <div className="timeline__controls">
+        <PlaybackSourceSelect send={send} />
         <select className="input timeline__clip" aria-label={CLIP_LABEL} title={CLIP_LABEL} value={clipIndex} onChange={(event) => selectClip(Number(event.target.value))}>
           {clips.map((clip, index) => <option key={index} value={index}>{clip.name}</option>)}
         </select>
