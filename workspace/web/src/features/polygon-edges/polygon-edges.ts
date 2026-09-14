@@ -64,6 +64,8 @@ export function hasPolygonEdges(geometry: BufferGeometry): boolean {
 
 /** file 順の多角形分割に対応する輪郭辺属性を geometry に付ける。 */
 export function applyPolygonEdges(geometry: BufferGeometry, polygonSizes: readonly number[]): boolean {
+  if (hasPolygonEdges(geometry)) return true;
+
   const position = geometry.getAttribute("position");
   if (geometry.index !== null || position === undefined || polygonSizes.length === 0) return false;
 
@@ -73,8 +75,6 @@ export function applyPolygonEdges(geometry: BufferGeometry, polygonSizes: readon
     expectedVertexCount += 3 * (polygonSize - 2);
   }
   if (expectedVertexCount !== position.count) return false;
-  if (hasPolygonEdges(geometry)) return true;
-
   const barycentric: number[] = [];
   const mask: number[] = [];
   let triangleStart = 0;

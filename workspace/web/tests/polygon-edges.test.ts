@@ -54,12 +54,23 @@ describe("polygon edge attributes", () => {
     expect(applyPolygonEdges(triangle, [3])).toBe(true);
     expect(values(triangle, POLYGON_EDGE_MASK_ATTRIBUTE)).toEqual([1, 1, 1, 1, 1, 1, 1, 1, 1]);
 
+    const pentagon = geometryForPolygons([
+      [0, 0, 0], [1, 0, 0], [2, 1, 0], [1, 2, 0], [0, 1, 0],
+    ]);
+    expect(applyPolygonEdges(pentagon, [5])).toBe(true);
+    expect(values(pentagon, POLYGON_EDGE_MASK_ATTRIBUTE).filter((value) => value === 0))
+      .toHaveLength(12);
+
     const polygons = geometryForPolygons(
-      [[0, 0, 0], [1, 0, 0], [2, 1, 0], [1, 2, 0], [0, 1, 0]],
-      [[5, 0, 0], [6, 0, 0], [6, 1, 0]],
+      [[0, 0, 0], [1, 0, 0], [1, 1, 0], [0, 1, 0]],
+      [[5, 0, 0], [6, 0, 0], [5, 1, 0]],
     );
-    expect(applyPolygonEdges(polygons, [5, 3])).toBe(true);
-    expect(values(polygons, POLYGON_EDGE_MASK_ATTRIBUTE).filter((value) => value === 0)).toHaveLength(12);
+    expect(applyPolygonEdges(polygons, [4, 3])).toBe(true);
+    expect(values(polygons, POLYGON_EDGE_MASK_ATTRIBUTE)).toEqual([
+      1, 0, 1, 1, 0, 1, 1, 0, 1,
+      1, 1, 0, 1, 1, 0, 1, 1, 0,
+      1, 1, 1, 1, 1, 1, 1, 1, 1,
+    ]);
   });
 
   it("rejects invalid geometry and leaves attributes untouched", () => {
@@ -83,6 +94,18 @@ describe("polygon edge attributes", () => {
     const mask = geometry.getAttribute(POLYGON_EDGE_MASK_ATTRIBUTE);
     expect(hasPolygonEdges(geometry)).toBe(true);
     expect(applyPolygonEdges(geometry, [3])).toBe(true);
+    expect(geometry.getAttribute(POLYGON_EDGE_BARYCENTRIC_ATTRIBUTE)).toBe(barycentric);
+    expect(geometry.getAttribute(POLYGON_EDGE_MASK_ATTRIBUTE)).toBe(mask);
+  });
+
+  it("accepts an already-attributed geometry without revalidating its source", () => {
+    const geometry = geometryForPolygons([[0, 0, 0], [1, 0, 0], [0, 1, 0]]);
+    expect(applyPolygonEdges(geometry, [3])).toBe(true);
+    geometry.setIndex([0, 1, 2]);
+    const barycentric = geometry.getAttribute(POLYGON_EDGE_BARYCENTRIC_ATTRIBUTE);
+    const mask = geometry.getAttribute(POLYGON_EDGE_MASK_ATTRIBUTE);
+
+    expect(applyPolygonEdges(geometry, [])).toBe(true);
     expect(geometry.getAttribute(POLYGON_EDGE_BARYCENTRIC_ATTRIBUTE)).toBe(barycentric);
     expect(geometry.getAttribute(POLYGON_EDGE_MASK_ATTRIBUTE)).toBe(mask);
   });
@@ -172,6 +195,24 @@ describe("PolygonEdgeOBJLoader", () => {
     const text = "v 0 0 0\nv 1 0 0\nv 0 1 0\no line\nl 1 2\no mesh\nf 1 2 3";
     const result = loader.parse(text);
     expect(result.children).toHaveLength(2);
+    expect(hasPolygonEdges((result.children[1] as Mesh).geometry)).toBe(true);
+  });
+
+  it("skips Points objects while attaching attributes to later Mesh objects", () => {
+    const text = [
+      "v 0 0 0",
+      "v 1 0 0",
+      "v 0 1 0",
+      "o points",
+      "p 1 2 3",
+      "f 1 2 3",
+      "o mesh",
+      "f 1 2 3",
+    ].join("\n");
+    const result = new PolygonEdgeOBJLoader().parse(text);
+    expect(result.children).toHaveLength(2);
+    expect(result.children[0]).not.toBeInstanceOf(Mesh);
+    expect(result.children[1]).toBeInstanceOf(Mesh);
     expect(hasPolygonEdges((result.children[1] as Mesh).geometry)).toBe(true);
   });
 });
