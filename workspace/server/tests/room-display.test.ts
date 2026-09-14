@@ -3,6 +3,7 @@ import {
   applyDisplayMessage,
   createRoomDisplayState,
   displayWelcomeFields,
+  forgetObjectInDisplay,
   hiddenPartsOf,
 } from "../src/realtime/room-display";
 
@@ -222,5 +223,28 @@ describe("room display state", () => {
     parts.push({ versionId: "v3", objectPath: "3" });
     parts[0]!.objectPath = "caller-only";
     expect(hiddenPartsOf(state)).toEqual([{ versionId: "v1", objectPath: "0/1" }]);
+  });
+
+  it("forgets deleted versions from hidden, compare, and playback state", () => {
+    const state = createRoomDisplayState();
+    applyDisplayMessage(state, "u1", { type: "object:visibility", versionId: "v1", visible: false });
+    applyDisplayMessage(state, "u1", { type: "object:visibility", versionId: "v2", visible: false });
+    applyDisplayMessage(state, "u1", {
+      type: "object:part-visibility", versionId: "v1", objectPath: "0", visible: false,
+    });
+    applyDisplayMessage(state, "u1", {
+      type: "mesh:compare", compare: { baseId: "v1", targetId: "v2", thresholdPermille: 10 },
+    });
+    applyDisplayMessage(state, "u1", { type: "playback:source", versionId: "v1" });
+
+    forgetObjectInDisplay(state, "v1");
+
+    expect([...state.hiddenObjects]).toEqual(["v2"]);
+    expect(hiddenPartsOf(state)).toEqual([]);
+    expect(state.meshCompare).toEqual({ baseId: null, targetId: "v2", thresholdPermille: 10 });
+    expect(state.playbackSource).toBeNull();
+
+    forgetObjectInDisplay(state, "v2");
+    expect(state.meshCompare).toEqual({ baseId: null, targetId: null, thresholdPermille: 10 });
   });
 });

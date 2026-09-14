@@ -20,7 +20,10 @@ const app = createApp({
   db,
   storage,
   config,
-  publish: (projectId, msg) => realtime?.publish(projectId, msg),
+  publish: (projectId, msg) => {
+    if (msg.type === "object:removed") hub.forgetObject(projectId, msg.versionId);
+    realtime?.publish(projectId, msg);
+  },
 });
 const server = serve({ fetch: app.fetch, port: config.port });
 realtime = attachRealtime(server as unknown as Server, hub, {

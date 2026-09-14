@@ -9,7 +9,7 @@
 - vitest.config.ts: テスト設定(tests/**/*.test.ts、cacheDir は .vite)
 - src/types.ts: Vec3、CameraState、Stroke、Comment(`CommentPlayback` によるクリップ添字・フレーム位置と任意の再生対象 versionId を含む)、ModelVersion、Project(全 versions と latestVersion の整合性を含む)、LightAngles、MeshDisplayMode、MeshCompare、JointDisplay、PresenceUser、ObjectPath、ObjectPartRef の型と、識別子・ファイル名・自由文字列・焦点距離・ライト角度・メッシュ表示方法・比較設定・ジョイント表示設定・コメント再生位置・版内オブジェクトパスを検証する zod スキーマ
 - src/api.ts: REST のエラー、プロジェクト名、コメント入出力スキーマ(`CreateCommentInput` は任意の `CommentPlayback` を含む)、`ModelFormat` / `modelFormat` / `MODEL_CONTENT_TYPES` と upload 定数
-- src/protocol.ts: WS の ClientMessage/ServerMessage 型(カメラの focalLength、ルーム共有 light / mesh display / mesh compare / joint:display / trail:display / playback:source、オブジェクト可視性・部位可視性・版追加を含む)、送信間隔定数、discriminated union スキーマ、JSON フレーム parse 関数
+- src/protocol.ts: WS の ClientMessage/ServerMessage 型(カメラの focalLength、ルーム共有 light / mesh display / mesh compare / joint:display / trail:display / playback:source、オブジェクト可視性・部位可視性・版追加・版削除を含む)、送信間隔定数、discriminated union スキーマ、JSON フレーム parse 関数
 - src/camera.ts: three.js に依存しない CameraState/Vec3 の比較、補間、複製(NaN は補間開始点として処理)、焦点距離(mm)のクランプ
 - src/stroke.ts: 反復処理による3D Ramer–Douglas–Peucker の点列間引きと送信可否判定
 - src/compare.ts: `MeshCompare` の active 判定、全フィールド比較、浅い複製を行う three.js 非依存の純粋関数
@@ -38,7 +38,7 @@
 - 型: `Vec3`, `CameraState`, `Stroke`, `CommentStatus`, `CommentPlayback`, `Comment`(`playback` は任意・null 許容), `ModelVersion`, `Project`(`versions` と `latestVersion` を含む), `LightAngles`, `MeshDisplayMode`, `MeshCompare`, `JointDisplay`, `MotionTrail`, `ActiveMeshCompare`, `PresenceUser`(`focalLength` は任意), `ObjectPath`, `ObjectPartRef`
 - スキーマ: `Vec3Schema`, `ColorSchema`, `CameraStateSchema`, `FocalLengthSchema`, `LightAnglesSchema`, `MeshDisplayModeSchema`, `MeshCompareSchema`, `JointDisplaySchema`, `MotionTrailSchema`, `StrokeSchema`, `CommentStatusSchema`, `CommentPlaybackSchema`, `CommentSchema`, `ModelVersionSchema`, `ProjectSchema`, `PresenceUserSchema`, `ObjectPathSchema`, `ObjectPartRefSchema`
 - api: `ErrorCode`, `ApiError`, `ApiErrorSchema`, `MAX_UPLOAD_BYTES_DEFAULT`, `ALLOWED_MODEL_EXTENSIONS`, `ModelFormat`, `modelFormat`, `MODEL_CONTENT_TYPES`, `ProjectNameSchema`, `CreateCommentInput`, `UpdateCommentStatusInput`, `ListCommentsQuery`
-- protocol: `ClientMessage`, `ServerMessage`, `ClientMessageSchema`, `ServerMessageSchema`, `ParseResult`, `parseClientMessage`, `parseServerMessage`, `MAX_NAME_LENGTH`, `CAMERA_SEND_INTERVAL_MS`, `LIGHT_SEND_INTERVAL_MS`; Client の `object:visibility` / `object:part-visibility` / `mesh:display` / `mesh:compare` / `joint:display` / `trail:display` / `playback:source`、Server の `welcome.hiddenObjectIds` / `welcome.hiddenObjectParts` / `meshDisplay` / `meshCompare` / `jointDisplay` / `motionTrail` / `playbackSource`、各表示イベントを含む
+- protocol: `ClientMessage`, `ServerMessage`, `ClientMessageSchema`, `ServerMessageSchema`, `ParseResult`, `parseClientMessage`, `parseServerMessage`, `MAX_NAME_LENGTH`, `CAMERA_SEND_INTERVAL_MS`, `LIGHT_SEND_INTERVAL_MS`; Client の表示操作、Server の `welcome` 表示状態、`object:added` / `object:removed` を含む各イベントを提供する
 - types の定数: `MAX_ID_LENGTH`, `MAX_FILE_NAME_LENGTH`, `MAX_PROJECT_NAME_LENGTH`, `MAX_AUTHOR_NAME_LENGTH`, `MAX_COMMENT_BODY_LENGTH`, `MAX_OBJECT_PATH_LENGTH`, `MIN_FOCAL_LENGTH_MM`, `MAX_FOCAL_LENGTH_MM`, `DEFAULT_FOCAL_LENGTH_MM`, `DEFAULT_MESH_DISPLAY`, `MIN_COMPARE_THRESHOLD_PERMILLE`, `MAX_COMPARE_THRESHOLD_PERMILLE`, `DEFAULT_COMPARE_THRESHOLD_PERMILLE`, `DEFAULT_MESH_COMPARE`, `DEFAULT_JOINT_DISPLAY`
 - types の入力スキーマ: `IdSchema`, `FileNameSchema`
 - camera: `DEFAULT_CAMERA`, `vec3Equals`, `lerpVec3`, `cameraEquals`, `lerpCamera`, `cloneCamera`, `clampFocalLength`
@@ -50,7 +50,7 @@
 - `shared/src/index.ts` は types.ts/api.ts/protocol.ts/camera.ts/stroke.ts/compare.ts/object-part.ts/joint.ts/trail.ts の公開インターフェイスだけを再エクスポートする。
 
 ## 他機能との関係
-コメントの `CommentPlayback.versionId` は投稿時の再生対象を指し、古いコメントでは省略される。server は playback を JSON のまま保存・返却し、web がこの値を使って再生対象を切り替える。
+コメントの `CommentPlayback.versionId` は投稿時の再生対象を指し、古いコメントでは省略される。server は playback を JSON のまま保存・返却し、web がこの値を使って再生対象を切り替える。Project は版が無い場合も `latestVersion: null` と `versions: []` で表す。
 server の DB・ルート、web の状態管理・表示が本モジュールの型とスキーマを import する。部位の共有鍵は three.js の uuid ではなく、版の scene ルートからの子インデックスの `ObjectPath`(設計書 §13.5) とする。`focalLength` は PresenceUser と camera メッセージだけに存在する Presence 専用の値で、`CameraState` とコメント保存スキーマには含まれない。`light` は ClientMessage と ServerMessage に存在するルーム共有値で、welcome では任意、通常イベントでは userId と角度を持つ。`mesh:display` もルーム共有値として mode を扱い、welcome では任意の `meshDisplay` として表現する。`mesh:compare` は baseId / targetId / thresholdPermille 全体をルーム共有値として扱い、welcome では任意の `meshCompare` として表現する。`joint:display` は visible / xray 全体をルーム共有値として扱い、welcome では任意の `jointDisplay` として表現する。`object:part-visibility` は版内の部位の可視性切り替えを中継し、welcome の `hiddenObjectParts` は非表示状態の復元に使う。
-api.ts は REST のサーバ受信入力とクライアント利用型を、protocol.ts は WS のサーバ受信・クライアント受信を同じ zod スキーマで検証する。Project の `versions` は版番号順の全モデル版で、`latestVersion` はその末尾と一致する。オブジェクト可視性は `versionId` の集合を扱い、`object:added` は新しい ModelVersion を通知する。
+api.ts は REST のサーバ受信入力とクライアント利用型を、protocol.ts は WS のサーバ受信・クライアント受信を同じ zod スキーマで検証する。Project の `versions` は版番号順の全モデル版で、`latestVersion` はその末尾と一致する(空配列では null)。オブジェクト可視性は `versionId` の集合を扱い、`object:added` / `object:removed` は REST の版変更を通知する。
 camera.ts は Follow Camera とコメント再現の補間・比較を、stroke.ts は Annotation 送信前の点列間引きを、compare.ts はメッシュ比較設定の判定・比較・複製を提供する。いずれも three.js に依存しない。trail.ts は ObjectPartRef を対象とする軌跡表示設定を比較・複製を含めて提供し、protocol の `trail:display` と welcome の `motionTrail` で送受信する。

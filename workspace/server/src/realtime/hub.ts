@@ -5,6 +5,7 @@ import { cloneMotionTrail, type MotionTrail } from "@shared/trail";
 import {
   applyDisplayMessage,
   displayWelcomeFields,
+  forgetObjectInDisplay,
   hiddenPartsOf,
 } from "./room-display";
 import { addStroke, clearStrokes, removeStroke } from "./room-strokes";
@@ -165,6 +166,12 @@ export class RoomHub {
 
   playbackSourceIn(projectId: string): string | null {
     return this.rooms.get(projectId)?.display.playbackSource ?? null;
+  }
+
+  /** Forget a deleted version from an existing room without broadcasting. */
+  forgetObject(projectId: string, versionId: string): void {
+    const room = this.rooms.get(projectId);
+    if (room) forgetObjectInDisplay(room.display, versionId);
   }
 
   private join(connId: string, connection: Connection, name: string): Outbound[] {

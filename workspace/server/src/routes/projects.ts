@@ -5,6 +5,7 @@ import { MODEL_CONTENT_TYPES, modelFormat, ProjectNameSchema } from "@shared/api
 import type { ModelVersion } from "@shared/types";
 import type { AppDeps } from "../app";
 import {
+  deleteModelVersion,
   findModelVersion,
   findProject,
   insertModelVersion,
@@ -109,6 +110,21 @@ export function projectRoutes(deps: Required<AppDeps>): Hono {
 
     deps.publish(projectId, { type: "object:added", version });
     return c.json(version, 201);
+  });
+
+  routes.delete("/:projectId/versions/:versionId", async (c) => {
+    const projectId = c.req.param("projectId");
+    const versionId = c.req.param("versionId");
+    if (!findProject(deps.db, projectId)) {
+      notFound("Project not found");
+    }
+    if (!deleteModelVersion(deps.db, projectId, versionId)) {
+      notFound("Model version not found");
+    }
+
+    await deps.storage.deleteModelFile(versionId);
+    deps.publish(projectId, { type: "object:removed", versionId });
+    return c.body(null, 204);
   });
 
   routes.get("/:projectId", (c) => {

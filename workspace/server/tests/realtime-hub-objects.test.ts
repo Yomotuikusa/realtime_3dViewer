@@ -133,4 +133,29 @@ describe("RoomHub object visibility", () => {
     hub.connect("p1");
     expect(welcome(hub, "b", "Bob").light).toEqual({ yaw: 1, pitch: 0.5 });
   });
+
+  it("forgets deleted versions without broadcasting and leaves other display state", () => {
+    const ids = ["a", "b"];
+    const hub = new RoomHub({ newId: () => ids.shift()! });
+    hub.connect("p1");
+    join(hub, "a", "Alice");
+    hub.handle("a", visibility("v1", false));
+    hub.handle("a", visibility("v2", false));
+    hub.handle("a", { type: "object:part-visibility", versionId: "v1", objectPath: "0", visible: false });
+    hub.handle("a", { type: "object:part-visibility", versionId: "v2", objectPath: "1", visible: false });
+    hub.handle("a", { type: "mesh:compare", compare: { baseId: "v1", targetId: "v2", thresholdPermille: 10 } });
+    hub.handle("a", { type: "playback:source", versionId: "v1" });
+
+    hub.forgetObject("p1", "v1");
+
+    expect(hub.hiddenObjectsIn("p1")).toEqual(["v2"]);
+    expect(hub.hiddenObjectPartsIn("p1")).toEqual([{ versionId: "v2", objectPath: "1" }]);
+    expect(hub.meshCompareIn("p1")).toEqual({ baseId: null, targetId: "v2", thresholdPermille: 10 });
+    expect(hub.playbackSourceIn("p1")).toBeNull();
+    hub.connect("p1");
+    const joined = welcome(hub, "b", "Bob");
+    expect(joined.hiddenObjectIds).toEqual(["v2"]);
+    expect(joined.hiddenObjectParts).toEqual([{ versionId: "v2", objectPath: "1" }]);
+    expect(() => hub.forgetObject("missing", "v1")).not.toThrow();
+  });
 });

@@ -1,5 +1,5 @@
 import type { ModelVersion, Project } from "@shared/types";
-import type { Db } from "./connection";
+import { withTransaction, type Db } from "./connection";
 
 interface ProjectRow {
   id: string;
@@ -82,17 +82,32 @@ export function findProject(db: Db, projectId: string): Project | null {
   }
 
   const versions = listModelVersions(db, projectId);
-  if (versions.length === 0) {
-    return null;
-  }
-
   return {
     id: project.id,
     name: project.name,
     createdAt: project.created_at,
-    latestVersion: versions[versions.length - 1]!,
+    latestVersion: versions[versions.length - 1] ?? null,
     versions,
   };
+}
+
+/** Delete a version and its comments atomically when it belongs to the project. */
+export function deleteModelVersion(
+  db: Db,
+  projectId: string,
+  versionId: string,
+): boolean {
+  return withTransaction(db, () => {
+    const version = db
+      .prepare("SELECT id FROM model_versions WHERE project_id = ? AND id = ?")
+      .get(projectId, versionId) as { id: string } | undefined;
+    if (!version) return false;
+
+    db.prepare("DELETE FROM comments WHERE version_id = ?").run(versionId);
+    db.prepare("DELETE FROM model_versions WHERE project_id = ? AND id = ?")
+      .run(projectId, versionId);
+    return true;
+  });
 }
 
 export function findModelVersion(
