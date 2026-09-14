@@ -5,7 +5,7 @@
 
 ## ファイル一覧と役割
 - CommentList.tsx: `CommentList({ projectId })` として REST でコメントを取得し、未解決フィルタ、時刻・状態・再生フレームバッジ付き一覧、選択領域、解決 / 再開操作、API エラーと空状態を提供。選択領域は native button、状態変更ボタンは兄弟要素として分離し、layout effect cleanup で無効化したアンマウントまたは projectId 世代変更後の非同期結果はストアへ反映しない
-- comment-labels.ts: コメント見出し、状態/空状態/Composer/ピン/フレーム/吹き出しの日本語ラベル、Intl による時刻整形
+- comment-labels.ts: コメント見出し、状態/空状態/Composer/ピン/フレーム/吹き出し、空シーン投稿欄の日本語ラベル、Intl による時刻整形
 - comments.css: コメント一覧を枠線・ドロップシャドウ付きカードとして表示し、Composer に同じ影を与えるトークン CSS。コメント領域を縦グリッド化し、カードを上から積み上げ、非選択カードの本文領域を 2 行分の高さに揃え、選択中のみ本文を全文展開する。Composer 不在時は親を単独の可変行へ切り替えて一覧が全高を使い、一覧だけをスクロールさせる。3D ビューの選択コメント吹き出しはピン横の固定幅カードとして表示し、長文本文だけをスクロールさせ、吹き出しの閉じるボタンは円形アウトライン付きにする
 - compose.ts: クリック移動量の判定、自分の線の時系列順・最新200本への制限、再生位置と再生対象 versionId の投稿値算出、コメント投稿入力の組み立てを提供する
 - frame-switch.ts: フレーム自動記録スイッチの localStorage 読み書きと既定値を提供する
@@ -20,7 +20,7 @@
 ## 公開インターフェイス
 - compose.ts: `CLICK_MOVE_THRESHOLD_PX`、`isClick`、`ownStrokesForComment`、`commentPlaybackOf`、`buildCommentInput`
 - frame-switch.ts: `RECORD_FRAME_STORAGE_KEY`、`loadRecordFrame`、`saveRecordFrame`
-- comment-labels.ts: コメント表示定数、`RECORD_FRAME_LABEL`、`CLOSE_CALLOUT_LABEL`、`commentsHeading`、`statusLabel`、`statusTone`、`toggleStatusLabel`、`pinLabel`、`recordFrameLabel`、`playbackBadge`、`playbackTitle`、`formatCommentTime`
+- comment-labels.ts: コメント表示定数、`COMPOSER_NO_OBJECTS_MESSAGE`、`RECORD_FRAME_LABEL`、`CLOSE_CALLOUT_LABEL`、`commentsHeading`、`statusLabel`、`statusTone`、`toggleStatusLabel`、`pinLabel`、`recordFrameLabel`、`playbackBadge`、`playbackTitle`、`formatCommentTime`
 - CommentPickLayer.tsx: `CommentPickLayer()`
 - CommentComposer.tsx: `CommentComposer({ projectId, versionId })`
 - CommentPins.tsx: `CommentPins()`。表示対象から `selectedId` のコメントを探し、ピン群の後に `CommentCallout` を描画

@@ -15,7 +15,7 @@
 - UploadPage.tsx: `.glb`/`.gltf`/`.fbx`/`.obj` のアップロード画面。`accept` は `ALLOWED_MODEL_EXTENSIONS` 由来で、OBJ が材質なし表示になる注記を常時出す
 - upload-labels.ts: アップロード画面と NotFound の表示文言、OBJ 材質なし表示注記、ファイル検証・複数ファイル容量表示 helper の純粋関数
 - upload.css: アップロード画面と NotFound の狭い幅のレイアウト CSS
-- ReviewPage.tsx: プロジェクト取得、レビュー画面の骨格、ロード状態・エラーカード、`.review-stage` とビュー下部タイムラインを含むビューア／サイズ変更可能な左ドックとサイドパネルのレイアウトを担当する。左ドック `.review-outliner` に realtime の `send` を渡した `Outliner` を配置し、`outlinerWidth` を保存する。右パネル優先で幅を計算し、Canvas に RemoteCameras / RoomStrokes / ReplayStrokes / AnnotationLayer / CommentPickLayer / CommentPins / `SelectionRig` / `VisibilityRig` / `JointRig` を配置し、右ドックに PresenceList / ObjectList / `.review-panel__comments` を順に配置する。`.review-hud` を HUD 差し込み口、`.review-panel__comments` をコメント領域差し込み口として提供し、カメラとライトの変更、コメント再生を realtime の `send` へ結線し、入室後だけショートカットを有効にする。設定表示中は `SettingsDialog` を表示し、タイムラインへ realtime の `send` を渡す
+- ReviewPage.tsx: プロジェクト取得、レビュー画面の骨格、ロード状態・エラーカード、`.review-stage` とビュー下部タイムラインを含むビューア／サイズ変更可能な左ドックとサイドパネルのレイアウトを担当する。左ドック `.review-outliner` に realtime の `send` を渡した `Outliner` を配置し、`outlinerWidth` を保存する。右パネル優先で幅を計算し、Canvas に RemoteCameras / RoomStrokes / ReplayStrokes / AnnotationLayer / CommentPickLayer / CommentPins / `SelectionRig` / `VisibilityRig` / `JointRig` を配置し、右ドックに PresenceList / ObjectList / `.review-panel__comments` を順に配置する。コメント欄はストアの最新オブジェクトに追随し、空シーンでは投稿案内を表示する。`.review-hud` を HUD 差し込み口、`.review-panel__comments` をコメント領域差し込み口として提供し、カメラとライトの変更、コメント再生を realtime の `send` へ結線し、入室後だけショートカットを有効にする。設定表示中は `SettingsDialog` を表示し、タイムラインへ realtime の `send` を渡す
 - ReviewHeader.tsx: 接続状態バッジ、入室後の自分の表示名・色、レビュー URL のコピーと失敗時の手動コピー欄を表示し、入室後だけ設定ダイアログを開くボタンを表示する
 - SettingsDialog.tsx: `ShortcutSettings` と `ThemeSettings` をキー操作／表示色タブで切り替える設定ダイアログの枠を担当する
 - review-labels.ts: 接続状態・コピー状態・ロード/エラー文言、設定ダイアログとタブのラベル、サイドパネル幅ハンドルのラベルを定義する JSX 非依存の純粋関数と定数
@@ -49,7 +49,7 @@
 失敗回数をリセットする。明示的な `close` 後は再接続しない。
 `dispatchServerMessage` は `welcome` で session の self ID/色、presence の参加者一覧、annotation のライブ線、任意の共有ライト・メッシュ表示方法・メッシュ比較設定・ジョイント表示設定・モーション軌跡表示設定・再生対象、非表示オブジェクト一覧と `welcome.hiddenObjectParts` を確定し、
 `user:joined` / `user:left` / `camera` を presence ストアへ、`stroke:add` / `stroke:remove` / `stroke:clear` を
-  annotation ストアへ、`light` を lighting ストアへ、`comment:created` / `comment:updated` を comments ストアへ、`object:visibility` / `object:part-visibility` / `object:added` を objects ストアへ、`object:removed` は `applyObjectRemoved` へ委譲して全ストアの参照を掃除し、`mesh:display` / `mesh:compare` / `joint:display` / `trail:display` / `playback:source` を display ストアへ反映し、`error` を `CODE: message` として保存する。welcome に比較設定、ジョイント表示設定、軌跡表示設定、または再生対象がない場合は既定値または null へ戻す。空 project では latestVersion が null のためコメント投稿欄を表示しない。
+  annotation ストアへ、`light` を lighting ストアへ、`comment:created` / `comment:updated` を comments ストアへ、`object:visibility` / `object:part-visibility` / `object:added` を objects ストアへ、`object:removed` は `applyObjectRemoved` へ委譲して全ストアの参照を掃除し、`mesh:display` / `mesh:compare` / `joint:display` / `trail:display` / `playback:source` を display ストアへ反映し、`error` を `CODE: message` として保存する。welcome に比較設定、ジョイント表示設定、軌跡表示設定、または再生対象がない場合は既定値または null へ戻す。空 project ではオブジェクトストアが空になるためコメント投稿欄の代わりに案内を表示する。
 
 ## テスト
 - tests/api-delete-version.test.ts: 版削除 API の204成功、エンコード、構造化エラー、非JSONエラー、通信失敗のテスト

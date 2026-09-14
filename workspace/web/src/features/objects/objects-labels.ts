@@ -4,6 +4,11 @@ export const HIDDEN_LABEL = "非表示";
 export const ADD_FILES_LABEL = "ファイルを追加";
 export const ADDING_LABEL = "追加中…";
 export const ADD_FAILED = "ファイルの追加に失敗しました。";
+export const DELETE_LABEL = "削除";
+export const DELETING_LABEL = "削除中…";
+export const DELETE_DIALOG_TITLE = "オブジェクトを削除";
+export const DELETE_CONFIRM_LABEL = "削除する";
+export const DELETE_FAILED = "オブジェクトの削除に失敗しました。";
 export const COMPARE_HEADING = "比較";
 export const COMPARE_BASE_LABEL = "基準";
 export const COMPARE_TARGET_LABEL = "対象";
@@ -24,6 +29,27 @@ export function versionTag(version: { number: number }): string {
 /** "<fileName> の表示を切り替え" */
 export function toggleAriaLabel(version: { fileName: string }): string {
   return `${version.fileName} の表示を切り替え`;
+}
+
+/** "<fileName> を削除" */
+export function deleteAriaLabel(version: { fileName: string }): string {
+  return `${version.fileName} を削除`;
+}
+
+/** オブジェクトと、紐づくコメントの削除確認文。 */
+export function deleteConfirmMessage(fileName: string, commentCount: number): string {
+  const comments = commentCount > 0
+    ? `付いているコメント ${commentCount} 件も削除されます。`
+    : "";
+  return `${fileName} を削除します。${comments}元に戻せません。`;
+}
+
+/** versionId に紐づくコメント件数。 */
+export function countCommentsForVersion(
+  comments: readonly { versionId: string }[],
+  versionId: string,
+): number {
+  return comments.filter((comment) => comment.versionId === versionId).length;
 }
 
 /** "v<number> · <fileName>" */

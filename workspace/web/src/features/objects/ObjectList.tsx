@@ -1,17 +1,25 @@
 import { useState, type ChangeEvent, type ReactElement } from "react";
 import type { ClientMessage } from "@shared/protocol";
 import { ALLOWED_MODEL_EXTENSIONS, MAX_UPLOAD_BYTES_DEFAULT } from "@shared/api";
-import { ApiClientError, addModelVersion } from "../../api/client";
+import { ApiClientError, addModelVersion, deleteModelVersion } from "../../api/client";
 import { validateModelFiles } from "../../app/upload-labels";
+import { applyObjectRemoved } from "../../app/object-removal";
+import { useCommentsStore } from "../../store/comments";
 import { isObjectVisible, useObjectsStore } from "../../store/objects";
+import type { ModelVersion } from "@shared/types";
 import { CompareControls } from "./CompareControls";
+import { DeleteObjectDialog } from "./DeleteObjectDialog";
 import {
   ADD_FAILED,
   ADD_FILES_LABEL,
   ADDING_LABEL,
+  DELETE_FAILED,
+  DELETE_LABEL,
   HIDDEN_LABEL,
   OBJECTS_HEADING,
   VISIBLE_LABEL,
+  countCommentsForVersion,
+  deleteAriaLabel,
   objectsHeading,
   toggleAriaLabel,
   versionTag,
@@ -25,6 +33,13 @@ function uploadErrorMessage(error: unknown): string {
   return ADD_FAILED;
 }
 
+function deleteErrorMessage(error: unknown): string {
+  if (error instanceof ApiClientError || error instanceof Error) {
+    return error.message || DELETE_FAILED;
+  }
+  return DELETE_FAILED;
+}
+
 export function ObjectList({
   projectId,
   send,
@@ -34,10 +49,12 @@ export function ObjectList({
 }): ReactElement {
   const objects = useObjectsStore((state) => state.objects);
   const hiddenIds = useObjectsStore((state) => state.hiddenIds);
+  const comments = useCommentsStore((state) => state.items);
   const setVisible = useObjectsStore((state) => state.setVisible);
   const append = useObjectsStore((state) => state.append);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [pendingDelete, setPendingDelete] = useState<ModelVersion | null>(null);
 
   const handleToggle = (versionId: string): void => {
     const visible = isObjectVisible(useObjectsStore.getState().hiddenIds, versionId);
@@ -74,6 +91,24 @@ export function ObjectList({
     }
   };
 
+  const handleDeleteConfirm = async (): Promise<void> => {
+    if (pendingDelete === null) return;
+    const versionId = pendingDelete.id;
+    setBusy(true);
+    setError(null);
+    try {
+      await deleteModelVersion(projectId, versionId);
+      applyObjectRemoved(versionId);
+      setPendingDelete(null);
+      setError(null);
+    } catch (caught: unknown) {
+      setError(deleteErrorMessage(caught));
+      setPendingDelete(null);
+    } finally {
+      setBusy(false);
+    }
+  };
+
   return (
     <section className="objects" aria-label={OBJECTS_HEADING}>
       <h2 className="objects__heading">{objectsHeading(objects.length)}</h2>
@@ -92,6 +127,18 @@ export function ObjectList({
                 onClick={() => handleToggle(version.id)}
               >
                 {visible ? VISIBLE_LABEL : HIDDEN_LABEL}
+              </button>
+              <button
+                className="btn btn--quiet objects__delete"
+                type="button"
+                aria-label={deleteAriaLabel(version)}
+                onClick={() => {
+                  setError(null);
+                  setPendingDelete(version);
+                }}
+                disabled={busy}
+              >
+                {DELETE_LABEL}
               </button>
             </li>
           );
@@ -113,6 +160,15 @@ export function ObjectList({
       </label>
       <CompareControls send={send} />
       {error !== null && <p className="alert" role="alert">{error}</p>}
+      {pendingDelete !== null && (
+        <DeleteObjectDialog
+          version={pendingDelete}
+          commentCount={countCommentsForVersion(comments, pendingDelete.id)}
+          busy={busy}
+          onConfirm={() => void handleDeleteConfirm()}
+          onCancel={() => setPendingDelete(null)}
+        />
+      )}
     </section>
   );
 }
