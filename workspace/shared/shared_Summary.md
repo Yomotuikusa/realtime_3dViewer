@@ -7,7 +7,7 @@
 ## ファイル一覧と役割
 - tsconfig.json: 型検査設定(../tsconfig.base.json を継承。`@shared/*` は shared/src を指す)
 - vitest.config.ts: テスト設定(tests/**/*.test.ts、cacheDir は .vite)
-- src/types.ts: Vec3、CameraState、Stroke、Comment(`CommentPlayback` による任意のクリップ添字・フレーム位置を含む)、ModelVersion、Project(全 versions と latestVersion の整合性を含む)、LightAngles、MeshDisplayMode、MeshCompare、JointDisplay、PresenceUser、ObjectPath、ObjectPartRef の型と、識別子・ファイル名・自由文字列・焦点距離・ライト角度・メッシュ表示方法・比較設定・ジョイント表示設定・コメント再生位置・版内オブジェクトパスを検証する zod スキーマ
+- src/types.ts: Vec3、CameraState、Stroke、Comment(`CommentPlayback` によるクリップ添字・フレーム位置と任意の再生対象 versionId を含む)、ModelVersion、Project(全 versions と latestVersion の整合性を含む)、LightAngles、MeshDisplayMode、MeshCompare、JointDisplay、PresenceUser、ObjectPath、ObjectPartRef の型と、識別子・ファイル名・自由文字列・焦点距離・ライト角度・メッシュ表示方法・比較設定・ジョイント表示設定・コメント再生位置・版内オブジェクトパスを検証する zod スキーマ
 - src/api.ts: REST のエラー、プロジェクト名、コメント入出力スキーマ(`CreateCommentInput` は任意の `CommentPlayback` を含む)、`ModelFormat` / `modelFormat` / `MODEL_CONTENT_TYPES` と upload 定数
 - src/protocol.ts: WS の ClientMessage/ServerMessage 型(カメラの focalLength、ルーム共有 light / mesh display / mesh compare / joint:display / trail:display / playback:source、オブジェクト可視性・部位可視性・版追加を含む)、送信間隔定数、discriminated union スキーマ、JSON フレーム parse 関数
 - src/camera.ts: three.js に依存しない CameraState/Vec3 の比較、補間、複製(NaN は補間開始点として処理)、焦点距離(mm)のクランプ
@@ -28,7 +28,7 @@
 - tests/protocol-joint.test.ts: `joint:display` の Client/Server variant、welcome optional、parse のテスト
 - tests/camera.test.ts: カメラの比較、補間、クランプ、複製のテスト
 - tests/stroke.test.ts: 点列間引き、許容誤差、送信可能範囲のテスト
-- tests/comment-playback.test.ts: コメント再生位置の型・スキーマ、REST 入力、WS コメント受信のテスト
+- tests/comment-playback.test.ts: コメント再生位置と任意の versionId の型・スキーマ、REST 入力、WS コメント受信のテスト
 - tests/object-part.test.ts: `ObjectPath` / `ObjectPartRef` のスキーマ、部位参照ヘルパー、公開面のテスト
 - tests/trail.test.ts: モーション軌跡の比較、複製、既定値、スキーマ境界のテスト
 - tests/protocol-trail.test.ts: `trail:display` の Client/Server variant、welcome optional、parse のテスト
@@ -50,6 +50,7 @@
 - `shared/src/index.ts` は types.ts/api.ts/protocol.ts/camera.ts/stroke.ts/compare.ts/object-part.ts/joint.ts/trail.ts の公開インターフェイスだけを再エクスポートする。
 
 ## 他機能との関係
+コメントの `CommentPlayback.versionId` は投稿時の再生対象を指し、古いコメントでは省略される。server は playback を JSON のまま保存・返却し、web がこの値を使って再生対象を切り替える。
 server の DB・ルート、web の状態管理・表示が本モジュールの型とスキーマを import する。部位の共有鍵は three.js の uuid ではなく、版の scene ルートからの子インデックスの `ObjectPath`(設計書 §13.5) とする。`focalLength` は PresenceUser と camera メッセージだけに存在する Presence 専用の値で、`CameraState` とコメント保存スキーマには含まれない。`light` は ClientMessage と ServerMessage に存在するルーム共有値で、welcome では任意、通常イベントでは userId と角度を持つ。`mesh:display` もルーム共有値として mode を扱い、welcome では任意の `meshDisplay` として表現する。`mesh:compare` は baseId / targetId / thresholdPermille 全体をルーム共有値として扱い、welcome では任意の `meshCompare` として表現する。`joint:display` は visible / xray 全体をルーム共有値として扱い、welcome では任意の `jointDisplay` として表現する。`object:part-visibility` は版内の部位の可視性切り替えを中継し、welcome の `hiddenObjectParts` は非表示状態の復元に使う。
 api.ts は REST のサーバ受信入力とクライアント利用型を、protocol.ts は WS のサーバ受信・クライアント受信を同じ zod スキーマで検証する。Project の `versions` は版番号順の全モデル版で、`latestVersion` はその末尾と一致する。オブジェクト可視性は `versionId` の集合を扱い、`object:added` は新しい ModelVersion を通知する。
 camera.ts は Follow Camera とコメント再現の補間・比較を、stroke.ts は Annotation 送信前の点列間引きを、compare.ts はメッシュ比較設定の判定・比較・複製を提供する。いずれも three.js に依存しない。trail.ts は ObjectPartRef を対象とする軌跡表示設定を比較・複製を含めて提供し、protocol の `trail:display` と welcome の `motionTrail` で送受信する。

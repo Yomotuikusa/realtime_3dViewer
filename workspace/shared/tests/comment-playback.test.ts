@@ -62,9 +62,16 @@ describe("CommentPlaybackSchema", () => {
   it("requires both position fields and strips extra fields", () => {
     expect(CommentPlaybackSchema.safeParse({ clipIndex: 0 }).success).toBe(false);
     expect(CommentPlaybackSchema.safeParse({ frame: 0 }).success).toBe(false);
-    const parsed = CommentPlaybackSchema.safeParse({ clipIndex: 0, frame: 0, extra: 1 });
+    const parsed = CommentPlaybackSchema.safeParse({ clipIndex: 0, frame: 0, versionId: "v1", extra: 1 });
     expect(parsed.success).toBe(true);
-    if (parsed.success) expect(parsed.data).toEqual({ clipIndex: 0, frame: 0 });
+    if (parsed.success) expect(parsed.data).toEqual({ clipIndex: 0, frame: 0, versionId: "v1" });
+  });
+
+  it("accepts an omitted version and rejects invalid version ids", () => {
+    expect(CommentPlaybackSchema.safeParse({ clipIndex: 0, frame: 0 }).success).toBe(true);
+    for (const versionId of ["", "a b"]) {
+      expect(CommentPlaybackSchema.safeParse({ clipIndex: 0, frame: 0, versionId }).success).toBe(false);
+    }
   });
 });
 
@@ -95,7 +102,7 @@ describe("CreateCommentInput playback", () => {
   it("accepts omitted, null, and valid playback", () => {
     expect(CreateCommentInput.safeParse(createInput).success).toBe(true);
     expect(CreateCommentInput.safeParse({ ...createInput, playback: null }).success).toBe(true);
-    expect(CreateCommentInput.safeParse({ ...createInput, playback: { clipIndex: 0, frame: 10 } }).success).toBe(true);
+    expect(CreateCommentInput.safeParse({ ...createInput, playback: { clipIndex: 0, frame: 10, versionId: "v1" } }).success).toBe(true);
   });
 
   it("rejects a nonnumeric frame", () => {

@@ -36,16 +36,26 @@ export function ownStrokesForComment(
 
 /** 投稿に載せる再生位置。スイッチ OFF またはクリップ無しなら null。 */
 export function commentPlaybackOf(
-  playback: { clips: readonly PlaybackClip[]; clipIndex: number; time: number; fps: number },
+  playback: {
+    clips: readonly PlaybackClip[];
+    clipIndex: number;
+    time: number;
+    fps: number;
+    sourceId: string | null;
+  },
   recordFrame: boolean,
 ): CommentPlayback | null {
   if (!recordFrame || playback.clips.length === 0) {
     return null;
   }
-  return {
+  const recorded: CommentPlayback = {
     clipIndex: playback.clipIndex,
     frame: frameOfTime(playback.time, playback.fps),
   };
+  if (playback.sourceId !== null) {
+    recorded.versionId = playback.sourceId;
+  }
+  return recorded;
 }
 
 /** コメント投稿用の入力を組み立てる。本文が空の場合は null を返す。 */
