@@ -3,6 +3,19 @@ export const MIN_LABEL_PX = 48;
 export const MIN_TICK_PX = 5;
 export const STEP_SERIES: readonly number[] = [1, 2, 5, 10, 20, 50, 100, 200, 500, 1000, 2000, 5000, 10000];
 export const FPS_OPTIONS: readonly number[] = [12, 15, 24, 25, 30, 48, 50, 60, 120];
+/** 帯の上端に数字ラベル用として空けておく高さ */
+export const TICK_LABEL_BAND_PX = 16;
+/** tickStep の何倍ごとにアクセント目盛りにするか */
+export const ACCENT_TICK_MULTIPLE = 5;
+/** (高さ - TICK_LABEL_BAND_PX) に掛ける長さの比率 */
+export const TICK_LENGTH_RATIO = { label: 1, accent: 0.6, minor: 0.35 } as const;
+
+export type TickKind = "label" | "accent" | "minor";
+
+export interface RulerTick {
+  frame: number;
+  kind: TickKind;
+}
 
 export interface TimelineTicks {
   labelStep: number;
@@ -28,6 +41,22 @@ export function tickFrames(lastFrame: number, step: number): number[] {
   const frames: number[] = [];
   for (let frame = 0; frame <= lastFrame; frame += step) frames.push(frame);
   return frames;
+}
+
+export function rulerTicks(lastFrame: number, ticks: TimelineTicks): RulerTick[] {
+  return tickFrames(lastFrame, ticks.tickStep).map((frame) => ({
+    frame,
+    kind: frame % ticks.labelStep === 0
+      ? "label"
+      : frame % (ACCENT_TICK_MULTIPLE * ticks.tickStep) === 0
+        ? "accent"
+        : "minor",
+  }));
+}
+
+export function tickLength(kind: TickKind, heightPx: number): number {
+  if (!Number.isFinite(heightPx)) return 0;
+  return Math.max(0, (heightPx - TICK_LABEL_BAND_PX) * TICK_LENGTH_RATIO[kind]);
 }
 
 export function frameToX(frame: number, lastFrame: number, widthPx: number): number {

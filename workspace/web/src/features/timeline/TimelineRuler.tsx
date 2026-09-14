@@ -1,7 +1,7 @@
 import { useRef, type KeyboardEvent, type PointerEvent, type ReactElement } from "react";
 import { useElementSize } from "../layout/useElementSize";
 import { frameText, TIMELINE_LABEL } from "./timeline-labels";
-import { frameAtX, frameToX, tickFrames, timelineKeyFrame, timelineTicks } from "./timeline";
+import { frameAtX, frameToX, rulerTicks, tickFrames, tickLength, timelineKeyFrame, timelineTicks } from "./timeline";
 
 /** ルーラー帯の既定(最小)の高さ。CSS のフォールバックと LAYOUT_SIZE_SPECS.timelineHeight.defaultValue に一致する */
 export const RULER_HEIGHT_PX = 32;
@@ -16,7 +16,7 @@ export function TimelineRuler({ frame, lastFrame, onSeek }: TimelineRulerProps):
   const trackRef = useRef<HTMLDivElement>(null);
   const { width, height } = useElementSize(trackRef);
 
-  const { labelStep, tickStep } = timelineTicks(lastFrame, width);
+  const ticks = timelineTicks(lastFrame, width);
   const seekFromClientX = (clientX: number, rect: DOMRect): void => {
     onSeek(frameAtX(clientX - rect.left, lastFrame, width));
   };
@@ -62,14 +62,18 @@ export function TimelineRuler({ frame, lastFrame, onSeek }: TimelineRulerProps):
     >
       {width > 0 && height > 0 && (
         <svg className="timeline__ruler" viewBox={"0 0 " + width + " " + height} aria-hidden="true">
-          {tickFrames(lastFrame, tickStep).map((tick) => (
-            <line key={"tick-" + tick} className="timeline__tick" x1={frameToX(tick, lastFrame, width)} x2={frameToX(tick, lastFrame, width)} y1={height - 6} y2={height} />
+          {rulerTicks(lastFrame, ticks).map((tick) => (
+            <line
+              key={"tick-" + tick.frame}
+              className={"timeline__tick timeline__tick--" + tick.kind}
+              x1={frameToX(tick.frame, lastFrame, width)}
+              x2={frameToX(tick.frame, lastFrame, width)}
+              y1={height - tickLength(tick.kind, height)}
+              y2={height}
+            />
           ))}
-          {tickFrames(lastFrame, labelStep).map((label) => (
-            <g key={"label-" + label}>
-              <line className="timeline__tick" x1={frameToX(label, lastFrame, width)} x2={frameToX(label, lastFrame, width)} y1={height - 12} y2={height} />
-              <text className="timeline__label" x={frameToX(label, lastFrame, width)} y={12}>{label}</text>
-            </g>
+          {tickFrames(lastFrame, ticks.labelStep).map((label) => (
+            <text key={"label-" + label} className="timeline__label" x={frameToX(label, lastFrame, width)} y={12}>{label}</text>
           ))}
           <g className="timeline__playhead" transform={"translate(" + frameToX(frame, lastFrame, width) + " 0)"}>
             <path d="M-5 0h10l-5 6z" />
