@@ -12,3 +12,5 @@ __pycache__/
 node_modules/
 
 # 依存の実体はリポジトリ外の /opt/3dreviewer/deps/ に置く (docs/…§23.2)
+# .deps/ はリポジトリ内に置く二段構成を試した名残。使われていないが念のため残している
+/.deps/
