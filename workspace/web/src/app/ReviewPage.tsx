@@ -38,7 +38,7 @@ import {
   panelWidthMax,
 } from "../features/layout/resize";
 import { useSessionStore } from "../store/session";
-import { useObjectsStore } from "../store/objects";
+import { latestObjectId, useObjectsStore } from "../store/objects";
 import { ErrorBoundary } from "./ErrorBoundary";
 import { JoinDialog } from "./JoinDialog";
 import { ReviewHeader } from "./ReviewHeader";
@@ -52,6 +52,7 @@ import {
   PROJECT_LOAD_FAILED,
   RELOAD_LABEL,
 } from "./review-labels";
+import { COMPOSER_NO_OBJECTS_MESSAGE } from "../features/comments/comment-labels";
 import "./review.css";
 
 type ReviewState =
@@ -91,6 +92,7 @@ export function ReviewPage({ projectId }: { projectId: string }): ReactElement {
   useLightBroadcast(realtime.send);
   useShortcuts(joinName !== null && !settingsOpen);
   const lastError = useSessionStore((session) => session.lastError);
+  const composerVersionId = useObjectsStore((s) => latestObjectId(s.objects));
 
   useEffect(() => () => resetReviewStores(), []);
 
@@ -225,9 +227,9 @@ export function ReviewPage({ projectId }: { projectId: string }): ReactElement {
           <PresenceList />
           <ObjectList projectId={projectId} send={realtime.send} />
           <section className="review-panel__comments" aria-label="コメント">
-            {state.project.latestVersion !== null && (
-              <CommentComposer projectId={projectId} versionId={state.project.latestVersion.id} />
-            )}
+            {composerVersionId === null
+              ? <p className="comments__empty" role="status">{COMPOSER_NO_OBJECTS_MESSAGE}</p>
+              : <CommentComposer projectId={projectId} versionId={composerVersionId} />}
             <CommentList projectId={projectId} />
           </section>
         </aside>

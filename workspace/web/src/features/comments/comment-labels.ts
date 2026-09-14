@@ -6,6 +6,7 @@ export const COMPOSER_TITLE = "この位置にコメント";
 export const COMPOSER_BODY_LABEL = "本文";
 export const SUBMIT_LABEL = "投稿する";
 export const CANCEL_LABEL = "キャンセル";
+export const COMPOSER_NO_OBJECTS_MESSAGE = "オブジェクトを追加するとコメントできます。";
 export const EMPTY_MESSAGE = "コメントはまだありません。「コメント」モードでモデルをクリックすると投稿できます。";
 export const EMPTY_FILTERED_MESSAGE = "未解決のコメントはありません。";
 export const RECORD_FRAME_LABEL = "フレームを記録";

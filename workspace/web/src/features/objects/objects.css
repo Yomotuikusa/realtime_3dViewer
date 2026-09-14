@@ -49,6 +49,13 @@
   white-space: nowrap;
 }
 
+.objects__delete {
+  flex: 0 0 auto;
+  padding-inline: var(--space-2);
+  font-size: var(--text-sm);
+  white-space: nowrap;
+}
+
 .objects__add {
   display: block;
   cursor: pointer;
@@ -62,6 +69,17 @@
 .objects__add > [data-busy="true"] {
   opacity: 0.5;
   cursor: not-allowed;
+}
+
+.objects-delete__backdrop {
+  position: fixed;
+  z-index: 3;
+}
+
+.objects-delete__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-2);
 }
 
 .compare {
