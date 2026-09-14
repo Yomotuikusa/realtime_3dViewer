@@ -49,12 +49,14 @@ describe("playback source select", () => {
   it("is hidden when fewer than two objects have animation clips", () => {
     const send = vi.fn(() => true);
     const empty = renderSelect(send);
+    expect(empty.host.querySelector("label")).toBeNull();
     expect(empty.host.querySelector("select")).toBeNull();
     act(() => {
       useObjectsStore.getState().setObjects([version("v1", 1, "a.fbx"), version("v2", 2, "b.glb")]);
       useModelClipsStore.getState().register("v1", [new AnimationClip("walk", 1)]);
       useModelClipsStore.getState().register("v2", []);
     });
+    expect(empty.host.querySelector("label")).toBeNull();
     expect(empty.host.querySelector("select")).toBeNull();
     empty.root.unmount();
   });
@@ -64,9 +66,12 @@ describe("playback source select", () => {
     const send = vi.fn(() => true);
     const { host, root } = renderSelect(send);
     try {
+      const field = host.querySelector("label.timeline__field") as HTMLLabelElement;
       const select = host.querySelector("select") as HTMLSelectElement;
+      expect(field.querySelector("span")?.textContent).toBe("対象オブジェクト");
+      expect(field.contains(select)).toBe(true);
       expect(select.className).toBe("input timeline__source");
-      expect(select.getAttribute("aria-label")).toBe("再生オブジェクト");
+      expect(select.getAttribute("aria-label")).toBe("対象オブジェクト");
       expect(select.value).toBe("v1");
       expect([...select.options].map((option) => option.text)).toEqual(["a.fbx", "b.glb"]);
 

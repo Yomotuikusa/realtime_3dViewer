@@ -58,12 +58,14 @@ export function PlaybackTimeline({ send }: { send: (msg: ClientMessage) => boole
         label={TIMELINE_RESIZE_LABEL}
         onChange={setTrackHeight}
       />
-      <TimelineRuler frame={frame} lastFrame={lastFrame} onSeek={seekFrame} />
       <div className="timeline__controls">
         <PlaybackSourceSelect send={send} />
-        <select className="input timeline__clip" aria-label={CLIP_LABEL} title={CLIP_LABEL} value={clipIndex} onChange={(event) => selectClip(Number(event.target.value))}>
-          {clips.map((clip, index) => <option key={index} value={index}>{clip.name}</option>)}
-        </select>
+        <label className="timeline__field">
+          <span>{CLIP_LABEL}</span>
+          <select className="input timeline__clip" aria-label={CLIP_LABEL} title={CLIP_LABEL} value={clipIndex} onChange={(event) => selectClip(Number(event.target.value))}>
+            {clips.map((clip, index) => <option key={index} value={index}>{clip.name}</option>)}
+          </select>
+        </label>
         <div className="timeline__transport" role="group" aria-label={TRANSPORT_LABEL}>
           <button className="btn timeline__btn" type="button" aria-label={GO_TO_START_LABEL} title={GO_TO_START_LABEL} onClick={() => seekFrame(0)}><SkipStartIcon /></button>
           <button className="btn timeline__btn" type="button" aria-label={playing ? PAUSE_LABEL : PLAY_LABEL} title={playing ? PAUSE_LABEL : PLAY_LABEL} onClick={toggle}>{playing ? <PauseIcon /> : <PlayIcon />}</button>
@@ -81,6 +83,7 @@ export function PlaybackTimeline({ send }: { send: (msg: ClientMessage) => boole
           </select>
         </label>
       </div>
+      <TimelineRuler frame={frame} lastFrame={lastFrame} onSeek={seekFrame} />
     </div>
   );
 }
