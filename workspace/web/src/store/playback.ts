@@ -16,7 +16,10 @@ export interface PlaybackStoreState {
   playing: boolean;
   time: number;
   fps: number;
-  setClips(clips: readonly PlaybackClip[], fps?: number): void;
+  /** 現在タイムラインに登録しているクリップの持ち主 versionId。未登録は null */
+  sourceId: string | null;
+  /** クリップと持ち主を登録し、選択状態を初期化する */
+  setClips(clips: readonly PlaybackClip[], fps?: number, sourceId?: string | null): void;
   selectClip(index: number): void;
   play(): void;
   pause(): void;
@@ -33,18 +36,20 @@ const INITIAL_STATE = {
   playing: false,
   time: 0,
   fps: DEFAULT_FPS,
+  sourceId: null,
 };
 
 export const usePlaybackStore = create<PlaybackStoreState>((set, get) => ({
   ...INITIAL_STATE,
 
-  setClips(clips, fps = DEFAULT_FPS) {
+  setClips(clips, fps = DEFAULT_FPS, sourceId = null) {
     set({
       clips: clips.map((clip) => ({ ...clip })),
       clipIndex: 0,
       playing: false,
       time: 0,
       fps: clampFps(fps),
+      sourceId,
     });
   },
 

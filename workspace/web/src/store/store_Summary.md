@@ -8,7 +8,7 @@
 - lighting.ts: 共有 `LightAngles` を `rotateLight` の規則で更新し、サーバ受信値を正規化して適用する `applyRemote`、更新元 `origin`、既定方向への reset を提供する zustand ストア
 - objects.ts: project の全 `ModelVersion` を number 昇順で保持し、非表示 versionId / `hiddenParts`、welcome 置換、追加、版・部位の表示状態変更、primary 版の選択を提供する zustand ストア
 - display.ts: ルーム共有メッシュ表示方法、メッシュ比較設定、ジョイント表示設定、モーション軌跡表示設定、再生対象 versionId を保持し、同値更新を抑止する `useDisplayStore` を提供する
-- playback.ts: ロード中モデルのアニメーションクリップ要約、選択、再生／一時停止、秒の時刻シーク、fps とフレームシークを保持する zustand ストア
+- playback.ts: 現在タイムラインへ登録した sourceId とロード中モデルのアニメーションクリップ要約、選択、再生／一時停止、秒の時刻シーク、fps とフレームシークを保持する zustand ストア
 - session.ts: 自分の ID・色・表示名・接続状態・直近エラーを保持する zustand ストア
 - presence.ts: 参加者一覧、各参加者のカメラと任意の焦点距離、Follow 対象を保持する zustand ストア
 - annotation.ts: ルーム全員分のライブ線、annotation mode・色・描画中 draft・コメント再現用線・メッシュに埋もれた線の透過表示設定・ペンの描画基準を保持し、welcome/線操作・draft・表示設定・reset を提供する zustand ストア
@@ -43,8 +43,8 @@ annotation ストアは `strokes` を id で上書き・削除し、`clearByUser
 presence の `applyWelcome` は一覧と Follow 対象を初期化して全置換し、削除されたユーザーを Follow 中なら解除する。
 `updateCamera` は camera の複製を保存し、受信した焦点距離があるときだけその値も更新する。
 `viewer_Summary.md` を参照。
-playback ストアは `clips` を要素ごとに複製して保持し、クリップ選択時に時刻を0へ戻す。fps は有限値を1〜240へ丸め、レビュー画面の reset では clips、選択、再生状態、秒の時刻、fps を初期値へ戻す。
-objects ストアは版を要素ごとに複製し、number 昇順で保持する。`hiddenIds` は welcome で全置換し、`hiddenParts` は版内の非表示部位を追加順・重複なしで保持する。`setPartVisible` は部位単位で更新し、`isObjectPartVisible` / `hiddenObjectPaths` は部位の表示判定・版別パス取得を提供する。レビュー画面の reset で objects、hiddenIds、hiddenParts ともに空へ戻す。`setObjects` は非表示状態を維持する。**3D ビューの見え方を決める状態はルーム共有が原則** (設計書 §13.5)。版・部位の非表示は welcome で全置換し、受信で更新する。number 最小の版を primary としてビューアの Fit・モデルサイズ・クリップ一覧の基準にする。
+playback ストアは `clips` を要素ごとに複製して保持し、現在の持ち主を `sourceId` として保存する。クリップ選択時に時刻を0へ戻す。fps は有限値を1〜240へ丸め、レビュー画面の reset では clips、sourceId、選択、再生状態、秒の時刻、fps を初期値へ戻す。primary は Fit・サイズ計測の基準であり、クリップ一覧の基準ではない。
+objects ストアは版を要素ごとに複製し、number 昇順で保持する。`hiddenIds` は welcome で全置換し、`hiddenParts` は版内の非表示部位を追加順・重複なしで保持する。`setPartVisible` は部位単位で更新し、`isObjectPartVisible` / `hiddenObjectPaths` は部位の表示判定・版別パス取得を提供する。レビュー画面の reset で objects、hiddenIds、hiddenParts ともに空へ戻す。`setObjects` は非表示状態を維持する。**3D ビューの見え方を決める状態はルーム共有が原則** (設計書 §13.5)。版・部位の非表示は welcome で全置換し、受信で更新する。number 最小の版を primary としてビューアの Fit・モデルサイズの基準にする。
 display ストアは `MeshDisplayMode`、`MeshCompare`、`JointDisplay`、`MotionTrail`、`playbackSource` を保持し、初期値と reset はそれぞれの shared 既定値の複製または null、同値の set は state と購読通知を変えない。比較設定、ジョイント表示設定、軌跡表示設定、再生対象の setter、welcome 受信値は必要な参照まで複製して保持する。
 comments ストアは `items`（常に `createdAt` 昇順、同値なら `id` 昇順）、`showOnlyOpen`、`selectedId`、`composerAnchor`、`lastError` を保持する。
 `setAll` / `upsert` / `setFilter` の後は、`selectedId` が `selectVisible(items, showOnlyOpen)` に含まれなければ `null` に正規化する。
@@ -56,7 +56,7 @@ comments ストアは `items`（常に `createdAt` 昇順、同値なら `id` �
 - tests/store-annotation.test.ts: annotation ストアの初期値、線操作、mode/色、draft、再現線、透過表示・描画基準設定、順序、reset のテスト
 - tests/store-camera.test.ts: カメラストアの初期値、参照を保つ epsilon／exact 判定、複製して保持・消費する再現要求、Reset・Fit・モデルサイズ・全 state 初期化の振る舞いを検証
 - tests/store-lighting.test.ts: lighting ストアの既定値、累積回転、値の複製、remote 正規化、origin、reset を検証
-- tests/store-playback.test.ts: playback ストアのクリップ複製、選択、再生制御、シーク、無効入力、reset を検証
+- tests/store-playback.test.ts: playback ストアのクリップ複製、sourceId、選択、再生制御、シーク、無効入力、reset を検証
 - tests/store-presence.test.ts: presence の全置換、焦点距離を含む upsert・削除・カメラ更新、Follow、reset のテスト
 - tests/store-shortcuts.test.ts: shortcuts ストアの割り当て・永続化・既定値復元とレビュー reset 非対象のテスト
 - tests/store-objects.test.ts: 版のソート・複製・追加、可視性、welcome、primary ヘルパー、reset のテスト

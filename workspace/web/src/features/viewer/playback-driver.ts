@@ -7,6 +7,7 @@ import {
 
 export interface PlaybackDriver {
   apply(clipIndex: number, time: number): void;
+  stop(): void;
   dispose(): void;
 }
 
@@ -28,10 +29,17 @@ export function createPlaybackDriver(root: Object3D, clips: readonly AnimationCl
       mixer.setTime(time);
     },
 
+    stop() {
+      if (activeIndex === null) return;
+      mixer.stopAllAction();
+      activeIndex = null;
+    },
+
     dispose() {
       if (disposed) return;
       disposed = true;
       mixer.stopAllAction();
+      activeIndex = null;
       mixer.uncacheRoot(root);
     },
   };

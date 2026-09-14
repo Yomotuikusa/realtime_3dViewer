@@ -126,7 +126,7 @@ export function hiddenObjectPaths(hiddenParts: readonly ObjectPartRef[], version
   return hiddenParts.filter((part) => part.versionId === versionId).map((part) => part.objectPath);
 }
 
-/** number が最小の版を再生、Fit、サイズ計測の基準にする。 */
+/** number が最小の版を Fit、サイズ計測の基準にする。 */
 export function primaryObjectId(objects: readonly ModelVersion[]): string | null {
   let primary: ModelVersion | undefined;
   for (const object of objects) {

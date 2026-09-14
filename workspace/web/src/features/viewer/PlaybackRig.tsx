@@ -5,7 +5,11 @@ import { usePlaybackStore } from "../../store/playback";
 import { createPlaybackDriver, type PlaybackDriver } from "./playback-driver";
 
 /** ストアの時刻を AnimationMixer のポーズへ反映する描画なしの Rig。 */
-export function PlaybackRig({ root, clips }: { root: Object3D; clips: readonly AnimationClip[] }): null {
+export function PlaybackRig({ root, clips, versionId }: {
+  root: Object3D;
+  clips: readonly AnimationClip[];
+  versionId: string;
+}): null {
   const driverRef = useRef<PlaybackDriver | null>(null);
 
   useEffect(() => {
@@ -18,8 +22,12 @@ export function PlaybackRig({ root, clips }: { root: Object3D; clips: readonly A
   }, [root, clips]);
 
   useFrame(() => {
-    const { clipIndex, time } = usePlaybackStore.getState();
-    driverRef.current?.apply(clipIndex, time);
+    const { clipIndex, sourceId, time } = usePlaybackStore.getState();
+    if (sourceId === versionId) {
+      driverRef.current?.apply(clipIndex, time);
+    } else {
+      driverRef.current?.stop();
+    }
   });
 
   return null;

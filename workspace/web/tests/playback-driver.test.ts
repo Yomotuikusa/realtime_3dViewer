@@ -60,4 +60,17 @@ describe("playback driver", () => {
     expect(() => driver.apply(0, 1)).not.toThrow();
     expect(root.position.toArray()).toEqual([0, 0, 0]);
   });
+
+  it("stops at the original pose and can resume after stopping", () => {
+    const { root, clips } = makeFixture();
+    const driver = createPlaybackDriver(root, clips);
+
+    expect(() => driver.stop()).not.toThrow();
+    driver.apply(0, 0.5);
+    driver.stop();
+    expect(root.position.toArray()).toEqual([0, 0, 0]);
+    expect(() => driver.stop()).not.toThrow();
+    driver.apply(0, 1);
+    expect(root.position.x).toBeCloseTo(5);
+  });
 });

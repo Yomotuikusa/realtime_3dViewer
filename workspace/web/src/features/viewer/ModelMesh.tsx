@@ -38,7 +38,7 @@ function ModelScene({ scene, animations, visible, ...options }: {
   return (
     <>
       <primitive object={scene} visible={visible} />
-      {animations.length > 0 && <PlaybackRig root={scene} clips={animations} />}
+      {animations.length > 0 && <PlaybackRig root={scene} clips={animations} versionId={options.versionId} />}
     </>
   );
 }
