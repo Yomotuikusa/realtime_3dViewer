@@ -49,7 +49,9 @@ export type ClientMessage =
   /** 自分がジョイントの表示設定を変えた(値全体を送る) */
   | { type: "joint:display"; display: JointDisplay }
   /** 自分が軌跡の表示設定を変えた(値全体を送る) */
-  | { type: "trail:display"; trail: MotionTrail };
+  | { type: "trail:display"; trail: MotionTrail }
+  /** 自分がタイムラインの再生対象オブジェクトを切り替えた */
+  | { type: "playback:source"; versionId: string };
 
 export type ServerMessage =
   | {
@@ -70,6 +72,8 @@ export type ServerMessage =
       jointDisplay?: JointDisplay;
       /** ルームの軌跡表示設定。誰も変えていなければ省略される */
       motionTrail?: MotionTrail;
+      /** ルームで選ばれた再生対象の versionId。誰も選んでいなければ省略される */
+      playbackSource?: string;
     }
   | { type: "user:joined"; user: PresenceUser }
   | { type: "user:left"; userId: string }
@@ -94,6 +98,8 @@ export type ServerMessage =
   | { type: "joint:display"; userId: string; display: JointDisplay }
   /** userId が軌跡の表示設定を変えた(送信元以外へ中継) */
   | { type: "trail:display"; userId: string; trail: MotionTrail }
+  /** userId が再生対象を切り替えた(送信元以外へ中継) */
+  | { type: "playback:source"; userId: string; versionId: string }
   | { type: "error"; code: string; message: string };
 
 const IdSchema = z.string().min(1);
@@ -111,6 +117,7 @@ export const ClientMessageSchema = z.discriminatedUnion("type", [
   z.object({ type: z.literal("mesh:compare"), compare: MeshCompareSchema }),
   z.object({ type: z.literal("joint:display"), display: JointDisplaySchema }),
   z.object({ type: z.literal("trail:display"), trail: MotionTrailSchema }),
+  z.object({ type: z.literal("playback:source"), versionId: IdSchema }),
 ]) satisfies z.ZodType<ClientMessage>;
 
 export const ServerMessageSchema = z.discriminatedUnion("type", [
@@ -126,6 +133,7 @@ export const ServerMessageSchema = z.discriminatedUnion("type", [
     meshCompare: MeshCompareSchema.optional(),
     jointDisplay: JointDisplaySchema.optional(),
     motionTrail: MotionTrailSchema.optional(),
+    playbackSource: IdSchema.optional(),
   }),
   z.object({ type: z.literal("user:joined"), user: PresenceUserSchema }),
   z.object({ type: z.literal("user:left"), userId: IdSchema }),
@@ -148,6 +156,7 @@ export const ServerMessageSchema = z.discriminatedUnion("type", [
   z.object({ type: z.literal("mesh:compare"), userId: IdSchema, compare: MeshCompareSchema }),
   z.object({ type: z.literal("joint:display"), userId: IdSchema, display: JointDisplaySchema }),
   z.object({ type: z.literal("trail:display"), userId: IdSchema, trail: MotionTrailSchema }),
+  z.object({ type: z.literal("playback:source"), userId: IdSchema, versionId: IdSchema }),
   z.object({ type: z.literal("error"), code: z.string(), message: z.string() }),
 ]) satisfies z.ZodType<ServerMessage>;
 

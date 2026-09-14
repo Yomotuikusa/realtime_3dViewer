@@ -21,6 +21,10 @@ export interface DisplayStoreState {
   motionTrail: MotionTrail;
   /** motionTrailEquals で同値なら state を更新しない。複製して保持する */
   setMotionTrail(trail: MotionTrail): void;
+  /** ルームで選ばれた再生対象の versionId。初期値は null */
+  playbackSource: string | null;
+  /** 同値なら state を更新しない */
+  setPlaybackSource(versionId: string | null): void;
   reset(): void;
 }
 
@@ -29,6 +33,7 @@ export const useDisplayStore: UseBoundStore<StoreApi<DisplayStoreState>> = creat
   meshCompare: cloneMeshCompare(DEFAULT_MESH_COMPARE),
   jointDisplay: cloneJointDisplay(DEFAULT_JOINT_DISPLAY),
   motionTrail: cloneMotionTrail(DEFAULT_MOTION_TRAIL),
+  playbackSource: null,
 
   setMeshDisplay(mode) {
     if (get().meshDisplay === mode) return;
@@ -50,12 +55,18 @@ export const useDisplayStore: UseBoundStore<StoreApi<DisplayStoreState>> = creat
     set({ motionTrail: cloneMotionTrail(trail) });
   },
 
+  setPlaybackSource(versionId) {
+    if (get().playbackSource === versionId) return;
+    set({ playbackSource: versionId });
+  },
+
   reset() {
     set({
       meshDisplay: DEFAULT_MESH_DISPLAY,
       meshCompare: cloneMeshCompare(DEFAULT_MESH_COMPARE),
       jointDisplay: cloneJointDisplay(DEFAULT_JOINT_DISPLAY),
       motionTrail: cloneMotionTrail(DEFAULT_MOTION_TRAIL),
+      playbackSource: null,
     });
   },
 }));

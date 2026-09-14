@@ -101,6 +101,7 @@ export class RoomHub {
       case "mesh:compare":
       case "joint:display":
       case "trail:display":
+      case "playback:source":
         return [{ target: "others", msg: applyDisplayMessage(room.display, connId, msg) }];
       case "stroke:add":
         return addStroke(room, connId, msg.stroke, this.now());
@@ -160,6 +161,10 @@ export class RoomHub {
   motionTrailIn(projectId: string): MotionTrail | null {
     const trail = this.rooms.get(projectId)?.display.motionTrail;
     return trail ? cloneMotionTrail(trail) : null;
+  }
+
+  playbackSourceIn(projectId: string): string | null {
+    return this.rooms.get(projectId)?.display.playbackSource ?? null;
   }
 
   private join(connId: string, connection: Connection, name: string): Outbound[] {

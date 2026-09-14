@@ -35,7 +35,7 @@ server の基盤。本番は `npm run build && npm run start` で起動する。
   `index.html` へ SPA フォールバックする。`/api/`、拡張子付きの不在ファイル、GET / HEAD
   以外は後段へ渡し、字句解決と realpath の両方で root 外への traversal / symlink 脱出を拒否する。
 - `src/realtime/room-display.ts`: ルーム共有の表示状態はすべてここに置く(設計書 §13.5)。
-  ライト、非表示の版、非表示の部位集合、メッシュ表示方法、メッシュ比較設定、ジョイント表示設定、モーション軌跡表示設定を更新し、
+  ライト、非表示の版、非表示の部位集合、メッシュ表示方法、メッシュ比較設定、ジョイント表示設定、モーション軌跡表示設定、再生対象 versionId を更新し、
   welcome 用に必要な値だけ複製して復元する。部位集合は `hiddenParts` として挿入順を保ち、
   `hiddenPartsOf` が部位参照も複製した配列を返す。
 - `src/realtime/room-state.ts`: ルームの `Connection` / `Room` データ構造、接続・ルーム・ストローク上限、Presence 色、`Outbound` 型、
@@ -45,7 +45,7 @@ server の基盤。本番は `npm run build && npm run start` で起動する。
 - `src/realtime/hub.ts`: `ws` 非依存のインメモリ RoomHub。接続・join 済み Presence、カメラ、ルーム参照を project 単位で管理し、
   表示状態は `room-display.ts`、ストローク操作は `room-strokes.ts` に委譲する。camera メッセージの `focalLength` は参加者ごとに保持する。
   未指定の camera でも直前の値を保って中継し、`welcome` / `user:joined` / `usersIn` にも載せる。
-  `hiddenObjectPartsIn` で非表示部位の挿入順複製を返し、`jointDisplayIn` / `motionTrailIn` で表示設定を返す。接続ごとの配信先を `Outbound` で返す。
+  `hiddenObjectPartsIn` で非表示部位の挿入順複製を返し、`jointDisplayIn` / `motionTrailIn` / `playbackSourceIn` で表示設定を返す。接続ごとの配信先を `Outbound` で返す。
 - `src/realtime/ws.ts`: `GET /ws?projectId=<id>` を既存の Node HTTP Server に接続する WebSocket
   アダプタ。`RealtimeOptions.projectExists` で project の存在を確認してから Hub に接続し、
   接続時は projectId、Origin (指定時は Host 一致)、project 存在、接続上限の順に検証する。
@@ -102,7 +102,8 @@ server の基盤。本番は `npm run build && npm run start` で起動する。
 - `tests/realtime-hub-compare.test.ts`: RoomHub のメッシュ比較設定の複製・中継、後勝ち保持、welcome 反映、既定値、ルーム分離・削除、未参加接続の無視、他状態との独立性を検証する。
 - `tests/realtime-hub-joint.test.ts`: RoomHub のジョイント表示設定の複製・中継、後勝ち保持、welcome 反映、ルーム分離・削除、未参加接続の無視、他状態との独立性を検証する。
 - `tests/realtime-hub-trail.test.ts`: RoomHub のモーション軌跡表示設定の複製・中継、welcome 反映、未設定値の省略、未定義ルーム参照を検証する。
-- `tests/room-display.test.ts`: ルーム共有表示状態の初期化、7種の更新・中継、値の複製、welcome 復元フィールドを検証する。
+- `tests/realtime-hub-playback.test.ts`: RoomHub と表示状態の再生対象 versionId の初期値、中継、後勝ち保持、welcome 反映、ルーム分離・削除、未定義ルーム参照を検証する。
+- `tests/room-display.test.ts`: ルーム共有表示状態の初期化、8種の更新・中継、値の複製、welcome 復元フィールドを検証する。
 - `tests/realtime-guards.test.ts`: project / Origin / 接続数 / ルーム数 / payload の接続ガードと、
   stroke 所有者検証・上限内の大きな stroke のテスト。
 - `tests/room-state.test.ts`: `createRoom` の独立性、色割り当て、定数、camera / user / stroke の複製ヘルパを検証する。
@@ -147,7 +148,7 @@ server の基盤。本番は `npm run build && npm run start` で起動する。
 - `contentTypeFor` / `resolveStaticPath` / `staticRoutes`: 静的ファイルの Content-Type 判定、
   root 配下の安全なパス解決、`index.html` を使った SPA フォールバック付き配信を提供する。
 - `RoomDisplayState` / `createRoomDisplayState` / `applyDisplayMessage` / `displayWelcomeFields` / `hiddenPartsOf`:
-  ルーム共有の表示状態を更新・中継し、非表示部位の挿入順複製配列と welcome の復元フィールドを作る。
+  ルーム共有の表示状態を更新・中継し、非表示部位の挿入順複製配列と welcome の復元フィールドを作る。`playbackSource` は未設定時 null とする。
 - `Room` / `Connection` / `createRoom` / `colorFor` / `copyCamera` / `copyUser` / `copyStroke`:
   `room-state.ts` でルーム構造と複製・色割り当てを提供する。`PRESENCE_PALETTE`、`MAX_CONNECTIONS`、`MAX_ROOMS`、
   `MAX_ROOM_STROKES`、`Outbound`、`OutboundTarget` は `hub.ts` からも後方互換に再エクスポートする。
@@ -158,7 +159,7 @@ server の基盤。本番は `npm run build && npm run start` で起動する。
   camera の `focalLength` は参加者単位で最後に指定された値を保持し、未指定の camera 中継でも
   その値を維持する。未指定の参加者はキーを持たず、保持値は `welcome` / `user:joined` /
   `usersIn` の Presence に反映される。表示状態の更新・中継・welcome 復元は `room-display.ts` が担い、
-  `hiddenObjectsIn` / `hiddenObjectPartsIn` / `meshDisplayIn` / `meshCompareIn` / `jointDisplayIn` / `motionTrailIn` は現在値を参照する。
+  `hiddenObjectsIn` / `hiddenObjectPartsIn` / `meshDisplayIn` / `meshCompareIn` / `jointDisplayIn` / `motionTrailIn` / `playbackSourceIn` は現在値を参照する。
   `motionTrailIn` は未設定または存在しないルームでは `null`、設定済みの場合はルーム内の実体を複製して返す。
   `Outbound.target` は `self` (送信元のみ)、`others` (送信元以外)、`all` (ルーム全員) を表す。
   `PRESENCE_PALETTE` は8色で、ルーム内の未使用色をjoin順に割り当て、全色使用時はサイズの剰余で
