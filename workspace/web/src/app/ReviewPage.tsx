@@ -225,7 +225,9 @@ export function ReviewPage({ projectId }: { projectId: string }): ReactElement {
           <PresenceList />
           <ObjectList projectId={projectId} send={realtime.send} />
           <section className="review-panel__comments" aria-label="コメント">
-            <CommentComposer projectId={projectId} versionId={state.project.latestVersion.id} />
+            {state.project.latestVersion !== null && (
+              <CommentComposer projectId={projectId} versionId={state.project.latestVersion.id} />
+            )}
             <CommentList projectId={projectId} />
           </section>
         </aside>

@@ -113,3 +113,20 @@ export function displayWelcomeFields(state: RoomDisplayState): DisplayWelcomeFie
 export function hiddenPartsOf(state: RoomDisplayState): ObjectPartRef[] {
   return [...state.hiddenParts.values()].map((part) => ({ ...part }));
 }
+
+/** Remove all display-state references to a deleted model version. */
+export function forgetObjectInDisplay(state: RoomDisplayState, versionId: string): void {
+  state.hiddenObjects.delete(versionId);
+  for (const [key, part] of state.hiddenParts) {
+    if (part.versionId === versionId) state.hiddenParts.delete(key);
+  }
+  const compare = state.meshCompare;
+  if (compare !== null) {
+    const baseId = compare.baseId === versionId ? null : compare.baseId;
+    const targetId = compare.targetId === versionId ? null : compare.targetId;
+    if (baseId !== compare.baseId || targetId !== compare.targetId) {
+      state.meshCompare = { ...compare, baseId, targetId };
+    }
+  }
+  if (state.playbackSource === versionId) state.playbackSource = null;
+}

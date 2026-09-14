@@ -65,8 +65,8 @@ describe("POST /api/projects (FBX / OBJ)", () => {
 
     expect(response.status).toBe(201);
     const project = ProjectSchema.parse(await response.json());
-    expect(project.latestVersion.fileName).toBe("a.fbx");
-    expect(project.latestVersion.byteSize).toBe(bytes.length);
+    expect(project.latestVersion!.fileName).toBe("a.fbx");
+    expect(project.latestVersion!.byteSize).toBe(bytes.length);
   });
 
   it("accepts an ASCII FBX", async () => {
@@ -82,7 +82,7 @@ describe("POST /api/projects (FBX / OBJ)", () => {
 
     expect(response.status).toBe(201);
     const project = ProjectSchema.parse(await response.json());
-    expect(project.latestVersion.fileName).toBe("a.obj");
+    expect(project.latestVersion!.fileName).toBe("a.obj");
   });
 
   it("accepts GLB and FBX in submission order", async () => {

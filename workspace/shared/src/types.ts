@@ -57,9 +57,9 @@ export interface Project {
   id: string;
   name: string;
   createdAt: number;
-  /** versions の末尾要素と同じもの。既存呼び出し側との互換のため残す */
-  latestVersion: ModelVersion;
-  /** project に属する全版。number 昇順。1件以上 */
+  /** versions の末尾要素と同じもの。versions が空なら null */
+  latestVersion: ModelVersion | null;
+  /** project に属する全版。number 昇順。0件もありうる */
   versions: ModelVersion[];
 }
 
@@ -224,10 +224,10 @@ export const ProjectSchema = z.object({
   id: IdSchema,
   name: z.string().min(1).max(MAX_PROJECT_NAME_LENGTH),
   createdAt: TimestampSchema,
-  latestVersion: ModelVersionSchema,
-  versions: z.array(ModelVersionSchema).min(1),
+  latestVersion: ModelVersionSchema.nullable(),
+  versions: z.array(ModelVersionSchema),
 }).refine(
-  (project) => project.versions[project.versions.length - 1]?.id === project.latestVersion.id,
+  (project) => (project.versions[project.versions.length - 1]?.id ?? null) === (project.latestVersion?.id ?? null),
   { message: "latestVersion must be the last element of versions" },
 ) satisfies z.ZodType<Project>;
 

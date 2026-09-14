@@ -74,7 +74,7 @@ describe("POST /api/projects", () => {
       { number: 1, fileName: "a.glb" },
       { number: 2, fileName: "b.gltf" },
     ]);
-    expect(project.latestVersion.id).toBe(project.versions[1]!.id);
+    expect(project.latestVersion!.id).toBe(project.versions[1]!.id);
     expect(existsSync(t.storage.modelFilePath(project.versions[0]!.id))).toBe(true);
     expect(existsSync(t.storage.modelFilePath(project.versions[1]!.id))).toBe(true);
   });
@@ -153,15 +153,15 @@ describe("POST /api/projects", () => {
     expect(response.status).toBe(201);
     const project = ProjectSchema.parse(await response.json());
     expect(project.name).toBe("Robot");
-    expect(project.latestVersion.number).toBe(1);
-    expect(project.latestVersion.fileName).toBe("a.glb");
-    expect(project.latestVersion.byteSize).toBe(12);
+    expect(project.latestVersion!.number).toBe(1);
+    expect(project.latestVersion!.fileName).toBe("a.glb");
+    expect(project.latestVersion!.byteSize).toBe(12);
     expect(t.published).toEqual([]);
 
     const fetched = await t.app.request(`/api/projects/${project.id}`);
     expect(fetched.status).toBe(200);
     const model = await t.app.request(
-      `/api/projects/${project.id}/versions/${project.latestVersion.id}/model`,
+      `/api/projects/${project.id}/versions/${project.latestVersion!.id}/model`,
     );
     expect(model.status).toBe(200);
     expect(new Uint8Array(await model.arrayBuffer())).toEqual(bytes);
@@ -175,7 +175,7 @@ describe("POST /api/projects", () => {
 
     expect(response.status).toBe(201);
     expect(project.id).toBe("p1");
-    expect(project.latestVersion.id).toBe("v1");
+    expect(project.latestVersion!.id).toBe("v1");
     expect(existsSync(t.storage.modelFilePath("v1"))).toBe(true);
   });
 
@@ -262,7 +262,7 @@ describe("POST /api/projects", () => {
     const response = await post(t, "  Robot  ", modelFile(glbBytes(), "a.glb"));
     const project = ProjectSchema.parse(await response.json());
     expect(project.name).toBe("Robot");
-    expect(readFileSync(t.storage.modelFilePath(project.latestVersion.id))).toEqual(
+    expect(readFileSync(t.storage.modelFilePath(project.latestVersion!.id))).toEqual(
       Buffer.from(glbBytes()),
     );
   });

@@ -3,12 +3,14 @@ import { join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 import { openDb, withTransaction } from "../src/db/connection";
 import {
+  deleteModelVersion,
   findModelVersion,
   findProject,
   insertModelVersion,
   insertProject,
   listModelVersions,
 } from "../src/db/projects";
+import { insertComment, listComments } from "../src/db/comments";
 import { makeTmpDir, removeTmpDir } from "./helpers/tmp";
 
 const temporaryDirectories: string[] = [];
@@ -77,10 +79,12 @@ describe("SQLite connection", () => {
 });
 
 describe("projects database layer", () => {
-  it("returns null for a project without versions", () => {
+  it("returns an empty project without versions", () => {
     const db = openDb(":memory:");
     insertProject(db, { id: "p1", name: "Project", createdAt: 10 });
-    expect(findProject(db, "p1")).toBeNull();
+    expect(findProject(db, "p1")).toEqual({
+      id: "p1", name: "Project", createdAt: 10, latestVersion: null, versions: [],
+    });
     db.close();
   });
 
@@ -177,6 +181,32 @@ describe("projects database layer", () => {
       createdAt: 3,
     });
     expect(version.fileName).toBe("b.glb");
+    db.close();
+  });
+
+  it("deletes a version and only its comments", () => {
+    const db = openDb(":memory:");
+    insertProject(db, { id: "pa", name: "A", createdAt: 1 });
+    insertProject(db, { id: "pb", name: "B", createdAt: 2 });
+    insertModelVersion(db, { id: "va", projectId: "pa", fileName: "a.glb", byteSize: 1, createdAt: 3 });
+    insertModelVersion(db, { id: "vb", projectId: "pa", fileName: "b.glb", byteSize: 1, createdAt: 4 });
+    insertModelVersion(db, { id: "vc", projectId: "pb", fileName: "c.glb", byteSize: 1, createdAt: 5 });
+    const addComment = (id: string, versionId: string, projectId: string) => insertComment(db, {
+      id, projectId, versionId, authorName: "Tester", body: id, anchor: [0, 0, 0],
+      camera: { position: [0, 0, 1], target: [0, 0, 0] }, strokes: [], createdAt: 10,
+    });
+    addComment("ca", "va", "pa");
+    addComment("cb", "va", "pa");
+    addComment("cc", "vb", "pa");
+    addComment("cd", "vc", "pb");
+
+    expect(deleteModelVersion(db, "pa", "va")).toBe(true);
+    expect(findModelVersion(db, "pa", "va")).toBeNull();
+    expect(listComments(db, "pa").map(({ id }) => id)).toEqual(["cc"]);
+    expect(listComments(db, "pb").map(({ id }) => id)).toEqual(["cd"]);
+    expect(deleteModelVersion(db, "pa", "va")).toBe(false);
+    expect(deleteModelVersion(db, "pa", "vc")).toBe(false);
+    expect(deleteModelVersion(db, "pa", "missing")).toBe(false);
     db.close();
   });
 });

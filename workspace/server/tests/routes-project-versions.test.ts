@@ -32,6 +32,10 @@ async function postVersion(t: TestApp, projectId: string, files: File[]): Promis
   });
 }
 
+async function deleteVersion(t: TestApp, projectId: string, versionId: string): Promise<Response> {
+  return t.app.request(`/api/projects/${projectId}/versions/${versionId}`, { method: "DELETE" });
+}
+
 describe("POST /api/projects/:projectId/versions", () => {
   it("adds a version and publishes it after persistence", async () => {
     const t = testApp();
@@ -46,7 +50,7 @@ describe("POST /api/projects/:projectId/versions", () => {
       await (await t.app.request("/api/projects/p1")).json(),
     );
     expect(project.versions.map((item) => item.number)).toEqual([1, 2]);
-    expect(project.latestVersion.id).toBe(version.id);
+    expect(project.latestVersion!.id).toBe(version.id);
     expect(existsSync(t.storage.modelFilePath(version.id))).toBe(true);
   });
 
@@ -62,7 +66,7 @@ describe("POST /api/projects/:projectId/versions", () => {
       await (await t.app.request("/api/projects/p1")).json(),
     );
     expect(project.versions.map((item) => item.number)).toEqual([1, 2, 3]);
-    expect(project.latestVersion.number).toBe(3);
+    expect(project.latestVersion!.number).toBe(3);
   });
 
   it("rejects a missing project without saving or publishing", async () => {
@@ -109,4 +113,18 @@ describe("POST /api/projects/:projectId/versions", () => {
     expect(t.published).toEqual([]);
     expect(readdirSync(`${t.dir}/uploads`)).toEqual([]);
   });
+
+  it("adds a version to an empty project", async () => {
+    const t = testApp();
+    const seeded = seedProject(t);
+    await deleteVersion(t, seeded.project.id, seeded.version.id);
+
+    const response = await postVersion(t, seeded.project.id, [modelFile("restored.glb")]);
+    expect(response.status).toBe(201);
+    const version = await response.json();
+    const project = ProjectSchema.parse(await (await t.app.request("/api/projects/p1")).json());
+    expect(project.versions).toHaveLength(1);
+    expect(project.latestVersion!.id).toBe(version.id);
+  });
+
 });

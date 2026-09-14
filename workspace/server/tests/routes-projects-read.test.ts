@@ -21,7 +21,7 @@ describe("project read routes", () => {
     const response = await t.app.request(`/api/projects/${seeded.project.id}`);
     expect(response.status).toBe(200);
     const body = await response.json();
-    expect(ProjectSchema.parse(body).latestVersion.id).toBe(seeded.version.id);
+    expect(ProjectSchema.parse(body).latestVersion!.id).toBe(seeded.version.id);
   });
 
   it("returns NOT_FOUND for a missing project or unrelated version", async () => {

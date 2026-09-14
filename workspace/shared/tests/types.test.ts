@@ -172,13 +172,15 @@ describe("ProjectSchema", () => {
     versions: [modelVersion],
   };
 
-  it("requires versions and latestVersion and non-empty strings", () => {
+  it("accepts empty versions with a null latest version", () => {
     expect(ProjectSchema.safeParse(project).success).toBe(true);
+    expect(ProjectSchema.safeParse({ ...project, versions: [], latestVersion: null }).success).toBe(true);
     const { latestVersion: _latestVersion, ...withoutLatestVersion } = project;
     expect(ProjectSchema.safeParse(withoutLatestVersion).success).toBe(false);
     const { versions: _versions, ...withoutVersions } = project;
     expect(ProjectSchema.safeParse(withoutVersions).success).toBe(false);
-    expect(ProjectSchema.safeParse({ ...project, versions: [] }).success).toBe(false);
+    expect(ProjectSchema.safeParse({ ...project, versions: [], latestVersion: modelVersion }).success).toBe(false);
+    expect(ProjectSchema.safeParse({ ...project, versions: [modelVersion], latestVersion: null }).success).toBe(false);
     expect(ProjectSchema.safeParse({ ...project, id: "" }).success).toBe(false);
     expect(ProjectSchema.safeParse({ ...project, name: "" }).success).toBe(false);
   });

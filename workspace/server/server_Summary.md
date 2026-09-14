@@ -14,14 +14,14 @@ server の基盤。本番は `npm run build && npm run start` で起動する。
   `addColumnIfMissing` で不足列だけを `ALTER TABLE` する。
 - `src/db/schema.sql`: projects、model_versions、comments とコメント検索用 index の DDL。
   comments は `strokes_json` の後に nullable な `playback_json` を持つ。
-- `src/db/projects.ts`: projects / model_versions の登録、全版の番号順一覧と検索、および行の型変換。
+- `src/db/projects.ts`: projects / model_versions の登録、全版の番号順一覧と検索、コメントを含む版削除、および行の型変換。版が無い project も返す。
 - `src/db/comments.ts`: コメントの登録、project 単位の一覧、status 更新。JSON 列と
   shared の `Comment` の相互変換を担い、playback は `playback_json` へ nullable JSON として
   保存して常に `playback` キーを返す。
 - `src/storage/files.ts`: `dataDir/uploads/<versionId>.glb` への一時ファイル経由の非同期保存・削除。拡張子 `.glb` は内部名で、中身の形式とは無関係。
-- `src/routes/projects.ts`: multipart モデルアップロード、既存 project への版追加、project JSON
+- `src/routes/projects.ts`: multipart モデルアップロード、既存 project への版追加・削除、project JSON
   の取得とモデル本体の配信を提供する。複数ファイルの保存と projects / model_versions 登録を
-  同一処理で行い、失敗時は保存済みファイルを削除する。版追加成功後は `object:added` を publish
+  同一処理で行い、失敗時は保存済みファイルを削除する。版追加・削除成功後は `object:added` / `object:removed` を publish
   し、`MODEL_CONTENT_TYPES` 由来の Content-Type と immutable キャッシュヘッダを設定する。
 - `src/routes/project-upload.ts`: multipart の file フィールド(単一または配列)を全件検証し、
   検証済みのファイル名・バイト列へ変換する。File 以外、形式不正、サイズ超過を API エラーへ変換する。
@@ -37,7 +37,7 @@ server の基盤。本番は `npm run build && npm run start` で起動する。
 - `src/realtime/room-display.ts`: ルーム共有の表示状態はすべてここに置く(設計書 §13.5)。
   ライト、非表示の版、非表示の部位集合、メッシュ表示方法、メッシュ比較設定、ジョイント表示設定、モーション軌跡表示設定、再生対象 versionId を更新し、
   welcome 用に必要な値だけ複製して復元する。部位集合は `hiddenParts` として挿入順を保ち、
-  `hiddenPartsOf` が部位参照も複製した配列を返す。
+  `hiddenPartsOf` が部位参照も複製した配列を返す。`forgetObjectInDisplay` は削除版への表示参照を除く。
 - `src/realtime/room-state.ts`: ルームの `Connection` / `Room` データ構造、接続・ルーム・ストローク上限、Presence 色、`Outbound` 型、
   空ルーム生成、色割り当て、camera / user / stroke の複製ヘルパを提供する。`Room.display` は `room-display.ts` の状態を保持する。
 - `src/realtime/room-strokes.ts`: ルーム内ストロークの追加・所有者検証・上限検証・削除・clear を担当する。ストロークの保存値と
@@ -45,7 +45,7 @@ server の基盤。本番は `npm run build && npm run start` で起動する。
 - `src/realtime/hub.ts`: `ws` 非依存のインメモリ RoomHub。接続・join 済み Presence、カメラ、ルーム参照を project 単位で管理し、
   表示状態は `room-display.ts`、ストローク操作は `room-strokes.ts` に委譲する。camera メッセージの `focalLength` は参加者ごとに保持する。
   未指定の camera でも直前の値を保って中継し、`welcome` / `user:joined` / `usersIn` にも載せる。
-  `hiddenObjectPartsIn` で非表示部位の挿入順複製を返し、`jointDisplayIn` / `motionTrailIn` / `playbackSourceIn` で表示設定を返す。接続ごとの配信先を `Outbound` で返す。
+  `hiddenObjectPartsIn` で非表示部位の挿入順複製を返し、`jointDisplayIn` / `motionTrailIn` / `playbackSourceIn` で表示設定を返す。`forgetObject` は削除版の表示参照を配信せずに掃除する。接続ごとの配信先を `Outbound` で返す。
 - `src/realtime/ws.ts`: `GET /ws?projectId=<id>` を既存の Node HTTP Server に接続する WebSocket
   アダプタ。`RealtimeOptions.projectExists` で project の存在を確認してから Hub に接続し、
   接続時は projectId、Origin (指定時は Host 一致)、project 存在、接続上限の順に検証する。
@@ -59,7 +59,7 @@ server の基盤。本番は `npm run build && npm run start` で起動する。
   `/api/projects/:projectId/versions` と `/api/projects/:projectId/comments` のマウント、および
   最後の static route のマウントを担う。project 作成・版追加 multipart の本体上限も検査する。
 - `src/index.ts`: `DATA_DIR` を作成して SQLite / ファイルストレージ / Hono HTTP / WebSocket を
-  1プロセスで起動するエントリポイント。起動時に `server_started` の JSON 1行をログ出力する。
+  1プロセスで起動するエントリポイント。REST の版削除時は Hub の表示参照を掃除し、起動時に `server_started` の JSON 1行をログ出力する。
 - `tests/helpers/tmp.ts`: `server/.vite/test-tmp` 配下の一時ディレクトリ管理。
 - `tests/helpers/ws.ts`: ephemeral HTTP server と実 WebSocket を使う realtime テスト fixture。
 - `tests/helpers/app.ts`: 固定時刻・インメモリ DB・一時ファイルストレージを使う `TestApp` と
@@ -69,7 +69,7 @@ server の基盤。本番は `npm run build && npm run start` で起動する。
 - `tests/routes-static.test.ts`: Content-Type、静的ファイル、キャッシュ、SPA フォールバック、
   HEAD、API 非横取り、パストラバーサル、未存在 root のテスト。
 - `tests/errors.test.ts`: HTTP / Zod / 未知エラーの応答変換テスト。
-- `tests/db-projects.test.ts`: SQLite 接続、スキーマ、トランザクション、projects 層の全版一覧・検索テスト。
+- `tests/db-projects.test.ts`: SQLite 接続、スキーマ、トランザクション、projects 層の空 project・全版一覧・検索・版削除テスト。
 - `tests/db-comments.test.ts`: comments 層の JSON 往復、FK、一覧順序・status 絞り込み、
   project スコープ、status トグル、playback の保存・null・status 更新維持のテスト。
 - `tests/db-migrate.test.ts`: playback_json 列の新規作成、旧 comments 定義からの nullable 列移行、
@@ -86,7 +86,8 @@ server の基盤。本番は `npm run build && npm run start` で起動する。
   入力検証、上限超過、全件事前検証、DB 失敗時の後始末のテスト。
 - `tests/routes-projects-formats.test.ts`: FBX / OBJ の作成・版追加、複数形式混在、内容不正の multipart テスト。
 - `tests/routes-project-versions.test.ts`: 既存 project への版追加、2回追加後の全版取得と採番、publish、
-  存在しない project、単一ファイル制約、形式不正、DB 失敗時の後始末のテスト。
+  空 project への版追加、存在しない project、単一ファイル制約、形式不正、DB 失敗時の後始末のテスト。
+- `tests/routes-project-delete.test.ts`: 版削除時のコメント・モデルファイル・project 状態・publish、存在しない対象、二重削除のテスト。
 - `tests/routes-comments.test.ts`: コメント一覧の順序・絞り込み、投稿・status 更新、入力検証、
   project/version スコープ、publish 呼び出しのテスト。
 - `tests/routes-comments-playback.test.ts`: コメント投稿の playback 保存・応答・publish・一覧反映、
@@ -104,6 +105,7 @@ server の基盤。本番は `npm run build && npm run start` で起動する。
 - `tests/realtime-hub-trail.test.ts`: RoomHub のモーション軌跡表示設定の複製・中継、welcome 反映、未設定値の省略、未定義ルーム参照を検証する。
 - `tests/realtime-hub-playback.test.ts`: RoomHub と表示状態の再生対象 versionId の初期値、中継、後勝ち保持、welcome 反映、ルーム分離・削除、未定義ルーム参照を検証する。
 - `tests/room-display.test.ts`: ルーム共有表示状態の初期化、8種の更新・中継、値の複製、welcome 復元フィールドを検証する。
+- `tests/realtime-hub-forget.test.ts`: 削除版に対する表示状態の参照掃除と、RoomHub の welcome 復元・未存在ルーム処理を検証する。
 - `tests/realtime-guards.test.ts`: project / Origin / 接続数 / ルーム数 / payload の接続ガードと、
   stroke 所有者検証・上限内の大きな stroke のテスト。
 - `tests/room-state.test.ts`: `createRoom` の独立性、色割り当て、定数、camera / user / stroke の複製ヘルパを検証する。
@@ -119,7 +121,7 @@ server の基盤。本番は `npm run build && npm run start` で起動する。
   `ALTER TABLE ... ADD COLUMN` を実行する。`migrate` は schema.sql の後に comments の
   `playback_json TEXT` 移行を適用する。
 - `insertProject` / `insertModelVersion`: プロジェクトと版を登録する。
-- `listModelVersions` / `findProject` / `findModelVersion`: 全版を番号昇順で列挙し、shared の `Project` / `ModelVersion` へ変換して検索する。
+- `listModelVersions` / `findProject` / `findModelVersion` / `deleteModelVersion`: 全版を番号昇順で列挙し、空 project を含む shared の `Project` / `ModelVersion` へ変換して検索し、コメントと版本体をトランザクションで削除する。
 - `insertComment`: `NewComment` を status `open` として登録し、playback を nullable JSON として
   保存した `Comment` を返す。未指定・null は `playback: null` になる。
 - `listComments`: project 単位でコメントを順序付き一覧する。
@@ -132,13 +134,13 @@ server の基盤。本番は `npm run build && npm run start` で起動する。
   multipart 本体上限へ加える 64 KiB の余裕を公開する。
 - `projectRoutes`: `GET /api/projects/:projectId` と
   `GET /api/projects/:projectId/versions/:versionId/model`、`POST /api/projects`、
-  `POST /api/projects/:projectId/versions` を提供する。作成 POST は multipart の `name` と
+  `POST /api/projects/:projectId/versions`、`DELETE /api/projects/:projectId/versions/:versionId` を提供する。作成 POST は multipart の `name` と
   1件以上の `file` を送信順に受け、201 で全 `versions` を含む `Project` を返す。版追加 POST は
   1件の `file` を受け、採番済み `ModelVersion` を201で返し、DB反映後に `object:added` を publish
   する。名前は trim して保存し、不正な入力は `VALIDATION`、非 glTF/GLB/FBX/OBJ は
   拡張子不正は HTTP 415 の `UNSUPPORTED_FORMAT`、内容不正は HTTP 400 の
   `UNSUPPORTED_FORMAT`、上限超過は `PAYLOAD_TOO_LARGE`、保存後の DB 失敗など予期しないエラーは
-  `INTERNAL` を返す。
+  `INTERNAL` を返す。削除はコメント、版本体、ファイルを順に処理して `object:removed` を publish する。
 - `readUploadedModels`: multipart の file フィールドを検証済み `UploadedModel[]` へ変換する。
 - `commentRoutes`: `GET /api/projects/:projectId/comments` は `Comment[]` を返し、任意の
   `status=open|resolved` で絞り込む。POST は `CreateCommentInput` を検証し、対象 version が
@@ -147,8 +149,8 @@ server の基盤。本番は `npm run build && npm run start` で起動する。
   いずれも対象 project が無ければ `NOT_FOUND`、入力不正なら `VALIDATION` を返す。
 - `contentTypeFor` / `resolveStaticPath` / `staticRoutes`: 静的ファイルの Content-Type 判定、
   root 配下の安全なパス解決、`index.html` を使った SPA フォールバック付き配信を提供する。
-- `RoomDisplayState` / `createRoomDisplayState` / `applyDisplayMessage` / `displayWelcomeFields` / `hiddenPartsOf`:
-  ルーム共有の表示状態を更新・中継し、非表示部位の挿入順複製配列と welcome の復元フィールドを作る。`playbackSource` は未設定時 null とする。
+- `RoomDisplayState` / `createRoomDisplayState` / `applyDisplayMessage` / `displayWelcomeFields` / `hiddenPartsOf` / `forgetObjectInDisplay`:
+  ルーム共有の表示状態を更新・中継し、非表示部位の挿入順複製配列と welcome の復元フィールドを作る。`forgetObjectInDisplay` は削除版を hidden / 部位 / compare / playback から除く。`playbackSource` は未設定時 null とする。
 - `Room` / `Connection` / `createRoom` / `colorFor` / `copyCamera` / `copyUser` / `copyStroke`:
   `room-state.ts` でルーム構造と複製・色割り当てを提供する。`PRESENCE_PALETTE`、`MAX_CONNECTIONS`、`MAX_ROOMS`、
   `MAX_ROOM_STROKES`、`Outbound`、`OutboundTarget` は `hub.ts` からも後方互換に再エクスポートする。
@@ -159,7 +161,7 @@ server の基盤。本番は `npm run build && npm run start` で起動する。
   camera の `focalLength` は参加者単位で最後に指定された値を保持し、未指定の camera 中継でも
   その値を維持する。未指定の参加者はキーを持たず、保持値は `welcome` / `user:joined` /
   `usersIn` の Presence に反映される。表示状態の更新・中継・welcome 復元は `room-display.ts` が担い、
-  `hiddenObjectsIn` / `hiddenObjectPartsIn` / `meshDisplayIn` / `meshCompareIn` / `jointDisplayIn` / `motionTrailIn` / `playbackSourceIn` は現在値を参照する。
+  `hiddenObjectsIn` / `hiddenObjectPartsIn` / `meshDisplayIn` / `meshCompareIn` / `jointDisplayIn` / `motionTrailIn` / `playbackSourceIn` は現在値を参照する。`forgetObject` は削除版の表示参照を配信せずに掃除する。
   `motionTrailIn` は未設定または存在しないルームでは `null`、設定済みの場合はルーム内の実体を複製して返す。
   `Outbound.target` は `self` (送信元のみ)、`others` (送信元以外)、`all` (ルーム全員) を表す。
   `PRESENCE_PALETTE` は8色で、ルーム内の未使用色をjoin順に割り当て、全色使用時はサイズの剰余で

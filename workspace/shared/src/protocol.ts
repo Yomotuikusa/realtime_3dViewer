@@ -90,6 +90,8 @@ export type ServerMessage =
   | { type: "object:part-visibility"; userId: string; versionId: string; objectPath: ObjectPath; visible: boolean }
   /** REST でオブジェクトが追加された(ルーム全員へ配信) */
   | { type: "object:added"; version: ModelVersion }
+  /** REST でオブジェクトが削除された(ルーム全員へ配信) */
+  | { type: "object:removed"; versionId: string }
   /** userId がメッシュの表示方法を切り替えた(送信元以外へ中継) */
   | { type: "mesh:display"; userId: string; mode: MeshDisplayMode }
   /** userId がメッシュ比較の設定を変えた(送信元以外へ中継) */
@@ -152,6 +154,7 @@ export const ServerMessageSchema = z.discriminatedUnion("type", [
   z.object({ type: z.literal("object:visibility"), userId: IdSchema, versionId: IdSchema, visible: z.boolean() }),
   z.object({ type: z.literal("object:part-visibility"), userId: IdSchema, versionId: IdSchema, objectPath: ObjectPathSchema, visible: z.boolean() }),
   z.object({ type: z.literal("object:added"), version: ModelVersionSchema }),
+  z.object({ type: z.literal("object:removed"), versionId: IdSchema }),
   z.object({ type: z.literal("mesh:display"), userId: IdSchema, mode: MeshDisplayModeSchema }),
   z.object({ type: z.literal("mesh:compare"), userId: IdSchema, compare: MeshCompareSchema }),
   z.object({ type: z.literal("joint:display"), userId: IdSchema, display: JointDisplaySchema }),
