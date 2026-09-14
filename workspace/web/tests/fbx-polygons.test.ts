@@ -84,7 +84,7 @@ function node(name: string, properties: Property[], children: Uint8Array[], star
   return result;
 }
 
-function binaryFbx(version: number, compressed = false): ArrayBuffer {
+function binaryFbx(version: number, compressed = false, footer = new Uint8Array(176)): ArrayBuffer {
   const wide = version >= 7500;
   const objectsStart = 27;
   const geometryStart = objectsStart + (wide ? 25 : 13) + new TextEncoder().encode("Objects").length;
@@ -103,7 +103,7 @@ function binaryFbx(version: number, compressed = false): ArrayBuffer {
     { type: "S", value: "OO" }, { type: "L", value: 11 }, { type: "L", value: 22 },
   ], [], connectionsStart + (wide ? 25 : 13) + 11, wide);
   const connections = node("Connections", [], [connection], connectionsStart, wide);
-  const body = join([new TextEncoder().encode(MAGIC), bytes([0, 0]), bytes([0, 0, 0, 0]), objects, connections, new Uint8Array(176)]);
+  const body = join([new TextEncoder().encode(MAGIC), bytes([0, 0]), bytes([0, 0, 0, 0]), objects, connections, footer]);
   new DataView(body.buffer).setUint32(23, version, true);
   return body.buffer as ArrayBuffer;
 }
@@ -178,6 +178,14 @@ describe("FBX polygon readers", () => {
 
   it.each([7400, 7500])("reads %s binary nodes", (version) => {
     const result = readFbxBinaryPolygons(binaryFbx(version));
+    expect(result.geometries).toEqual(new Map([[11, [4, 4]]]));
+    expect(result.modelToGeometry).toEqual(new Map([[22, 11]]));
+  });
+
+  it.each([7400, 7500, 7700])("reads %s binary files ending with a null record and a footer shorter than 176 bytes", (version) => {
+    // 実ファイル(Maya 書き出しなど)はトップレベル終端の空レコードの後に約 172 バイトのフッターが続く
+    const nullRecordLength = version >= 7500 ? 25 : 13;
+    const result = readFbxBinaryPolygons(binaryFbx(version, false, new Uint8Array(nullRecordLength + 172)));
     expect(result.geometries).toEqual(new Map([[11, [4, 4]]]));
     expect(result.modelToGeometry).toEqual(new Map([[22, 11]]));
   });

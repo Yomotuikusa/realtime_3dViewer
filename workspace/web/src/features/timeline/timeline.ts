@@ -8,9 +8,9 @@ export const TICK_LABEL_BAND_PX = 16;
 /** tickStep の何倍ごとにアクセント目盛りにするか */
 export const ACCENT_TICK_MULTIPLE = 5;
 /** (高さ - TICK_LABEL_BAND_PX) に掛ける長さの比率 */
-export const TICK_LENGTH_RATIO = { label: 0.3, accent: 0.18, minor: 0.105 } as const;
+export const TICK_LENGTH_RATIO = { label: 0.55, accent: 0.35, minor: 0.105 } as const;
 /** 目盛りの種類ごとの最小の長さ(px)。ただし利用可能な高さを超えない */
-export const TICK_MIN_LENGTH_PX = { label: 6, accent: 4, minor: 3 } as const;
+export const TICK_MIN_LENGTH_PX = { label: 13, accent: 9, minor: 3 } as const;
 
 export type TickKind = "label" | "accent" | "minor";
 

@@ -90,9 +90,8 @@ function header(reader: Reader, wide: boolean): Header | null {
 
 function skip(reader: Reader, node: Header): void { reader.offset = node.end; }
 
+/** 残りがフッター(トップレベル終端の空レコード後、約 160〜176 バイト)だけなら true。FBXLoader と同じ判定 */
 function endOfContent(reader: Reader): boolean {
-  const remaining = reader.buffer.byteLength - reader.offset;
-  if (remaining < 176) return false;
   if (reader.buffer.byteLength % 16 === 0) {
     return ((reader.offset + 176) & ~0xf) >= reader.buffer.byteLength;
   }
