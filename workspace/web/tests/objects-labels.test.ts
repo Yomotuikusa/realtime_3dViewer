@@ -4,6 +4,7 @@ import {
   ADD_FILES_LABEL,
   ADDING_LABEL,
   COMPARE_BASE_LABEL,
+  COMPARE_BASE_VISIBLE_LABEL,
   COMPARE_HEADING,
   COMPARE_LEGEND,
   COMPARE_NONE_LABEL,
@@ -32,6 +33,7 @@ describe("objects labels", () => {
     expect(COMPARE_TARGET_LABEL).toBe("対象");
     expect(COMPARE_NONE_LABEL).toBe("なし");
     expect(COMPARE_THRESHOLD_LABEL).toBe("しきい値");
+    expect(COMPARE_BASE_VISIBLE_LABEL).toBe("比較中も基準を表示");
     expect(COMPARE_LEGEND).toBe("赤: 対象が基準から飛び出し / 青: へこみ");
   });
 

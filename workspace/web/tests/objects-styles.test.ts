@@ -26,6 +26,7 @@ describe("objects styles and placement", () => {
     expect(objectsCss).toContain(".compare {");
     expect(objectsCss).toContain(".compare__field {");
     expect(objectsCss).toContain(".compare__range {");
+    expect(objectsCss).toContain(".compare__check {");
     expect(objectsCss).toContain(".compare__legend {");
     expect(objectsCss).toContain("grid-template-columns: 3rem minmax(0, 1fr);");
   });
@@ -44,6 +45,9 @@ describe("objects styles and placement", () => {
     expect(compareControls).toContain("meshCompareEquals(");
     expect(compareControls.match(/<select\b/g)).toHaveLength(2);
     expect(compareControls.match(/type="range"/g)).toHaveLength(1);
+    expect(compareControls.match(/type="checkbox"/g)).toHaveLength(1);
+    expect(compareControls).toContain("checked={meshCompare.baseVisible === true}");
+    expect(compareControls).toContain("baseVisible: event.target.checked");
     expect(compareControls).toContain("min={MIN_COMPARE_THRESHOLD_PERMILLE}");
     expect(compareControls).toContain("max={MAX_COMPARE_THRESHOLD_PERMILLE}");
     expect(compareControls).toContain("objects.length < 2");

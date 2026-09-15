@@ -10,6 +10,7 @@ import { useDisplayStore } from "../../store/display";
 import { useObjectsStore } from "../../store/objects";
 import {
   COMPARE_BASE_LABEL,
+  COMPARE_BASE_VISIBLE_LABEL,
   COMPARE_HEADING,
   COMPARE_LEGEND,
   COMPARE_NONE_LABEL,
@@ -83,6 +84,15 @@ export function CompareControls({ send }: { send: (msg: ClientMessage) => boolea
           onChange={(event) => update({ thresholdPermille: Number(event.target.value) })}
         />
       </div>
+      <label className="compare__check">
+        <input
+          type="checkbox"
+          className="compare__checkbox"
+          checked={meshCompare.baseVisible === true}
+          onChange={(event) => update({ baseVisible: event.target.checked })}
+        />
+        <span className="compare__label">{COMPARE_BASE_VISIBLE_LABEL}</span>
+      </label>
       <p className="compare__legend">{COMPARE_LEGEND}</p>
     </div>
   );

@@ -10,6 +10,7 @@
 - overlay-geometry.ts: 比較重ね描き用に index 付き geometry の属性を三角形ごとの独立頂点へ展開し、元頂点番号との対応を保持する
 - overlay.ts: 符号付き距離を指定された赤・青・透明の面単位色で比較対象 Mesh に重ね描きし、再利用・破棄する関数を提供する。既定の比較色は viewer color defaults から取得する
 - model-scenes.ts: versionId ごとにマウント中の ModelMesh の glTF scene を参照のまま登録する Zustand ストアと選択関数を提供する
+- compare-visibility.ts: 比較中に対象が表示されている場合だけ、基準版の描画を止める判定を提供する
 - MeshCompareRig.tsx: display ストアの比較設定とロード済み scene を結び、対象 scene の距離計算と比較重ね描きを管理する Canvas 用 Rig。theme ストアの `compareOutside` / `compareInside` を購読して塗り重ねへ渡す
 
 ## 公開インターフェイス
@@ -18,11 +19,12 @@
 - overlay-geometry.ts: `COMPARE_SOURCE_INDEX_KEY`、`expandByIndex`、`compareSourceIndex`、`createCompareOverlayGeometry`
 - overlay.ts: `MESH_COMPARE_OVERLAY_KEY`、`COMPARE_OUTSIDE_COLOR`、`COMPARE_INSIDE_COLOR`、`COMPARE_OVERLAY_OPACITY`、`CompareColors`、`isMeshCompareOverlay`、`createCompareOverlayGeometry`、`createCompareOverlayMaterial`、`createCompareOverlay`、`colorizeDeviation(geometry, signedDistance, threshold, colors)`、`applyCompareOverlay(mesh, signedDistance, threshold, colors)`、`clearCompareOverlays`
 - model-scenes.ts: `ModelScenesState`、`useModelScenesStore`、`selectModelScene`
+- compare-visibility.ts: `isHiddenByCompare`
 - MeshCompareRig.tsx: `ZERO_THRESHOLD_RATIO`、`thresholdWorld`、`MeshCompareRig`
 
 ## 他フォルダとの関係
 
-`viewer/mesh-display.ts` の `isViewerOverlay` を共有し、ビューアが後付けしたワイヤフレームや比較重ね描きを比較対象から除外する。overlay.ts は index 展開したコピーを所有し三角形単位で塗る。比較色は `MeshCompareRig` が theme ストアから購読して `CompareColors` として渡し、距離計算の再実行なしに塗り直す。計算はレスト姿勢で行い、ボーンの現在姿勢やモーフは反映しない。対象のポリゴンが粗い場合、三角形内部の逸脱は拾えない。面の表裏が反転したモデルでは符号が逆になる。計算は同期的にメインスレッドを止めるため、Worker 化は今後の課題とする。
+`viewer/mesh-display.ts` の `isViewerOverlay` を共有し、ビューアが後付けしたワイヤフレームや比較重ね描きを比較対象から除外する。比較中は `ViewerCanvas` が `isHiddenByCompare` で基準の版の描画を止め、`baseVisible` で戻す。overlay.ts は index 展開したコピーを所有し三角形単位で塗る。比較色は `MeshCompareRig` が theme ストアから購読して `CompareColors` として渡し、距離計算の再実行なしに塗り直す。計算はレスト姿勢で行い、ボーンの現在姿勢やモーフは反映しない。対象のポリゴンが粗い場合、三角形内部の逸脱は拾えない。面の表裏が反転したモデルでは符号が逆になる。計算は同期的にメインスレッドを止めるため、Worker 化は今後の課題とする。
 
 ## テスト
 
@@ -32,3 +34,4 @@
 - tests/compare-overlay-faces.test.ts: index 展開、元頂点対応、三角形単位の代表距離と面色を検証する
 - tests/compare-model-scenes.test.ts: versionId ごとの scene 登録・同一参照の通知抑止・条件付き解除・不変更新・選択・reset を検証する
 - tests/compare-rig.test.ts: しきい値換算と MeshCompareRig のストア／計算／重ね描き結線をソース検査する
+- tests/compare-visibility.test.ts: 比較中の基準描画抑制・復帰、対象の表示状態、ViewerCanvas／CompareControls のソース結線を検証する
