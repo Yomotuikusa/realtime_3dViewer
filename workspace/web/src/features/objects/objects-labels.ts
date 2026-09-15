@@ -58,7 +58,7 @@ export function compareOptionLabel(version: { number: number; fileName: string }
   return `v${version.number} · ${version.fileName}`;
 }
 
-/** 千分率を小数1桁の百分率で表す。 */
+/** 千分率を小数 2 桁の百分率で表す。"0.50%" / "0.03%" */
 export function thresholdPermilleText(permille: number): string {
-  return `${(permille / 10).toFixed(1)}%`;
+  return `${(permille / 10).toFixed(2)}%`;
 }

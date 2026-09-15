@@ -48,8 +48,9 @@ describe("objects styles and placement", () => {
     expect(compareControls.match(/type="checkbox"/g)).toHaveLength(1);
     expect(compareControls).toContain("checked={meshCompare.baseVisible === true}");
     expect(compareControls).toContain("baseVisible: event.target.checked");
-    expect(compareControls).toContain("min={MIN_COMPARE_THRESHOLD_PERMILLE}");
-    expect(compareControls).toContain("max={MAX_COMPARE_THRESHOLD_PERMILLE}");
+    expect(compareControls).toContain("min={0}");
+    expect(compareControls).toContain("max={COMPARE_THRESHOLD_STEPS_PERMILLE.length - 1}");
+    expect(compareControls).toContain("value={nearestCompareThresholdIndex(meshCompare.thresholdPermille)}");
     expect(compareControls).toContain("objects.length < 2");
     expect(compareControls).not.toMatch(/#[0-9a-f]{3,8}/i);
   });
