@@ -1,11 +1,7 @@
 import type { ReactElement } from "react";
 import type { ClientMessage } from "@shared/protocol";
-import {
-  MAX_COMPARE_THRESHOLD_PERMILLE,
-  MIN_COMPARE_THRESHOLD_PERMILLE,
-  type MeshCompare,
-} from "@shared/types";
-import { meshCompareEquals } from "@shared/compare";
+import type { MeshCompare } from "@shared/types";
+import { COMPARE_THRESHOLD_STEPS_PERMILLE, meshCompareEquals, nearestCompareThresholdIndex } from "@shared/compare";
 import { useDisplayStore } from "../../store/display";
 import { useObjectsStore } from "../../store/objects";
 import {
@@ -77,11 +73,14 @@ export function CompareControls({ send }: { send: (msg: ClientMessage) => boolea
           id="compare-threshold"
           className="compare__range"
           type="range"
-          min={MIN_COMPARE_THRESHOLD_PERMILLE}
-          max={MAX_COMPARE_THRESHOLD_PERMILLE}
+          min={0}
+          max={COMPARE_THRESHOLD_STEPS_PERMILLE.length - 1}
           step="1"
-          value={meshCompare.thresholdPermille}
-          onChange={(event) => update({ thresholdPermille: Number(event.target.value) })}
+          value={nearestCompareThresholdIndex(meshCompare.thresholdPermille)}
+          onChange={(event) => {
+            const permille = COMPARE_THRESHOLD_STEPS_PERMILLE[Number(event.target.value)];
+            if (permille !== undefined) update({ thresholdPermille: permille });
+          }}
         />
       </div>
       <label className="compare__check">
