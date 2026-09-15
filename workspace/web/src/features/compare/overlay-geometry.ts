@@ -1,55 +1,43 @@
-import {
-  BufferAttribute,
-  BufferGeometry,
-  Float32BufferAttribute,
-  InterleavedBufferAttribute,
-  Mesh,
-} from "three";
+import { BufferGeometry, Float32BufferAttribute, Mesh } from "three";
 
-/** 展開元 index の配列を持つ geometry.userData のキー。元 geometry に index が無ければ未設定 */
-export const COMPARE_SOURCE_INDEX_KEY = "meshCompareSourceIndex";
+/** 頂点ごとの符号付き距離(ワールド単位)を持つ float 属性の名前。itemSize 1 */
+export const COMPARE_DISTANCE_ATTRIBUTE = "compareDistance";
 
-/** attribute を index の順に並べ直した新しい属性を返す。 */
-export function expandByIndex(
-  attribute: BufferAttribute | InterleavedBufferAttribute,
-  index: BufferAttribute,
-): Float32BufferAttribute {
-  const values = new Float32Array(index.count * attribute.itemSize);
-  for (let vertex = 0; vertex < index.count; vertex += 1) {
-    const sourceVertex = index.getComponent(vertex, 0);
-    for (let component = 0; component < attribute.itemSize; component += 1) {
-      values[vertex * attribute.itemSize + component] = attribute.getComponent(sourceVertex, component);
-    }
-  }
-  return new Float32BufferAttribute(values, attribute.itemSize);
-}
-
-/** 重ね描きの頂点番号から元 geometry の頂点番号を取得する。 */
-export function compareSourceIndex(geometry: BufferGeometry): ArrayLike<number> | null {
-  return geometry.userData[COMPARE_SOURCE_INDEX_KEY] ?? null;
-}
-
-/** 比較重ね描き専用の、index を持たない geometry を作る。 */
+/** 比較重ね描き専用の geometry を作る。元 geometry の変形属性は共有する。 */
 export function createCompareOverlayGeometry(mesh: Mesh): BufferGeometry {
   const source = mesh.geometry;
   const geometry = new BufferGeometry();
-  const index = source.getIndex();
+  const position = source.getAttribute("position");
 
   for (const name of ["position", "skinIndex", "skinWeight"] as const) {
     const attribute = source.getAttribute(name);
-    if (attribute) geometry.setAttribute(name, index ? expandByIndex(attribute, index) : attribute);
+    if (attribute) geometry.setAttribute(name, attribute);
   }
-  if (source.morphAttributes.position) {
-    geometry.morphAttributes.position = index
-      ? source.morphAttributes.position.map((attribute) => expandByIndex(attribute, index))
-      : source.morphAttributes.position;
-  }
+  const index = source.getIndex();
+  if (index) geometry.setIndex(index);
+  if (source.morphAttributes.position) geometry.morphAttributes.position = source.morphAttributes.position;
   geometry.morphTargetsRelative = source.morphTargetsRelative;
-
-  const position = geometry.getAttribute("position");
-  geometry.setAttribute("color", new Float32BufferAttribute((position?.count ?? 0) * 4, 4));
-  if (index) geometry.userData[COMPARE_SOURCE_INDEX_KEY] = index.array;
   geometry.boundingBox = source.boundingBox;
   geometry.boundingSphere = source.boundingSphere;
+  geometry.setAttribute(
+    COMPARE_DISTANCE_ATTRIBUTE,
+    new Float32BufferAttribute(position?.count ?? 0, 1),
+  );
   return geometry;
+}
+
+/** signedDistance を比較重ね描き用の頂点属性へ書く。 */
+export function writeCompareDistance(
+  geometry: BufferGeometry,
+  signedDistance: ArrayLike<number>,
+): void {
+  const distance = geometry.getAttribute(COMPARE_DISTANCE_ATTRIBUTE);
+  if (!distance) return;
+
+  const count = Math.min(distance.count, signedDistance.length);
+  for (let vertex = 0; vertex < distance.count; vertex += 1) {
+    const value = vertex < count ? signedDistance[vertex]! : 0;
+    distance.setX(vertex, Number.isFinite(value) ? value : 0);
+  }
+  distance.needsUpdate = true;
 }
