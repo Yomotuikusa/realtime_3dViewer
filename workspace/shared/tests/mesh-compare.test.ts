@@ -24,9 +24,12 @@ const active = { baseId: "v1", targetId: "v2", thresholdPermille: 5 };
 describe("mesh compare", () => {
   it("validates compare values and the default", () => {
     expect(MIN_COMPARE_THRESHOLD_PERMILLE).toBe(0);
-    for (const value of [active, { ...active, thresholdPermille: 0.3 }, { ...active, thresholdPermille: 1 }, { baseId: null, targetId: null, thresholdPermille: 0 }, { ...active, thresholdPermille: 50 }]) {
+    for (const value of [active, { ...active, thresholdPermille: 0.3 }, { baseId: null, targetId: null, thresholdPermille: 0 }, { ...active, thresholdPermille: 50 }]) {
       expect(MeshCompareSchema.safeParse(value).success).toBe(true);
     }
+    const onePermille = MeshCompareSchema.safeParse({ ...active, thresholdPermille: 1 });
+    expect(onePermille.success).toBe(true);
+    if (onePermille.success) expect(onePermille.data.thresholdPermille).toBe(1);
     for (const baseVisible of [true, false]) {
       const result = MeshCompareSchema.safeParse({ ...active, baseVisible });
       expect(result.success).toBe(true);
