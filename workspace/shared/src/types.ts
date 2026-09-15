@@ -85,7 +85,8 @@ export interface MeshCompare {
   /** しきい値。基準モデルの最大辺長に対する千分率。MIN〜MAX の整数 */
   thresholdPermille: number;
 }
-export const MIN_COMPARE_THRESHOLD_PERMILLE = 1;
+/** しきい値の下限。0 は「換算後の誤差下限を超えた差分をすべて着色」を意味する */
+export const MIN_COMPARE_THRESHOLD_PERMILLE = 0;
 export const MAX_COMPARE_THRESHOLD_PERMILLE = 50;
 export const DEFAULT_COMPARE_THRESHOLD_PERMILLE = 5;
 /** 誰も比較を設定していないルームの値 */
