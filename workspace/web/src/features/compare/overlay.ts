@@ -1,7 +1,6 @@
 import {
   BufferGeometry,
   Color,
-  Float32BufferAttribute,
   Mesh,
   MeshBasicMaterial,
   Object3D,
@@ -9,6 +8,14 @@ import {
 } from "three";
 import { VIEWER_OVERLAY_KEY } from "../viewer/mesh-display";
 import { VIEWER_COLOR_DEFAULTS, hexToNumber } from "../theme/viewer-colors";
+import { compareSourceIndex, createCompareOverlayGeometry } from "./overlay-geometry";
+
+export {
+  COMPARE_SOURCE_INDEX_KEY,
+  compareSourceIndex,
+  createCompareOverlayGeometry,
+  expandByIndex,
+} from "./overlay-geometry";
 
 /** 比較重ね描き Mesh の userData キー。値は true */
 export const MESH_COMPARE_OVERLAY_KEY = "meshCompareOverlay";
@@ -30,24 +37,6 @@ export const COMPARE_OVERLAY_OPACITY = 0.85;
 /** userData[MESH_COMPARE_OVERLAY_KEY] === true なら比較重ね描き */
 export function isMeshCompareOverlay(object: Object3D): boolean {
   return object.userData[MESH_COMPARE_OVERLAY_KEY] === true;
-}
-
-/** 比較重ね描き専用の属性だけを持つ geometry を作る。 */
-export function createCompareOverlayGeometry(mesh: Mesh): BufferGeometry {
-  const source = mesh.geometry;
-  const geometry = new BufferGeometry();
-  for (const name of ["position", "skinIndex", "skinWeight"] as const) {
-    const attribute = source.getAttribute(name);
-    if (attribute) geometry.setAttribute(name, attribute);
-  }
-  const index = source.getIndex();
-  if (index) geometry.setIndex(index);
-  if (source.morphAttributes.position) geometry.morphAttributes.position = source.morphAttributes.position;
-  geometry.morphTargetsRelative = source.morphTargetsRelative;
-  geometry.setAttribute("color", new Float32BufferAttribute((source.getAttribute("position")?.count ?? 0) * 4, 4));
-  geometry.boundingBox = source.boundingBox;
-  geometry.boundingSphere = source.boundingSphere;
-  return geometry;
 }
 
 /** 頂点色で着色する、共有しない材質を作る。 */
@@ -85,7 +74,7 @@ export function createCompareOverlay(mesh: Mesh): Mesh {
 const outsideColor = new Color(COMPARE_OUTSIDE_COLOR);
 const insideColor = new Color(COMPARE_INSIDE_COLOR);
 
-/** 符号付き距離に応じて color 属性を書き直す。 */
+/** 符号付き距離に応じて color 属性を三角形単位で書き直す。 */
 export function colorizeDeviation(
   geometry: BufferGeometry,
   signedDistance: Float32Array,
@@ -98,14 +87,22 @@ export function colorizeDeviation(
   outsideColor.setHex(colors.outside);
   insideColor.setHex(colors.inside);
   for (let vertex = 0; vertex < color.count; vertex += 1) color.setXYZW(vertex, 0, 0, 0, 0);
-  const count = Math.min(color.count, signedDistance.length);
-  for (let vertex = 0; vertex < count; vertex += 1) {
-    const distance = signedDistance[vertex]!;
-    if (!Number.isFinite(distance) || distance === 0) continue;
-    if (distance >= threshold) {
-      color.setXYZW(vertex, outsideColor.r, outsideColor.g, outsideColor.b, COMPARE_OVERLAY_OPACITY);
-    } else if (distance <= -threshold) {
-      color.setXYZW(vertex, insideColor.r, insideColor.g, insideColor.b, COMPARE_OVERLAY_OPACITY);
+  const sourceIndex = compareSourceIndex(geometry);
+  const faceCount = Math.floor(color.count / 3);
+  for (let face = 0; face < faceCount; face += 1) {
+    let best = 0;
+    for (let corner = 0; corner < 3; corner += 1) {
+      const vertex = face * 3 + corner;
+      const sourceVertex = sourceIndex ? sourceIndex[vertex]! : vertex;
+      if (sourceVertex >= signedDistance.length) continue;
+      const distance = signedDistance[sourceVertex]!;
+      if (Number.isFinite(distance) && Math.abs(distance) > Math.abs(best)) best = distance;
+    }
+    if (best === 0) continue;
+    const paint = best >= threshold ? outsideColor : best <= -threshold ? insideColor : null;
+    if (!paint) continue;
+    for (let corner = 0; corner < 3; corner += 1) {
+      color.setXYZW(face * 3 + corner, paint.r, paint.g, paint.b, COMPARE_OVERLAY_OPACITY);
     }
   }
   color.needsUpdate = true;

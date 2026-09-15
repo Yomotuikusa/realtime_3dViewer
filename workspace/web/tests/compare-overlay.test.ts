@@ -58,17 +58,18 @@ function expectRgba(geometry: Mesh["geometry"], vertex: number, expected: number
 const DEFAULT_COLORS = { outside: COMPARE_OUTSIDE_COLOR, inside: COMPARE_INSIDE_COLOR };
 
 describe("compare overlay", () => {
-  it("creates a separate geometry with shared deformation attributes", () => {
+  it("creates an index-expanded geometry with separate color attributes", () => {
     const source = mesh();
     const geometry = createCompareOverlayGeometry(source);
 
     expect(geometry).not.toBe(source.geometry);
-    expect(geometry.getAttribute("position")).toBe(source.geometry.getAttribute("position"));
-    expect(geometry.getIndex()).toBe(source.geometry.getIndex());
+    expect(geometry.getAttribute("position")).not.toBe(source.geometry.getAttribute("position"));
+    expect(geometry.getAttribute("position").count).toBe(36);
+    expect(geometry.getIndex()).toBeNull();
     expect(geometry.getAttribute("normal")).toBeUndefined();
     expect(geometry.getAttribute("uv")).toBeUndefined();
     expect(geometry.getAttribute("color").itemSize).toBe(4);
-    expect(geometry.getAttribute("color").count).toBe(geometry.getAttribute("position").count);
+    expect(geometry.getAttribute("color").count).toBe(36);
     expect(Array.from(geometry.getAttribute("color").array as Float32Array).every((value) => value === 0)).toBe(true);
     expect(source.geometry.getAttribute("color")).toBeUndefined();
 
@@ -85,9 +86,13 @@ describe("compare overlay", () => {
     const geometry = createCompareOverlayGeometry(source);
     const overlay = createCompareOverlay(source) as SkinnedMesh;
 
-    expect(geometry.getAttribute("skinIndex")).toBe(source.geometry.getAttribute("skinIndex"));
-    expect(geometry.getAttribute("skinWeight")).toBe(source.geometry.getAttribute("skinWeight"));
-    expect(geometry.morphAttributes.position).toBe(source.geometry.morphAttributes.position);
+    expect(geometry.getAttribute("skinIndex")).not.toBe(source.geometry.getAttribute("skinIndex"));
+    expect(geometry.getAttribute("skinIndex").count).toBe(36);
+    expect(geometry.getAttribute("skinWeight")).not.toBe(source.geometry.getAttribute("skinWeight"));
+    expect(geometry.getAttribute("skinWeight").count).toBe(36);
+    expect(geometry.morphAttributes.position).not.toBe(source.geometry.morphAttributes.position);
+    expect(geometry.morphAttributes.position![0]).not.toBe(source.geometry.morphAttributes.position![0]);
+    expect(geometry.morphAttributes.position![0]!.count).toBe(36);
     expect(geometry.morphTargetsRelative).toBe(source.geometry.morphTargetsRelative);
     expect(overlay).toBeInstanceOf(SkinnedMesh);
     expect(overlay.skeleton).toBe(source.skeleton);
@@ -136,19 +141,24 @@ describe("compare overlay", () => {
     const outside = new Color(COMPARE_OUTSIDE_COLOR);
     const inside = new Color(COMPARE_INSIDE_COLOR);
 
-    expectRgba(geometry, 0, [outside.r, outside.g, outside.b, COMPARE_OVERLAY_OPACITY]);
-    expectRgba(geometry, 1, [inside.r, inside.g, inside.b, COMPARE_OVERLAY_OPACITY]);
-    expectRgba(geometry, 2, [0, 0, 0, 0]);
-    expectRgba(geometry, 3, [0, 0, 0, 0]);
-    expectRgba(geometry, 4, [outside.r, outside.g, outside.b, COMPARE_OVERLAY_OPACITY]);
-    expectRgba(geometry, 5, [inside.r, inside.g, inside.b, COMPARE_OVERLAY_OPACITY]);
-    expectRgba(geometry, 6, [0, 0, 0, 0]);
+    for (const vertex of [0, 1, 2]) {
+      expectRgba(geometry, vertex, [outside.r, outside.g, outside.b, COMPARE_OVERLAY_OPACITY]);
+    }
+    for (const vertex of [3, 4, 5]) {
+      expectRgba(geometry, vertex, [inside.r, inside.g, inside.b, COMPARE_OVERLAY_OPACITY]);
+    }
+    for (const vertex of [6, 7, 8]) {
+      expectRgba(geometry, vertex, [outside.r, outside.g, outside.b, COMPARE_OVERLAY_OPACITY]);
+    }
     expect(color.version).toBeGreaterThan(version);
 
     colorizeDeviation(geometry, new Float32Array([0.2, -0.2, 0]), 0, DEFAULT_COLORS);
-    expectRgba(geometry, 0, [outside.r, outside.g, outside.b, COMPARE_OVERLAY_OPACITY]);
-    expectRgba(geometry, 1, [inside.r, inside.g, inside.b, COMPARE_OVERLAY_OPACITY]);
-    expectRgba(geometry, 2, [0, 0, 0, 0]);
+    for (const vertex of [0, 1, 2]) {
+      expectRgba(geometry, vertex, [outside.r, outside.g, outside.b, COMPARE_OVERLAY_OPACITY]);
+    }
+    for (const vertex of [3, 4, 5]) {
+      expectRgba(geometry, vertex, [inside.r, inside.g, inside.b, COMPARE_OVERLAY_OPACITY]);
+    }
     colorizeDeviation(geometry, new Float32Array([0.01]), 0.1, DEFAULT_COLORS);
     expectRgba(geometry, 0, [0, 0, 0, 0]);
   });
@@ -156,8 +166,10 @@ describe("compare overlay", () => {
   it("limits coloring to the shorter of the two arrays", () => {
     const geometry = createCompareOverlayGeometry(mesh());
     expect(() => colorizeDeviation(geometry, new Float32Array([1]), 0, DEFAULT_COLORS)).not.toThrow();
-    expect(rgba(geometry, 0)[3]).toBeCloseTo(COMPARE_OVERLAY_OPACITY, 6);
-    expectRgba(geometry, 1, [0, 0, 0, 0]);
+    for (const vertex of [0, 1, 2]) {
+      expect(rgba(geometry, vertex)[3]).toBeCloseTo(COMPARE_OVERLAY_OPACITY, 6);
+    }
+    expectRgba(geometry, 3, [0, 0, 0, 0]);
     expect(() => colorizeDeviation(geometry, new Float32Array(100).fill(-1), 0, DEFAULT_COLORS)).not.toThrow();
   });
 
