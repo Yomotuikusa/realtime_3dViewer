@@ -44,5 +44,6 @@ describe("objects labels", () => {
     expect(thresholdPermilleText(12)).toBe("1.2%");
     expect(thresholdPermilleText(50)).toBe("5.0%");
     expect(thresholdPermilleText(1)).toBe("0.1%");
+    expect(thresholdPermilleText(0)).toBe("0.0%");
   });
 });
