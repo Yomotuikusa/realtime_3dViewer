@@ -141,6 +141,13 @@
   color: var(--color-text-muted);
 }
 
+.compare__check {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--text-sm);
+}
+
 .compare__legend {
   color: var(--color-text-muted);
   font-size: var(--text-xs);

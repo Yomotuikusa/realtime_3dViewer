@@ -4,7 +4,7 @@
 Canvas、モデル、カメラ、ライティング、焦点距離、内蔵アニメーション再生、HUD、ポインター入力を合成した 3D ビューアを提供する。FBX / OBJ の多角形輪郭辺も表示する。
 
 ## ファイル一覧と役割
-- ViewerCanvas.tsx: Canvas、ライティング、焦点距離、Bounds、全オブジェクト、カメラを合成するビューア。display ストアの `meshDisplay` と各版の `fileName` をモデルへ渡し、theme ストアの `background` を Canvas の背景へ渡し、`MeshCompareRig` を一つ配置する。版ごとのモデルを単一 group に置き、その group を共通モデルターゲットへ登録する。`children` は RemoteCameras / StrokeLines / AnnotationLayer など後続機能の差し込み口
+- ViewerCanvas.tsx: Canvas、ライティング、焦点距離、Bounds、全オブジェクト、カメラを合成するビューア。display ストアの `meshDisplay` と各版の `fileName` をモデルへ渡し、theme ストアの `background` を Canvas の背景へ渡し、`MeshCompareRig` を一つ配置する。比較中は compare の `isHiddenByCompare` で基準の版の `visible` を落とす。版ごとのモデルを単一 group に置き、その group を共通モデルターゲットへ登録する。`children` は RemoteCameras / StrokeLines / AnnotationLayer など後続機能の差し込み口
 - SceneLights.tsx: lighting ストアの角度から環境光・主ライト・反転した補助ライトを Bounds 外へ描画する
 - LightGizmo.tsx: 枠なしで3Dビュー右下へ重ねる、Y軸まわりに45°回転した立方体ギズモを描画し、水平ドラッグ・矢印キー・リセットをライトストアへ接続する
 - light-gizmo.ts: ギズモの寸法・回転・カメラ定数、マーカー座標、ドラッグ／キー入力、yaw 表示の純粋関数

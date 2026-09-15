@@ -14,6 +14,7 @@ export const COMPARE_BASE_LABEL = "基準";
 export const COMPARE_TARGET_LABEL = "対象";
 export const COMPARE_NONE_LABEL = "なし";
 export const COMPARE_THRESHOLD_LABEL = "しきい値";
+export const COMPARE_BASE_VISIBLE_LABEL = "比較中も基準を表示";
 export const COMPARE_LEGEND = "赤: 対象が基準から飛び出し / 青: へこみ";
 
 /** "オブジェクト (N)" */

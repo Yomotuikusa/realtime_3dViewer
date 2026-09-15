@@ -11,6 +11,7 @@ import { CameraRig } from "./CameraRig";
 import { DEFAULT_FOV } from "./focal-length";
 import { FocalLengthRig } from "./FocalLengthRig";
 import { ModelMesh } from "./ModelMesh";
+import { isHiddenByCompare } from "../compare/compare-visibility";
 import { MeshCompareRig } from "../compare/MeshCompareRig";
 import { PlaybackClock } from "./PlaybackClock";
 import { PlaybackSourceSync } from "./PlaybackSourceSync";
@@ -21,6 +22,7 @@ export function ViewerCanvas({ children }: { children?: ReactNode }): ReactEleme
   const objects = useObjectsStore((state) => state.objects);
   const hiddenIds = useObjectsStore((state) => state.hiddenIds);
   const meshDisplay = useDisplayStore((state) => state.meshDisplay);
+  const meshCompare = useDisplayStore((state) => state.meshCompare);
   const background = useThemeStore(selectViewerColor("background"));
   const primaryId = primaryObjectId(objects);
   const registerModelTarget = useCallback((group: Group | null) => {
@@ -44,7 +46,7 @@ export function ViewerCanvas({ children }: { children?: ReactNode }): ReactEleme
                 src={modelUrl(version.projectId, version.id)}
                 fileName={version.fileName}
                 versionId={version.id}
-                visible={isObjectVisible(hiddenIds, version.id)}
+                visible={isObjectVisible(hiddenIds, version.id) && !isHiddenByCompare(meshCompare, hiddenIds, version.id)}
                 primary={version.id === primaryId}
                 meshDisplay={meshDisplay}
               />
