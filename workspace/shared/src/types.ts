@@ -82,7 +82,7 @@ export interface MeshCompare {
   baseId: string | null;
   /** 基準と比べて着色する版の id。未選択なら null */
   targetId: string | null;
-  /** しきい値。基準モデルの最大辺長に対する千分率。MIN〜MAX の整数 */
+  /** しきい値。基準モデルの最大辺長に対する千分率。MIN〜MAX の 0.1‰ 刻み */
   thresholdPermille: number;
   /** 比較中も基準の版を 3D ビューで描くか。未指定は false(比較中は基準を描かない) */
   baseVisible?: boolean;
@@ -91,6 +91,16 @@ export interface MeshCompare {
 export const MIN_COMPARE_THRESHOLD_PERMILLE = 0;
 export const MAX_COMPARE_THRESHOLD_PERMILLE = 50;
 export const DEFAULT_COMPARE_THRESHOLD_PERMILLE = 5;
+/** しきい値の格子。ルーム共有値はこの倍数(0.01%)だけを受け付ける */
+export const COMPARE_THRESHOLD_STEP_PERMILLE = 0.1;
+
+/** 有限で MIN〜MAX の範囲にあり、0.1‰ の格子に乗っている(|v*10 − round(v*10)| < 1e-6)とき true */
+export function isCompareThresholdPermille(value: number): boolean {
+  return Number.isFinite(value)
+    && value >= MIN_COMPARE_THRESHOLD_PERMILLE
+    && value <= MAX_COMPARE_THRESHOLD_PERMILLE
+    && Math.abs(value * 10 - Math.round(value * 10)) < 1e-6;
+}
 /** 誰も比較を設定していないルームの値 */
 export const DEFAULT_MESH_COMPARE: MeshCompare = {
   baseId: null,
@@ -175,7 +185,7 @@ export const MeshDisplayModeSchema = z.enum(["solid", "wireframe", "solid-wirefr
 export const MeshCompareSchema = z.object({
   baseId: IdSchema.nullable(),
   targetId: IdSchema.nullable(),
-  thresholdPermille: z.number().int().min(MIN_COMPARE_THRESHOLD_PERMILLE).max(MAX_COMPARE_THRESHOLD_PERMILLE),
+  thresholdPermille: z.number().refine(isCompareThresholdPermille),
   baseVisible: z.boolean().optional(),
 }) satisfies z.ZodType<MeshCompare>;
 
