@@ -8,9 +8,12 @@ import { selectViewerColor, useThemeStore } from "../../store/theme";
 import { hexToNumber } from "../theme/viewer-colors";
 import { selectModelScene, useModelScenesStore } from "./model-scenes";
 
-/** 千分率のしきい値をワールド単位へ換算する。baseSize * permille / 1000 */
+/** しきい値 0 のときにも計算誤差を着色しないための下限。基準サイズに対する比 */
+export const ZERO_THRESHOLD_RATIO = 1e-6;
+
+/** 千分率のしきい値をワールド単位へ換算する。 */
 export function thresholdWorld(baseSize: number, thresholdPermille: number): number {
-  return baseSize * thresholdPermille / 1000;
+  return Math.max(baseSize * thresholdPermille / 1000, baseSize * ZERO_THRESHOLD_RATIO);
 }
 
 /** Canvas に1つだけ置く描画なしの部品。比較設定とロード済みシーンから重ね描きを管理する */

@@ -47,10 +47,12 @@ describe("compare overlay colors", () => {
 
     colorizeDeviation(geometry, new Float32Array([1, -1, 0, 0.1]), 0.5, colors);
 
-    expectRgba(geometry, 0, [1, 0, 0, COMPARE_OVERLAY_OPACITY]);
-    expectRgba(geometry, 1, [0, 1, 0, COMPARE_OVERLAY_OPACITY]);
-    expectRgba(geometry, 2, [0, 0, 0, 0]);
-    expectRgba(geometry, 3, [0, 0, 0, 0]);
+    for (const vertex of [0, 1, 2]) {
+      expectRgba(geometry, vertex, [1, 0, 0, COMPARE_OVERLAY_OPACITY]);
+    }
+    for (const vertex of [3, 4, 5]) {
+      expectRgba(geometry, vertex, [0, 1, 0, COMPARE_OVERLAY_OPACITY]);
+    }
   });
 
   it("updates reused colors on every coloring call", () => {
@@ -58,7 +60,9 @@ describe("compare overlay colors", () => {
     colorizeDeviation(geometry, new Float32Array([1]), 0.5, { outside: 0xff0000, inside: 0x00ff00 });
     colorizeDeviation(geometry, new Float32Array([1]), 0.5, { outside: 0x0000ff, inside: 0xffff00 });
 
-    expectRgba(geometry, 0, [0, 0, 1, COMPARE_OVERLAY_OPACITY]);
+    for (const vertex of [0, 1, 2]) {
+      expectRgba(geometry, vertex, [0, 0, 1, COMPARE_OVERLAY_OPACITY]);
+    }
   });
 
   it("passes colors through overlay creation and reuses the same mesh", () => {

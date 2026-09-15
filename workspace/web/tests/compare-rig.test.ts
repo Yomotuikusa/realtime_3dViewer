@@ -3,7 +3,7 @@
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { thresholdWorld } from "../src/features/compare/MeshCompareRig";
+import { thresholdWorld, ZERO_THRESHOLD_RATIO } from "../src/features/compare/MeshCompareRig";
 
 const sourceRoot = existsSync(join(process.cwd(), "web", "src"))
   ? join(process.cwd(), "web", "src")
@@ -18,6 +18,10 @@ describe("mesh compare rig", () => {
     expect(thresholdWorld(2, 5)).toBe(0.01);
     expect(thresholdWorld(10, 50)).toBe(0.5);
     expect(thresholdWorld(0, 5)).toBe(0);
+    expect(thresholdWorld(2, 0)).toBeCloseTo(2e-6, 12);
+    expect(thresholdWorld(1000, 0)).toBeCloseTo(0.001, 12);
+    expect(thresholdWorld(1000, 1)).toBe(1);
+    expect(ZERO_THRESHOLD_RATIO).toBe(1e-6);
   });
 
   it("connects compare settings and scenes without a frame loop", () => {
