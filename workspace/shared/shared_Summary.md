@@ -24,7 +24,7 @@
 - tests/api.test.ts: REST スキーマ、定数、trim・境界値のテスト
 - tests/protocol.test.ts: Client/Server の全メッセージ種別と parse 関数のテスト
 - tests/protocol-object-removed.test.ts: `object:removed` の Server スキーマ受理、必須 versionId、JSON parse のテスト
-- tests/mesh-compare.test.ts: mesh compare のスキーマ境界、純粋関数、protocol の受信・parse テスト
+- tests/mesh-compare.test.ts: mesh compare のスキーマ境界(下限 0 の受理と負値の拒否を含む)、純粋関数、protocol の受信・parse テスト
 - tests/joint.test.ts: ジョイント表示の既定値、比較、複製、スキーマ、公開面のテスト
 - tests/protocol-joint.test.ts: `joint:display` の Client/Server variant、welcome optional、parse のテスト
 - tests/camera.test.ts: カメラの比較、補間、クランプ、複製のテスト

@@ -6,6 +6,7 @@ import {
 } from "../src/protocol";
 import {
   DEFAULT_MESH_COMPARE,
+  MIN_COMPARE_THRESHOLD_PERMILLE,
   MeshCompareSchema,
 } from "../src/types";
 import {
@@ -18,10 +19,11 @@ const active = { baseId: "v1", targetId: "v2", thresholdPermille: 5 };
 
 describe("mesh compare", () => {
   it("validates compare values and the default", () => {
-    for (const value of [active, { baseId: null, targetId: null, thresholdPermille: 1 }, { ...active, thresholdPermille: 50 }]) {
+    expect(MIN_COMPARE_THRESHOLD_PERMILLE).toBe(0);
+    for (const value of [active, { baseId: null, targetId: null, thresholdPermille: 0 }, { ...active, thresholdPermille: 50 }]) {
       expect(MeshCompareSchema.safeParse(value).success).toBe(true);
     }
-    for (const thresholdPermille of [0, 51, 2.5, "5"]) {
+    for (const thresholdPermille of [-1, 51, 2.5, "5"]) {
       expect(MeshCompareSchema.safeParse({ ...active, thresholdPermille }).success).toBe(false);
     }
     for (const baseId of ["", "a b", undefined]) {
@@ -74,6 +76,11 @@ describe("mesh compare", () => {
     expect(parseClientMessage(JSON.stringify({ type: "mesh:compare", compare: active }))).toEqual({
       ok: true,
       msg: { type: "mesh:compare", compare: active },
+    });
+    const zeroThreshold = { ...active, thresholdPermille: 0 };
+    expect(parseClientMessage(JSON.stringify({ type: "mesh:compare", compare: zeroThreshold }))).toEqual({
+      ok: true,
+      msg: { type: "mesh:compare", compare: zeroThreshold },
     });
   });
 });
