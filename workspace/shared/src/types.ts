@@ -84,6 +84,8 @@ export interface MeshCompare {
   targetId: string | null;
   /** しきい値。基準モデルの最大辺長に対する千分率。MIN〜MAX の整数 */
   thresholdPermille: number;
+  /** 比較中も基準の版を 3D ビューで描くか。未指定は false(比較中は基準を描かない) */
+  baseVisible?: boolean;
 }
 /** しきい値の下限。0 は「換算後の誤差下限を超えた差分をすべて着色」を意味する */
 export const MIN_COMPARE_THRESHOLD_PERMILLE = 0;
@@ -174,6 +176,7 @@ export const MeshCompareSchema = z.object({
   baseId: IdSchema.nullable(),
   targetId: IdSchema.nullable(),
   thresholdPermille: z.number().int().min(MIN_COMPARE_THRESHOLD_PERMILLE).max(MAX_COMPARE_THRESHOLD_PERMILLE),
+  baseVisible: z.boolean().optional(),
 }) satisfies z.ZodType<MeshCompare>;
 
 export const JointDisplaySchema = z.object({

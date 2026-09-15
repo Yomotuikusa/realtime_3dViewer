@@ -24,7 +24,7 @@
 - tests/api.test.ts: REST スキーマ、定数、trim・境界値のテスト
 - tests/protocol.test.ts: Client/Server の全メッセージ種別と parse 関数のテスト
 - tests/protocol-object-removed.test.ts: `object:removed` の Server スキーマ受理、必須 versionId、JSON parse のテスト
-- tests/mesh-compare.test.ts: mesh compare のスキーマ境界(下限 0 の受理と負値の拒否を含む)、純粋関数、protocol の受信・parse テスト
+- tests/mesh-compare.test.ts: mesh compare のスキーマ境界(下限 0 の受理と負値の拒否を含む)、baseVisible の任意指定と同値判定、純粋関数、protocol の受信・parse テスト
 - tests/joint.test.ts: ジョイント表示の既定値、比較、複製、スキーマ、公開面のテスト
 - tests/protocol-joint.test.ts: `joint:display` の Client/Server variant、welcome optional、parse のテスト
 - tests/camera.test.ts: カメラの比較、補間、クランプ、複製のテスト
@@ -52,6 +52,6 @@
 
 ## 他機能との関係
 コメントの `CommentPlayback.versionId` は投稿時の再生対象を指し、古いコメントでは省略される。server は playback を JSON のまま保存・返却し、web がこの値を使って再生対象を切り替える。Project は版が無い場合も `latestVersion: null` と `versions: []` で表す。
-server の DB・ルート、web の状態管理・表示が本モジュールの型とスキーマを import する。部位の共有鍵は three.js の uuid ではなく、版の scene ルートからの子インデックスの `ObjectPath`(設計書 §13.5) とする。`focalLength` は PresenceUser と camera メッセージだけに存在する Presence 専用の値で、`CameraState` とコメント保存スキーマには含まれない。`light` は ClientMessage と ServerMessage に存在するルーム共有値で、welcome では任意、通常イベントでは userId と角度を持つ。`mesh:display` もルーム共有値として mode を扱い、welcome では任意の `meshDisplay` として表現する。`mesh:compare` は baseId / targetId / thresholdPermille 全体をルーム共有値として扱い、welcome では任意の `meshCompare` として表現する。`joint:display` は visible / xray 全体をルーム共有値として扱い、welcome では任意の `jointDisplay` として表現する。`object:part-visibility` は版内の部位の可視性切り替えを中継し、welcome の `hiddenObjectParts` は非表示状態の復元に使う。
+server の DB・ルート、web の状態管理・表示が本モジュールの型とスキーマを import する。部位の共有鍵は three.js の uuid ではなく、版の scene ルートからの子インデックスの `ObjectPath`(設計書 §13.5) とする。`focalLength` は PresenceUser と camera メッセージだけに存在する Presence 専用の値で、`CameraState` とコメント保存スキーマには含まれない。`light` は ClientMessage と ServerMessage に存在するルーム共有値で、welcome では任意、通常イベントでは userId と角度を持つ。`mesh:display` もルーム共有値として mode を扱い、welcome では任意の `meshDisplay` として表現する。`mesh:compare` は baseId / targetId / thresholdPermille 全体と任意の baseVisible(比較中も基準を描くか)をルーム共有値として扱い、welcome では任意の `meshCompare` として表現する。`joint:display` は visible / xray 全体をルーム共有値として扱い、welcome では任意の `jointDisplay` として表現する。`object:part-visibility` は版内の部位の可視性切り替えを中継し、welcome の `hiddenObjectParts` は非表示状態の復元に使う。
 api.ts は REST のサーバ受信入力とクライアント利用型を、protocol.ts は WS のサーバ受信・クライアント受信を同じ zod スキーマで検証する。Project の `versions` は版番号順の全モデル版で、`latestVersion` はその末尾と一致する(空配列では null)。オブジェクト可視性は `versionId` の集合を扱い、`object:added` / `object:removed` は REST の版変更を通知する。
 camera.ts は Follow Camera とコメント再現の補間・比較を、stroke.ts は Annotation 送信前の点列間引きを、compare.ts はメッシュ比較設定の判定・比較・複製を提供する。いずれも three.js に依存しない。trail.ts は ObjectPartRef を対象とする軌跡表示設定を比較・複製を含めて提供し、protocol の `trail:display` と welcome の `motionTrail` で送受信する。
