@@ -13,7 +13,7 @@ export interface RealtimeFixture {
   url: string;
   hub: RoomHub;
   realtime: Realtime;
-  open(projectId?: string): Promise<WebSocket>;
+  open(projectId?: string, clientOptions?: { autoPong?: boolean }): Promise<WebSocket>;
   next(ws: WebSocket, timeoutMs?: number): Promise<ServerMessage>;
   closed(ws: WebSocket, timeoutMs?: number): Promise<number>;
   cleanup(): Promise<void>;
@@ -61,6 +61,7 @@ export function startRealtime(options?: Partial<RealtimeOptions>): Promise<Realt
       const hub = new RoomHub();
       const realtime = attachRealtime(server, hub, {
         projectExists: options?.projectExists ?? (() => true),
+        heartbeatIntervalMs: options?.heartbeatIntervalMs,
       });
       const clients: WebSocket[] = [];
       const closeCodes = new Map<WebSocket, number>();
@@ -70,9 +71,9 @@ export function startRealtime(options?: Partial<RealtimeOptions>): Promise<Realt
         url: `ws://127.0.0.1:${address.port}/ws`,
         hub,
         realtime,
-        async open(projectId) {
+        async open(projectId, clientOptions) {
           const query = projectId === undefined ? "" : `?projectId=${encodeURIComponent(projectId)}`;
-          const ws = new WebSocket(`${this.url}${query}`);
+          const ws = new WebSocket(`${this.url}${query}`, clientOptions);
           clients.push(ws);
           messageQueues.set(ws, []);
           ws.on("message", (data: RawData) => {
