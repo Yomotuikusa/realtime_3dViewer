@@ -6,7 +6,11 @@ import {
   PALETTE_LABEL,
   WHEEL_LABEL,
 } from "./theme-labels";
-import { swatchMarkColor, THEME_PALETTE } from "./theme-palette";
+import {
+  THEME_PALETTE,
+  THEME_PALETTE_COLUMNS,
+  swatchMarkColor,
+} from "./theme-palette";
 
 export interface ColorPickerProps {
   /** 今の色。"#rrggbb" */
@@ -38,7 +42,12 @@ export function ColorPicker({ value, onChange, label }: ColorPickerProps): React
   return (
     <div className="theme-picker" role="group" aria-label={label}>
       <ColorWheel value={value} onChange={onChange} label={WHEEL_LABEL} />
-      <div className="theme-palette" role="group" aria-label={PALETTE_LABEL}>
+      <div
+        className="theme-palette"
+        role="group"
+        aria-label={PALETTE_LABEL}
+        style={{ "--theme-palette-columns": THEME_PALETTE_COLUMNS } as CSSProperties}
+      >
         {THEME_PALETTE.map((swatch) => (
           <button
             className="theme-palette__swatch"

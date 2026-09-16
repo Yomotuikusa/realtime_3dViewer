@@ -78,7 +78,7 @@
 
 .theme-palette {
   display: grid;
-  grid-template-columns: repeat(9, 1fr);
+  grid-template-columns: repeat(var(--theme-palette-columns, 9), 1fr);
   gap: var(--space-1);
 }
 
@@ -99,8 +99,8 @@
 
 .theme-wheel {
   position: relative;
-  width: 176px;
-  height: 176px;
+  width: var(--wheel-size, 176px);
+  height: var(--wheel-size, 176px);
 }
 
 .theme-wheel__canvas {

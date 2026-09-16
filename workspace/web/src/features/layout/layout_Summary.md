@@ -30,3 +30,4 @@
 - tests/resize.test.ts: 寸法定数、丸め、パネル上限、予約幅、ドラッグ値、向き・軸ごとのキー操作、ハンドル配線のテスト
 - tests/layout-storage.test.ts: レイアウト寸法の保存・読み出し、不正値、既存値保持、localStorage 例外のテスト
 - tests/layout-styles.test.ts: 共通ハンドル CSS と ReviewPage の接続をソース検査
+- tests/layout-tokens.test.ts: パネル／アウトライナ幅の CSS rem フォールバックとリサイズ既定値、ReviewPage の inline style 配線をソース検査
