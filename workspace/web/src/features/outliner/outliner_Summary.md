@@ -11,14 +11,14 @@
 - VisibilityRig.tsx: objects ストアの `hiddenParts` と model-scenes ストアを購読し、版ごとの scene へ部位表示状態を同期する Canvas 用 Rig
 - selection.ts: 選択中の版と Object3D uuid を保持する Zustand ストアと選択判定を提供する
 - pick-selection.ts: 3D ビューのレイキャスト交点から、登録済み scene の版全体に対応する選択を解決する純粋関数を提供する
-- SelectionPickLayer.tsx: annotation が通常モードのとき、Canvas の左クリックをジョイント優先の選択、版全体の選択、または空クリックの解除へ結び付ける描画なし部品
+- SelectionPickLayer.tsx: annotation が通常モードのとき、Canvas の左クリックをジョイント優先の選択、版全体の選択、または空クリックの解除へ結び付ける描画なし部品。ジョイント選択には view-settings の `jointPickRadiusPx` を渡す
 - selection-highlight.ts: 表示色設定由来の選択色と表示設定の不透明度(既定 0.6)で、メッシュの選択対象と子孫へ重ね描きを付け外しする純粋関数を提供する。線・点の重ね描きは従来どおり
 - SelectionRig.tsx: 選択ストア・scene レジストリ・theme ストア・view-settings ストアを購読し、選択重ね描きを管理する Canvas 用 Rig
 - outliner-labels.ts: 見出し、表示列、状態、種別、名前、展開操作の表示文言を提供する
 - outliner-icons.tsx: 7 種別のインライン SVG アイコン、表示列の瞳、展開用山形を提供する
 - OutlinerRow.tsx: 1 行と再帰的なノード枝を treeitem/group として描画し、行ごとの表示チェックボックスを提供する
-- Outliner.tsx: objects / model-scenes / selection ストアを購読し、版と scene 木を描画する。`send` で `object:visibility` と `object:part-visibility` を共有する
-- outliner.css: アウトライナのレイアウト、インデント、展開、選択、非表示状態、表示列とチェックボックスを定義する
+- Outliner.tsx: objects / model-scenes / selection / view-settings ストアを購読し、版と scene 木を描画する。`outlinerRowHeightRem` と `outlinerIndentPx` を CSS カスタムプロパティへ渡し、`send` で `object:visibility` と `object:part-visibility` を共有する
+- outliner.css: アウトライナのレイアウト、インデント、展開、選択、非表示状態、表示列とチェックボックスを定義する。行高と字下げは CSS カスタムプロパティを使い、それぞれ `1.75rem` と `16px` をフォールバックにする
 
 ## 公開インターフェイス
 
