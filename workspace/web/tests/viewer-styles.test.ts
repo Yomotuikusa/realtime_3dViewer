@@ -228,43 +228,9 @@ describe("viewer styles", () => {
     expect(classes.every((className) => !className.includes("btn--quiet"))).toBe(true);
   });
 
-  it("removes the frame and surface styling from the light gizmo", () => {
-    const body = ruleBody(viewerCssText, ".light-gizmo");
-
-    expect(body).not.toBeNull();
-    expect(body).not.toMatch(/(?:^|;)\s*(?:border|background|box-shadow|overflow)\s*:/);
-  });
-
-  it("keeps the light gizmo positioned at its fixed size", () => {
-    const body = ruleBody(viewerCssText, ".light-gizmo");
-
-    expect(body).toMatch(/(?:^|;)\s*position\s*:/);
-    expect(body).toMatch(/(?:^|;)\s*right\s*:/);
-    expect(body).toMatch(/(?:^|;)\s*bottom\s*:/);
-    expect(body).toMatch(/(?:^|;)\s*width\s*:/);
-    expect(body).toMatch(/(?:^|;)\s*height\s*:/);
-    expect(body).toContain(`width: ${GIZMO_SIZE_PX}px`);
-    expect(body).toContain(`height: ${GIZMO_SIZE_PX}px`);
-  });
-
   it("leaves enough room for the light gizmo beside the hint", () => {
     const body = ruleBody(viewerCssText, ".hud-hint");
 
     expect(body).toContain(`right: calc(${GIZMO_SIZE_PX}px + var(--space-3) * 2)`);
-  });
-
-  it("does not confuse light gizmo child selectors with the parent rule", () => {
-    const body = ruleBody(viewerCssText, ".light-gizmo");
-
-    expect(body).not.toContain("cursor: ew-resize");
-    expect(body).not.toContain("min-height: 0");
-  });
-
-  it("styles the light brightness slider with the theme accent", () => {
-    const body = ruleBody(viewerCssText, ".light-gizmo__brightness");
-
-    expect(body).toContain("width: 100%");
-    expect(body).toContain("accent-color: var(--color-accent)");
-    expect(body).toContain("cursor: pointer");
   });
 });

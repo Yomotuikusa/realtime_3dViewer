@@ -23,6 +23,8 @@ import {
   yawText,
 } from "./light-gizmo";
 import { LIGHT_BRIGHTNESS_STEP } from "./lighting";
+import "./light-gizmo.css";
+import { HighBrightnessIcon, LowBrightnessIcon } from "./light-icons";
 
 function GizmoCamera(): null {
   const camera = useThree(({ camera }) => camera);
@@ -122,18 +124,22 @@ export function LightGizmo(): ReactElement {
           <GizmoScene />
         </Canvas>
       </div>
-      <input
-        className="light-gizmo__brightness"
-        type="range"
-        min={MIN_LIGHT_BRIGHTNESS}
-        max={MAX_LIGHT_BRIGHTNESS}
-        step={LIGHT_BRIGHTNESS_STEP}
-        value={brightness}
-        aria-label={LIGHT_BRIGHTNESS_LABEL}
-        aria-valuetext={brightnessText(brightness)}
-        title={LIGHT_BRIGHTNESS_LABEL}
-        onChange={(event) => useLightingStore.getState().setBrightness(Number(event.currentTarget.value))}
-      />
+      <div className="light-gizmo__brightness-row">
+        <LowBrightnessIcon />
+        <input
+          className="light-gizmo__brightness"
+          type="range"
+          min={MIN_LIGHT_BRIGHTNESS}
+          max={MAX_LIGHT_BRIGHTNESS}
+          step={LIGHT_BRIGHTNESS_STEP}
+          value={brightness}
+          aria-label={LIGHT_BRIGHTNESS_LABEL}
+          aria-valuetext={brightnessText(brightness)}
+          title={LIGHT_BRIGHTNESS_LABEL}
+          onChange={(event) => useLightingStore.getState().setBrightness(Number(event.currentTarget.value))}
+        />
+        <HighBrightnessIcon />
+      </div>
       <button
         className="btn btn--quiet light-gizmo__reset"
         type="button"
