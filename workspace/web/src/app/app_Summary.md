@@ -12,7 +12,7 @@
 - object-removal.ts: 削除された versionId を objects / comments / selection / compare / playback の各ストアへ冪等に反映し、最後の版ならコメント投稿アンカーも解除する
 - useRealtime.ts: 名前決定後の `WsClient` 接続と、open ごとの `join` 送信。`onRealtimeStatus` は session の接続状態を更新し、open 時に lastError を解除する
 - review-stores.ts: レビュー画面のアンマウント時に session / presence / annotation / comments / camera / lighting / objects / display / playback / selection の10ストアをまとめて初期化する reset 関数（shortcuts ストアは対象外）
-- UploadPage.tsx: `.glb`/`.gltf`/`.fbx`/`.obj` のアップロード画面。`accept` は `ALLOWED_MODEL_EXTENSIONS` 由来で、OBJ が材質なし表示になる注記を常時出す
+- UploadPage.tsx: `.glb`/`.gltf`/`.fbx`/`.obj` のアップロード画面。プロジェクト名の入力上限は `MAX_PROJECT_NAME_LENGTH` 由来で、`accept` は `ALLOWED_MODEL_EXTENSIONS` 由来。OBJ が材質なし表示になる注記を常時出す
 - upload-labels.ts: アップロード画面と NotFound の表示文言、OBJ 材質なし表示注記、ファイル検証・複数ファイル容量表示 helper の純粋関数
 - upload.css: アップロード画面と NotFound の狭い幅のレイアウト CSS
 - ReviewPage.tsx: プロジェクト取得、レビュー画面の骨格、ロード状態・エラーカード、`.review-stage` とビュー下部タイムラインを含むビューア／サイズ変更可能な左ドックとサイドパネルのレイアウトを担当する。左ドック `.review-outliner` に realtime の `send` を渡した `Outliner` を配置し、`outlinerWidth` を保存する。右パネル優先で幅を計算し、Canvas に RemoteCameras / RoomStrokes / ReplayStrokes / AnnotationLayer / CommentPickLayer / CommentPins / `SelectionRig` / `VisibilityRig` / `JointRig` を配置し、右ドックに PresenceList / ObjectList / `.review-panel__comments` を順に配置する。コメント欄はストアの最新オブジェクトに追随し、空シーンでは投稿案内を表示する。`.review-hud` を HUD 差し込み口、`.review-panel__comments` をコメント領域差し込み口として提供し、カメラとライトの変更、コメント再生を realtime の `send` へ結線し、入室後だけショートカットを有効にする。設定表示中は `SettingsDialog` を表示し、タイムラインへ realtime の `send` を渡す
@@ -63,5 +63,6 @@
 - tests/review-styles.test.ts: モデル読み込み失敗オーバーレイのCSS配置・重なり順・操作性と、ErrorBoundary フォールバックのJSX配置をソース検査
 - tests/routes.test.ts: ルート解析と履歴遷移テスト
 - tests/upload-labels.test.ts: 4形式のアップロード/NotFound 文言、OBJ 材質注記、対応形式の accept とヘルプ、容量エラー定数、複数ファイル検証とファイル helper の単位・丸め結果を検証
+- tests/upload-page.test.ts: UploadPage のプロジェクト名入力が共有の `MAX_PROJECT_NAME_LENGTH` を使うことをソース検査
 - tests/use-realtime.test.ts: 接続状態、open 時のエラー解除と join、closed 時の非送信を検証
 - tests/settings-dialog.test.ts: 設定ダイアログの枠、タブ切り替え、表示内容、閉じる操作を検証

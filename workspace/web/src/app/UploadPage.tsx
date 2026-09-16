@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from "react";
 import type React from "react";
 import { ALLOWED_MODEL_EXTENSIONS, MAX_UPLOAD_BYTES_DEFAULT } from "@shared/api";
+import { MAX_PROJECT_NAME_LENGTH } from "@shared/types";
 import { ApiClientError, createProject } from "../api/client";
 import { navigate, projectPath } from "./routes";
 import {
@@ -65,7 +66,7 @@ export function UploadPage(): React.ReactElement {
           <input
             className="input"
             type="text"
-            maxLength={100}
+            maxLength={MAX_PROJECT_NAME_LENGTH}
             value={name}
             onChange={(event) => setName(event.target.value)}
             disabled={submitting}

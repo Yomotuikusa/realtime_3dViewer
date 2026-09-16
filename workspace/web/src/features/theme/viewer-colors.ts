@@ -34,6 +34,9 @@ export type ViewerColorOverrides = Readonly<Partial<Record<ViewerColorKey, strin
 /** 全キーの実効色。 */
 export type ViewerColors = Readonly<Record<ViewerColorKey, string>>;
 
+/** 16 進入力欄の最大文字数。normalizeHex が受理する最長の形 "#rrggbb" */
+export const HEX_INPUT_MAX_LENGTH = 7;
+
 /** テーマごとの既定色。 */
 export const VIEWER_COLOR_DEFAULTS: Readonly<Record<ResolvedThemeMode, ViewerColors>> = {
   light: {

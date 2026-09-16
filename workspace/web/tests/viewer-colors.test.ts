@@ -1,3 +1,8 @@
+/// <reference types="node" />
+
+import { readFileSync } from "node:fs";
+import { fileURLToPath } from "node:url";
+import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { COMPARE_INSIDE_COLOR, COMPARE_OUTSIDE_COLOR } from "../src/features/compare/overlay";
 import { JOINT_COLOR, JOINT_LINK_COLOR } from "../src/features/joint/joint-display";
@@ -7,6 +12,7 @@ import { TRAIL_CURRENT_COLOR, TRAIL_LINE_COLOR, TRAIL_POINT_COLOR } from "../src
 import { WIREFRAME_OVERLAY_COLOR } from "../src/features/viewer/mesh-display";
 import {
   hexToNumber,
+  HEX_INPUT_MAX_LENGTH,
   normalizeHex,
   numberToHex,
   resolveViewerColor,
@@ -14,6 +20,11 @@ import {
   VIEWER_COLOR_DEFAULTS,
   VIEWER_COLOR_ORDER,
 } from "../src/features/theme/viewer-colors";
+
+const srcUrl = new URL("../src", import.meta.url);
+const srcDir = srcUrl.protocol === "file:"
+  ? fileURLToPath(srcUrl)
+  : join(process.cwd(), "web/src");
 
 describe("viewer colors", () => {
   it("has 11 ordered keys and valid light and dark defaults", () => {
@@ -42,6 +53,8 @@ describe("viewer colors", () => {
   });
 
   it("normalizes and converts hexadecimal colors", () => {
+    expect(HEX_INPUT_MAX_LENGTH).toBe("#abcdef".length);
+    expect(normalizeHex("#abcdef")).not.toBeNull();
     expect(normalizeHex("#F97316")).toBe("#f97316");
     expect(normalizeHex("f97316")).toBe("#f97316");
     expect(normalizeHex("  #ABC  ")).toBe("#aabbcc");
@@ -56,6 +69,12 @@ describe("viewer colors", () => {
     expect(numberToHex(0x1000000)).toBe("#ffffff");
     expect(numberToHex(1.6)).toBe("#000002");
     expect(numberToHex(Number.NaN)).toBe("#000000");
+  });
+
+  it("uses the shared input length in the color picker", () => {
+    const colorPicker = readFileSync(join(srcDir, "features/theme/ColorPicker.tsx"), "utf8");
+    expect(colorPicker).toContain("maxLength={HEX_INPUT_MAX_LENGTH}");
+    expect(colorPicker).not.toContain("maxLength={7}");
   });
 
   it("resolves overrides without losing any keys", () => {
