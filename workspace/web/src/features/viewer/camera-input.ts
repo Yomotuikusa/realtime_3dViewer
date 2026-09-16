@@ -32,7 +32,7 @@ export const DOLLY_SPEED = 0.005;
 export const MIN_DOLLY_DISTANCE = 0.001;
 
 /** 右ドラッグの水平移動量から target からの距離を変えた位置を返す。 */
-export function dollyPosition(position: Vec3, target: Vec3, deltaX: number): Vec3 {
+export function dollyPosition(position: Vec3, target: Vec3, deltaX: number, speed = DOLLY_SPEED): Vec3 {
   if (deltaX === 0) {
     return [...position];
   }
@@ -44,7 +44,7 @@ export function dollyPosition(position: Vec3, target: Vec3, deltaX: number): Vec
     return [...position];
   }
 
-  const nextDistance = Math.max(MIN_DOLLY_DISTANCE, distance * Math.exp(-DOLLY_SPEED * deltaX));
+  const nextDistance = Math.max(MIN_DOLLY_DISTANCE, distance * Math.exp(-speed * deltaX));
   const scale = nextDistance / distance;
   return [
     target[0] + offsetX * scale,

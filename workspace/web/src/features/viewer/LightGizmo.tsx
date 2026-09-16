@@ -1,6 +1,7 @@
 import { Canvas, useThree } from "@react-three/fiber";
 import { useEffect, useRef, type KeyboardEvent, type PointerEvent, type ReactElement } from "react";
 import { useLightingStore } from "../../store/lighting";
+import { useViewSettingsStore } from "../../store/view-settings";
 import { LIGHT_DIRECTION_LABEL, LIGHT_RESET_LABEL } from "./hud-labels";
 import {
   GIZMO_BOX_SIZE,
@@ -65,7 +66,8 @@ export function LightGizmo(): ReactElement {
     if (step === null) {
       return;
     }
-    useLightingStore.getState().rotate(step.deltaX, 0);
+    const sensitivity = useViewSettingsStore.getState().settings.lightRotateSensitivity;
+    useLightingStore.getState().rotate(step.deltaX * sensitivity, 0);
     dragRef.current = step.drag;
   }
 

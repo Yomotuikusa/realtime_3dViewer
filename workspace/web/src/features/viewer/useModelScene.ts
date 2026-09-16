@@ -3,6 +3,7 @@ import type { AnimationClip, Object3D } from "three";
 import { Box3, Vector3 } from "three";
 import type { MeshDisplayMode } from "@shared/types";
 import { useCameraStore } from "../../store/camera";
+import { selectViewSetting, useViewSettingsStore } from "../../store/view-settings";
 import { useModelScenesStore } from "../compare/model-scenes";
 import { useModelClipsStore } from "../trail/model-clips";
 import { selectViewerColor, useThemeStore } from "../../store/theme";
@@ -26,6 +27,7 @@ export function useModelScene(
 ): void {
   const { versionId, primary, meshDisplay } = options;
   const wireframeColor = useThemeStore(selectViewerColor("wireframe"));
+  const overlayOpacity = useViewSettingsStore(selectViewSetting("wireframeOverlayOpacity"));
 
   useEffect(() => {
     if (!primary) return;
@@ -37,8 +39,9 @@ export function useModelScene(
   }, [primary, scene]);
 
   useEffect(() => {
-    applyMeshDisplay(scene, meshDisplay, hexToNumber(wireframeColor));
-  }, [meshDisplay, scene, wireframeColor]);
+    applyMeshDisplay(scene, meshDisplay, hexToNumber(wireframeColor), overlayOpacity);
+    // Theme dependencies remain [meshDisplay, scene, wireframeColor]; opacity is also observed.
+  }, [meshDisplay, scene, wireframeColor, overlayOpacity]);
 
   useEffect(() => {
     useModelScenesStore.getState().register(versionId, scene);

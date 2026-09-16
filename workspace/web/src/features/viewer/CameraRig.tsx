@@ -19,6 +19,8 @@ import { rotationLocked } from "./view-presets";
 import { fitCamera } from "./fit-camera";
 import { getModelTarget } from "./model-target";
 import type { Camera } from "three";
+import { DOLLY_SPEED } from "./camera-input";
+import { useViewSettingsStore } from "../../store/view-settings";
 
 function readCamera(camera: Camera, controls: OrbitControlsImpl): CameraState {
   return {
@@ -64,7 +66,11 @@ export function CameraRig(): ReactElement {
     return attachViewerPointer(controls as unknown as ViewerControlsLike, {
       onUserInteract: handleUserInteract,
       onCameraChange: handleChange,
-      onLightRotate: (deltaX, deltaY) => useLightingStore.getState().rotate(deltaX, deltaY),
+      onLightRotate: (deltaX, deltaY) => {
+        const sensitivity = useViewSettingsStore.getState().settings.lightRotateSensitivity;
+        useLightingStore.getState().rotate(deltaX * sensitivity, deltaY * sensitivity);
+      },
+      dollySpeed: () => DOLLY_SPEED * useViewSettingsStore.getState().settings.dollySensitivity,
     });
   }, [controls, handleChange, handleUserInteract]);
 

@@ -22,6 +22,12 @@ type WireframeMaterial = Material & {
   polygonOffsetUnits: number;
 };
 
+type OverlayMaterial = Material & {
+  opacity: number;
+  transparent: boolean;
+  depthWrite: boolean;
+};
+
 /** userData[MESH_DISPLAY_OVERLAY_KEY] === true なら重ね描き用オブジェクト */
 export function isMeshDisplayOverlay(object: Object3D): boolean {
   return object.userData[MESH_DISPLAY_OVERLAY_KEY] === true;
@@ -33,22 +39,22 @@ export function isViewerOverlay(object: Object3D): boolean {
 }
 
 /** 重ね描きの線を描くための共有しない材質を作る。color は 0xrrggbb。 */
-export function createWireframeOverlayMaterial(color?: number): MeshBasicMaterial {
+export function createWireframeOverlayMaterial(color?: number, opacity = WIREFRAME_OVERLAY_OPACITY): MeshBasicMaterial {
   return new MeshBasicMaterial({
     color: color ?? WIREFRAME_OVERLAY_COLOR,
     wireframe: true,
-    transparent: true,
-    opacity: WIREFRAME_OVERLAY_OPACITY,
-    depthWrite: false,
+    transparent: opacity < 1,
+    opacity,
+    depthWrite: opacity >= 1,
     toneMapped: false,
   });
 }
 
 /** mesh と同じ geometry を使う重ね描き用 Mesh を作る。color は 0xrrggbb。 */
-export function createWireframeOverlay(mesh: Mesh, color?: number): Mesh {
+export function createWireframeOverlay(mesh: Mesh, color?: number, opacity = WIREFRAME_OVERLAY_OPACITY): Mesh {
   const material = hasPolygonEdges(mesh.geometry)
-    ? createPolygonEdgeMaterial(color ?? WIREFRAME_OVERLAY_COLOR, WIREFRAME_OVERLAY_OPACITY)
-    : createWireframeOverlayMaterial(color);
+    ? createPolygonEdgeMaterial(color ?? WIREFRAME_OVERLAY_COLOR, opacity)
+    : createWireframeOverlayMaterial(color, opacity);
   const overlay = mesh instanceof SkinnedMesh
     ? new SkinnedMesh(mesh.geometry, material)
     : new Mesh(mesh.geometry, material);
@@ -102,8 +108,20 @@ function replaceWithPolygonEdgeMaterial(mesh: Mesh, color: number): void {
   }
 }
 
+function updateOverlayMaterial(overlay: Mesh, opacity: number): void {
+  const material = overlay.material as OverlayMaterial;
+  material.opacity = opacity;
+  material.transparent = opacity < 1;
+  material.depthWrite = opacity >= 1;
+}
+
 /** root 配下の Mesh へ表示方法を適用する。wireframeColor は 0xrrggbb。 */
-export function applyMeshDisplay(root: Object3D, mode: MeshDisplayMode, wireframeColor?: number): void {
+export function applyMeshDisplay(
+  root: Object3D,
+  mode: MeshDisplayMode,
+  wireframeColor?: number,
+  overlayOpacity = WIREFRAME_OVERLAY_OPACITY,
+): void {
   const meshes: Mesh[] = [];
   root.traverse((object) => {
     if (object instanceof Mesh && !isViewerOverlay(object)) meshes.push(object);
@@ -120,7 +138,11 @@ export function applyMeshDisplay(root: Object3D, mode: MeshDisplayMode, wirefram
 
     const overlays = overlayChildren(mesh);
     if (mode === "solid-wireframe" && !(mesh instanceof InstancedMesh)) {
-      if (overlays.length === 0) mesh.add(createWireframeOverlay(mesh, wireframeColor));
+      if (overlays.length === 0) {
+        mesh.add(createWireframeOverlay(mesh, wireframeColor, overlayOpacity));
+      } else if (overlays[0] !== undefined) {
+        updateOverlayMaterial(overlays[0], overlayOpacity);
+      }
       continue;
     }
     for (const overlay of overlays) {
