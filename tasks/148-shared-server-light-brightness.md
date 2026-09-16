@@ -6,7 +6,7 @@ depends_on: [136, 141]
 owns: [shared/src/types.ts, shared/src/protocol.ts, shared/tests/protocol-light-brightness.test.ts, shared/shared_Summary.md, server/src/realtime/room-display.ts, server/src/realtime/hub.ts, server/tests/room-display.test.ts, server/tests/realtime-hub-brightness.test.ts, server/server_Summary.md, web/src/app/realtime-dispatch.ts]
 reads: [shared/tests/protocol.test.ts, server/src/realtime/room-state.ts, server/tests/realtime-hub-light.test.ts, web/tests/realtime-dispatch.test.ts, docs/3dreviewer-plan-and-architecture.md, docs/task-breakdown.md]
 verify: npm run typecheck && npm run test:shared && npm run test:server
-status: todo
+status: done
 ---
 
 ## 目的

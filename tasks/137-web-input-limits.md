@@ -6,7 +6,7 @@ depends_on: [136]
 owns: [web/src/app/UploadPage.tsx, web/src/features/comments/CommentComposer.tsx, web/src/features/comments/compose.ts, web/src/features/theme/ColorPicker.tsx, web/src/features/theme/viewer-colors.ts, web/tests/upload-page.test.ts, web/tests/compose.test.ts, web/tests/comments-styles.test.ts, web/tests/viewer-colors.test.ts, web/src/app/app_Summary.md, web/src/features/comments/comments_Summary.md, web/src/features/theme/theme_Summary.md]
 reads: [shared/src/types.ts, shared/src/api.ts, shared/shared_Summary.md, web/src/app/JoinDialog.tsx, web/tests/summary-coverage.test.ts, web/web_Summary.md]
 verify: npm run typecheck && npm run test:web
-status: todo
+status: done
 ---
 
 ## 目的

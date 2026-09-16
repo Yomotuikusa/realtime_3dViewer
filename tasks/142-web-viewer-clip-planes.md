@@ -6,7 +6,7 @@ depends_on: []
 owns: [web/src/features/viewer/clip-planes.ts, web/src/features/viewer/ClipPlanesRig.tsx, web/src/features/viewer/ViewerCanvas.tsx, web/src/features/viewer/viewer_Summary.md, web/tests/clip-planes.test.ts]
 reads: [web/src/features/viewer/FocalLengthRig.tsx, web/src/store/camera.ts, web/src/features/viewer/useModelScene.ts, web/tests/focal-length.test.ts, web/tests/mesh-display.test.ts, web/tests/model-scene.test.ts, web/tests/pick.test.ts, web/tests/trail-rig.test.ts, web/tests/layout-styles.test.ts, web/tests/timeline-styles.test.ts, web/tests/outliner-highlight.test.ts, web/tests/mesh-display-color.test.ts, web/tests/summary-coverage.test.ts]
 verify: npm run typecheck && npm run test:web
-status: todo
+status: done
 ---
 
 ## 目的

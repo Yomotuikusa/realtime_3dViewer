@@ -6,7 +6,7 @@ depends_on: [148, 144, 146]
 owns: [web/src/store/lighting.ts, web/src/store/store_Summary.md, web/src/app/realtime-dispatch.ts, web/src/app/ReviewPage.tsx, web/src/app/app_Summary.md, web/src/features/viewer/lighting.ts, web/src/features/viewer/SceneLights.tsx, web/src/features/viewer/LightGizmo.tsx, web/src/features/viewer/useLightBrightnessBroadcast.ts, web/src/features/viewer/hud-labels.ts, web/src/features/viewer/viewer.css, web/src/features/viewer/viewer_Summary.md, web/tests/store-lighting.test.ts, web/tests/realtime-dispatch.test.ts, web/tests/light-brightness-broadcast.test.ts, web/tests/hud-labels.test.ts, web/tests/light-gizmo.test.ts, web/tests/lighting.test.ts, web/tests/viewer-styles.test.ts, web/tests/review-stores.test.ts]
 reads: [shared/src/types.ts, shared/src/protocol.ts, shared/shared_Summary.md, web/src/features/viewer/useLightBroadcast.ts, web/src/features/viewer/send-throttle.ts, web/src/features/viewer/light-gizmo.ts, web/src/app/review-stores.ts, web/tests/light-broadcast.test.ts, web/tests/styles-rules.test.ts, web/tests/summary-coverage.test.ts, docs/3dreviewer-plan-and-architecture.md, docs/DESIGN_SKILL.md]
 verify: npm run typecheck && npm run test:web
-status: todo
+status: done
 ---
 
 ## 目的

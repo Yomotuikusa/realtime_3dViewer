@@ -6,7 +6,7 @@ depends_on: [144]
 owns: [web/src/features/joint/joint-display.ts, web/src/features/joint/joint-highlight.ts, web/src/features/joint/joint-pick.ts, web/src/features/joint/JointRig.tsx, web/src/features/joint/joint_Summary.md, web/tests/joint-display.test.ts, web/tests/joint-highlight.test.ts, web/tests/joint-pick.test.ts, web/tests/joint-rig.test.ts]
 reads: [web/src/store/view-settings.ts, web/src/features/view-settings/view-settings.ts, web/src/features/view-settings/view-settings_Summary.md, web/src/features/outliner/SelectionPickLayer.tsx, web/tests/summary-coverage.test.ts]
 verify: npm run typecheck && npm run test:web
-status: todo
+status: done
 ---
 
 ## 目的

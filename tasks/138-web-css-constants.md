@@ -6,7 +6,7 @@ depends_on: [137]
 owns: [web/src/features/theme/ColorWheel.tsx, web/src/features/theme/ColorPicker.tsx, web/src/features/theme/theme.css, web/src/features/theme/theme_Summary.md, web/tests/theme-styles.test.ts, web/tests/color-wheel.test.ts, web/tests/layout-tokens.test.ts, web/src/features/layout/layout_Summary.md]
 reads: [web/src/styles/tokens.css, web/src/features/layout/resize.ts, web/src/app/ReviewPage.tsx, web/src/app/review.css, web/src/features/theme/color-wheel.ts, web/src/features/theme/theme-palette.ts, web/tests/styles-rules.test.ts, web/tests/resize.test.ts, web/tests/summary-coverage.test.ts]
 verify: npm run typecheck && npm run test:web
-status: todo
+status: done
 ---
 
 ## 目的

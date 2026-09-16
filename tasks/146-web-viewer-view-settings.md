@@ -6,7 +6,7 @@ depends_on: [142, 144]
 owns: [web/src/features/viewer/mesh-display.ts, web/src/features/viewer/useModelScene.ts, web/src/features/viewer/camera-input.ts, web/src/features/viewer/viewer-pointer.ts, web/src/features/viewer/CameraRig.tsx, web/src/features/viewer/LightGizmo.tsx, web/src/features/viewer/viewer_Summary.md, web/tests/mesh-display.test.ts, web/tests/camera-input.test.ts, web/tests/viewer-pointer.test.ts, web/tests/light-gizmo.test.ts]
 reads: [web/src/store/view-settings.ts, web/src/features/view-settings/view-settings.ts, web/src/features/view-settings/view-settings_Summary.md, web/src/store/lighting.ts, web/src/features/viewer/lighting.ts, web/src/features/viewer/light-gizmo.ts, web/src/features/viewer/polygon-edge-material.ts, web/tests/camera-animation.test.ts, web/tests/model-scene.test.ts, web/tests/mesh-display-color.test.ts, web/tests/polygon-edge-display.test.ts, web/tests/summary-coverage.test.ts]
 verify: npm run typecheck && npm run test:web
-status: todo
+status: done
 ---
 
 ## 目的

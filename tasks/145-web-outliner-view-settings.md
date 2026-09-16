@@ -6,7 +6,7 @@ depends_on: [144, 147]
 owns: [web/src/features/outliner/selection-highlight.ts, web/src/features/outliner/SelectionRig.tsx, web/src/features/outliner/SelectionPickLayer.tsx, web/src/features/outliner/Outliner.tsx, web/src/features/outliner/outliner.css, web/src/features/outliner/outliner_Summary.md, web/tests/outliner-highlight.test.ts, web/tests/outliner-styles.test.ts, web/tests/outliner-pick.test.ts]
 reads: [web/src/store/view-settings.ts, web/src/features/view-settings/view-settings.ts, web/src/features/view-settings/view-settings_Summary.md, web/src/features/joint/joint-pick.ts, web/src/features/outliner/OutlinerRow.tsx, web/tests/styles-rules.test.ts, web/tests/summary-coverage.test.ts]
 verify: npm run typecheck && npm run test:web
-status: todo
+status: done
 ---
 
 ## 目的
