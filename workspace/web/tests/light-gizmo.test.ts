@@ -77,6 +77,9 @@ describe("light gizmo calculations", () => {
     const source = readFileSync(sourcePath, "utf8");
 
     expect(source).toContain("rotation={[0, GIZMO_BOX_ROTATION_Y, 0]}");
+    expect(source).toContain("settings.lightRotateSensitivity");
+    expect(source).toContain("rotate(step.deltaX * sensitivity, 0)");
+    expect(source).toContain("rotate(deltaX, 0)");
   });
 
   it("uses the lighting spherical coordinates for the marker", () => {

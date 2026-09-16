@@ -74,7 +74,8 @@ describe("viewer pointer input", () => {
     controls.update = vi.fn(() => calls.push("update"));
     const onUserInteract = vi.fn(() => calls.push("interact"));
     const onCameraChange = vi.fn(() => calls.push("change"));
-    const cleanup = attachViewerPointer(controls, { onUserInteract, onCameraChange, onLightRotate: vi.fn() });
+    const dollySpeed = vi.fn(() => 0.01);
+    const cleanup = attachViewerPointer(controls, { onUserInteract, onCameraChange, onLightRotate: vi.fn(), dollySpeed });
 
     controls.domElement.dispatchEvent(pointerEvent("pointerdown", {
       altKey: true,
@@ -90,7 +91,8 @@ describe("viewer pointer input", () => {
       clientX: 110,
       pointerId: 3,
     }));
-    expect(controls.object.position.z).toBeCloseTo(10 * Math.exp(-0.5));
+    expect(controls.object.position.z).toBeCloseTo(10 * Math.exp(-1));
+    expect(dollySpeed).toHaveBeenCalledTimes(1);
     expect(calls).toEqual(["interact", "update", "change"]);
 
     controls.domElement.dispatchEvent(pointerEvent("pointerup", { pointerId: 3 }));

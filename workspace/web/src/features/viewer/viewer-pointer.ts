@@ -1,5 +1,5 @@
 import type { Vector3 } from "three";
-import { dollyPosition, mouseButtonsFor, type ViewerMouseButtons } from "./camera-input";
+import { DOLLY_SPEED, dollyPosition, mouseButtonsFor, type ViewerMouseButtons } from "./camera-input";
 
 /** OrbitControls インスタンスをそのまま渡せる最小構造型。 */
 export interface ViewerControlsLike {
@@ -17,6 +17,8 @@ export interface ViewerPointerDeps {
   onCameraChange(): void;
   /** Shift+右ドラッグの移動量(px)。ライトの向きを回す。 */
   onLightRotate(deltaX: number, deltaY: number): void;
+  /** dolly の 1px あたりの係数。省略時は DOLLY_SPEED。 */
+  dollySpeed?: () => number;
 }
 
 interface DollyState {
@@ -71,6 +73,7 @@ export function attachViewerPointer(
       controls.object.position.toArray() as [number, number, number],
       controls.target.toArray() as [number, number, number],
       event.clientX - dolly.clientX,
+      deps.dollySpeed?.() ?? DOLLY_SPEED,
     );
     controls.object.position.set(...nextPosition);
     controls.update();

@@ -6,6 +6,7 @@ import { describe, expect, it, vi } from "vitest";
 import {
   Bone,
   BoxGeometry,
+  Float32BufferAttribute,
   Group,
   InstancedMesh,
   Line,
@@ -28,6 +29,7 @@ import {
   WIREFRAME_OVERLAY_COLOR,
   WIREFRAME_OVERLAY_OPACITY,
 } from "../src/features/viewer/mesh-display";
+import { isPolygonEdgeMaterial } from "../src/features/viewer/polygon-edge-material";
 
 const sourceRoot = existsSync(join(process.cwd(), "web", "src"))
   ? join(process.cwd(), "web", "src")
@@ -107,6 +109,23 @@ describe("mesh display", () => {
     expect(material.toneMapped).toBe(false);
   });
 
+  it("uses custom overlay opacity and polygon edge materials", () => {
+    const mesh = new Mesh(new BoxGeometry(), new MeshStandardMaterial());
+    const geometry = new BoxGeometry();
+    const count = geometry.getAttribute("position").count;
+    geometry.setAttribute("polygonEdgeBarycentric", new Float32BufferAttribute(new Array(count * 3).fill(0), 3));
+    geometry.setAttribute("polygonEdgeMask", new Float32BufferAttribute(new Array(count * 3).fill(1), 3));
+
+    const overlay = createWireframeOverlay(mesh, 0x123456, 0.2);
+    const polygonOverlay = createWireframeOverlay(new Mesh(geometry, new MeshStandardMaterial()), 0x123456, 0.2);
+
+    expect((overlay.material as MeshBasicMaterial).opacity).toBe(0.2);
+    expect((overlay.material as MeshBasicMaterial).transparent).toBe(true);
+    expect((overlay.material as MeshBasicMaterial).depthWrite).toBe(false);
+    expect(isPolygonEdgeMaterial(polygonOverlay.material as MeshBasicMaterial)).toBe(true);
+    expect((polygonOverlay.material as MeshBasicMaterial).opacity).toBe(0.2);
+  });
+
   it("shares skinning state with a SkinnedMesh overlay", () => {
     const scene = createScene();
     applyMeshDisplay(scene.root, "solid-wireframe");
@@ -147,6 +166,23 @@ describe("mesh display", () => {
     expect(overlays(scene.skinned)).toHaveLength(1);
     expect(overlays(scene.mesh)[0]!.children).toHaveLength(0);
     expect(overlays(scene.skinned)[0]!.children).toHaveLength(0);
+  });
+
+  it("updates an existing overlay without recreating it", () => {
+    const scene = createScene();
+    applyMeshDisplay(scene.root, "solid-wireframe", undefined, 0.6);
+    const overlay = overlays(scene.mesh)[0]!;
+
+    applyMeshDisplay(scene.root, "solid-wireframe", undefined, 0.2);
+    expect(overlays(scene.mesh)).toEqual([overlay]);
+    expect((overlay.material as MeshBasicMaterial).opacity).toBe(0.2);
+    expect((overlay.material as MeshBasicMaterial).transparent).toBe(true);
+    expect((overlay.material as MeshBasicMaterial).depthWrite).toBe(false);
+
+    applyMeshDisplay(scene.root, "solid-wireframe", undefined, 1);
+    expect((overlay.material as MeshBasicMaterial).opacity).toBe(1);
+    expect((overlay.material as MeshBasicMaterial).transparent).toBe(false);
+    expect((overlay.material as MeshBasicMaterial).depthWrite).toBe(true);
   });
 
   it("removes and disposes overlays when returning to solid", () => {
@@ -233,6 +269,8 @@ describe("mesh display", () => {
     const canvas = readSource("features/viewer/ViewerCanvas.tsx");
 
     expect(modelMesh).toContain("applyMeshDisplay(scene, meshDisplay,");
+    expect(modelMesh).toContain('selectViewSetting("wireframeOverlayOpacity")');
+    expect(modelMesh).toContain("applyMeshDisplay(scene, meshDisplay, hexToNumber(wireframeColor), overlayOpacity)");
     expect(modelMesh).toContain('applyMeshDisplay(scene, "solid",');
     expect(canvas).toContain("useDisplayStore");
     expect(canvas).toContain("meshDisplay={meshDisplay}");
