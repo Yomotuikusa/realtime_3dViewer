@@ -20,6 +20,7 @@ import {
   JOINT_OVERLAY_KEY,
   JOINT_RADIUS_RATIO,
   JOINT_XRAY_RENDER_ORDER,
+  jointRadius,
   jointLinks,
   jointOverlayOf,
   removeJointOverlay,
@@ -113,6 +114,25 @@ describe("joint display", () => {
     const overlay = addJointOverlay(root, DEFAULT_JOINT_COLORS)!;
     const spheres = overlay.children[0] as InstancedMesh;
     expect((spheres.geometry as SphereGeometry).parameters.radius).toBe(JOINT_FALLBACK_RADIUS);
+
+    const scaledRoot = new Group();
+    scaledRoot.add(new Bone());
+    const scaledOverlay = addJointOverlay(scaledRoot, DEFAULT_JOINT_COLORS, 2)!;
+    const scaledSpheres = scaledOverlay.children[0] as InstancedMesh;
+    expect((scaledSpheres.geometry as SphereGeometry).parameters.radius).toBe(JOINT_FALLBACK_RADIUS * 2);
+  });
+
+  it("scales the sphere radius and keeps the overlay idempotent", () => {
+    const scene = createScene();
+    scene.root.updateMatrixWorld(true);
+    const baseRadius = jointRadius(scene.root);
+    expect(jointRadius(scene.root, 2)).toBe(baseRadius * 2);
+
+    const overlay = addJointOverlay(scene.root, DEFAULT_JOINT_COLORS, 0.5)!;
+    const spheres = overlay.children[0] as InstancedMesh;
+    expect((spheres.geometry as SphereGeometry).parameters.radius).toBe(baseRadius * 0.5);
+    expect(addJointOverlay(scene.root, DEFAULT_JOINT_COLORS, 3)).toBe(overlay);
+    expect((spheres.geometry as SphereGeometry).parameters.radius).toBe(baseRadius * 0.5);
   });
 
   it("starts in x-ray mode and switches depth testing and order", () => {

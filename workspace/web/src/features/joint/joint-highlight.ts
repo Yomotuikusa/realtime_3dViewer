@@ -31,7 +31,12 @@ export function selectedJointMarkerOf(root: Object3D): SelectedJointMarker | nul
 }
 
 /** root 直下へマーカーを追加して返す。color は 0xrrggbb */
-export function addSelectedJointMarker(root: Object3D, bone: Bone, color: number): SelectedJointMarker {
+export function addSelectedJointMarker(
+  root: Object3D,
+  bone: Bone,
+  color: number,
+  radiusScale = 1,
+): SelectedJointMarker {
   const existing = selectedJointMarkerOf(root);
   if (existing !== null) {
     existing.userData.bone = bone;
@@ -46,7 +51,7 @@ export function addSelectedJointMarker(root: Object3D, bone: Bone, color: number
     toneMapped: false,
   });
   const marker = new Mesh(
-    new SphereGeometry(jointRadius(root) * SELECTED_JOINT_RADIUS_SCALE, 12, 8),
+    new SphereGeometry(jointRadius(root, radiusScale) * SELECTED_JOINT_RADIUS_SCALE, 12, 8),
     material,
   ) as unknown as SelectedJointMarker;
   marker.userData[SELECTED_JOINT_MARKER_KEY] = true;
