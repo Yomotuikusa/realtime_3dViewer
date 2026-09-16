@@ -259,4 +259,12 @@ describe("viewer styles", () => {
     expect(body).not.toContain("cursor: ew-resize");
     expect(body).not.toContain("min-height: 0");
   });
+
+  it("styles the light brightness slider with the theme accent", () => {
+    const body = ruleBody(viewerCssText, ".light-gizmo__brightness");
+
+    expect(body).toContain("width: 100%");
+    expect(body).toContain("accent-color: var(--color-accent)");
+    expect(body).toContain("cursor: pointer");
+  });
 });

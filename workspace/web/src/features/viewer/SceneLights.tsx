@@ -1,21 +1,21 @@
 import type { ReactElement } from "react";
 import {
-  AMBIENT_LIGHT_INTENSITY,
-  FILL_LIGHT_INTENSITY,
   fillLightPosition,
-  KEY_LIGHT_INTENSITY,
   lightPosition,
+  scaledLightIntensities,
 } from "./lighting";
 import { useLightingStore } from "../../store/lighting";
 
 /** lighting ストアの向きに従って環境光・主ライト・補助ライトを置く。 */
 export function SceneLights(): ReactElement {
   const angles = useLightingStore((state) => state.angles);
+  const brightness = useLightingStore((state) => state.brightness);
+  const { ambient, key, fill } = scaledLightIntensities(brightness);
   return (
     <>
-      <ambientLight intensity={AMBIENT_LIGHT_INTENSITY} />
-      <directionalLight position={lightPosition(angles)} intensity={KEY_LIGHT_INTENSITY} />
-      <directionalLight position={fillLightPosition(angles)} intensity={FILL_LIGHT_INTENSITY} />
+      <ambientLight intensity={ambient} />
+      <directionalLight position={lightPosition(angles)} intensity={key} />
+      <directionalLight position={fillLightPosition(angles)} intensity={fill} />
     </>
   );
 }

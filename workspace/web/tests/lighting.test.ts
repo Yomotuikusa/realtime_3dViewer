@@ -11,6 +11,7 @@ import {
   lightPosition,
   normalizeYaw,
   rotateLight,
+  scaledLightIntensities,
 } from "../src/features/viewer/lighting";
 
 describe("lighting calculations", () => {
@@ -84,5 +85,11 @@ describe("lighting calculations", () => {
     expect(fillAtOrigin[0]).toBeCloseTo(0, 10);
     expect(fillAtOrigin[1]).toBeCloseTo(0, 10);
     expect(fillAtOrigin[2]).toBeCloseTo(-2, 10);
+  });
+
+  it("scales all three light intensities and falls back for invalid brightness", () => {
+    expect(scaledLightIntensities(1)).toEqual({ ambient: 0.9, key: 2.2, fill: 0.5 });
+    expect(scaledLightIntensities(2)).toEqual({ ambient: 1.8, key: 4.4, fill: 1 });
+    expect(scaledLightIntensities(Number.NaN)).toEqual(scaledLightIntensities(1));
   });
 });

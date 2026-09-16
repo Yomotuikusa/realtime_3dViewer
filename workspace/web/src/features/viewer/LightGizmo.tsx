@@ -1,8 +1,14 @@
 import { Canvas, useThree } from "@react-three/fiber";
 import { useEffect, useRef, type KeyboardEvent, type PointerEvent, type ReactElement } from "react";
+import { MAX_LIGHT_BRIGHTNESS, MIN_LIGHT_BRIGHTNESS } from "@shared/types";
 import { useLightingStore } from "../../store/lighting";
 import { useViewSettingsStore } from "../../store/view-settings";
-import { LIGHT_DIRECTION_LABEL, LIGHT_RESET_LABEL } from "./hud-labels";
+import {
+  brightnessText,
+  LIGHT_BRIGHTNESS_LABEL,
+  LIGHT_DIRECTION_LABEL,
+  LIGHT_RESET_LABEL,
+} from "./hud-labels";
 import {
   GIZMO_BOX_SIZE,
   GIZMO_BOX_ROTATION_Y,
@@ -16,6 +22,7 @@ import {
   yawDegrees,
   yawText,
 } from "./light-gizmo";
+import { LIGHT_BRIGHTNESS_STEP } from "./lighting";
 
 function GizmoCamera(): null {
   const camera = useThree(({ camera }) => camera);
@@ -51,6 +58,7 @@ function GizmoScene(): ReactElement {
 
 export function LightGizmo(): ReactElement {
   const angles = useLightingStore((state) => state.angles);
+  const brightness = useLightingStore((state) => state.brightness);
   const dragRef = useRef<GizmoDrag | null>(null);
 
   function handlePointerDown(event: PointerEvent<HTMLDivElement>): void {
@@ -114,6 +122,18 @@ export function LightGizmo(): ReactElement {
           <GizmoScene />
         </Canvas>
       </div>
+      <input
+        className="light-gizmo__brightness"
+        type="range"
+        min={MIN_LIGHT_BRIGHTNESS}
+        max={MAX_LIGHT_BRIGHTNESS}
+        step={LIGHT_BRIGHTNESS_STEP}
+        value={brightness}
+        aria-label={LIGHT_BRIGHTNESS_LABEL}
+        aria-valuetext={brightnessText(brightness)}
+        title={LIGHT_BRIGHTNESS_LABEL}
+        onChange={(event) => useLightingStore.getState().setBrightness(Number(event.currentTarget.value))}
+      />
       <button
         className="btn btn--quiet light-gizmo__reset"
         type="button"

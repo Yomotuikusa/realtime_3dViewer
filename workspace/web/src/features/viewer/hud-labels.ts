@@ -22,6 +22,7 @@ export const RESET_LABEL = "視点リセット";
 export const LIGHT_RESET_LABEL = "ライトリセット";
 /** ギズモの role="slider" の aria-label */
 export const LIGHT_DIRECTION_LABEL = "ライトの向き";
+export const LIGHT_BRIGHTNESS_LABEL = "ライトの明るさ";
 export const FIT_LABEL = "全体を表示";
 export const FOCAL_LENGTH_LABEL = "焦点距離";
 /** 十字の中央セルに入れる短い表示名。aria-label / title には FIT_LABEL を使う。 */
@@ -49,6 +50,11 @@ export const MESH_DISPLAY_ORDER: readonly MeshDisplayMode[] = ["solid", "wirefra
 /** スライダー横の現在値表示。 */
 export function focalLengthText(focalLengthMm: number): string {
   return `${Math.round(focalLengthMm)}mm`;
+}
+
+/** スライダー横のライト明るさ表示。 */
+export function brightnessText(brightness: number): string {
+  return `×${brightness.toFixed(2)}`;
 }
 
 /** ボタン名にショートカットキーを併記する。未割り当てなら name をそのまま返す。 */
