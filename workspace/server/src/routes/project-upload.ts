@@ -13,10 +13,14 @@ export interface UploadedModel {
 export async function readUploadedModels(
   field: unknown,
   maxBytes: number,
+  maxFiles: number,
 ): Promise<UploadedModel[]> {
   const fields = Array.isArray(field) ? field : [field];
   if (fields.length === 0 || fields.some((value) => !(value instanceof File))) {
     throw new HttpError(400, "VALIDATION", "A model file is required");
+  }
+  if (fields.length > maxFiles) {
+    throw new HttpError(400, "VALIDATION", "Too many files");
   }
 
   const models: UploadedModel[] = [];

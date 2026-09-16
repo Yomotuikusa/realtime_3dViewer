@@ -21,8 +21,8 @@ export interface AppDeps {
   db: Db;
   storage: Storage;
   // Keep dependency injection compatible with fixtures created before these config values existed.
-  config: Omit<Config, "webDistDir" | "wsHeartbeatIntervalMs">
-    & Partial<Pick<Config, "webDistDir" | "wsHeartbeatIntervalMs">>;
+  config: Omit<Config, "webDistDir" | "wsHeartbeatIntervalMs" | "maxUploadFiles">
+    & Partial<Pick<Config, "webDistDir" | "wsHeartbeatIntervalMs" | "maxUploadFiles">>;
   publish: (projectId: string, msg: ServerMessage) => void;
   now?: () => number;
   newId?: () => string;

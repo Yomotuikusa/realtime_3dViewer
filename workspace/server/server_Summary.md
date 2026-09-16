@@ -8,8 +8,9 @@ server の基盤。本番は `npm run build && npm run start` で起動する。
 ## ファイル一覧と役割
 - `src/config.ts`: 環境変数から `Config` を読み込む。`DEFAULT_WEB_DIST_DIR` は web/dist の
   既定ルート (`./web/dist`、相対パスは cwd 基準)、`DEFAULT_WS_HEARTBEAT_INTERVAL_MS` は
-  WS ハートビートの既定間隔 (30秒) を定義する。`WEB_DIST_DIR` と
-  `WS_HEARTBEAT_INTERVAL_MS` (0で無効) を設定できる。
+  WS ハートビートの既定間隔 (30秒)、`DEFAULT_MAX_UPLOAD_FILES` は multipart で
+  受け付けるモデルファイル数の既定上限 (20) を定義する。`WEB_DIST_DIR`、
+  `WS_HEARTBEAT_INTERVAL_MS` (0で無効)、`MAX_UPLOAD_FILES` (1以上) を設定できる。
 - `src/errors.ts`: `HttpError` と未知エラーを API エラー応答へ変換する。
 - `src/db/connection.ts`: `node:sqlite` の接続、PRAGMA、スキーマ適用、既存 DB への
   `playback_json` 列追加移行、トランザクション。`migrate` は schema.sql を適用した後に
@@ -25,8 +26,9 @@ server の基盤。本番は `npm run build && npm run start` で起動する。
   の取得とモデル本体の配信を提供する。複数ファイルの保存と projects / model_versions 登録を
   同一処理で行い、失敗時は保存済みファイルを削除する。版追加・削除成功後は `object:added` / `object:removed` を publish
   し、`MODEL_CONTENT_TYPES` 由来の Content-Type と immutable キャッシュヘッダを設定する。
-- `src/routes/project-upload.ts`: multipart の file フィールド(単一または配列)を全件検証し、
-  検証済みのファイル名・バイト列へ変換する。File 以外、形式不正、サイズ超過を API エラーへ変換する。
+- `src/routes/project-upload.ts`: multipart の file フィールド(単一または配列)を件数上限内で
+  全件検証し、検証済みのファイル名・バイト列へ変換する。File 以外、件数超過、形式不正、
+  サイズ超過を API エラーへ変換し、件数超過はファイルのバイト列を読む前に拒否する。
 - `src/routes/comments.ts`: project 配下のコメント一覧、投稿、status 更新を提供する。
   一覧は `status` 絞り込みと `created_at` 昇順に対応し、投稿・更新は保存後にそれぞれ
   `comment:created` / `comment:updated` を `publish` へ渡す。project、version、comment の
@@ -121,8 +123,9 @@ server の基盤。本番は `npm run build && npm run start` で起動する。
 
 ## 公開インターフェイス
 - `DEFAULT_WEB_DIST_DIR` / `DEFAULT_WS_HEARTBEAT_INTERVAL_MS`: static ルートと WS ハートビートの既定値。
-- `loadConfig`: `PORT`、`DATA_DIR`、`MAX_UPLOAD_BYTES`、`WEB_DIST_DIR`、
-  `WS_HEARTBEAT_INTERVAL_MS` から `Config` を作る。
+- `DEFAULT_MAX_UPLOAD_FILES`: multipart の 1 リクエストあたりモデルファイル数の既定上限 (20)。
+- `loadConfig`: `PORT`、`DATA_DIR`、`MAX_UPLOAD_BYTES`、`MAX_UPLOAD_FILES`、`WEB_DIST_DIR`、
+  `WS_HEARTBEAT_INTERVAL_MS` から `Config` を作る。`MAX_UPLOAD_FILES` は 1 以上に制限する。
 - `HttpError` / `toErrorResponse`: API のエラーコード・HTTP ステータス・メッセージを統一する。
 - `openDb` / `migrate` / `withTransaction`: SQLite 接続とトランザクションを管理する。
 - `addColumnIfMissing`: 指定テーブルの PRAGMA 列一覧を確認し、列が無い場合だけ指定定義で
