@@ -1,6 +1,7 @@
 import type { IncomingMessage, Server } from "node:http";
 import { WebSocketServer, WebSocket } from "ws";
 import { parseClientMessage, type ServerMessage } from "@shared/protocol";
+import { DEFAULT_WS_HEARTBEAT_INTERVAL_MS } from "../config";
 import type { Outbound, RoomHub } from "./hub";
 
 /** Same-connection schema violations before the server closes with 1008. */
@@ -9,6 +10,8 @@ export const MAX_WS_PAYLOAD_BYTES = 256 * 1024;
 
 export interface RealtimeOptions {
   projectExists: (projectId: string) => boolean;
+  /** ping の間隔(ms)。省略時 DEFAULT_WS_HEARTBEAT_INTERVAL_MS。0 以下で無効 */
+  heartbeatIntervalMs?: number;
 }
 
 export interface Realtime {
@@ -21,6 +24,7 @@ export interface Realtime {
 interface SocketConnection {
   projectId: string;
   socket: WebSocket;
+  isAlive: boolean;
 }
 
 function errorMessage(error: unknown): string {
@@ -59,6 +63,20 @@ function projectIdFromRequest(request: IncomingMessage): string | null {
 export function attachRealtime(server: Server, hub: RoomHub, options: RealtimeOptions): Realtime {
   const sockets = new Map<string, SocketConnection>();
   const wss = new WebSocketServer({ server, path: "/ws", maxPayload: MAX_WS_PAYLOAD_BYTES });
+  const heartbeatIntervalMs = options.heartbeatIntervalMs ?? DEFAULT_WS_HEARTBEAT_INTERVAL_MS;
+  const heartbeatTimer = heartbeatIntervalMs > 0
+    ? setInterval(() => {
+      for (const connection of sockets.values()) {
+        if (!connection.isAlive) {
+          connection.socket.terminate();
+          continue;
+        }
+        connection.isAlive = false;
+        if (connection.socket.readyState === WebSocket.OPEN) connection.socket.ping();
+      }
+    }, heartbeatIntervalMs)
+    : null;
+  heartbeatTimer?.unref();
   let closePromise: Promise<void> | null = null;
 
   const sendOutbound = (sourceId: string, projectId: string, outbound: Outbound): void => {
@@ -124,7 +142,8 @@ export function attachRealtime(server: Server, hub: RoomHub, options: RealtimeOp
       socket.close(1013);
       return;
     }
-    sockets.set(connId, { projectId, socket });
+    const connection = { projectId, socket, isAlive: true };
+    sockets.set(connId, connection);
     let consecutiveErrors = 0;
     let finalized = false;
 
@@ -147,6 +166,9 @@ export function attachRealtime(server: Server, hub: RoomHub, options: RealtimeOp
       consecutiveErrors = 0;
       sendOutbounds(connId, projectId, hub.handle(connId, parsed.msg));
     });
+    socket.on("pong", () => {
+      connection.isAlive = true;
+    });
     socket.on("close", finalize);
     socket.on("error", finalize);
   });
@@ -160,6 +182,7 @@ export function attachRealtime(server: Server, hub: RoomHub, options: RealtimeOp
       }
     },
     close() {
+      if (heartbeatTimer) clearInterval(heartbeatTimer);
       if (closePromise) return closePromise;
       closePromise = new Promise<void>((resolve, reject) => {
         for (const { socket } of sockets.values()) socket.close(1001);
