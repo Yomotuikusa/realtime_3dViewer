@@ -149,7 +149,7 @@ export function ObjectList({
           className="objects__file"
           type="file"
           multiple
-          accept=".glb,.gltf"
+          accept={ALLOWED_MODEL_EXTENSIONS.join(",")}
           hidden
           disabled={busy}
           onChange={(event) => void handleFiles(event)}
