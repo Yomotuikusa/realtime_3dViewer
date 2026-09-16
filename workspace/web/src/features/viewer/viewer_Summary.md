@@ -5,8 +5,8 @@ Canvas、モデル、カメラ、ライティング、焦点距離、内蔵ア�
 
 ## ファイル一覧と役割
 - ViewerCanvas.tsx: Canvas、ライティング、焦点距離、Bounds、全オブジェクト、カメラを合成するビューア。display ストアの `meshDisplay` と各版の `fileName` をモデルへ渡し、theme ストアの `background` を Canvas の背景へ渡し、`MeshCompareRig` を一つ配置する。版ごとのモデルを単一 group に置き、その group を共通モデルターゲットへ登録する。`children` は RemoteCameras / StrokeLines / AnnotationLayer など後続機能の差し込み口
-- SceneLights.tsx: lighting ストアの角度から環境光・主ライト・反転した補助ライトを Bounds 外へ描画する
-- LightGizmo.tsx: 枠なしで3Dビュー右下へ重ねる、Y軸まわりに45°回転した立方体ギズモを描画し、view-settings のライト回転感度を水平ドラッグにだけ掛けて、矢印キー・リセットとともにライトストアへ接続する
+- SceneLights.tsx: lighting ストアの角度と明るさ倍率から環境光・主ライト・反転した補助ライトを Bounds 外へ描画する
+- LightGizmo.tsx: 枠なしで3Dビュー右下へ重ねる、Y軸まわりに45°回転した立方体ギズモと明るさスライダーを描画し、view-settings のライト回転感度を水平ドラッグにだけ掛けて、矢印キー・リセットとともにライトストアへ接続する
 - light-gizmo.ts: ギズモの寸法・回転・カメラ定数、マーカー座標、ドラッグ／キー入力、yaw 表示の純粋関数
 - FocalLengthRig.tsx: camera ストアの焦点距離を PerspectiveCamera の垂直画角へ反映する描画なしの Rig。Bounds の計算対象外
 - ClipPlanesRig.tsx: camera ストアのモデル最大辺長から PerspectiveCamera の near / far を反映する描画なしの Rig。Bounds の計算対象外
@@ -28,9 +28,9 @@ Canvas、モデル、カメラ、ライティング、焦点距離、内蔵ア�
 - PlaybackSourceSync.tsx: Canvas 内で解決済みの再生対象を playback ストアへ同期する描画なしの部品
 - PlaybackClock.tsx: Canvas に一つだけ配置し、再生中の playback 時刻を毎フレーム一度だけ進める描画なしの部品
 - PlaybackRig.tsx: 各モデルの playback ストアの sourceId が一致するときだけ clipIndex と time を AnimationMixer へ反映し、それ以外を初期ポーズへ戻す描画なしの Rig。時刻は進めない
-- hud-labels.ts: HUD のモード、カメラ／ライト、メッシュ表示、Follow、透過表示、描画基準、ヒントの日本語文言と純粋な判定関数
+- hud-labels.ts: HUD のモード、カメラ／ライト、メッシュ表示、Follow、透過表示、描画基準、ヒントの日本語文言と、焦点距離／明るさの値表示を提供する純粋な判定関数
 - view-presets.ts: 正面／背面／右／左の向き、十字セルと並び順、距離を保ったプリセットカメラ計算、既定視点一致判定と回転ロック判定
-- lighting.ts: `@shared/types` 由来の `LightAngles` を再エクスポートし、ワールド固定ライトの角度の正規化・クランプ・ドラッグ回転と主／補助ライト座標を提供する
+- lighting.ts: `@shared/types` 由来の `LightAngles` を再エクスポートし、ワールド固定ライトの角度の正規化・クランプ・ドラッグ回転、3灯の明るさ倍率計算と主／補助ライト座標を提供する
 - ModelMesh.tsx: 拡張子から形式を判別して glTF / `PolygonEdgeFBXLoader` / `PolygonEdgeOBJLoader` へ割り、`useModelScene` で共通接続する。形式ごとに同一オリジン用の LoadingManager を指定し、読み込み前に `installFbxSkinCompat()` を呼び、`visible` を scene に反映する。OBJ は材質なしの単色表示、FBX はスケール補正なしとする。Draco 圧縮時のデコーダ取得（`https://www.gstatic.com/...`）は drei の別 manager による外部依存として残る
 - fbx-compat.ts: FBXLoader が未対応の Model を Group または Bone にしてスキンを適用しようとする場合に、no-op の `bind` で該当ノードのスキン適用だけを読み飛ばす
 - useModelScene.ts: 読み込み済みの glTF / FBX / OBJ の scene を共通処理へ接続する。primary のモデルだけバウンディングボックスからモデルサイズを記録して初回 Fit を要求し、全版の `animations` を trail のクリップレジストリへ登録する。theme ストアの `wireframe` を数値化し、view-settings の `wireframeOverlayOpacity` とともに `meshDisplay` を全 Mesh へ適用して、アンマウント時は solid に戻す。`versionId` と scene を比較用レジストリへ登録し、アンマウント時に同じ参照だけを解除する
@@ -49,7 +49,8 @@ Canvas、モデル、カメラ、ライティング、焦点距離、内蔵ア�
 - camera-throttle.ts: `CameraPayload`（カメラと焦点距離）向けの比較・複製を定義し、汎用 `send-throttle` へ委譲して送信成功時刻から 50ms ごとの先頭送信と窓明けトレーリング送信を行う。送信失敗は未送信としてタイマーまたは次の更新で再試行し、破棄時に保留送信をキャンセルする
 - useCameraBroadcast.ts: `selfCamera` または焦点距離の変更を `camera-throttle` へ渡し、`camera` メッセージへ焦点距離を載せる。送信成功時に自分の presence カメラと焦点距離も更新する。`shouldSendCamera` は従来の判定インターフェイスとして公開する
 - useLightBroadcast.ts: lighting ストアの local 更新を汎用 throttle 経由で `light` メッセージへ送り、remote 更新は `markSent` で保留値を破棄してエコーを防ぐ。50ms 間隔で角度を送信する
-- viewer.css: HUD のモード選択、枠線と影付きの常設メッシュ表示モードバーと右上カメラメニュー、焦点距離スライダー、各メニューのブロック区切りと十字配置、表示モードの押下状態、Follow 中の参加者色フレームと操作ヒント、160px の枠を持たないライトギズモのプレーン CSS
+- useLightBrightnessBroadcast.ts: lighting ストアの local な明るさ更新を角度と同じ汎用 throttle 経由で `light:brightness` メッセージへ送り、remote 更新は `markSent` でエコーを防ぐ
+- viewer.css: HUD のモード選択、枠線と影付きの常設メッシュ表示モードバーと右上カメラメニュー、焦点距離スライダー、各メニューのブロック区切りと十字配置、表示モードの押下状態、Follow 中の参加者色フレームと操作ヒント、160px の枠を持たないライトギズモとテーマ色の明るさスライダーのプレーン CSS
 
 ## 公開インターフェイス
 - ViewerCanvas.tsx: `ViewerCanvas({ children? })`。theme ストアの `background` を hex 文字列のまま Canvas 背景へ渡す
@@ -67,9 +68,9 @@ Canvas、モデル、カメラ、ライティング、焦点距離、内蔵ア�
 - display-icons.tsx: `SolidIcon()`、`WireframeIcon()`、`SolidWireframeIcon()`、`MESH_DISPLAY_ICONS` と共通立方体パス定数
 - HudMenu.tsx: `HudMenu({ id, open, onToggle, onClose, children })`。カメラメニューの開閉 state を持たず、Escape を親へ通知する
 - hud-menu.ts: `HudMenuId`、`HUD_MENU_ORDER`、`HUD_MENU_LABELS`、`HUD_MENU_INITIAL`、`toggleHudMenu`
-- hud-labels.ts: `ToolMode`、`MODE_LABELS`、`MODE_ORDER`、`VIEW_PRESET_LABELS`、`FIT_SHORT_LABEL`、`VIEW_PRESETS_LABEL`、`PLACEMENT_LABELS`、`PLACEMENT_ORDER`、`MESH_DISPLAY_LABEL`、`MESH_DISPLAY_LABELS`、`MESH_DISPLAY_ORDER`、カメラ／ライト／Follow のラベル、`focalLengthText`、`colorName`、`followingLabel`、`HintInput`、`hint`、`withShortcut`
+- hud-labels.ts: `ToolMode`、`MODE_LABELS`、`MODE_ORDER`、`VIEW_PRESET_LABELS`、`FIT_SHORT_LABEL`、`VIEW_PRESETS_LABEL`、`PLACEMENT_LABELS`、`PLACEMENT_ORDER`、`MESH_DISPLAY_LABEL`、`MESH_DISPLAY_LABELS`、`MESH_DISPLAY_ORDER`、カメラ／ライト／Follow のラベル、`focalLengthText`、`brightnessText`、`colorName`、`followingLabel`、`HintInput`、`hint`、`withShortcut`
 - view-presets.ts: `ViewPreset`、`VIEW_PRESET_ORDER`、`GridCell`、`VIEW_CROSS_CENTER`、`VIEW_PRESET_CELLS`、`VIEW_PRESET_DIRECTIONS`、`MIN_PRESET_DISTANCE`、`PRESET_MATCH_EPSILON`、`presetCamera`、`matchViewPreset`、`rotationLocked`
-- lighting.ts: `LightAngles`（`@shared/types` 由来の再エクスポート）、ライト定数、`normalizeYaw`、`clampPitch`、`rotateLight`、`lightPosition`、`fillLightPosition`
+- lighting.ts: `LightAngles`（`@shared/types` 由来の再エクスポート）、ライト定数、`LIGHT_BRIGHTNESS_STEP`、`normalizeYaw`、`clampPitch`、`rotateLight`、`scaledLightIntensities`、`lightPosition`、`fillLightPosition`
 - ModelMesh.tsx: `ModelMesh({ src, fileName, versionId, visible, primary, meshDisplay })`、`MODEL_COMPONENTS`
 - fbx-compat.ts: `installFbxSkinCompat()`
 - useModelScene.ts: `useModelScene(scene, animations, options)`、`ModelSceneOptions`。wireframe 色は theme ストアから、重ね描き不透明度は view-settings ストアから購読する
@@ -87,6 +88,7 @@ Canvas、モデル、カメラ、ライティング、焦点距離、内蔵ア�
 - camera-throttle.ts: `CameraPayload`、`payloadEquals`、`CameraThrottleDeps`、`CameraThrottle`、`createCameraThrottle`
 - send-throttle.ts: `SendThrottleDeps<T>`、`SendThrottle<T>`、`createSendThrottle<T>`
 - useLightBroadcast.ts: `lightAnglesEqual`、`LightingChange`、`onLightingChange`、`useLightBroadcast`
+- useLightBrightnessBroadcast.ts: `LightBrightnessChange`、`onLightBrightnessChange`、`useLightBrightnessBroadcast`
 - model-loading.ts: `BLOCKED_RESOURCE_URL`、`resolveModelResourceUrl`、`createModelLoadingManager`
 - model-target.ts: `setModelTarget(obj)`、`getModelTarget()`
 - pick.ts: `toNdc(rect, clientX, clientY)`、`isVisibleInScene(object)`、`pickModel(raycaster, camera, ndc, target)`
@@ -137,6 +139,8 @@ presence_Summary.md を参照。
 remote の受信値は `markSent` で最後の値として記録し、保留中の自分の値とタイマーを捨てるため、受信値を送り返さない。
 light の送信成功時にストアを追加更新することはない。
 
+`useLightBrightnessBroadcast` は `brightnessOrigin` が local の変更だけを同じ `LIGHT_SEND_INTERVAL_MS` の汎用 throttle へ渡し、remote の受信値は `markSent` でエコーを防ぐ。`SceneLights` は既定の3灯強度へ brightness を掛け、`LightGizmo` の range input は 0.25 刻みで 0.25〜4 倍を変更する。
+
 後続の viewer 機能は `ViewerCanvas` の `children` 差し込み口に RemoteCameras / StrokeLines /
 AnnotationLayer などのレイヤーを追加する。`ModelMesh` が登録する `model-target` を `pickModel` に渡すと、
 Canvas のクライアント座標を NDC 化して再帰的にモデルをレイキャストでき、交点法線はヒットした
@@ -151,12 +155,13 @@ Canvas のクライアント座標を NDC 化して再帰的にモデルをレ�
 - tests/camera-throttle.test.ts: `payloadEquals`、焦点距離を含む先頭送信、最新値のトレーリング、重複抑止、送信失敗の再試行、破棄時キャンセルのテスト
 - tests/send-throttle.test.ts: 汎用 throttle の先頭送信、最新値のトレーリング、`markSent` による保留破棄・送信済み判定・間隔維持、破棄、失敗後の mark、複製のテスト
 - tests/light-broadcast.test.ts: ライト角度の厳密比較と local／remote 更新の throttle 呼び分け・順序のテスト
+- tests/light-brightness-broadcast.test.ts: ライト明るさの local／remote 更新の throttle 呼び分け・順序、メッセージ／購読／ReviewPage の結線テスト
 - tests/focal-length.test.ts: 焦点距離と垂直画角の換算テスト
 - tests/clip-planes.test.ts: モデルサイズからの near / far 計算、無効値の既定値、比率、Rig と Canvas の結線を検証
 - tests/follow.test.ts: Follow 対象のカメラ・焦点距離の判定、複製、補間、収束テスト
 - tests/camera-animation.test.ts: ease-out補間、独立複製、時間基準の開始前・途中・到達・NaN、CameraRig の減衰無効化のソース検査
 - tests/fit-camera.test.ts: Fit 方向・距離・中心の非破壊性、既定視点非一致、CameraRig の Bounds 内部補間を使わないことのソース検査
-- tests/hud-labels.test.ts: HUD のモード・操作・透過表示・描画基準・メッシュ表示・Follow・既定視点文言とヒントのテスト
+- tests/hud-labels.test.ts: HUD のモード・操作・透過表示・描画基準・メッシュ表示・Follow・ライト明るさ文言と値表示・既定視点文言とヒントのテスト
 - tests/display-mode-bar.test.ts: 共通立方体パス、3種類の SVG アイコン、アイコン対応表、表示モードバーのソース構造と旧表示メニュー削除のテスト
 - tests/hud-menu.test.ts: HUD カメラメニューの初期表示、順序・表示名、排他的トグルの純粋関数テスト
 - tests/playback.test.ts: クリップ要約、選択中クリップ長、時刻 clamp、ループ前進のテスト
@@ -164,7 +169,7 @@ Canvas のクライアント座標を NDC 化して再帰的にモデルをレ�
 - tests/playback-source.test.ts: アニメーション付き版の抽出・優先解決、source 切替、クリップ要約同期のテスト
 - tests/playback-source-sync.test.ts: PlaybackSourceSync の実マウントによる後登録、source 切替、登録解除と fallback のテスト
 - tests/light-gizmo.test.ts: ライトギズモの定数、回転、カメラ視野、座標・入力・表示の純粋関数テスト
-- tests/lighting.test.ts: ライト角度の正規化・クランプ・ドラッグ回転・主／補助ライト座標を検証
+- tests/lighting.test.ts: ライト角度の正規化・クランプ・ドラッグ回転・明るさ倍率・主／補助ライト座標を検証
 - tests/model-loading.test.ts: 埋め込み・同一オリジン URL の許可、外部 URL の遮断、LoadingManager の URL modifier のテスト
 - tests/model-target.test.ts: モデルターゲットの登録・取得テスト
 - tests/pick.test.ts: NDC 変換、可視な交点だけの再帰レイキャスト、ワールド法線変換、useModelScene／PlaybackClock／PlaybackRig／ViewerCanvas／ReviewPage のソース検査
@@ -175,4 +180,4 @@ Canvas のクライアント座標を NDC 化して再帰的にモデルをレ�
 - tests/polygon-edge-display.test.ts: 多角形輪郭材質の shader 設定・差し替え／復元・破棄・重ね描き・InstancedMesh / SkinnedMesh / レイキャストとローダー結線を検証する
 - tests/view-presets.test.ts: 既定視点の方向・順序・単位ベクトル・距離維持・最小距離・非破壊性、既定視点一致と回転ロック判定のテスト
 - tests/viewer-pointer.test.ts: capture phase の割り当て、Alt+右ドラッグ dolly、pointer capture、継続・終了・ブラウザ既定動作抑止、cleanup のテスト
-- tests/viewer-styles.test.ts: カメラメニューと常設表示モードバーの枠・配置・押下状態、初期展開と操作後の非クローズ、カメラメニューのボタン状態と影、160px のライトギズモとヒントの退避幅、ライトギズモの枠廃止、シャドウトークン、Follow フレームと上辺タブ、CSS セレクタ完全一致のテキスト検査
+- tests/viewer-styles.test.ts: カメラメニューと常設表示モードバーの枠・配置・押下状態、初期展開と操作後の非クローズ、カメラメニューのボタン状態と影、160px のライトギズモとヒントの退避幅、ライトギズモの枠廃止、明るさスライダーのテーマ色、シャドウトークン、Follow フレームと上辺タブ、CSS セレクタ完全一致のテキスト検査

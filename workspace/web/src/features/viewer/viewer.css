@@ -234,6 +234,15 @@
   touch-action: none;
 }
 
+.light-gizmo__brightness {
+  position: absolute;
+  left: 0;
+  bottom: calc(var(--space-3) * -1);
+  width: 100%;
+  accent-color: var(--color-accent);
+  cursor: pointer;
+}
+
 .light-gizmo__stage:focus-visible {
   outline: 2px solid var(--focus-ring-color);
   outline-offset: -2px;

@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import type { ServerMessage } from "@shared/protocol";
-import { DEFAULT_JOINT_DISPLAY, DEFAULT_MESH_COMPARE } from "@shared/types";
+import { DEFAULT_JOINT_DISPLAY, DEFAULT_LIGHT_BRIGHTNESS, DEFAULT_MESH_COMPARE } from "@shared/types";
 import { DEFAULT_MOTION_TRAIL } from "@shared/trail";
 import { dispatchServerMessage } from "../src/app/realtime-dispatch";
 import { useAnnotationStore } from "../src/store/annotation";
@@ -237,10 +237,29 @@ describe("realtime dispatch", () => {
     expect(useLightingStore.getState().origin).toBe("remote");
   });
 
+  it("applies light brightness events and welcome state", () => {
+    dispatchServerMessage({ type: "light:brightness", userId: "u2", brightness: 2 });
+    expect(useLightingStore.getState().brightness).toBe(2);
+    expect(useLightingStore.getState().brightnessOrigin).toBe("remote");
+
+    useLightingStore.getState().reset();
+    dispatchServerMessage({
+      type: "welcome",
+      selfId: "u1",
+      users: [],
+      strokes: [],
+      lightBrightness: 0.5,
+    });
+    expect(useLightingStore.getState().brightness).toBe(0.5);
+    expect(useLightingStore.getState().brightnessOrigin).toBe("remote");
+  });
+
   it("keeps the default light when welcome has no light and ignores errors", () => {
     dispatchServerMessage({ type: "welcome", selfId: "u1", users: [], strokes: [] });
     expect(useLightingStore.getState().angles).toEqual({ yaw: Math.PI / 4, pitch: Math.PI / 4 });
     expect(useLightingStore.getState().origin).toBe("local");
+    expect(useLightingStore.getState().brightness).toBe(DEFAULT_LIGHT_BRIGHTNESS);
+    expect(useLightingStore.getState().brightnessOrigin).toBe("local");
     useLightingStore.getState().applyRemote({ yaw: 1, pitch: 0.5 });
     dispatchServerMessage({ type: "error", code: "BAD_REQUEST", message: "x" });
     expect(useLightingStore.getState().angles).toEqual({ yaw: 1, pitch: 0.5 });

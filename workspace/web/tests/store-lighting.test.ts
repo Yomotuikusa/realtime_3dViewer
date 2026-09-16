@@ -1,5 +1,10 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import {
+  DEFAULT_LIGHT_BRIGHTNESS,
+  MAX_LIGHT_BRIGHTNESS,
+  MIN_LIGHT_BRIGHTNESS,
+} from "@shared/types";
+import {
   DEFAULT_LIGHT_ANGLES,
   MAX_LIGHT_PITCH,
 } from "../src/features/viewer/lighting";
@@ -14,6 +19,8 @@ describe("lighting store", () => {
     const angles = useLightingStore.getState().angles;
     expect(angles).toEqual(DEFAULT_LIGHT_ANGLES);
     expect(angles).not.toBe(DEFAULT_LIGHT_ANGLES);
+    expect(useLightingStore.getState().brightness).toBe(DEFAULT_LIGHT_BRIGHTNESS);
+    expect(useLightingStore.getState().brightnessOrigin).toBe("local");
   });
 
   it("accumulates rotations and clamps pitch", () => {
@@ -75,5 +82,56 @@ describe("lighting store", () => {
     useLightingStore.getState().reset();
     expect(useLightingStore.getState().angles).toEqual(DEFAULT_LIGHT_ANGLES);
     expect(useLightingStore.getState().origin).toBe("local");
+  });
+
+  it("updates brightness independently and preserves the angle state", () => {
+    useLightingStore.getState().applyRemote({ yaw: 1, pitch: 0.5 });
+    const beforeAngles = useLightingStore.getState().angles;
+    useLightingStore.getState().setBrightness(2);
+
+    expect(useLightingStore.getState().brightness).toBe(2);
+    expect(useLightingStore.getState().brightnessOrigin).toBe("local");
+    expect(useLightingStore.getState().angles).toBe(beforeAngles);
+    expect(useLightingStore.getState().origin).toBe("remote");
+  });
+
+  it("clamps brightness and ignores non-finite local values", () => {
+    useLightingStore.getState().setBrightness(10);
+    expect(useLightingStore.getState().brightness).toBe(MAX_LIGHT_BRIGHTNESS);
+    useLightingStore.getState().setBrightness(0);
+    expect(useLightingStore.getState().brightness).toBe(MIN_LIGHT_BRIGHTNESS);
+
+    const before = useLightingStore.getState();
+    useLightingStore.getState().setBrightness(Number.NaN);
+    useLightingStore.getState().setBrightness(Number.POSITIVE_INFINITY);
+    expect(useLightingStore.getState()).toBe(before);
+    expect(useLightingStore.getState().brightnessOrigin).toBe("local");
+  });
+
+  it("does not replace state for an equal brightness and tracks remote brightness", () => {
+    useLightingStore.getState().setBrightness(2);
+    const before = useLightingStore.getState();
+    useLightingStore.getState().setBrightness(2);
+    expect(useLightingStore.getState()).toBe(before);
+
+    useLightingStore.getState().applyRemoteBrightness(3);
+    expect(useLightingStore.getState().brightness).toBe(3);
+    expect(useLightingStore.getState().brightnessOrigin).toBe("remote");
+    expect(useLightingStore.getState().origin).toBe("local");
+    useLightingStore.getState().applyRemoteBrightness(9);
+    expect(useLightingStore.getState().brightness).toBe(MAX_LIGHT_BRIGHTNESS);
+  });
+
+  it("keeps brightness origin independent during rotation and resets both values", () => {
+    useLightingStore.getState().applyRemoteBrightness(2);
+    useLightingStore.getState().rotate(10, 0);
+    expect(useLightingStore.getState().origin).toBe("local");
+    expect(useLightingStore.getState().brightnessOrigin).toBe("remote");
+
+    useLightingStore.getState().reset();
+    expect(useLightingStore.getState().angles).toEqual(DEFAULT_LIGHT_ANGLES);
+    expect(useLightingStore.getState().brightness).toBe(DEFAULT_LIGHT_BRIGHTNESS);
+    expect(useLightingStore.getState().origin).toBe("local");
+    expect(useLightingStore.getState().brightnessOrigin).toBe("local");
   });
 });

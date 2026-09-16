@@ -3,6 +3,7 @@ import { DEFAULT_MESH_DISPLAY } from "@shared/types";
 import {
   CLEAR_LABEL,
   colorName,
+  brightnessText,
   FIT_LABEL,
   FIT_SHORT_LABEL,
   FOCAL_LENGTH_LABEL,
@@ -10,6 +11,7 @@ import {
   followingLabel,
   hint,
   LIGHT_DIRECTION_LABEL,
+  LIGHT_BRIGHTNESS_LABEL,
   LIGHT_RESET_LABEL,
   MODE_LABELS,
   MODE_ORDER,
@@ -41,6 +43,7 @@ describe("viewer HUD labels", () => {
     expect(RESET_LABEL).toBe("視点リセット");
     expect(LIGHT_RESET_LABEL).toBe("ライトリセット");
     expect(LIGHT_DIRECTION_LABEL).toBe("ライトの向き");
+    expect(LIGHT_BRIGHTNESS_LABEL).toBe("ライトの明るさ");
     expect(FIT_LABEL).toBe("全体を表示");
     expect(FIT_SHORT_LABEL).toBe("全体");
     expect(VIEW_PRESETS_LABEL).toBe("既定の視点");
@@ -66,6 +69,11 @@ describe("viewer HUD labels", () => {
     for (const mode of MESH_DISPLAY_ORDER) {
       expect(MESH_DISPLAY_LABELS[mode]).toBeTruthy();
     }
+  });
+
+  it("formats light brightness as a multiplier", () => {
+    expect(brightnessText(1)).toBe("×1.00");
+    expect(brightnessText(0.25)).toBe("×0.25");
   });
 
   it("formats focal length in whole millimeters", () => {
