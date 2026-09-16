@@ -47,8 +47,8 @@
   display: flex;
   align-items: center;
   gap: var(--space-1);
-  min-height: 1.75rem;
-  padding-left: calc(var(--outliner-depth, 0) * var(--space-4));
+  min-height: var(--outliner-row-height, 1.75rem);
+  padding-left: calc(var(--outliner-depth, 0) * var(--outliner-indent, 16px));
 }
 
 .outliner__expand {
