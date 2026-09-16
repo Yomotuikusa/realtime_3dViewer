@@ -106,13 +106,13 @@ export function jointOverlayOf(root: Object3D): JointOverlay | null {
 }
 
 /** root 配下全体の大きさからジョイント球の半径を求める。 */
-export function jointRadius(root: Object3D): number {
+export function jointRadius(root: Object3D, scale = 1): number {
   const bounds = new Box3().setFromObject(root);
   const size = bounds.getSize(jointPosition);
   const maximum = Math.max(size.x, size.y, size.z);
   return maximum > 0 && Number.isFinite(maximum)
-    ? maximum * JOINT_RADIUS_RATIO
-    : JOINT_FALLBACK_RADIUS;
+    ? maximum * JOINT_RADIUS_RATIO * scale
+    : JOINT_FALLBACK_RADIUS * scale;
 }
 
 function overlayObjects(overlay: JointOverlay): [InstancedMesh, LineSegments] {
@@ -125,7 +125,7 @@ function markOverlay(object: Object3D): void {
 }
 
 /** root 配下のボーンを可視化し、root へ追加する。 */
-export function addJointOverlay(root: Object3D, colors: JointColors): JointOverlay | null {
+export function addJointOverlay(root: Object3D, colors: JointColors, radiusScale = 1): JointOverlay | null {
   const existing = jointOverlayOf(root);
   if (existing !== null) return existing;
 
@@ -134,7 +134,7 @@ export function addJointOverlay(root: Object3D, colors: JointColors): JointOverl
   const links = jointLinks(joints);
 
   const spheres = new InstancedMesh(
-    new SphereGeometry(jointRadius(root), 8, 6),
+    new SphereGeometry(jointRadius(root, radiusScale), 8, 6),
     new MeshBasicMaterial({ color: colors.joint, depthWrite: false, toneMapped: false }),
     joints.length,
   );
