@@ -6,8 +6,10 @@ comments の永続化、ファイル保存、プロジェクト取得 API、web/
 server の基盤。本番は `npm run build && npm run start` で起動する。
 
 ## ファイル一覧と役割
-- `src/config.ts`: 環境変数から `Config` を読み込む。`WEB_DIST_DIR` は web/dist のルートを
-  指定し、既定値は `./web/dist` (相対パスは cwd 基準)。
+- `src/config.ts`: 環境変数から `Config` を読み込む。`DEFAULT_WEB_DIST_DIR` は web/dist の
+  既定ルート (`./web/dist`、相対パスは cwd 基準)、`DEFAULT_WS_HEARTBEAT_INTERVAL_MS` は
+  WS ハートビートの既定間隔 (30秒) を定義する。`WEB_DIST_DIR` と
+  `WS_HEARTBEAT_INTERVAL_MS` (0で無効) を設定できる。
 - `src/errors.ts`: `HttpError` と未知エラーを API エラー応答へ変換する。
 - `src/db/connection.ts`: `node:sqlite` の接続、PRAGMA、スキーマ適用、既存 DB への
   `playback_json` 列追加移行、トランザクション。`migrate` は schema.sql を適用した後に
@@ -52,12 +54,14 @@ server の基盤。本番は `npm run build && npm run start` で起動する。
   projectId 不在や不許可 Origin は `BAD_REQUEST`、project 不在は `NOT_FOUND` を送って close
   `1008`、接続上限は `BAD_REQUEST` を送って close `1013` する。`maxPayload` は
   `MAX_WS_PAYLOAD_BYTES = 256 KiB` とし、スキーマ違反は `VALIDATION` を返して同一接続で
-  20回連続すると close `1008` する。
+  20回連続すると close `1008` する。接続ごとに ping/pong の応答状態を管理し、設定した間隔で
+  応答の無い接続を terminate して既存の退室通知・接続枠解放へ渡す。タイマーは unref される。
 - `src/app.ts`: `createApp(deps)`。厳密な `Content-Length` 検証を含むリクエスト本体の
   bodyLimit、共通の `nosniff` ヘッダ、500 時の `request_failed` ログ、JSON 404、
   `/api/projects` と
   `/api/projects/:projectId/versions` と `/api/projects/:projectId/comments` のマウント、および
-  最後の static route のマウントを担う。project 作成・版追加 multipart の本体上限も検査する。
+  最後の static route のマウントを担う。static の既定ルートには `DEFAULT_WEB_DIST_DIR` を使い、
+  project 作成・版追加 multipart の本体上限も検査する。
 - `src/index.ts`: `DATA_DIR` を作成して SQLite / ファイルストレージ / Hono HTTP / WebSocket を
   1プロセスで起動するエントリポイント。REST の版削除時は Hub の表示参照を掃除し、起動時に `server_started` の JSON 1行をログ出力する。
 - `tests/helpers/tmp.ts`: `server/.vite/test-tmp` 配下の一時ディレクトリ管理。
@@ -94,6 +98,8 @@ server の基盤。本番は `npm run build && npm run start` で起動する。
   省略/null の既定値、入力検証、seed fixture の playback テスト。
 - `tests/realtime-ws.test.ts`: join、Presence、camera / stroke 配信、切断、入力検証、連続違反 close、
   REST publish 結線の実ソケットテスト。
+- `tests/realtime-heartbeat.test.ts`: ping/pong に応答しない接続の terminate、退室通知・接続枠解放、
+  応答する接続とハートビート無効時の維持を実ソケットで検証する。
 - `tests/realtime-hub-focal.test.ts`: RoomHub の camera `focalLength` の保持・中継、Presence への
   反映、未指定時のキー省略、切断・再join、stroke との独立性を検証する。
 - `tests/realtime-hub-light.test.ts`: RoomHub のライトの中継、後勝ち保持、welcome への反映、値の複製、ルーム分離・削除を検証する。
@@ -114,7 +120,9 @@ server の基盤。本番は `npm run build && npm run start` で起動する。
 - `vitest.config.ts`: テスト設定(tests/**/*.test.ts、cacheDir は .vite)。
 
 ## 公開インターフェイス
-- `loadConfig`: `PORT`、`DATA_DIR`、`MAX_UPLOAD_BYTES`、`WEB_DIST_DIR` から `Config` を作る。
+- `DEFAULT_WEB_DIST_DIR` / `DEFAULT_WS_HEARTBEAT_INTERVAL_MS`: static ルートと WS ハートビートの既定値。
+- `loadConfig`: `PORT`、`DATA_DIR`、`MAX_UPLOAD_BYTES`、`WEB_DIST_DIR`、
+  `WS_HEARTBEAT_INTERVAL_MS` から `Config` を作る。
 - `HttpError` / `toErrorResponse`: API のエラーコード・HTTP ステータス・メッセージを統一する。
 - `openDb` / `migrate` / `withTransaction`: SQLite 接続とトランザクションを管理する。
 - `addColumnIfMissing`: 指定テーブルの PRAGMA 列一覧を確認し、列が無い場合だけ指定定義で
@@ -169,9 +177,10 @@ server の基盤。本番は `npm run build && npm run start` で起動する。
   既存線を置換するため上限到達後も許可する。`MAX_ROOMS = 200` 到達後も既存ルームへの join は
   可能で、全員退室した空ルームは削除される。
 - `attachRealtime` / `Realtime`: `GET /ws?projectId=<id>` の接続、送受信、切断通知、REST の
-  `publish`、WebSocketServer の `close` を提供する。`RealtimeOptions` は project 存在判定を
-  受け取り、`MAX_WS_PAYLOAD_BYTES = 256 * 1024` の受信上限を適用する。`npm run dev:server` または `npm start` で
-  HTTP と WS を同時に起動し、`PORT` / `DATA_DIR` / `MAX_UPLOAD_BYTES` を環境変数で設定できる。
+  `publish`、WebSocketServer の `close` を提供する。`RealtimeOptions` は project 存在判定と
+  任意の heartbeat 間隔を受け取り、`MAX_WS_PAYLOAD_BYTES = 256 * 1024` の受信上限を適用する。
+  `npm run dev:server` または `npm start` で HTTP と WS を同時に起動し、`PORT` / `DATA_DIR` /
+  `MAX_UPLOAD_BYTES` / `WS_HEARTBEAT_INTERVAL_MS` を環境変数で設定できる。
 
 ## 他機能との関係
 `shared/src/api.ts` の `ErrorCode`、`ApiError`、`MAX_UPLOAD_BYTES_DEFAULT` と、

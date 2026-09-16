@@ -3,7 +3,7 @@ import { Hono } from "hono";
 import { bodyLimit } from "hono/body-limit";
 import type { Hono as HonoType, MiddlewareHandler } from "hono";
 import type { ServerMessage } from "@shared/protocol";
-import type { Config } from "./config";
+import { DEFAULT_WEB_DIST_DIR, type Config } from "./config";
 import type { Db } from "./db/connection";
 import { HttpError, toErrorResponse } from "./errors";
 import { commentRoutes } from "./routes/comments";
@@ -20,8 +20,9 @@ export const MULTIPART_OVERHEAD_BYTES = 64 * 1024;
 export interface AppDeps {
   db: Db;
   storage: Storage;
-  // Keep dependency injection compatible with fixtures created before webDistDir existed.
-  config: Omit<Config, "webDistDir"> & Partial<Pick<Config, "webDistDir">>;
+  // Keep dependency injection compatible with fixtures created before these config values existed.
+  config: Omit<Config, "webDistDir" | "wsHeartbeatIntervalMs">
+    & Partial<Pick<Config, "webDistDir" | "wsHeartbeatIntervalMs">>;
   publish: (projectId: string, msg: ServerMessage) => void;
   now?: () => number;
   newId?: () => string;
@@ -98,7 +99,7 @@ export function createApp(deps: AppDeps): HonoType {
   );
   app.route("/api/projects", projectRoutes(resolved));
   app.route("/api/projects/:projectId/comments", commentRoutes(resolved));
-  app.route("/", staticRoutes(config.webDistDir ?? "./web/dist"));
+  app.route("/", staticRoutes(config.webDistDir ?? DEFAULT_WEB_DIST_DIR));
 
   return app;
 }

@@ -28,6 +28,7 @@ const app = createApp({
 const server = serve({ fetch: app.fetch, port: config.port });
 realtime = attachRealtime(server as unknown as Server, hub, {
   projectExists: (projectId) => findProject(db, projectId) !== null,
+  heartbeatIntervalMs: config.wsHeartbeatIntervalMs,
 });
 
 console.log(JSON.stringify({
