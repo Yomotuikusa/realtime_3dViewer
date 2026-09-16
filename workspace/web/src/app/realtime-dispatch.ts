@@ -48,6 +48,8 @@ export function dispatchServerMessage(msg: ServerMessage): void {
     case "light":
       lighting.applyRemote(msg.angles);
       break;
+    case "light:brightness":
+      break;
     case "stroke:add":
       annotation.addStroke(msg.stroke);
       break;

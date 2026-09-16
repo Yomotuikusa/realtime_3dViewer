@@ -13,6 +13,7 @@ describe("room display state", () => {
 
     expect(first).toEqual({
       light: null,
+      lightBrightness: null,
       hiddenObjects: new Set(),
       hiddenParts: new Map(),
       meshDisplay: null,
@@ -23,6 +24,7 @@ describe("room display state", () => {
     });
     expect(second).toEqual({
       light: null,
+      lightBrightness: null,
       hiddenObjects: new Set(),
       hiddenParts: new Map(),
       meshDisplay: null,
@@ -46,6 +48,16 @@ describe("room display state", () => {
     if (result.type !== "light") throw new Error("expected light message");
     expect(state.light).not.toBe(input.angles);
     expect(result.angles).not.toBe(state.light);
+  });
+
+  it("stores and relays light brightness", () => {
+    const state = createRoomDisplayState();
+
+    const result = applyDisplayMessage(state, "u1", { type: "light:brightness", brightness: 1.5 });
+
+    expect(result).toEqual({ type: "light:brightness", userId: "u1", brightness: 1.5 });
+    expect(state.lightBrightness).toBe(1.5);
+    expect(displayWelcomeFields(state).lightBrightness).toBe(1.5);
   });
 
   it("keeps hidden versions in insertion order and removes them when visible", () => {
@@ -168,6 +180,7 @@ describe("room display state", () => {
 
     expect(fields).toEqual({});
     expect("light" in fields).toBe(false);
+    expect("lightBrightness" in fields).toBe(false);
     expect("hiddenObjectIds" in fields).toBe(false);
     expect("hiddenObjectParts" in fields).toBe(false);
     expect("meshDisplay" in fields).toBe(false);
@@ -179,6 +192,7 @@ describe("room display state", () => {
   it("restores all configured fields as copies", () => {
     const state = createRoomDisplayState();
     applyDisplayMessage(state, "u1", { type: "light", angles: { yaw: 1, pitch: 0.5 } });
+    applyDisplayMessage(state, "u1", { type: "light:brightness", brightness: 2 });
     applyDisplayMessage(state, "u1", { type: "object:visibility", versionId: "v1", visible: false });
     applyDisplayMessage(state, "u1", {
       type: "object:part-visibility", versionId: "v1", objectPath: "0/1", visible: false,
@@ -197,6 +211,7 @@ describe("room display state", () => {
 
     expect(fields).toEqual({
       light: { yaw: 1, pitch: 0.5 },
+      lightBrightness: 2,
       hiddenObjectIds: ["v1"],
       hiddenObjectParts: [{ versionId: "v1", objectPath: "0/1" }],
       meshDisplay: "wireframe",
