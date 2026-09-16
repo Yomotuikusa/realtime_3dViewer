@@ -91,6 +91,7 @@ export function ColorWheel({ value, onChange, label }: ColorWheelProps): ReactEl
   return (
     <div
       className="theme-wheel"
+      style={{ "--wheel-size": `${WHEEL_SIZE}px` } as CSSProperties}
       role="group"
       aria-label={label}
       onPointerDown={handlePointerDown}

@@ -3,8 +3,11 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
+import { WHEEL_SIZE } from "../src/features/theme/color-wheel";
+import { THEME_PALETTE_COLUMNS } from "../src/features/theme/theme-palette";
 
 const css = readFileSync(join(process.cwd(), "web/src/features/theme/theme.css"), "utf8");
+const colorPicker = readFileSync(join(process.cwd(), "web/src/features/theme/ColorPicker.tsx"), "utf8");
 
 function ruleBody(selector: string): string | null {
   const escaped = selector.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
@@ -22,15 +25,21 @@ describe("theme styles", () => {
     expect(css).toContain(".theme-color-row__hex");
     expect(ruleBody(".theme-color-row__name,\n.theme-color-row__hex")).toContain("white-space: nowrap");
     expect(ruleBody('.theme-color-row[data-changed="true"] .theme-color-row__name')).toContain("font-weight");
-    expect(ruleBody(".theme-palette")).toContain("grid-template-columns: repeat(9, 1fr)");
+    const palette = ruleBody(".theme-palette");
+    expect(palette).toContain("grid-template-columns: repeat(var(--theme-palette-columns, 9), 1fr)");
+    expect(Number(palette?.match(/repeat\(var\(--theme-palette-columns,\s*(\d+)\),\s*1fr\)/)?.[1]))
+      .toBe(THEME_PALETTE_COLUMNS);
     expect(ruleBody('.theme-palette__swatch[aria-pressed="true"]')).toContain("box-shadow: inset");
   });
 
   it("defines variable-driven swatches and wheel markers", () => {
     expect(ruleBody(".theme-swatch,\n.theme-palette__swatch")).toContain("background: var(--swatch-color, transparent)");
-    expect(ruleBody(".theme-wheel")).toContain("position: relative");
-    expect(ruleBody(".theme-wheel")).toContain("width: 176px");
-    expect(ruleBody(".theme-wheel")).toContain("height: 176px");
+    const wheel = ruleBody(".theme-wheel");
+    expect(wheel).toContain("position: relative");
+    expect(wheel).toContain("width: var(--wheel-size, 176px)");
+    expect(wheel).toContain("height: var(--wheel-size, 176px)");
+    expect(Number(wheel?.match(/width:\s*var\(--wheel-size,\s*(\d+)px\)/)?.[1])).toBe(WHEEL_SIZE);
+    expect(Number(wheel?.match(/height:\s*var\(--wheel-size,\s*(\d+)px\)/)?.[1])).toBe(WHEEL_SIZE);
     expect(ruleBody(".theme-wheel__canvas")).toContain("display: block");
     expect(ruleBody(".theme-wheel__marker")).toContain("position: absolute");
     expect(ruleBody(".theme-wheel__marker")).toContain("left: var(--marker-x, 0)");
@@ -38,6 +47,10 @@ describe("theme styles", () => {
     expect(ruleBody(".theme-wheel__marker")).toContain("transform: translate(-50%, -50%)");
     expect(ruleBody(".theme-wheel__marker--hue")).toContain("width");
     expect(ruleBody(".theme-wheel__marker--sv")).toContain("width");
+  });
+
+  it("passes the palette column count from the TypeScript constant", () => {
+    expect(colorPicker).toContain('"--theme-palette-columns": THEME_PALETTE_COLUMNS');
   });
 
   it("keeps state in attributes and does not redefine shared controls or raw colors", () => {

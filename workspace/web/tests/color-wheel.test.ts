@@ -141,8 +141,10 @@ describe("ColorWheel", () => {
     try {
       expect(wheel.getAttribute("role")).toBe("group");
       expect(wheel.getAttribute("aria-label")).toBe("色");
+      expect(wheel.style.getPropertyValue("--wheel-size")).toBe(`${WHEEL_SIZE}px`);
       expect(wheel.querySelector("canvas.theme-wheel__canvas")?.getAttribute("aria-hidden")).toBe("true");
       expect((wheel.querySelector("canvas") as HTMLCanvasElement).width).toBe(WHEEL_SIZE);
+      expect((wheel.querySelector("canvas") as HTMLCanvasElement).height).toBe(WHEEL_SIZE);
       expect(wheel.querySelectorAll("i.theme-wheel__marker")).toHaveLength(2);
       const hueMarker = wheel.querySelector(".theme-wheel__marker--hue") as HTMLElement;
       const svMarker = wheel.querySelector(".theme-wheel__marker--sv") as HTMLElement;

@@ -11,6 +11,8 @@ import { cloneMotionTrail, type MotionTrail } from "@shared/trail";
 export interface RoomDisplayState {
   /** ルームで共有するライトの向き。誰も変えていなければ null */
   light: LightAngles | null;
+  /** ルームで共有するライトの明るさ。誰も変えていなければ null */
+  lightBrightness: number | null;
   /** 非表示にされた版の versionId。挿入順を保つ */
   hiddenObjects: Set<string>;
   /** 非表示にされた部位。キーは objectPartKey(part)。挿入順を保つ */
@@ -30,7 +32,7 @@ export interface RoomDisplayState {
 /** 表示状態を変える ClientMessage */
 export type DisplayClientMessage = Extract<
   ClientMessage,
-  { type: "light" | "object:visibility" | "object:part-visibility" | "mesh:display" | "mesh:compare" | "joint:display" | "trail:display" | "playback:source" }
+  { type: "light" | "light:brightness" | "object:visibility" | "object:part-visibility" | "mesh:display" | "mesh:compare" | "joint:display" | "trail:display" | "playback:source" }
 >;
 
 export type WelcomeMessage = Extract<ServerMessage, { type: "welcome" }>;
@@ -38,13 +40,14 @@ export type WelcomeMessage = Extract<ServerMessage, { type: "welcome" }>;
 /** 表示状態の welcome 復元フィールド(未設定・空のキーは含まれない) */
 export type DisplayWelcomeFields = Pick<
   WelcomeMessage,
-  "light" | "hiddenObjectIds" | "hiddenObjectParts" | "meshDisplay" | "meshCompare" | "jointDisplay" | "motionTrail" | "playbackSource"
+  "light" | "lightBrightness" | "hiddenObjectIds" | "hiddenObjectParts" | "meshDisplay" | "meshCompare" | "jointDisplay" | "motionTrail" | "playbackSource"
 >;
 
 /** すべて未設定の初期状態を作る(Set は呼び出しごとに新しいインスタンス) */
 export function createRoomDisplayState(): RoomDisplayState {
   return {
     light: null,
+    lightBrightness: null,
     hiddenObjects: new Set<string>(),
     hiddenParts: new Map<string, ObjectPartRef>(),
     meshDisplay: null,
@@ -65,6 +68,9 @@ export function applyDisplayMessage(
     case "light":
       state.light = { yaw: msg.angles.yaw, pitch: msg.angles.pitch };
       return { type: "light", userId, angles: { ...state.light } };
+    case "light:brightness":
+      state.lightBrightness = msg.brightness;
+      return { type: "light:brightness", userId, brightness: msg.brightness };
     case "object:visibility":
       if (msg.visible) state.hiddenObjects.delete(msg.versionId);
       else state.hiddenObjects.add(msg.versionId);
@@ -99,6 +105,7 @@ export function applyDisplayMessage(
 export function displayWelcomeFields(state: RoomDisplayState): DisplayWelcomeFields {
   const fields: DisplayWelcomeFields = {};
   if (state.light !== null) fields.light = { ...state.light };
+  if (state.lightBrightness !== null) fields.lightBrightness = state.lightBrightness;
   if (state.hiddenObjects.size > 0) fields.hiddenObjectIds = [...state.hiddenObjects];
   if (state.hiddenParts.size > 0) fields.hiddenObjectParts = hiddenPartsOf(state);
   if (state.meshDisplay !== null) fields.meshDisplay = state.meshDisplay;
