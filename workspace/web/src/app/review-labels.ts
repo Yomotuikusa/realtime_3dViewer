@@ -10,8 +10,8 @@ export const SETTINGS_DIALOG_TITLE = "設定";
 export const SETTINGS_TABS_LABEL = "設定の分類";
 
 /** タブの識別子。並べる順。 */
-export type SettingsTab = "shortcuts" | "theme";
-export const SETTINGS_TAB_ORDER: readonly SettingsTab[] = ["shortcuts", "theme"];
+export type SettingsTab = "shortcuts" | "theme" | "view";
+export const SETTINGS_TAB_ORDER: readonly SettingsTab[] = ["shortcuts", "theme", "view"];
 
 export type ConnectionTone = "neutral" | "success" | "warning" | "danger";
 

@@ -67,6 +67,6 @@ describe("review labels", () => {
     expect(CLOSE_LABEL).not.toBe("");
     expect(SETTINGS_DIALOG_TITLE).not.toBe("");
     expect(SETTINGS_TABS_LABEL).not.toBe("");
-    expect(SETTINGS_TAB_ORDER).toEqual(["shortcuts", "theme"]);
+    expect(SETTINGS_TAB_ORDER).toEqual(["shortcuts", "theme", "view"]);
   });
 });
