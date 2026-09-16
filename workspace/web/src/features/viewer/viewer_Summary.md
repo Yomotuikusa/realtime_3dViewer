@@ -6,7 +6,7 @@ Canvas、モデル、カメラ、ライティング、焦点距離、内蔵ア�
 ## ファイル一覧と役割
 - ViewerCanvas.tsx: Canvas、ライティング、焦点距離、Bounds、全オブジェクト、カメラを合成するビューア。display ストアの `meshDisplay` と各版の `fileName` をモデルへ渡し、theme ストアの `background` を Canvas の背景へ渡し、`MeshCompareRig` を一つ配置する。版ごとのモデルを単一 group に置き、その group を共通モデルターゲットへ登録する。`children` は RemoteCameras / StrokeLines / AnnotationLayer など後続機能の差し込み口
 - SceneLights.tsx: lighting ストアの角度から環境光・主ライト・反転した補助ライトを Bounds 外へ描画する
-- LightGizmo.tsx: 枠なしで3Dビュー右下へ重ねる、Y軸まわりに45°回転した立方体ギズモを描画し、水平ドラッグ・矢印キー・リセットをライトストアへ接続する
+- LightGizmo.tsx: 枠なしで3Dビュー右下へ重ねる、Y軸まわりに45°回転した立方体ギズモを描画し、view-settings のライト回転感度を水平ドラッグにだけ掛けて、矢印キー・リセットとともにライトストアへ接続する
 - light-gizmo.ts: ギズモの寸法・回転・カメラ定数、マーカー座標、ドラッグ／キー入力、yaw 表示の純粋関数
 - FocalLengthRig.tsx: camera ストアの焦点距離を PerspectiveCamera の垂直画角へ反映する描画なしの Rig。Bounds の計算対象外
 - ClipPlanesRig.tsx: camera ストアのモデル最大辺長から PerspectiveCamera の near / far を反映する描画なしの Rig。Bounds の計算対象外
@@ -33,18 +33,18 @@ Canvas、モデル、カメラ、ライティング、焦点距離、内蔵ア�
 - lighting.ts: `@shared/types` 由来の `LightAngles` を再エクスポートし、ワールド固定ライトの角度の正規化・クランプ・ドラッグ回転と主／補助ライト座標を提供する
 - ModelMesh.tsx: 拡張子から形式を判別して glTF / `PolygonEdgeFBXLoader` / `PolygonEdgeOBJLoader` へ割り、`useModelScene` で共通接続する。形式ごとに同一オリジン用の LoadingManager を指定し、読み込み前に `installFbxSkinCompat()` を呼び、`visible` を scene に反映する。OBJ は材質なしの単色表示、FBX はスケール補正なしとする。Draco 圧縮時のデコーダ取得（`https://www.gstatic.com/...`）は drei の別 manager による外部依存として残る
 - fbx-compat.ts: FBXLoader が未対応の Model を Group または Bone にしてスキンを適用しようとする場合に、no-op の `bind` で該当ノードのスキン適用だけを読み飛ばす
-- useModelScene.ts: 読み込み済みの glTF / FBX / OBJ の scene を共通処理へ接続する。primary のモデルだけバウンディングボックスからモデルサイズを記録して初回 Fit を要求し、全版の `animations` を trail のクリップレジストリへ登録する。theme ストアの `wireframe` を数値化して `meshDisplay` を全 Mesh へ適用し、アンマウント時は solid に戻す。`versionId` と scene を比較用レジストリへ登録し、アンマウント時に同じ参照だけを解除する
+- useModelScene.ts: 読み込み済みの glTF / FBX / OBJ の scene を共通処理へ接続する。primary のモデルだけバウンディングボックスからモデルサイズを記録して初回 Fit を要求し、全版の `animations` を trail のクリップレジストリへ登録する。theme ストアの `wireframe` を数値化し、view-settings の `wireframeOverlayOpacity` とともに `meshDisplay` を全 Mesh へ適用して、アンマウント時は solid に戻す。`versionId` と scene を比較用レジストリへ登録し、アンマウント時に同じ参照だけを解除する
 - polygon-edge-material.ts: `MeshBasicMaterial` に多角形輪郭辺の attribute / varying / discard を注入する 1px 固定の shader 材質を生成し、属性付き材質の判定を提供する
-- mesh-display.ts: MeshDisplayMode に応じた材質の wireframe / polygon offset 切替と、通常メッシュへ追従する raycast 無効のワイヤフレーム重ね描きを冪等に管理する。多角形属性付き Mesh は wireframe 時に輪郭辺材質へ差し替え、solid-wireframe 時は輪郭辺材質の重ね描きを使い、元材質を復元・破棄する。ワイヤフレーム色は既定値または呼び出し側の `0xrrggbb` を受け取る。ワイヤフレームと比較重ね描きを共通の `VIEWER_OVERLAY_KEY` で識別し、表示方法の走査から除外する
+- mesh-display.ts: MeshDisplayMode に応じた材質の wireframe / polygon offset 切替と、通常メッシュへ追従する raycast 無効のワイヤフレーム重ね描きを冪等に管理する。多角形属性付き Mesh は wireframe 時に輪郭辺材質へ差し替え、solid-wireframe 時は輪郭辺材質の重ね描きを使い、元材質を復元・破棄する。ワイヤフレーム色と重ね描き opacity は既定値または呼び出し側の `0xrrggbb` / 値を受け取り、既存重ね描きは材質だけ更新する。ワイヤフレームと比較重ね描きを共通の `VIEWER_OVERLAY_KEY` で識別し、表示方法の走査から除外する
 - model-loading.ts: glTF の `buffers` / `images` などが参照する data/blob URI と同一オリジン URL だけを許可する LoadingManager を作り、外部 URL を `about:blank` に置換する
 - model-target.ts: React や Zustand に依存せず、現在のレイキャスト対象 `Object3D` を保持する `setModelTarget` / `getModelTarget`
 - fit-camera.ts: 初期視点と同じ斜め方向からモデル全体を見る Fit カメラ目標を純粋関数で作る
 - pick.ts: Canvas 座標を NDC に変換し、共通モデルターゲットへ可視な祖先だけを対象に最近傍レイキャストを行う。交点と、逆転置の法線行列で変換して正規化したワールド系法線を返す
 - follow.ts: Follow 対象のカメラと焦点距離の妥当性判定、共有カメラ関数を使った 1 フレーム分の補間
 - camera-animation.ts: 既定視点・視点再現の400ms時間基準アニメーションと ease-out 補間を提供する
-- CameraRig.tsx: OrbitControls を常時有効にしてカメラストアと同期し、Reset・Fit・時間基準のカメラ再現・Follow を処理する。Fit はモデル本体の箱から `fitCamera` で目標を作り `requestCamera` に積む(`Bounds` 内部補間は使わない)。既定視点ちょうどの向きでは `enableRotate` を false にし、Follow 中は回転ロックしない。OrbitControls の減衰を無効にし操作は即時反映する。補間中のユーザー操作で補間を中断する。Follow 中だけ対象の焦点距離もカメラストアへ反映し、controls.domElement に Alt 操作、右ドラッグ dolly、Shift+右ドラッグのライト回転を接続する
-- camera-input.ts: OrbitControls の Alt／非 Alt 時のマウス割り当てと、target からの距離を指数的に変える右ドラッグ dolly の純粋関数
-- viewer-pointer.ts: controls.domElement へ Maya 式の pointer、contextmenu、マウス抑止イベントを接続し、右ドラッグ dolly／Shift+右ドラッグのライト回転と後始末を提供する
+- CameraRig.tsx: OrbitControls を常時有効にしてカメラストアと同期し、Reset・Fit・時間基準のカメラ再現・Follow を処理する。Fit はモデル本体の箱から `fitCamera` で目標を作り `requestCamera` に積む(`Bounds` 内部補間は使わない)。既定視点ちょうどの向きでは `enableRotate` を false にし、Follow 中は回転ロックしない。OrbitControls の減衰を無効にし操作は即時反映する。補間中のユーザー操作で補間を中断する。Follow 中だけ対象の焦点距離もカメラストアへ反映し、controls.domElement に Alt 操作、view-settings の dolly 感度を掛ける右ドラッグ dolly、ライト回転感度を掛ける Shift+右ドラッグを接続する
+- camera-input.ts: OrbitControls の Alt／非 Alt 時のマウス割り当てと、指定または既定の 1px 係数で target からの距離を指数的に変える右ドラッグ dolly の純粋関数
+- viewer-pointer.ts: controls.domElement へ Maya 式の pointer、contextmenu、マウス抑止イベントを接続し、移動ごとに指定可能な dolly 係数を使う右ドラッグ dolly／Shift+右ドラッグのライト回転と後始末を提供する
 - send-throttle.ts: 値の複製・同値判定を差し替え可能な汎用送信 throttle。先頭送信と窓明けトレーリング送信、送信失敗の再試行、受信値を送信済みとして扱う `markSent`、破棄時の保留送信キャンセルを提供する
 - camera-throttle.ts: `CameraPayload`（カメラと焦点距離）向けの比較・複製を定義し、汎用 `send-throttle` へ委譲して送信成功時刻から 50ms ごとの先頭送信と窓明けトレーリング送信を行う。送信失敗は未送信としてタイマーまたは次の更新で再試行し、破棄時に保留送信をキャンセルする
 - useCameraBroadcast.ts: `selfCamera` または焦点距離の変更を `camera-throttle` へ渡し、`camera` メッセージへ焦点距離を載せる。送信成功時に自分の presence カメラと焦点距離も更新する。`shouldSendCamera` は従来の判定インターフェイスとして公開する
@@ -72,9 +72,9 @@ Canvas、モデル、カメラ、ライティング、焦点距離、内蔵ア�
 - lighting.ts: `LightAngles`（`@shared/types` 由来の再エクスポート）、ライト定数、`normalizeYaw`、`clampPitch`、`rotateLight`、`lightPosition`、`fillLightPosition`
 - ModelMesh.tsx: `ModelMesh({ src, fileName, versionId, visible, primary, meshDisplay })`、`MODEL_COMPONENTS`
 - fbx-compat.ts: `installFbxSkinCompat()`
-- useModelScene.ts: `useModelScene(scene, animations, options)`、`ModelSceneOptions`。wireframe 色は theme ストアから購読する
+- useModelScene.ts: `useModelScene(scene, animations, options)`、`ModelSceneOptions`。wireframe 色は theme ストアから、重ね描き不透明度は view-settings ストアから購読する
 - polygon-edge-material.ts: `POLYGON_EDGE_LINE_WIDTH`、`POLYGON_EDGE_MATERIAL_KEY`、`isPolygonEdgeMaterial(material)`、`createPolygonEdgeMaterial(color, opacity)`
-- mesh-display.ts: `MESH_DISPLAY_OVERLAY_KEY`、`VIEWER_OVERLAY_KEY`、`POLYGON_EDGE_ORIGINAL_MATERIAL_KEY`、`WIREFRAME_OVERLAY_COLOR`、`WIREFRAME_OVERLAY_OPACITY`、`isMeshDisplayOverlay`、`isViewerOverlay`、`createWireframeOverlayMaterial(color?)`、`createWireframeOverlay(mesh, color?)`、`applyMeshDisplay(root, mode, wireframeColor?)`
+- mesh-display.ts: `MESH_DISPLAY_OVERLAY_KEY`、`VIEWER_OVERLAY_KEY`、`POLYGON_EDGE_ORIGINAL_MATERIAL_KEY`、`WIREFRAME_OVERLAY_COLOR`、`WIREFRAME_OVERLAY_OPACITY`、`isMeshDisplayOverlay`、`isViewerOverlay`、`createWireframeOverlayMaterial(color?, opacity?)`、`createWireframeOverlay(mesh, color?, opacity?)`、`applyMeshDisplay(root, mode, wireframeColor?, overlayOpacity?)`
 - PlaybackClock.tsx: `PlaybackClock()`
 - playback.ts: `PlaybackClip`、`clipSummaries`、`currentDuration`、`clampTime`、`advanceTime`
 - playback-frames.ts: `DEFAULT_FPS`、fps 判定・clamp・秒／フレーム変換関数
@@ -94,8 +94,8 @@ Canvas、モデル、カメラ、ライティング、焦点距離、内蔵ア�
 - camera-animation.ts: `CAMERA_ANIMATION_DURATION_MS`、`CameraAnimation`、`easeOutCubic`、`startCameraAnimation`、`stepCameraAnimation`
 - CameraRig.tsx: `CameraRig()`
 - fit-camera.ts: `FIT_DIRECTION`、`fitCamera(center, distance)`
-- camera-input.ts: `ViewerMouseButtons`、`MOUSE_BUTTONS_ALT`、`MOUSE_BUTTONS_IDLE`、`mouseButtonsFor`、`DOLLY_SPEED`、`MIN_DOLLY_DISTANCE`、`dollyPosition`
-- viewer-pointer.ts: `ViewerControlsLike`、`ViewerPointerDeps`、`attachViewerPointer(controls, deps)`
+- camera-input.ts: `ViewerMouseButtons`、`MOUSE_BUTTONS_ALT`、`MOUSE_BUTTONS_IDLE`、`mouseButtonsFor`、`DOLLY_SPEED`、`MIN_DOLLY_DISTANCE`、`dollyPosition(position, target, deltaX, speed?)`
+- viewer-pointer.ts: `ViewerControlsLike`、`ViewerPointerDeps`（任意の `dollySpeed` を含む）、`attachViewerPointer(controls, deps)`
 - useCameraBroadcast.ts: `shouldSendCamera`、`useCameraBroadcast(send)`
 
 ## 他フォルダとの関係

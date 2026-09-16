@@ -21,11 +21,13 @@ describe("viewer camera input", () => {
     const target: [number, number, number] = [0, 0, 0];
     const zoomIn = dollyPosition(position, target, 100);
     const zoomOut = dollyPosition(position, target, -100);
+    const fastZoomIn = dollyPosition(position, target, 100, DOLLY_SPEED * 2);
 
     expect(zoomIn[0]).toBe(0);
     expect(zoomIn[1]).toBe(0);
     expect(zoomIn[2]).toBeCloseTo(10 * Math.exp(-DOLLY_SPEED * 100));
     expect(zoomOut[2]).toBeCloseTo(10 * Math.exp(DOLLY_SPEED * 100));
+    expect(fastZoomIn[2]).toBeCloseTo(10 * Math.exp(-DOLLY_SPEED * 200));
     expect(position).toEqual([0, 0, 10]);
     expect(target).toEqual([0, 0, 0]);
   });
