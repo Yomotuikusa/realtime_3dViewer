@@ -54,14 +54,14 @@ describe("timeline calculations", () => {
   });
 
   it("scales tick lengths from the ruler height", () => {
-    expect(tickLength("label", 32)).toBe(6);
-    expect(tickLength("accent", 32)).toBe(4);
+    expect(tickLength("label", 32)).toBe(13);
+    expect(tickLength("accent", 32)).toBe(9);
     expect(tickLength("minor", 32)).toBe(3);
-    expect(tickLength("label", 60)).toBeCloseTo(13.2);
-    expect(tickLength("accent", 60)).toBeCloseTo(7.92);
+    expect(tickLength("label", 60)).toBeCloseTo(24.2);
+    expect(tickLength("accent", 60)).toBeCloseTo(15.4);
     expect(tickLength("minor", 60)).toBeCloseTo(4.62);
-    expect(tickLength("label", 240)).toBeCloseTo(67.2);
-    expect(tickLength("accent", 240)).toBeCloseTo(40.32);
+    expect(tickLength("label", 240)).toBeCloseTo(123.2);
+    expect(tickLength("accent", 240)).toBeCloseTo(78.4);
     expect(tickLength("minor", 240)).toBeCloseTo(23.52);
     expect(tickLength("label", 20)).toBe(4);
     expect(tickLength("accent", 20)).toBe(4);
@@ -69,8 +69,8 @@ describe("timeline calculations", () => {
     expect(tickLength("label", 16)).toBe(0);
     expect(tickLength("minor", 10)).toBe(0);
     expect(tickLength("accent", Number.NaN)).toBe(0);
-    expect(TICK_LENGTH_RATIO).toEqual({ label: 0.3, accent: 0.18, minor: 0.105 });
-    expect(TICK_MIN_LENGTH_PX).toEqual({ label: 6, accent: 4, minor: 3 });
+    expect(TICK_LENGTH_RATIO).toEqual({ label: 0.55, accent: 0.35, minor: 0.105 });
+    expect(TICK_MIN_LENGTH_PX).toEqual({ label: 13, accent: 9, minor: 3 });
   });
 
   it("maps between frames and ruler coordinates", () => {

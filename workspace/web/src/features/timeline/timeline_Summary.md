@@ -22,8 +22,8 @@
 - PlaybackSourceSelect.tsx: `PlaybackSourceSelect({ send })`。アニメーション付き版が2件未満なら `null`、それ以外は `SOURCE_LABEL` の見えるラベル付き select を描画し、`switchPlaybackSource` へ変更を委譲する
 - TimelineRuler.tsx: `RULER_HEIGHT_PX`、`TimelineRuler({ frame, lastFrame, onSeek })`
 - timeline.ts: `TIMELINE_PAD_PX`、`MIN_LABEL_PX`、`MIN_TICK_PX`、`STEP_SERIES`、`FPS_OPTIONS`、
-  `TICK_LABEL_BAND_PX`、`ACCENT_TICK_MULTIPLE`、`TICK_LENGTH_RATIO` (label 0.3 / accent 0.18 / minor 0.105)、
-  `TICK_MIN_LENGTH_PX` (label 6px / accent 4px / minor 3px)、`TimelineTicks`、`TickKind`、
+  `TICK_LABEL_BAND_PX`、`ACCENT_TICK_MULTIPLE`、`TICK_LENGTH_RATIO` (label 0.55 / accent 0.35 / minor 0.105)、
+  `TICK_MIN_LENGTH_PX` (label 13px / accent 9px / minor 3px)、`TimelineTicks`、`TickKind`、
   `RulerTick`、`timelineTicks`、`tickFrames`、`rulerTicks`、`tickLength`、`frameToX`、`frameAtX`、
   `timelineKeyFrame`、`fpsOptions`
 - timeline-labels.ts: タイムラインの各ラベル、`SOURCE_LABEL`、`TIMELINE_RESIZE_LABEL`、`frameText`、`lastFrameText`
