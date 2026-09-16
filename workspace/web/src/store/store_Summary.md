@@ -15,6 +15,7 @@
 - comments.ts: コメント一覧、Open フィルタ、選択中コメント、投稿アンカー、API エラーを保持し、`setAll` / `upsert` / `select` / `setFilter` / `setComposerAnchor` / `setLastError` / `removeByVersion` / `reset` を提供する zustand ストア
 - shortcuts.ts: `useShortcutsStore` として永続化された `keymap` を保持し、`setBinding` / `resetKeymap` を提供する。`resetReviewStores()` の対象外
 - theme.ts: `useThemeStore` として端末ローカルの UI テーマ、OS の配色状態、3D ビュー色の override を保持し、テーマ・色の変更と reset、実効値セレクタを提供する。`resetReviewStores()` の対象外
+- view-settings.ts: `useViewSettingsStore` として端末ローカルの表示・操作 10 設定を保持し、設定値の clamp、個別／全体 reset、保存と設定値セレクタを提供する。`resetReviewStores()` の対象外
 
 ## 公開インターフェイス
 - camera.ts: `useCameraStore`、`CameraStoreState`（`focalLength`、`setFocalLength` を含む）
@@ -28,6 +29,7 @@
 - objects.ts: `useObjectsStore`、`ObjectsStoreState`（`remove` を含む）、`isObjectVisible`、`isObjectPartVisible`、`hiddenObjectPaths`、`primaryObjectId`、`latestObjectId`
 - display.ts: `useDisplayStore`、`DisplayStoreState`（`meshDisplay` / `meshCompare` / `jointDisplay` / `motionTrail` / `playbackSource` と各 setter、reset）
 - theme.ts: `useThemeStore`、`ThemeStoreState`、`selectResolvedTheme`、`selectViewerColor`、`selectViewerColors`
+- view-settings.ts: `useViewSettingsStore`、`ViewSettingsStoreState`、`selectViewSetting`
 
 ## 他フォルダとの関係
 カメラストアの `selfCamera` は `DEFAULT_CAMERA`、`focalLength` は 50mm を初期値とし、`setSelfCamera(camera, exact?)` は
@@ -64,3 +66,4 @@ comments ストアは `items`（常に `createdAt` 昇順、同値なら `id` �
 - tests/realtime-dispatch-playback.test.ts: 再生対象の store 初期値、切替、同値更新抑止、null/reset と realtime welcome/event 反映のテスト
 - tests/store-object-removal.test.ts: 版・非表示状態・latestObjectId と版別コメントの削除テスト
 - tests/store-theme.test.ts: テーマストアの初期値、テーマ・色の永続化、同値更新抑止、色 reset、実効値セレクタ、`resetReviewStores()` 非対象のテスト
+- tests/store-view-settings.test.ts: 表示と操作設定の永続化、clamp、同値更新抑止、reset、`resetReviewStores()` 非対象のテスト

@@ -3,6 +3,7 @@ import type { Stroke } from "@shared/types";
 import {
   BASE_LINE_WIDTH,
   OVERLAY_LINE_WIDTH,
+  OVERLAY_LINE_WIDTH_RATIO,
   OVERLAY_OPACITY_RATIO,
   strokeLineSpecs,
 } from "../src/features/annotation/stroke-overlay";
@@ -16,6 +17,9 @@ const stroke: Stroke = {
 };
 
 describe("strokeLineSpecs", () => {
+  it("derives the default overlay width from the ratio", () => {
+    expect(OVERLAY_LINE_WIDTH).toBe(BASE_LINE_WIDTH * OVERLAY_LINE_WIDTH_RATIO);
+  });
   it("builds the normal line and overlay line in draw order", () => {
     const specs = strokeLineSpecs(stroke, { opacity: 1, overlay: true });
 
@@ -65,6 +69,25 @@ describe("strokeLineSpecs", () => {
     expect(specs[0]!.opacity).toBe(0.6);
     expect(specs[0]!.transparent).toBe(true);
     expect(specs[1]!.opacity).toBeCloseTo(0.21);
+  });
+
+  it("accepts configurable width and overlay opacity ratio", () => {
+    const specs = strokeLineSpecs(stroke, {
+      opacity: 0.5,
+      overlay: true,
+      lineWidth: 6,
+      overlayOpacityRatio: 0.2,
+    });
+
+    expect(specs[0]?.lineWidth).toBe(6);
+    expect(specs[1]?.lineWidth).toBe(3);
+    expect(specs[1]?.opacity).toBe(0.1);
+  });
+
+  it("uses a configurable width without an overlay", () => {
+    const specs = strokeLineSpecs(stroke, { opacity: 1, overlay: false, lineWidth: 6 });
+    expect(specs).toHaveLength(1);
+    expect(specs[0]?.lineWidth).toBe(6);
   });
 
   it("does not mutate or replace stroke points", () => {

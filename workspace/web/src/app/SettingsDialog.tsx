@@ -3,6 +3,8 @@ import { ShortcutSettings } from "../features/shortcuts/ShortcutSettings";
 import { SETTINGS_TITLE } from "../features/shortcuts/shortcut-labels";
 import { ThemeSettings } from "../features/theme/ThemeSettings";
 import { THEME_SETTINGS_TITLE } from "../features/theme/theme-labels";
+import { ViewSettings } from "../features/view-settings/ViewSettings";
+import { VIEW_SETTINGS_TITLE } from "../features/view-settings/view-settings-labels";
 import {
   CLOSE_LABEL,
   SETTINGS_DIALOG_TITLE,
@@ -28,11 +30,11 @@ export function SettingsDialog({ onClose }: { onClose: () => void }): ReactEleme
               aria-pressed={tab === active}
               onClick={() => setActive(tab)}
             >
-              {tab === "shortcuts" ? SETTINGS_TITLE : THEME_SETTINGS_TITLE}
+              {tab === "shortcuts" ? SETTINGS_TITLE : tab === "theme" ? THEME_SETTINGS_TITLE : VIEW_SETTINGS_TITLE}
             </button>
           ))}
         </div>
-        {active === "shortcuts" ? <ShortcutSettings /> : <ThemeSettings />}
+        {active === "shortcuts" ? <ShortcutSettings /> : active === "theme" ? <ThemeSettings /> : <ViewSettings />}
         <div className="settings-dialog__footer">
           <button className="btn btn--primary" type="button" onClick={onClose} autoFocus>{CLOSE_LABEL}</button>
         </div>
