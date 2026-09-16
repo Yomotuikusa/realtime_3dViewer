@@ -6,6 +6,7 @@ import {
   IdSchema,
   MAX_AUTHOR_NAME_LENGTH,
   MAX_COMMENT_BODY_LENGTH,
+  MAX_COMMENT_STROKES,
   MAX_PROJECT_NAME_LENGTH,
   StrokeSchema,
   Vec3Schema,
@@ -65,7 +66,7 @@ export const CreateCommentInput = z.object({
   body: z.string().trim().min(1).max(MAX_COMMENT_BODY_LENGTH),
   anchor: Vec3Schema,
   camera: CameraStateSchema,
-  strokes: z.array(StrokeSchema).max(200),
+  strokes: z.array(StrokeSchema).max(MAX_COMMENT_STROKES),
   playback: CommentPlaybackSchema.nullable().optional(),
 });
 export type CreateCommentInput = z.infer<typeof CreateCommentInput>;
