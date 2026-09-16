@@ -2,12 +2,25 @@
 
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
-import { describe, expect, it, vi } from "vitest";
+import { act, createElement } from "react";
+import { createRoot } from "react-dom/client";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import type { ClientMessage } from "@shared/protocol";
 import type { SendThrottle } from "../src/features/viewer/send-throttle";
 import {
   onLightBrightnessChange,
   type LightBrightnessChange,
+  useLightBrightnessBroadcast,
 } from "../src/features/viewer/useLightBrightnessBroadcast";
+import { dispatchServerMessage } from "../src/app/realtime-dispatch";
+import { useLightingStore } from "../src/store/lighting";
+
+Object.assign(globalThis, { IS_REACT_ACT_ENVIRONMENT: true });
+
+function BroadcastHarness({ send }: { send: (message: ClientMessage) => boolean }): null {
+  useLightBrightnessBroadcast(send);
+  return null;
+}
 
 function createThrottleStub(): SendThrottle<number> {
   return {
@@ -24,6 +37,9 @@ const sourceDir = existsSync(join(process.cwd(), "src"))
 function readSource(relativePath: string): string {
   return readFileSync(join(sourceDir, relativePath), "utf8");
 }
+
+beforeEach(() => useLightingStore.getState().reset());
+afterEach(() => useLightingStore.getState().reset());
 
 describe("onLightBrightnessChange", () => {
   it("updates the throttle for local changes", () => {
@@ -75,6 +91,31 @@ describe("onLightBrightnessChange", () => {
 });
 
 describe("light brightness broadcast wiring", () => {
+  it("does not broadcast the default brightness while welcome applies angles first", async () => {
+    const send = vi.fn(() => true);
+    const host = document.createElement("div");
+    const root = createRoot(host);
+
+    try {
+      await act(async () => root.render(createElement(BroadcastHarness, { send })));
+      await act(async () => dispatchServerMessage({
+        type: "welcome",
+        selfId: "u1",
+        users: [],
+        strokes: [],
+        light: { yaw: 1, pitch: 0.5 },
+        lightBrightness: 4,
+      }));
+
+      expect(useLightingStore.getState().angles).toEqual({ yaw: 1, pitch: 0.5 });
+      expect(useLightingStore.getState().brightness).toBe(4);
+      expect(send).not.toHaveBeenCalled();
+    } finally {
+      await act(async () => root.unmount());
+      host.remove();
+    }
+  });
+
   it("uses the brightness message, shared interval, and lighting subscription", () => {
     const source = readSource("features/viewer/useLightBrightnessBroadcast.ts");
 

@@ -35,7 +35,13 @@ export function useLightBrightnessBroadcast(send: (msg: ClientMessage) => boolea
       intervalMs: LIGHT_SEND_INTERVAL_MS,
     });
 
-    const unsubscribe = useLightingStore.subscribe((state) => {
+    const unsubscribe = useLightingStore.subscribe((state, previousState) => {
+      if (
+        state.brightness === previousState.brightness
+        && state.brightnessOrigin === previousState.brightnessOrigin
+      ) {
+        return;
+      }
       onLightBrightnessChange(throttle, {
         brightness: state.brightness,
         brightnessOrigin: state.brightnessOrigin,
