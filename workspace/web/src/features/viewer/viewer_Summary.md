@@ -6,8 +6,10 @@ Canvas、モデル、カメラ、ライティング、焦点距離、内蔵ア�
 ## ファイル一覧と役割
 - ViewerCanvas.tsx: Canvas、ライティング、焦点距離、Bounds、全オブジェクト、カメラを合成するビューア。display ストアの `meshDisplay` と各版の `fileName` をモデルへ渡し、theme ストアの `background` を Canvas の背景へ渡し、`MeshCompareRig` を一つ配置する。比較中は compare の `isHiddenByCompare` で基準の版の `visible` を落とす。版ごとのモデルを単一 group に置き、その group を共通モデルターゲットへ登録する。`children` は RemoteCameras / StrokeLines / AnnotationLayer など後続機能の差し込み口
 - SceneLights.tsx: lighting ストアの角度と明るさ倍率から環境光・主ライト・反転した補助ライトを Bounds 外へ描画する
-- LightGizmo.tsx: 枠なしで3Dビュー右下へ重ねる、Y軸まわりに45°回転した立方体ギズモと明るさスライダーを描画し、view-settings のライト回転感度を水平ドラッグにだけ掛けて、矢印キー・リセットとともにライトストアへ接続する
+- LightGizmo.tsx: 枠なしで3Dビュー右下へ重ねる、Y軸まわりに45°回転した立方体ギズモと、両端の強弱アイコンと同じ行に並べた明るさスライダーを描画し、view-settings のライト回転感度を水平ドラッグにだけ掛けて、矢印キー・リセットとともにライトストアへ接続する
 - light-gizmo.ts: ギズモの寸法・回転・カメラ定数、マーカー座標、ドラッグ／キー入力、yaw 表示の純粋関数
+- light-icons.tsx: 明るさスライダー両端の弱い光／強い光を表すインライン SVG と、共通コア・光線の形状定数
+- light-gizmo.css: 160px のライトギズモ、3D ステージ、リセットボタン、両端の太陽アイコンを含む明るさスライダー行のプレーン CSS
 - FocalLengthRig.tsx: camera ストアの焦点距離を PerspectiveCamera の垂直画角へ反映する描画なしの Rig。Bounds の計算対象外
 - ClipPlanesRig.tsx: camera ストアのモデル最大辺長から PerspectiveCamera の near / far を反映する描画なしの Rig。Bounds の計算対象外
 - clip-planes.ts: モデルサイズからカメラの near / far を求める比率と `clipPlanesFor` を提供する
@@ -50,13 +52,14 @@ Canvas、モデル、カメラ、ライティング、焦点距離、内蔵ア�
 - useCameraBroadcast.ts: `selfCamera` または焦点距離の変更を `camera-throttle` へ渡し、`camera` メッセージへ焦点距離を載せる。送信成功時に自分の presence カメラと焦点距離も更新する。`shouldSendCamera` は従来の判定インターフェイスとして公開する
 - useLightBroadcast.ts: lighting ストアの local 更新を汎用 throttle 経由で `light` メッセージへ送り、remote 更新は `markSent` で保留値を破棄してエコーを防ぐ。50ms 間隔で角度を送信する
 - useLightBrightnessBroadcast.ts: lighting ストアの local な明るさ更新を角度と同じ汎用 throttle 経由で `light:brightness` メッセージへ送り、remote 更新は `markSent` でエコーを防ぐ
-- viewer.css: HUD のモード選択、枠線と影付きの常設メッシュ表示モードバーと右上のカメラ／表示メニュー、メニューを縦に押し下げるスタック、焦点距離スライダー、各メニューのブロック区切りと十字配置、表示モードの押下状態、Follow 中の参加者色フレームと操作ヒント、160px の枠を持たないライトギズモとテーマ色の明るさスライダーのプレーン CSS
+- viewer.css: HUD のモード選択、枠線と影付きの常設メッシュ表示モードバーと右上のカメラ／表示メニュー、メニューを縦に押し下げるスタック、焦点距離スライダー、各メニューのブロック区切りと十字配置、表示モードの押下状態、Follow 中の参加者色フレームと操作ヒントのプレーン CSS
 
 ## 公開インターフェイス
 - ViewerCanvas.tsx: `ViewerCanvas({ children? })`。theme ストアの `background` を hex 文字列のまま Canvas 背景へ渡す
 - SceneLights.tsx: `SceneLights()`
-- LightGizmo.tsx: `LightGizmo()`。回転した立方体、固定カメラに収まるライトマーカー、水平入力、リセットボタンを描画する
+- LightGizmo.tsx: `LightGizmo()`。回転した立方体、固定カメラに収まるライトマーカー、強弱アイコン付きの明るさスライダー、水平入力、リセットボタンを描画する
 - light-gizmo.ts: `GIZMO_SIZE_PX`、`GIZMO_BOX_ROTATION_Y` などのギズモ定数、`gizmoMarkerPosition`、`gizmoDragStep`、`gizmoKeyDeltaX`、`yawDegrees`、`yawText`
+- light-icons.tsx: `SUN_VIEW_BOX`、コアと光線の形状定数、`LowBrightnessIcon()`、`HighBrightnessIcon()`
 - FocalLengthRig.tsx: `FocalLengthRig()`
 - ClipPlanesRig.tsx: `ClipPlanesRig()`。camera ストアの `modelSize` から PerspectiveCamera の near / far を更新する
 - clip-planes.ts: `NEAR_PLANE_RATIO`、`FAR_PLANE_RATIO`、`ClipPlanes`、`clipPlanesFor`
@@ -139,7 +142,7 @@ presence_Summary.md を参照。
 remote の受信値は `markSent` で最後の値として記録し、保留中の自分の値とタイマーを捨てるため、受信値を送り返さない。
 light の送信成功時にストアを追加更新することはない。
 
-`useLightBrightnessBroadcast` は `brightnessOrigin` が local の変更だけを同じ `LIGHT_SEND_INTERVAL_MS` の汎用 throttle へ渡し、remote の受信値は `markSent` でエコーを防ぐ。`SceneLights` は既定の3灯強度へ brightness を掛け、`LightGizmo` の range input は 0.25 刻みで 0.25〜4 倍を変更する。
+`useLightBrightnessBroadcast` は `brightnessOrigin` が local の変更だけを同じ `LIGHT_SEND_INTERVAL_MS` の汎用 throttle へ渡し、remote の受信値は `markSent` でエコーを防ぐ。`SceneLights` は既定の3灯強度へ brightness を掛け、`LightGizmo` の range input は 0.25 刻みで 0.25〜4 倍を変更し、左端が最小・右端が最大であることを両端のアイコンで示す。
 
 後続の viewer 機能は `ViewerCanvas` の `children` 差し込み口に RemoteCameras / StrokeLines /
 AnnotationLayer などのレイヤーを追加する。`ModelMesh` が登録する `model-target` を `pickModel` に渡すと、
@@ -168,7 +171,7 @@ Canvas のクライアント座標を NDC 化して再帰的にモデルをレ�
 - tests/playback-driver.test.ts: AnimationMixer の絶対時刻適用、action 切替、停止と再開、無効 index、破棄のテスト
 - tests/playback-source.test.ts: アニメーション付き版の抽出・優先解決、source 切替、クリップ要約同期のテスト
 - tests/playback-source-sync.test.ts: PlaybackSourceSync の実マウントによる後登録、source 切替、登録解除と fallback のテスト
-- tests/light-gizmo.test.ts: ライトギズモの定数、回転、カメラ視野、座標・入力・表示の純粋関数テスト
+- tests/light-gizmo.test.ts: ライトギズモの定数、回転、カメラ視野、座標・入力・表示の純粋関数と明るさスライダーのアイコン配置・形状定数のテスト
 - tests/lighting.test.ts: ライト角度の正規化・クランプ・ドラッグ回転・明るさ倍率・主／補助ライト座標を検証
 - tests/model-loading.test.ts: 埋め込み・同一オリジン URL の許可、外部 URL の遮断、LoadingManager の URL modifier のテスト
 - tests/model-target.test.ts: モデルターゲットの登録・取得テスト
@@ -180,4 +183,5 @@ Canvas のクライアント座標を NDC 化して再帰的にモデルをレ�
 - tests/polygon-edge-display.test.ts: 多角形輪郭材質の shader 設定・差し替え／復元・破棄・重ね描き・InstancedMesh / SkinnedMesh / レイキャストとローダー結線を検証する
 - tests/view-presets.test.ts: 既定視点の方向・順序・単位ベクトル・距離維持・最小距離・非破壊性、既定視点一致と回転ロック判定のテスト
 - tests/viewer-pointer.test.ts: capture phase の割り当て、Alt+右ドラッグ dolly、pointer capture、継続・終了・ブラウザ既定動作抑止、cleanup のテスト
-- tests/viewer-styles.test.ts: カメラメニューと常設表示モードバーの枠・配置・押下状態、初期展開と操作後の非クローズ、カメラメニューのボタン状態と影、160px のライトギズモとヒントの退避幅、ライトギズモの枠廃止、明るさスライダーのテーマ色、シャドウトークン、Follow フレームと上辺タブ、CSS セレクタ完全一致のテキスト検査
+- tests/light-gizmo-styles.test.ts: 160px のライトギズモ配置、枠廃止、明るさスライダー行とアイコンの CSS、viewer.css からの規則分離を検査
+- tests/viewer-styles.test.ts: カメラメニューと常設表示モードバーの枠・配置・押下状態、初期展開と操作後の非クローズ、カメラメニューのボタン状態と影、ライトギズモ横のヒント退避幅、シャドウトークン、Follow フレームと上辺タブ、CSS セレクタ完全一致のテキスト検査

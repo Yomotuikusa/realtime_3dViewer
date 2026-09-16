@@ -6,6 +6,13 @@ import { PerspectiveCamera, Vector3 } from "three";
 import type { Vec3 } from "@shared/types";
 import { lightPosition, MAX_LIGHT_PITCH } from "../src/features/viewer/lighting";
 import {
+  SUN_CORE_RADIUS,
+  SUN_RAYS,
+  SUN_RAY_INNER_RADIUS,
+  SUN_RAY_OUTER_RADIUS,
+  SUN_VIEW_BOX,
+} from "../src/features/viewer/light-icons";
+import {
   GIZMO_BOX_SIZE,
   GIZMO_BOX_ROTATION_Y,
   GIZMO_CAMERA_FOV,
@@ -49,6 +56,19 @@ function worstMarkerNdc(position: Vec3): number {
   return worst;
 }
 
+/** "M<x1> <y1> <x2> <y2>" の 8 本を [始点, 終点] の距離へ変換する */
+function rayRadii(rays: string): Array<{ inner: number; outer: number; values: number[] }> {
+  return rays.split("M").filter(Boolean).map((segment) => {
+    const values = segment.trim().split(/\s+/).map(Number);
+    const [x1, y1, x2, y2] = values as [number, number, number, number];
+    return {
+      inner: Math.hypot(x1 - 8, y1 - 8),
+      outer: Math.hypot(x2 - 8, y2 - 8),
+      values,
+    };
+  });
+}
+
 describe("light gizmo calculations", () => {
   it("defines the fixed gizmo dimensions and camera", () => {
     expect(GIZMO_SIZE_PX).toBe(160);
@@ -81,11 +101,47 @@ describe("light gizmo calculations", () => {
     expect(source).toContain("rotate(step.deltaX * sensitivity, 0)");
     expect(source).toContain("rotate(deltaX, 0)");
     expect(source).toContain('className="light-gizmo__brightness"');
+    expect(source).toContain('className="light-gizmo__brightness-row"');
+    expect(source).toContain("<LowBrightnessIcon />");
+    expect(source).toContain("<HighBrightnessIcon />");
+    expect(source.indexOf("<LowBrightnessIcon />")).toBeLessThan(source.indexOf('type="range"'));
+    expect(source.indexOf("<HighBrightnessIcon />")).toBeGreaterThan(source.indexOf('type="range"'));
     expect(source).toContain('type="range"');
     expect(source).toContain("min={MIN_LIGHT_BRIGHTNESS}");
     expect(source).toContain("max={MAX_LIGHT_BRIGHTNESS}");
     expect(source).toContain("step={LIGHT_BRIGHTNESS_STEP}");
     expect(source).toContain("setBrightness(");
+  });
+
+  it("defines the brightness sun rays inside the view box", () => {
+    const rays = rayRadii(SUN_RAYS);
+
+    expect(rays).toHaveLength(8);
+    for (const { inner, outer, values } of rays) {
+      expect(Math.abs(inner - SUN_RAY_INNER_RADIUS)).toBeLessThan(0.01);
+      expect(Math.abs(outer - SUN_RAY_OUTER_RADIUS)).toBeLessThan(0.01);
+      expect(values.every((value) => value >= 0.8 && value <= 15.2)).toBe(true);
+    }
+    expect(SUN_CORE_RADIUS).toBe(3.2);
+    expect(SUN_VIEW_BOX).toBe("0 0 16 16");
+  });
+
+  it("keeps the low brightness icon ray-free and both sun icons decorative", () => {
+    const sourceUrl = new URL("../src/features/viewer/light-icons.tsx", import.meta.url);
+    const sourceRoot = existsSync(join(process.cwd(), "web", "src"))
+      ? join(process.cwd(), "web", "src")
+      : join(process.cwd(), "src");
+    const sourcePath = sourceUrl.protocol === "file:"
+      ? fileURLToPath(sourceUrl)
+      : join(sourceRoot, "features/viewer/light-icons.tsx");
+    const source = readFileSync(sourcePath, "utf8");
+    const lowIconSource = source.slice(source.indexOf("export function LowBrightnessIcon"), source.indexOf("export function HighBrightnessIcon"));
+
+    expect(lowIconSource).not.toContain("SUN_RAYS");
+    expect(source.match(/aria-hidden="true"/g)).toHaveLength(2);
+    expect(source).toContain("cx={SUN_CORE_CX}");
+    expect(source).toContain("cy={SUN_CORE_CY}");
+    expect(source).toContain("r={SUN_CORE_RADIUS}");
   });
 
   it("uses the lighting spherical coordinates for the marker", () => {
