@@ -1,5 +1,5 @@
 import { existsSync, readdirSync, readFileSync } from "node:fs";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { ProjectSchema } from "@shared/types";
 import { MULTIPART_OVERHEAD_BYTES } from "../src/app";
 import { makeTestApp, seedProject, type TestApp } from "./helpers/app";
@@ -56,8 +56,39 @@ function projectCount(t: TestApp): number {
 }
 
 describe("POST /api/projects", () => {
+  it("rejects uploads over the configured file count before reading file bytes", async () => {
+    const t = testApp({ maxUploadFiles: 2 });
+    const files = ["a.glb", "b.glb", "c.glb"].map((name) => modelFile(glbBytes(), name));
+    const arrayBuffer = vi.spyOn(File.prototype, "arrayBuffer");
+    const response = await t.app.request("/api/projects", {
+      method: "POST",
+      body: multiUploadForm("Robot", files),
+    });
+
+    expect(response.status).toBe(400);
+    expect((await response.json()).error).toEqual({ code: "VALIDATION", message: "Too many files" });
+    expect(projectCount(t)).toBe(0); expect(readdirSync(`${t.dir}/uploads`)).toEqual([]);
+    expect(arrayBuffer).not.toHaveBeenCalled();
+    arrayBuffer.mockRestore();
+  });
+
+  it("checks file count before file format", async () => {
+    const t = testApp({ maxUploadFiles: 1 });
+    const response = await t.app.request("/api/projects", {
+      method: "POST",
+      body: multiUploadForm("Robot", [
+        modelFile(glbBytes(), "a.glb"),
+        modelFile(new TextEncoder().encode("not a model"), "b.txt"),
+      ]),
+    });
+
+    expect(response.status).toBe(400);
+    expect((await response.json()).error).toEqual({ code: "VALIDATION", message: "Too many files" });
+    expect(projectCount(t)).toBe(0); expect(readdirSync(`${t.dir}/uploads`)).toEqual([]);
+  });
+
   it("stores multiple uploaded models in submission order", async () => {
-    const t = testApp();
+    const t = testApp({ maxUploadFiles: 2 });
     const firstBytes = glbBytes();
     const secondBytes = new TextEncoder().encode('{"asset":{}}');
     const response = await t.app.request("/api/projects", {
