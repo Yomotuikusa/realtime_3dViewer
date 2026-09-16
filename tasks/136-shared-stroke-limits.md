@@ -6,7 +6,7 @@ depends_on: []
 owns: [shared/src/types.ts, shared/src/api.ts, shared/src/stroke.ts, shared/tests/types.test.ts, shared/tests/api.test.ts, shared/tests/stroke.test.ts, shared/shared_Summary.md]
 reads: [shared/src/index.ts, web/src/features/comments/compose.ts, docs/task-breakdown.md]
 verify: npm run typecheck && npm run test:shared
-status: todo
+status: done
 ---
 
 ## 目的

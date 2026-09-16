@@ -6,7 +6,7 @@ depends_on: []
 owns: [web/src/features/objects/ObjectList.tsx, web/src/features/objects/objects_Summary.md, web/tests/objects-add.test.ts]
 reads: [shared/src/api.ts, web/src/app/UploadPage.tsx, web/src/app/upload-labels.ts, web/tests/objects-delete.test.ts, web/tests/objects-styles.test.ts, web/tests/summary-coverage.test.ts]
 verify: npm run typecheck && npm run test:web
-status: todo
+status: done
 ---
 
 ## 目的

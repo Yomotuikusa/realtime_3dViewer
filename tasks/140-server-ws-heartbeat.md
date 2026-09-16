@@ -6,7 +6,7 @@ depends_on: []
 owns: [server/src/config.ts, server/src/app.ts, server/src/realtime/ws.ts, server/src/index.ts, server/tests/config.test.ts, server/tests/helpers/ws.ts, server/tests/realtime-heartbeat.test.ts, server/server_Summary.md]
 reads: [server/src/realtime/hub.ts, server/src/realtime/room-state.ts, server/tests/realtime-ws.test.ts, server/tests/realtime-guards.test.ts, server/tests/helpers/app.ts, node_modules/ws/lib/websocket.js, node_modules/@types/ws/index.d.ts, docs/3dreviewer-plan-and-architecture.md]
 verify: npm run typecheck && npm run test:server
-status: todo
+status: done
 ---
 
 ## 目的

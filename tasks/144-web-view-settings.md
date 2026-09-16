@@ -6,7 +6,7 @@ depends_on: [137]
 owns: [web/src/store/view-settings.ts, web/src/store/store_Summary.md, web/src/features/view-settings/view-settings.ts, web/src/features/view-settings/view-settings-storage.ts, web/src/features/view-settings/view-settings-labels.ts, web/src/features/view-settings/ViewSettings.tsx, web/src/features/view-settings/view-settings.css, web/src/features/view-settings/view-settings_Summary.md, web/web_Summary.md, web/src/app/SettingsDialog.tsx, web/src/app/review-labels.ts, web/src/app/app_Summary.md, web/src/features/annotation/stroke-overlay.ts, web/src/features/annotation/StrokeLines.tsx, web/src/features/annotation/annotation_Summary.md, web/tests/view-settings.test.ts, web/tests/view-settings-storage.test.ts, web/tests/store-view-settings.test.ts, web/tests/view-settings-components.test.ts, web/tests/settings-dialog.test.ts, web/tests/review-labels.test.ts, web/tests/stroke-overlay.test.ts]
 reads: [web/src/store/theme.ts, web/src/features/theme/theme-storage.ts, web/src/features/theme/viewer-colors.ts, web/src/features/theme/ThemeSettings.tsx, web/src/features/theme/theme-labels.ts, web/src/features/theme/theme.css, web/src/features/shortcuts/ShortcutSettings.tsx, web/src/features/shortcuts/shortcuts.css, web/src/app/review.css, web/src/app/review-stores.ts, web/src/features/annotation/RoomStrokes.tsx, web/src/features/comments/ReplayStrokes.tsx, web/tests/theme-components.test.ts, web/tests/store-theme.test.ts, web/tests/theme-storage.test.ts, web/tests/styles-rules.test.ts, web/tests/summary-coverage.test.ts, docs/3dreviewer-plan-and-architecture.md, docs/DESIGN_SKILL.md]
 verify: npm run typecheck && npm run test:web
-status: todo
+status: done
 ---
 
 ## 目的

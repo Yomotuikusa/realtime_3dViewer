@@ -6,7 +6,7 @@ depends_on: []
 owns: [web/src/features/presence/RemoteCameras.tsx, web/src/features/presence/remote-camera-size.ts, web/src/features/presence/presence_Summary.md, web/tests/remote-camera-size.test.ts]
 reads: [web/src/store/camera.ts, web/src/store/presence.ts, web/src/features/joint/joint-display.ts, web/tests/store-presence.test.ts, web/tests/summary-coverage.test.ts]
 verify: npm run typecheck && npm run test:web
-status: todo
+status: done
 ---
 
 ## 目的
