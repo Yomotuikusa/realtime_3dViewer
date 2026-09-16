@@ -14,6 +14,7 @@ import {
 } from "../src/app/review-labels";
 import { SETTINGS_HELP, SETTINGS_TITLE, RESET_KEYMAP_LABEL } from "../src/features/shortcuts/shortcut-labels";
 import { THEME_SETTINGS_TITLE } from "../src/features/theme/theme-labels";
+import { VIEW_SETTINGS_TITLE } from "../src/features/view-settings/view-settings-labels";
 import { useShortcutsStore } from "../src/store/shortcuts";
 
 Object.assign(globalThis, { IS_REACT_ACT_ENVIRONMENT: true });
@@ -52,8 +53,8 @@ describe("SettingsDialog", () => {
 
       const tabs = [...host.querySelectorAll(".settings-tabs button")] as HTMLButtonElement[];
       expect(tabs).toHaveLength(SETTINGS_TAB_ORDER.length);
-      expect(tabs.map((tab) => tab.textContent)).toEqual([SETTINGS_TITLE, THEME_SETTINGS_TITLE]);
-      expect(tabs.map((tab) => tab.getAttribute("aria-pressed"))).toEqual(["true", "false"]);
+      expect(tabs.map((tab) => tab.textContent)).toEqual([SETTINGS_TITLE, THEME_SETTINGS_TITLE, VIEW_SETTINGS_TITLE]);
+      expect(tabs.map((tab) => tab.getAttribute("aria-pressed"))).toEqual(["true", "false", "false"]);
       expect(host.querySelector(".settings-tabs")?.getAttribute("role")).toBe("group");
       expect(host.querySelector(".settings-tabs")?.getAttribute("aria-label")).toBe(SETTINGS_TABS_LABEL);
       expect(host.querySelector(".shortcut-settings")).not.toBeNull();
@@ -76,12 +77,18 @@ describe("SettingsDialog", () => {
       await act(async () => tabs()[1]?.click());
       expect(host.querySelector(".theme-settings")).not.toBeNull();
       expect(host.querySelector(".shortcut-settings")).toBeNull();
-      expect(tabs().map((tab) => tab.getAttribute("aria-pressed"))).toEqual(["false", "true"]);
+      expect(tabs().map((tab) => tab.getAttribute("aria-pressed"))).toEqual(["false", "true", "false"]);
 
       await act(async () => tabs()[0]?.click());
       expect(host.querySelector(".shortcut-settings")).not.toBeNull();
       expect(host.querySelector(".theme-settings")).toBeNull();
-      expect(tabs().map((tab) => tab.getAttribute("aria-pressed"))).toEqual(["true", "false"]);
+      expect(tabs().map((tab) => tab.getAttribute("aria-pressed"))).toEqual(["true", "false", "false"]);
+
+      await act(async () => tabs()[2]?.click());
+      expect(host.querySelector(".view-settings")).not.toBeNull();
+      expect(host.querySelector(".shortcut-settings")).toBeNull();
+      expect(host.querySelector(".theme-settings")).toBeNull();
+      expect(tabs().map((tab) => tab.getAttribute("aria-pressed"))).toEqual(["false", "false", "true"]);
     } finally {
       await act(async () => root.unmount());
     }
@@ -105,7 +112,7 @@ describe("SettingsDialog", () => {
       const footer = host.querySelector(".settings-dialog__footer");
       expect(dialog?.querySelectorAll("h2")).toHaveLength(1);
       expect(footer?.querySelectorAll("button")).toHaveLength(1);
-      await act(async () => (host.querySelectorAll(".settings-tabs button")[1] as HTMLButtonElement).click());
+      await act(async () => (host.querySelectorAll(".settings-tabs button")[2] as HTMLButtonElement).click());
       expect(host.querySelector(".review-backdrop > .review-dialog.settings-dialog")).toBe(dialog);
       expect(host.querySelector(".settings-dialog__footer")).toBe(footer);
       expect(host.querySelectorAll(".settings-tabs button")).toHaveLength(SETTINGS_TAB_ORDER.length);
@@ -119,6 +126,9 @@ describe("SettingsDialog", () => {
     try {
       await act(async () => (host.querySelector(".shortcut-row .btn") as HTMLButtonElement).click());
       await act(async () => (host.querySelectorAll(".settings-tabs button")[1] as HTMLButtonElement).click());
+      await act(async () => window.dispatchEvent(new KeyboardEvent("keydown", { code: "KeyQ" })));
+      expect(useShortcutsStore.getState().keymap).toEqual(DEFAULT_KEYMAP);
+      await act(async () => (host.querySelectorAll(".settings-tabs button")[2] as HTMLButtonElement).click());
       await act(async () => window.dispatchEvent(new KeyboardEvent("keydown", { code: "KeyQ" })));
       expect(useShortcutsStore.getState().keymap).toEqual(DEFAULT_KEYMAP);
     } finally {
@@ -160,7 +170,7 @@ describe("settings dialog source and style contracts", () => {
     expect(reviewLabels).toContain('export const CLOSE_LABEL = "閉じる"');
     expect(reviewLabels).toContain('export const SETTINGS_DIALOG_TITLE = "設定"');
     expect(reviewLabels).toContain('export const SETTINGS_TABS_LABEL = "設定の分類"');
-    expect(reviewLabels).toContain('export const SETTINGS_TAB_ORDER: readonly SettingsTab[] = ["shortcuts", "theme"]');
+    expect(reviewLabels).toContain('export const SETTINGS_TAB_ORDER: readonly SettingsTab[] = ["shortcuts", "theme", "view"]');
     expect(SETTINGS_TITLE).toBe("ショートカットキー");
     expect(SETTINGS_HELP).toBe("「変更」を押してから割り当てたいキーを押してください。Shift との組み合わせだけが使えます。Esc で中止します。");
     expect(RESET_KEYMAP_LABEL).toBe("既定に戻す");

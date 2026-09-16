@@ -9,6 +9,22 @@ export const LIGHT_DISTANCE = 10;
 export const AMBIENT_LIGHT_INTENSITY = 0.9;
 export const KEY_LIGHT_INTENSITY = 2.2;
 export const FILL_LIGHT_INTENSITY = 0.5;
+/** スライダーの刻み。 */
+export const LIGHT_BRIGHTNESS_STEP = 0.25;
+
+/** 3 灯の既定強度に明るさ倍率を掛けた値。 */
+export function scaledLightIntensities(brightness: number): {
+  ambient: number;
+  key: number;
+  fill: number;
+} {
+  const scale = Number.isFinite(brightness) ? brightness : 1;
+  return {
+    ambient: AMBIENT_LIGHT_INTENSITY * scale,
+    key: KEY_LIGHT_INTENSITY * scale,
+    fill: FILL_LIGHT_INTENSITY * scale,
+  };
+}
 
 const TAU = Math.PI * 2;
 

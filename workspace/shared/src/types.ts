@@ -71,6 +71,12 @@ export interface LightAngles {
   pitch: number;
 }
 
+/** ルームで共有するライトの明るさ。web 側の既定の光の強さに掛ける倍率 */
+export const MIN_LIGHT_BRIGHTNESS = 0.25;
+export const MAX_LIGHT_BRIGHTNESS = 4;
+/** 誰も変えていないルームの明るさ */
+export const DEFAULT_LIGHT_BRIGHTNESS = 1;
+
 /** ルームで共有するメッシュの表示方法。solid=通常、wireframe=線のみ、solid-wireframe=通常描画に線を重ねる */
 export type MeshDisplayMode = "solid" | "wireframe" | "solid-wireframe";
 /** 誰も切り替えていないルームの表示方法 */
@@ -144,6 +150,12 @@ export const MAX_FILE_NAME_LENGTH = 255;
 export const MAX_PROJECT_NAME_LENGTH = 100;
 export const MAX_AUTHOR_NAME_LENGTH = 50;
 export const MAX_COMMENT_BODY_LENGTH = 2000;
+/** ストロークの点数の下限(D15)。simplify 後にこれ未満なら送らない */
+export const MIN_STROKE_POINTS = 2;
+/** ストロークの点数の上限(D15) */
+export const MAX_STROKE_POINTS = 2000;
+/** 1 件のコメントに添付できるストロークの本数の上限 */
+export const MAX_COMMENT_STROKES = 200;
 
 /** 焦点距離(mm)の下限。これより広角にはしない */
 export const MIN_FOCAL_LENGTH_MM = 14;
@@ -180,6 +192,9 @@ export const LightAnglesSchema = z.object({
   pitch: z.number(),
 }) satisfies z.ZodType<LightAngles>;
 
+/** 有限数で MIN_LIGHT_BRIGHTNESS 以上 MAX_LIGHT_BRIGHTNESS 以下の倍率 */
+export const LightBrightnessSchema = z.number().min(MIN_LIGHT_BRIGHTNESS).max(MAX_LIGHT_BRIGHTNESS);
+
 export const MeshDisplayModeSchema = z.enum(["solid", "wireframe", "solid-wireframe"]) satisfies z.ZodType<MeshDisplayMode>;
 
 export const MeshCompareSchema = z.object({
@@ -198,7 +213,7 @@ export const StrokeSchema = z.object({
   id: IdSchema,
   userId: IdSchema,
   color: ColorSchema,
-  points: z.array(Vec3Schema).min(2).max(2000),
+  points: z.array(Vec3Schema).min(MIN_STROKE_POINTS).max(MAX_STROKE_POINTS),
   createdAt: TimestampSchema,
 }) satisfies z.ZodType<Stroke>;
 

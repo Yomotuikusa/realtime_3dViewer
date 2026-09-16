@@ -28,6 +28,9 @@ export function dispatchServerMessage(msg: ServerMessage): void {
       if (msg.light !== undefined) {
         lighting.applyRemote(msg.light);
       }
+      if (msg.lightBrightness !== undefined) {
+        lighting.applyRemoteBrightness(msg.lightBrightness);
+      }
       objects.applyWelcome(msg.hiddenObjectIds ?? [], msg.hiddenObjectParts ?? []);
       display.setMeshDisplay(msg.meshDisplay ?? DEFAULT_MESH_DISPLAY);
       display.setMeshCompare(msg.meshCompare ?? DEFAULT_MESH_COMPARE);
@@ -47,6 +50,9 @@ export function dispatchServerMessage(msg: ServerMessage): void {
       break;
     case "light":
       lighting.applyRemote(msg.angles);
+      break;
+    case "light:brightness":
+      lighting.applyRemoteBrightness(msg.brightness);
       break;
     case "stroke:add":
       annotation.addStroke(msg.stroke);

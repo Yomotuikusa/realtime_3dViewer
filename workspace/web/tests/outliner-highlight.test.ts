@@ -77,6 +77,23 @@ describe("outliner selection highlight", () => {
     expect(() => (overlay as Mesh).raycast(new Raycaster(), [])).not.toThrow();
   });
 
+  it("uses a supplied opacity only for mesh overlays", () => {
+    const mesh = new Mesh(new BoxGeometry(), new MeshStandardMaterial());
+    const line = new Line(new BoxGeometry(), new LineBasicMaterial());
+    const root = new Group();
+    root.add(mesh, line);
+
+    const overlay = createSelectionOverlay(mesh, SELECTION_COLOR, 0.2) as Mesh;
+    expect((overlay.material as MeshBasicMaterial).opacity).toBe(0.2);
+    expect((overlay.material as MeshBasicMaterial).transparent).toBe(true);
+
+    applySelectionHighlight(root, SELECTION_COLOR, 0.2);
+    const meshOverlay = selectionOverlays(mesh)[0] as Mesh;
+    const lineOverlay = selectionOverlays(line)[0] as Line;
+    expect((meshOverlay.material as MeshBasicMaterial).opacity).toBe(0.2);
+    expect((lineOverlay.material as LineBasicMaterial).transparent).toBe(false);
+  });
+
   it("shares skinning state with a SkinnedMesh overlay", () => {
     const bone = new Bone();
     const skeleton = new Skeleton([bone]);
@@ -214,6 +231,9 @@ describe("outliner selection highlight", () => {
     expect(rig).toContain("export function SelectionRig(): null");
     expect(rig).toContain('getObjectByProperty("uuid"');
     expect(rig).toContain("applySelectionHighlight(");
+    expect(rig).toContain('selectViewSetting("selectionOpacity")');
+    expect(rig).toContain("applySelectionHighlight(target, hexToNumber(color), opacity)");
+    expect(rig).toContain("[scene, selected, color, opacity]");
     expect(rig).toContain("clearSelectionHighlight(");
     expect(rig).toContain("useSelectionStore(");
     expect(rig).toContain("useModelScenesStore(");

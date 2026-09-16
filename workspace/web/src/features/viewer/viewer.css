@@ -37,6 +37,18 @@
   margin-left: auto;
 }
 
+.hud-menu-stack {
+  display: grid;
+  width: 13.5rem;
+  gap: var(--space-2);
+}
+
+.hud-menu-stack .hud-menu__panel {
+  position: static;
+  border-top: 0;
+  border-radius: 0 0 var(--radius-md) var(--radius-md);
+}
+
 .hud-menu {
   position: relative;
   width: 13.5rem;
@@ -232,6 +244,15 @@
   height: 100%;
   cursor: ew-resize;
   touch-action: none;
+}
+
+.light-gizmo__brightness {
+  position: absolute;
+  left: 0;
+  bottom: calc(var(--space-3) * -1);
+  width: 100%;
+  accent-color: var(--color-accent);
+  cursor: pointer;
 }
 
 .light-gizmo__stage:focus-visible {

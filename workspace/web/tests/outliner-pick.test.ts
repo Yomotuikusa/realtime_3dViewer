@@ -100,6 +100,7 @@ describe("outliner 3D selection picking", () => {
     expect(layer).toContain("isClick(");
     expect(layer).toContain("getModelTarget()");
     expect(layer).toContain("useModelScenesStore.getState().scenes");
+    expect(layer).toContain("pickJoint(camera, ndc, rect, scenes, useViewSettingsStore.getState().settings.jointPickRadiusPx)");
     expect(layer).toContain(".select(");
     expect(layer).toContain(".clear()");
     expect(layer).toContain('addEventListener("pointerdown"');

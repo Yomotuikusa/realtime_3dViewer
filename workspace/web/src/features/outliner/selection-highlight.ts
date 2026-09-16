@@ -34,11 +34,11 @@ function configureOverlay<T extends Object3D>(overlay: T): T {
   return overlay;
 }
 
-function createMeshOverlay(mesh: Mesh, color: number): Mesh {
+function createMeshOverlay(mesh: Mesh, color: number, opacity = SELECTION_MESH_OPACITY): Mesh {
   const material = new MeshBasicMaterial({
     color,
     transparent: true,
-    opacity: SELECTION_MESH_OPACITY,
+    opacity,
     depthWrite: false,
     polygonOffset: true,
     polygonOffsetFactor: -1,
@@ -81,15 +81,15 @@ function createPointsOverlay(points: Points, color: number): Points {
 }
 
 /** object と同じ geometry を共有する選択重ね描きを作る。color は 0xrrggbb */
-export function createSelectionOverlay(object: Object3D, color: number): Object3D | null {
-  if (object instanceof Mesh && !(object instanceof InstancedMesh)) return createMeshOverlay(object, color);
+export function createSelectionOverlay(object: Object3D, color: number, opacity?: number): Object3D | null {
+  if (object instanceof Mesh && !(object instanceof InstancedMesh)) return createMeshOverlay(object, color, opacity);
   if (object instanceof Line) return createLineOverlay(object, color);
   if (object instanceof Points) return createPointsOverlay(object, color);
   return null;
 }
 
 /** target 配下の描画対象へ選択重ね描きを追加する。color は 0xrrggbb */
-export function applySelectionHighlight(target: Object3D, color: number): void {
+export function applySelectionHighlight(target: Object3D, color: number, opacity?: number): void {
   const objects: Object3D[] = [];
   target.traverse((object) => {
     if (!isViewerOverlay(object)) objects.push(object);
@@ -97,7 +97,7 @@ export function applySelectionHighlight(target: Object3D, color: number): void {
 
   for (const object of objects) {
     if (object.children.some(isSelectionOverlay)) continue;
-    const overlay = createSelectionOverlay(object, color);
+    const overlay = createSelectionOverlay(object, color, opacity);
     if (overlay !== null) object.add(overlay);
   }
 }

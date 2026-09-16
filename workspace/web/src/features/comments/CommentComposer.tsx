@@ -1,5 +1,6 @@
 import { useEffect, useLayoutEffect, useRef, useState, type FormEvent, type ReactElement } from "react";
 import { ApiClientError, createComment } from "../../api/client";
+import { MAX_COMMENT_BODY_LENGTH } from "@shared/types";
 import { useAnnotationStore } from "../../store/annotation";
 import { useCameraStore } from "../../store/camera";
 import { useCommentsStore } from "../../store/comments";
@@ -104,7 +105,7 @@ export function CommentComposer({ projectId, versionId }: {
           className="input"
           value={body}
           onChange={(event) => setBody(event.target.value)}
-          maxLength={2000}
+          maxLength={MAX_COMMENT_BODY_LENGTH}
           rows={4}
           autoFocus
           disabled={sending}

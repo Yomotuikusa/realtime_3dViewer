@@ -34,6 +34,7 @@ describe("resetReviewStores", () => {
     useCommentsStore.getState().setComposerAnchor([1, 2, 3]);
     useCameraStore.getState().requestCamera({ position: [1, 2, 3], target: [0, 0, 0] });
     useLightingStore.getState().rotate(100, 0);
+    useLightingStore.getState().setBrightness(4);
     useObjectsStore.getState().setObjects([{
       id: "v1",
       projectId: "p1",
@@ -68,6 +69,8 @@ describe("resetReviewStores", () => {
     });
     expect(useCameraStore.getState()).toMatchObject({ pendingCamera: null, modelSize: 1 });
     expect(useLightingStore.getState().angles).toEqual({ yaw: Math.PI / 4, pitch: Math.PI / 4 });
+    expect(useLightingStore.getState().brightness).toBe(1);
+    expect(useLightingStore.getState().brightnessOrigin).toBe("local");
     expect(useObjectsStore.getState()).toMatchObject({ objects: [], hiddenIds: [] });
     expect(useDisplayStore.getState().meshDisplay).toBe("solid");
     expect(useDisplayStore.getState().meshCompare).toEqual(DEFAULT_MESH_COMPARE);

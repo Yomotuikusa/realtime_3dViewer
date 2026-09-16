@@ -6,6 +6,9 @@ import {
   CommentStatusSchema,
   DEFAULT_MESH_DISPLAY,
   FocalLengthSchema,
+  MAX_COMMENT_STROKES,
+  MAX_STROKE_POINTS,
+  MIN_STROKE_POINTS,
   MeshDisplayModeSchema,
   ModelVersionSchema,
   PresenceUserSchema,
@@ -83,6 +86,16 @@ describe("StrokeSchema", () => {
     expect(StrokeSchema.safeParse({ ...stroke, points: [] }).success).toBe(false);
     expect(StrokeSchema.safeParse({ ...stroke, points: [[0, 0, 0]] }).success).toBe(false);
     expect(StrokeSchema.safeParse({ ...stroke, points: Array.from({ length: 2001 }, () => [0, 0, 0]) }).success).toBe(false);
+  });
+
+  it("uses the shared point-count bounds", () => {
+    const maximumPoints = Array.from({ length: MAX_STROKE_POINTS }, () => [0, 0, 0]);
+    expect(StrokeSchema.safeParse({ ...stroke, points: maximumPoints }).success).toBe(true);
+    expect(StrokeSchema.safeParse({ ...stroke, points: Array.from({ length: MAX_STROKE_POINTS + 1 }, () => [0, 0, 0]) }).success).toBe(false);
+    expect(StrokeSchema.safeParse({ ...stroke, points: Array.from({ length: MIN_STROKE_POINTS - 1 }, () => [0, 0, 0]) }).success).toBe(false);
+    expect(MIN_STROKE_POINTS).toBe(2);
+    expect(MAX_STROKE_POINTS).toBe(2000);
+    expect(MAX_COMMENT_STROKES).toBe(200);
   });
 
   it("requires non-empty ids and a nonnegative integer timestamp", () => {

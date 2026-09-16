@@ -3,6 +3,7 @@ import type { Hono } from "hono";
 import { Hono as HonoApp } from "hono";
 import { MODEL_CONTENT_TYPES, modelFormat, ProjectNameSchema } from "@shared/api";
 import type { ModelVersion } from "@shared/types";
+import { DEFAULT_MAX_UPLOAD_FILES } from "../config";
 import type { AppDeps } from "../app";
 import {
   deleteModelVersion,
@@ -36,7 +37,11 @@ export function projectRoutes(deps: Required<AppDeps>): Hono {
   routes.post("/", async (c) => {
     const body = await c.req.parseBody({ all: true });
     const name = ProjectNameSchema.parse(body.name);
-    const models = await readUploadedModels(body.file, deps.config.maxUploadBytes);
+    const models = await readUploadedModels(
+      body.file,
+      deps.config.maxUploadBytes,
+      deps.config.maxUploadFiles ?? DEFAULT_MAX_UPLOAD_FILES,
+    );
 
     const projectId = deps.newId();
     const createdAt = deps.now();
@@ -85,7 +90,11 @@ export function projectRoutes(deps: Required<AppDeps>): Hono {
     if (Array.isArray(body.file) && body.file.length > 1) {
       throw new HttpError(400, "VALIDATION", "Exactly one model file is required");
     }
-    const models = await readUploadedModels(body.file, deps.config.maxUploadBytes);
+    const models = await readUploadedModels(
+      body.file,
+      deps.config.maxUploadBytes,
+      deps.config.maxUploadFiles ?? DEFAULT_MAX_UPLOAD_FILES,
+    );
     if (models.length !== 1) {
       throw new HttpError(400, "VALIDATION", "Exactly one model file is required");
     }

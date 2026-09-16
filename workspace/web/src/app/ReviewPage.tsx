@@ -24,6 +24,7 @@ import { ViewerHud } from "../features/viewer/ViewerHud";
 import { PlaybackTimeline } from "../features/timeline/PlaybackTimeline";
 import { useCameraBroadcast } from "../features/viewer/useCameraBroadcast";
 import { useLightBroadcast } from "../features/viewer/useLightBroadcast";
+import { useLightBrightnessBroadcast } from "../features/viewer/useLightBrightnessBroadcast";
 import { useShortcuts } from "../features/shortcuts/useShortcuts";
 import { ResizeHandle } from "../features/layout/ResizeHandle";
 import { useElementSize } from "../features/layout/useElementSize";
@@ -90,6 +91,7 @@ export function ReviewPage({ projectId }: { projectId: string }): ReactElement {
   useCommentReplay(realtime.send);
   useCameraBroadcast(realtime.send);
   useLightBroadcast(realtime.send);
+  useLightBrightnessBroadcast(realtime.send);
   useShortcuts(joinName !== null && !settingsOpen);
   const lastError = useSessionStore((session) => session.lastError);
   const composerVersionId = useObjectsStore((s) => latestObjectId(s.objects));

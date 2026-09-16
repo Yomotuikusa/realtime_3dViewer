@@ -1,8 +1,11 @@
-import type { Vec3 } from "./types";
+import { MAX_STROKE_POINTS, MIN_STROKE_POINTS, type Vec3 } from "./types";
 
-/** モデルの最大辺長から simplify の許容誤差を決める(modelSize * 0.001) */
+/** simplify の許容誤差 = モデルの最大辺長 * この比 */
+export const SIMPLIFY_TOLERANCE_RATIO = 0.001;
+
+/** モデルの最大辺長から simplify の許容誤差を決める(modelSize * SIMPLIFY_TOLERANCE_RATIO) */
 export function simplifyTolerance(modelSize: number): number {
-  return modelSize * 0.001;
+  return modelSize * SIMPLIFY_TOLERANCE_RATIO;
 }
 
 function clonePoint(point: Vec3): Vec3 {
@@ -71,7 +74,7 @@ export function simplify(points: Vec3[], tolerance: number): Vec3[] {
   return points.filter((_point, index) => kept.has(index)).map(clonePoint);
 }
 
-/** 送信可能か: 2 点以上 2000 点以下 */
+/** 送信可能か: MIN_STROKE_POINTS 点以上 MAX_STROKE_POINTS 点以下 */
 export function isSendableStroke(points: Vec3[]): boolean {
-  return points.length >= 2 && points.length <= 2000;
+  return points.length >= MIN_STROKE_POINTS && points.length <= MAX_STROKE_POINTS;
 }

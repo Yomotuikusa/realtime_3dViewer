@@ -77,6 +77,15 @@ describe("light gizmo calculations", () => {
     const source = readFileSync(sourcePath, "utf8");
 
     expect(source).toContain("rotation={[0, GIZMO_BOX_ROTATION_Y, 0]}");
+    expect(source).toContain("settings.lightRotateSensitivity");
+    expect(source).toContain("rotate(step.deltaX * sensitivity, 0)");
+    expect(source).toContain("rotate(deltaX, 0)");
+    expect(source).toContain('className="light-gizmo__brightness"');
+    expect(source).toContain('type="range"');
+    expect(source).toContain("min={MIN_LIGHT_BRIGHTNESS}");
+    expect(source).toContain("max={MAX_LIGHT_BRIGHTNESS}");
+    expect(source).toContain("step={LIGHT_BRIGHTNESS_STEP}");
+    expect(source).toContain("setBrightness(");
   });
 
   it("uses the lighting spherical coordinates for the marker", () => {

@@ -96,6 +96,7 @@ export class RoomHub {
         }];
       }
       case "light":
+      case "light:brightness":
       case "object:visibility":
       case "object:part-visibility":
       case "mesh:display":

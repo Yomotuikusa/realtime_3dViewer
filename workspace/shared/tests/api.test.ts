@@ -11,6 +11,7 @@ import {
   ProjectNameSchema,
   UpdateCommentStatusInput,
 } from "../src/api";
+import { MAX_COMMENT_STROKES } from "../src/types";
 
 const camera = { position: [1, 2, 3], target: [0, 0, 0] };
 const stroke = {
@@ -42,6 +43,15 @@ describe("REST schemas", () => {
   it("bounds the body and stroke count", () => {
     expect(CreateCommentInput.safeParse({ ...validInput, body: "a".repeat(2001) }).success).toBe(false);
     expect(CreateCommentInput.safeParse({ ...validInput, strokes: Array.from({ length: 201 }, () => stroke) }).success).toBe(false);
+  });
+
+  it("accepts the shared maximum comment stroke count and rejects one more", () => {
+    const maximumStrokes = Array.from({ length: MAX_COMMENT_STROKES }, () => stroke);
+    expect(CreateCommentInput.safeParse({ ...validInput, strokes: maximumStrokes }).success).toBe(true);
+    expect(CreateCommentInput.safeParse({
+      ...validInput,
+      strokes: [...maximumStrokes, stroke],
+    }).success).toBe(false);
   });
 
   it("requires a three-component anchor", () => {

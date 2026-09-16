@@ -5,7 +5,7 @@
 
 ## ファイル一覧と役割
 - camera.ts: `selfCamera`、`pendingCamera`、`resetSeq`、`fitSeq`、`modelSize`、`focalLength` と、カメラ更新・再現消費・Reset・Fit・サイズ更新・初期化の action を管理する zustand ストア。`setSelfCamera(camera, exact?)` は exact 指定時だけ完全一致で更新を判定する
-- lighting.ts: 共有 `LightAngles` を `rotateLight` の規則で更新し、サーバ受信値を正規化して適用する `applyRemote`、更新元 `origin`、既定方向への reset を提供する zustand ストア
+- lighting.ts: 共有 `LightAngles` と明るさ倍率を保持し、回転・明るさの local 更新、サーバ受信値の正規化／clamp、角度と明るさの更新元、既定値への reset を提供する zustand ストア
 - objects.ts: project の全 `ModelVersion` を number 昇順で保持し、非表示 versionId / `hiddenParts`、welcome 置換、追加、版・部位の表示状態変更、版削除、primary/latest 版の選択を提供する zustand ストア
 - display.ts: ルーム共有メッシュ表示方法、メッシュ比較設定、ジョイント表示設定、モーション軌跡表示設定、再生対象 versionId を保持し、同値更新を抑止する `useDisplayStore` を提供する
 - playback.ts: 現在タイムラインへ登録した sourceId とロード中モデルのアニメーションクリップ要約、選択、再生／一時停止、秒の時刻シーク、fps とフレームシークを保持する zustand ストア
@@ -15,6 +15,7 @@
 - comments.ts: コメント一覧、Open フィルタ、選択中コメント、投稿アンカー、API エラーを保持し、`setAll` / `upsert` / `select` / `setFilter` / `setComposerAnchor` / `setLastError` / `removeByVersion` / `reset` を提供する zustand ストア
 - shortcuts.ts: `useShortcutsStore` として永続化された `keymap` を保持し、`setBinding` / `resetKeymap` を提供する。`resetReviewStores()` の対象外
 - theme.ts: `useThemeStore` として端末ローカルの UI テーマ、OS の配色状態、3D ビュー色の override を保持し、テーマ・色の変更と reset、実効値セレクタを提供する。`resetReviewStores()` の対象外
+- view-settings.ts: `useViewSettingsStore` として端末ローカルの表示・操作 10 設定を保持し、設定値の clamp、個別／全体 reset、保存と設定値セレクタを提供する。`resetReviewStores()` の対象外
 
 ## 公開インターフェイス
 - camera.ts: `useCameraStore`、`CameraStoreState`（`focalLength`、`setFocalLength` を含む）
@@ -23,11 +24,12 @@
 - annotation.ts: `useAnnotationStore`、`AnnotationStoreState`、`AnnotationMode`、`PenPlacement`、`STROKE_COLORS`、`DEFAULT_STROKE_COLOR`、`orderedStrokes`（`overlay` / `setOverlay` / `placement` / `setPlacement` を含む）
 - comments.ts: `useCommentsStore`、`CommentsStoreState`（`items` / `showOnlyOpen` / `selectedId` / `composerAnchor` / `lastError` と全 action）、`selectVisible`
 - shortcuts.ts: `useShortcutsStore`、`ShortcutsStoreState`
-- lighting.ts: `useLightingStore`、`LightingStoreState`、`LightAnglesOrigin`
+- lighting.ts: `useLightingStore`、`LightingStoreState`、`LightAnglesOrigin`。`brightness` / `brightnessOrigin`、`setBrightness`、`applyRemoteBrightness` を含む
 - playback.ts: `usePlaybackStore`、`PlaybackStoreState`
 - objects.ts: `useObjectsStore`、`ObjectsStoreState`（`remove` を含む）、`isObjectVisible`、`isObjectPartVisible`、`hiddenObjectPaths`、`primaryObjectId`、`latestObjectId`
 - display.ts: `useDisplayStore`、`DisplayStoreState`（`meshDisplay` / `meshCompare` / `jointDisplay` / `motionTrail` / `playbackSource` と各 setter、reset）
 - theme.ts: `useThemeStore`、`ThemeStoreState`、`selectResolvedTheme`、`selectViewerColor`、`selectViewerColors`
+- view-settings.ts: `useViewSettingsStore`、`ViewSettingsStoreState`、`selectViewSetting`
 
 ## 他フォルダとの関係
 カメラストアの `selfCamera` は `DEFAULT_CAMERA`、`focalLength` は 50mm を初期値とし、`setSelfCamera(camera, exact?)` は
@@ -55,7 +57,7 @@ comments ストアは `items`（常に `createdAt` 昇順、同値なら `id` �
 - tests/store-comments.test.ts: コメント一覧の順序、upsert、選択・Open フィルタ正規化、投稿アンカー、エラー、reset のテスト
 - tests/store-annotation.test.ts: annotation ストアの初期値、線操作、mode/色、draft、再現線、透過表示・描画基準設定、順序、reset のテスト
 - tests/store-camera.test.ts: カメラストアの初期値、参照を保つ epsilon／exact 判定、複製して保持・消費する再現要求、Reset・Fit・モデルサイズ・全 state 初期化の振る舞いを検証
-- tests/store-lighting.test.ts: lighting ストアの既定値、累積回転、値の複製、remote 正規化、origin、reset を検証
+- tests/store-lighting.test.ts: lighting ストアの角度と明るさの既定値、累積回転、明るさの clamp／無効値／同値更新抑止、値の複製、remote 正規化、独立した origin、reset を検証
 - tests/store-playback.test.ts: playback ストアのクリップ複製、sourceId、選択、再生制御、シーク、無効入力、reset を検証
 - tests/store-presence.test.ts: presence の全置換、焦点距離を含む upsert・削除・カメラ更新、Follow、reset のテスト
 - tests/store-shortcuts.test.ts: shortcuts ストアの割り当て・永続化・既定値復元とレビュー reset 非対象のテスト
@@ -64,3 +66,4 @@ comments ストアは `items`（常に `createdAt` 昇順、同値なら `id` �
 - tests/realtime-dispatch-playback.test.ts: 再生対象の store 初期値、切替、同値更新抑止、null/reset と realtime welcome/event 反映のテスト
 - tests/store-object-removal.test.ts: 版・非表示状態・latestObjectId と版別コメントの削除テスト
 - tests/store-theme.test.ts: テーマストアの初期値、テーマ・色の永続化、同値更新抑止、色 reset、実効値セレクタ、`resetReviewStores()` 非対象のテスト
+- tests/store-view-settings.test.ts: 表示と操作設定の永続化、clamp、同値更新抑止、reset、`resetReviewStores()` 非対象のテスト

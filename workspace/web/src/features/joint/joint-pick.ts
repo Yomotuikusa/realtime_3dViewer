@@ -19,9 +19,10 @@ export function pickJoint(
   ndc: Ndc,
   viewport: { width: number; height: number },
   scenes: Readonly<Record<string, Object3D>>,
+  radiusPx = JOINT_PICK_RADIUS_PX,
 ): JointHit | null {
   let closest: JointHit | null = null;
-  let closestDistance = JOINT_PICK_RADIUS_PX;
+  let closestDistance = radiusPx;
 
   for (const [versionId, scene] of Object.entries(scenes)) {
     const overlay = jointOverlayOf(scene);

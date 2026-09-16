@@ -8,8 +8,8 @@ import {
 
 describe("viewer HUD menus", () => {
   it("defines the menu order and labels", () => {
-    expect(HUD_MENU_ORDER).toEqual(["camera"]);
-    expect(HUD_MENU_LABELS).toEqual({ camera: "カメラ" });
+    expect(HUD_MENU_ORDER).toEqual(["camera", "display"]);
+    expect(HUD_MENU_LABELS).toEqual({ camera: "カメラ", display: "表示" });
   });
 
   it("opens the camera menu initially", () => {
@@ -19,6 +19,9 @@ describe("viewer HUD menus", () => {
   it.each([
     [null, "camera", "camera"],
     ["camera", "camera", null],
+    ["camera", "display", "display"],
+    ["display", "camera", "camera"],
+    ["display", "display", null],
   ] as const)("toggles %s with %s to %s", (open, clicked, expected) => {
     expect(toggleHudMenu(open, clicked)).toBe(expected);
   });

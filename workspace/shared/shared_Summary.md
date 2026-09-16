@@ -7,11 +7,11 @@
 ## ファイル一覧と役割
 - tsconfig.json: 型検査設定(../tsconfig.base.json を継承。`@shared/*` は shared/src を指す)
 - vitest.config.ts: テスト設定(tests/**/*.test.ts、cacheDir は .vite)
-- src/types.ts: Vec3、CameraState、Stroke、Comment(`CommentPlayback` によるクリップ添字・フレーム位置と任意の再生対象 versionId を含む)、ModelVersion、Project(全 versions と latestVersion の整合性を含む)、LightAngles、MeshDisplayMode、MeshCompare、JointDisplay、PresenceUser、ObjectPath、ObjectPartRef の型と、識別子・ファイル名・自由文字列・焦点距離・ライト角度・メッシュ表示方法・比較設定・ジョイント表示設定・コメント再生位置・版内オブジェクトパスを検証する zod スキーマ
-- src/api.ts: REST のエラー、プロジェクト名、コメント入出力スキーマ(`CreateCommentInput` は任意の `CommentPlayback` を含む)、`ModelFormat` / `modelFormat` / `MODEL_CONTENT_TYPES` と upload 定数
-- src/protocol.ts: WS の ClientMessage/ServerMessage 型(カメラの focalLength、ルーム共有 light / mesh display / mesh compare / joint:display / trail:display / playback:source、オブジェクト可視性・部位可視性・版追加・版削除を含む)、送信間隔定数、discriminated union スキーマ、JSON フレーム parse 関数
+- src/types.ts: Vec3、CameraState、Stroke、Comment(`CommentPlayback` によるクリップ添字・フレーム位置と任意の再生対象 versionId を含む)、ModelVersion、Project(全 versions と latestVersion の整合性を含む)、LightAngles、ライト明るさ倍率、MeshDisplayMode、MeshCompare、JointDisplay、PresenceUser、ObjectPath、ObjectPartRef の型と、ストローク点数・コメント添付本数・識別子・ファイル名・自由文字列・焦点距離・ライト角度/明るさ・メッシュ表示方法・比較設定・ジョイント表示設定・コメント再生位置・版内オブジェクトパスを検証する zod スキーマ
+- src/api.ts: REST のエラー、プロジェクト名、コメント入出力スキーマ(`CreateCommentInput` は任意の `CommentPlayback` を含み、添付ストローク本数を共有上限で検証する)、`ModelFormat` / `modelFormat` / `MODEL_CONTENT_TYPES` と upload 定数
+- src/protocol.ts: WS の ClientMessage/ServerMessage 型(カメラの focalLength、ルーム共有 light / light:brightness / mesh display / mesh compare / joint:display / trail:display / playback:source、オブジェクト可視性・部位可視性・版追加・版削除を含む)、送信間隔定数、discriminated union スキーマ、JSON フレーム parse 関数
 - src/camera.ts: three.js に依存しない CameraState/Vec3 の比較、補間、複製(NaN は補間開始点として処理)、焦点距離(mm)のクランプ
-- src/stroke.ts: 反復処理による3D Ramer–Douglas–Peucker の点列間引きと送信可否判定
+- src/stroke.ts: `SIMPLIFY_TOLERANCE_RATIO` に基づく許容誤差を使った、反復処理による3D Ramer–Douglas–Peucker の点列間引きと共有点数上限による送信可否判定
 - src/compare.ts: `MeshCompare` の active 判定、全フィールド比較、浅い複製、共有しきい値目盛と最寄り添字を行う three.js 非依存の純粋関数
 - src/object-part.ts: `ObjectPath` の配列変換、参照キー生成、部位参照比較を行う three.js 非依存の純粋関数
 - src/joint.ts: `JointDisplay` の全フィールド比較と浅い複製を行う three.js 非依存の純粋関数
@@ -33,17 +33,18 @@
 - tests/object-part.test.ts: `ObjectPath` / `ObjectPartRef` のスキーマ、部位参照ヘルパー、公開面のテスト
 - tests/trail.test.ts: モーション軌跡の比較、複製、既定値、スキーマ境界のテスト
 - tests/protocol-trail.test.ts: `trail:display` の Client/Server variant、welcome optional、parse のテスト
+- tests/protocol-light-brightness.test.ts: ライト明るさ倍率の定数・範囲、Client/Server variant、welcome optional、JSON parse の検証テスト
 - tests/protocol-playback.test.ts: `playback:source` の Client/Server variant、welcome optional、必須 ID の検証テスト
 
 ## 公開インターフェイス
-- 型: `Vec3`, `CameraState`, `Stroke`, `CommentStatus`, `CommentPlayback`, `Comment`(`playback` は任意・null 許容), `ModelVersion`, `Project`(`versions` と `latestVersion` を含む), `LightAngles`, `MeshDisplayMode`, `MeshCompare`, `JointDisplay`, `MotionTrail`, `ActiveMeshCompare`, `PresenceUser`(`focalLength` は任意), `ObjectPath`, `ObjectPartRef`
-- スキーマ: `Vec3Schema`, `ColorSchema`, `CameraStateSchema`, `FocalLengthSchema`, `LightAnglesSchema`, `MeshDisplayModeSchema`, `MeshCompareSchema`, `JointDisplaySchema`, `MotionTrailSchema`, `StrokeSchema`, `CommentStatusSchema`, `CommentPlaybackSchema`, `CommentSchema`, `ModelVersionSchema`, `ProjectSchema`, `PresenceUserSchema`, `ObjectPathSchema`, `ObjectPartRefSchema`
+- 型: `Vec3`, `CameraState`, `Stroke`, `CommentStatus`, `CommentPlayback`, `Comment`(`playback` は任意・null 許容), `ModelVersion`, `Project`(`versions` と `latestVersion` を含む), `LightAngles`, ライト明るさ倍率(`MIN_LIGHT_BRIGHTNESS` / `MAX_LIGHT_BRIGHTNESS` / `DEFAULT_LIGHT_BRIGHTNESS`), `MeshDisplayMode`, `MeshCompare`, `JointDisplay`, `MotionTrail`, `ActiveMeshCompare`, `PresenceUser`(`focalLength` は任意), `ObjectPath`, `ObjectPartRef`
+- スキーマ: `Vec3Schema`, `ColorSchema`, `CameraStateSchema`, `FocalLengthSchema`, `LightAnglesSchema`, `LightBrightnessSchema`, `MeshDisplayModeSchema`, `MeshCompareSchema`, `JointDisplaySchema`, `MotionTrailSchema`, `StrokeSchema`, `CommentStatusSchema`, `CommentPlaybackSchema`, `CommentSchema`, `ModelVersionSchema`, `ProjectSchema`, `PresenceUserSchema`, `ObjectPathSchema`, `ObjectPartRefSchema`
 - api: `ErrorCode`, `ApiError`, `ApiErrorSchema`, `MAX_UPLOAD_BYTES_DEFAULT`, `ALLOWED_MODEL_EXTENSIONS`, `ModelFormat`, `modelFormat`, `MODEL_CONTENT_TYPES`, `ProjectNameSchema`, `CreateCommentInput`, `UpdateCommentStatusInput`, `ListCommentsQuery`
-- protocol: `ClientMessage`, `ServerMessage`, `ClientMessageSchema`, `ServerMessageSchema`, `ParseResult`, `parseClientMessage`, `parseServerMessage`, `MAX_NAME_LENGTH`, `CAMERA_SEND_INTERVAL_MS`, `LIGHT_SEND_INTERVAL_MS`; Client の表示操作、Server の `welcome` 表示状態、`object:added` / `object:removed` を含む各イベントを提供する
-- types の定数: `MAX_ID_LENGTH`, `MAX_FILE_NAME_LENGTH`, `MAX_PROJECT_NAME_LENGTH`, `MAX_AUTHOR_NAME_LENGTH`, `MAX_COMMENT_BODY_LENGTH`, `MAX_OBJECT_PATH_LENGTH`, `MIN_FOCAL_LENGTH_MM`, `MAX_FOCAL_LENGTH_MM`, `DEFAULT_FOCAL_LENGTH_MM`, `DEFAULT_MESH_DISPLAY`, `MIN_COMPARE_THRESHOLD_PERMILLE`, `MAX_COMPARE_THRESHOLD_PERMILLE`, `DEFAULT_COMPARE_THRESHOLD_PERMILLE`, `COMPARE_THRESHOLD_STEP_PERMILLE`, `isCompareThresholdPermille`, `DEFAULT_MESH_COMPARE`, `DEFAULT_JOINT_DISPLAY`
+- protocol: `ClientMessage`, `ServerMessage`, `ClientMessageSchema`, `ServerMessageSchema`, `ParseResult`, `parseClientMessage`, `parseServerMessage`, `MAX_NAME_LENGTH`, `CAMERA_SEND_INTERVAL_MS`, `LIGHT_SEND_INTERVAL_MS`; Client の表示操作、Server の `welcome` 表示状態、`light:brightness`、`object:added` / `object:removed` を含む各イベントを提供する
+- types の定数: `MAX_ID_LENGTH`, `MAX_FILE_NAME_LENGTH`, `MAX_PROJECT_NAME_LENGTH`, `MAX_AUTHOR_NAME_LENGTH`, `MAX_COMMENT_BODY_LENGTH`, `MIN_STROKE_POINTS`, `MAX_STROKE_POINTS`, `MAX_COMMENT_STROKES`, `MAX_OBJECT_PATH_LENGTH`, `MIN_FOCAL_LENGTH_MM`, `MAX_FOCAL_LENGTH_MM`, `DEFAULT_FOCAL_LENGTH_MM`, `MIN_LIGHT_BRIGHTNESS`, `MAX_LIGHT_BRIGHTNESS`, `DEFAULT_LIGHT_BRIGHTNESS`, `DEFAULT_MESH_DISPLAY`, `MIN_COMPARE_THRESHOLD_PERMILLE`, `MAX_COMPARE_THRESHOLD_PERMILLE`, `DEFAULT_COMPARE_THRESHOLD_PERMILLE`, `COMPARE_THRESHOLD_STEP_PERMILLE`, `isCompareThresholdPermille`, `DEFAULT_MESH_COMPARE`, `DEFAULT_JOINT_DISPLAY`
 - types の入力スキーマ: `IdSchema`, `FileNameSchema`
 - camera: `DEFAULT_CAMERA`, `vec3Equals`, `lerpVec3`, `cameraEquals`, `lerpCamera`, `cloneCamera`, `clampFocalLength`
-- stroke: `simplifyTolerance`, `simplify`, `isSendableStroke`
+- stroke: `SIMPLIFY_TOLERANCE_RATIO`, `simplifyTolerance`, `simplify`, `isSendableStroke`
 - compare: `COMPARE_THRESHOLD_STEPS_PERMILLE`, `nearestCompareThresholdIndex`, `isMeshCompareActive`, `meshCompareEquals`, `cloneMeshCompare`
 - joint: `jointDisplayEquals`, `cloneJointDisplay`
 - trail: `DEFAULT_MOTION_TRAIL`, `motionTrailEquals`, `cloneMotionTrail`
