@@ -11,35 +11,35 @@
 - VisibilityRig.tsx: objects ストアの `hiddenParts` と model-scenes ストアを購読し、版ごとの scene へ部位表示状態を同期する Canvas 用 Rig
 - selection.ts: 選択中の版と Object3D uuid を保持する Zustand ストアと選択判定を提供する
 - pick-selection.ts: 3D ビューのレイキャスト交点から、登録済み scene の版全体に対応する選択を解決する純粋関数を提供する
-- SelectionPickLayer.tsx: annotation が通常モードのとき、Canvas の左クリックをジョイント優先の選択、版全体の選択、または空クリックの解除へ結び付ける描画なし部品
-- selection-highlight.ts: 表示色設定由来の選択色(不透明度 0.6)で選択対象と子孫へ重ね描きを付け外しする純粋関数を提供する
-- SelectionRig.tsx: 選択ストア・scene レジストリ・theme ストアを購読し、選択重ね描きを管理する Canvas 用 Rig
+- SelectionPickLayer.tsx: annotation が通常モードのとき、Canvas の左クリックをジョイント優先の選択、版全体の選択、または空クリックの解除へ結び付ける描画なし部品。ジョイント選択には view-settings の `jointPickRadiusPx` を渡す
+- selection-highlight.ts: 表示色設定由来の選択色と表示設定の不透明度(既定 0.6)で、メッシュの選択対象と子孫へ重ね描きを付け外しする純粋関数を提供する。線・点の重ね描きは従来どおり
+- SelectionRig.tsx: 選択ストア・scene レジストリ・theme ストア・view-settings ストアを購読し、選択重ね描きを管理する Canvas 用 Rig
 - outliner-labels.ts: 見出し、表示列、状態、種別、名前、展開操作の表示文言を提供する
 - outliner-icons.tsx: 7 種別のインライン SVG アイコン、表示列の瞳、展開用山形を提供する
 - OutlinerRow.tsx: 1 行と再帰的なノード枝を treeitem/group として描画し、行ごとの表示チェックボックスを提供する
-- Outliner.tsx: objects / model-scenes / selection ストアを購読し、版と scene 木を描画する。`send` で `object:visibility` と `object:part-visibility` を共有する
-- outliner.css: アウトライナのレイアウト、インデント、展開、選択、非表示状態、表示列とチェックボックスを定義する
+- Outliner.tsx: objects / model-scenes / selection / view-settings ストアを購読し、版と scene 木を描画する。`outlinerRowHeightRem` と `outlinerIndentPx` を CSS カスタムプロパティへ渡し、`send` で `object:visibility` と `object:part-visibility` を共有する
+- outliner.css: アウトライナのレイアウト、インデント、展開、選択、非表示状態、表示列とチェックボックスを定義する。行高と字下げは CSS カスタムプロパティを使い、それぞれ `1.75rem` と `16px` をフォールバックにする
 
 ## 公開インターフェイス
 
 - outliner-tree.ts: `OutlinerNodeKind`、`OutlinerNode`、`classifyObject`、`buildOutlinerTree`、`plainChildren`、`childPath`、`objectAtPath`、`toggleId`
 - selection.ts: `OutlinerSelection`、`SelectionStoreState`、`useSelectionStore`、`isSelected`。`select` は同じ選択の再設定で state を更新しない
 - pick-selection.ts: `versionOfObject`、`pickSelection`
-- SelectionPickLayer.tsx: `SelectionPickLayer`
-- selection-highlight.ts: `SELECTION_OVERLAY_KEY`、`SELECTION_COLOR`、`SELECTION_MESH_OPACITY`、`isSelectionOverlay`、`createSelectionOverlay(object, color)`、`applySelectionHighlight(target, color)`、`clearSelectionHighlight`
+- SelectionPickLayer.tsx: `SelectionPickLayer`。ジョイント選択半径は view-settings の `jointPickRadiusPx` を使用する
+- selection-highlight.ts: `SELECTION_OVERLAY_KEY`、`SELECTION_COLOR`、`SELECTION_MESH_OPACITY`、`isSelectionOverlay`、`createSelectionOverlay(object, color, opacity?)`、`applySelectionHighlight(target, color, opacity?)`、`clearSelectionHighlight`
 - SelectionRig.tsx: `SelectionRig`
 - visibility.ts: `applyPartVisibility`
 - VisibilityRig.tsx: `VisibilityRig`
 - outliner-labels.ts: アウトライナ文言定数、`KIND_LABELS`、`nodeLabel`、`expandAriaLabel`、`visibilityAriaLabel`
 - outliner-icons.tsx: `OUTLINER_ICON_VIEW_BOX`、各種アイコン、`EyeIcon`、`OUTLINER_KIND_ICONS`、`OutlinerKindIcon`
 - OutlinerRow.tsx: `OutlinerRowProps`、`OutlinerRow`、`OutlinerBranchProps`、`OutlinerBranch`
-- Outliner.tsx: `Outliner`
+- Outliner.tsx: `Outliner`。view-settings の `outlinerRowHeightRem` と `outlinerIndentPx` を CSS カスタムプロパティへ渡す
 
 ## 他機能との関係
 
 版一覧は objects ストア、scene は compare の model-scenes ストア、選択は selection ストアで SelectionRig が読む。3D クリック選択は ReviewPage(105) の ViewerCanvas 内に配置し、ジョイントが見えているときは画面上の近さで Bone を優先選択する。
-選択重ね描きは `VIEWER_OVERLAY_KEY` を持つので表示モード・比較・アウトライナ木から除外される。選択色は theme ストアの `selectViewerColor("selection")` から SelectionRig が購読し、色変更時に重ね描きを再生成する。Rig の配置は ReviewPage(096)。
-ビューア重ね描きの除外判定とメッシュアイコンの図案は viewer の既存公開インターフェイスを利用する。選択・展開状態はルームへ送信しない。表示・非表示は送信する(設計書 §13.5)。
+選択重ね描きは `VIEWER_OVERLAY_KEY` を持つので表示モード・比較・アウトライナ木から除外される。選択色は theme ストアの `selectViewerColor("selection")`、メッシュ不透明度は view-settings ストアの `selectViewSetting("selectionOpacity")` から SelectionRig が購読し、値変更時に重ね描きを再生成する。Rig の配置は ReviewPage(096)。
+ビューア重ね描きの除外判定とメッシュアイコンの図案は viewer の既存公開インターフェイスを利用する。選択・展開状態はルームへ送信しない。表示・非表示は送信する(設計書 §13.5)。表示設定は view-settings ストアが管理し、アウトライナは行高・字下げを CSS カスタムプロパティへ、SelectionPickLayer はジョイント選択半径をピック関数へ渡す。
 部位の表示・非表示はルーム共有(設計書 §13.5)。鍵は uuid ではなく `path`(重ね描きを数えない子インデックス)。Rig は objects ストアの `hiddenParts` を読む。配置は ReviewPage(102)。
 既知の制限として、Rig は hidden path にない部位を一律 `visible = true` に戻すため、読み込み時点で `visible = false` だったオブジェクトの状態は保持しない。
 
