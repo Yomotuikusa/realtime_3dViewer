@@ -4,8 +4,10 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { ViewSettings } from "../src/features/view-settings/ViewSettings";
 import {
   DEFAULT_VIEW_SETTINGS,
+  DIALOG_VIEW_SETTING_GROUP_ORDER,
   VIEW_SETTING_GROUP_ORDER,
   VIEW_SETTING_ORDER,
+  viewSettingKeysOnSurface,
   VIEW_SETTING_SPECS,
 } from "../src/features/view-settings/view-settings";
 import {
@@ -40,19 +42,20 @@ describe("ViewSettings", () => {
   it("renders grouped, labelled sliders without a dialog shell", async () => {
     const { root, host } = await render();
     try {
-      expect(host.querySelectorAll(".view-setting-row")).toHaveLength(VIEW_SETTING_ORDER.length);
-      expect(host.querySelectorAll("fieldset.view-settings__group")).toHaveLength(5);
+      const dialogKeys = viewSettingKeysOnSurface("dialog");
+      expect(host.querySelectorAll(".view-setting-row")).toHaveLength(dialogKeys.length);
+      expect(host.querySelectorAll("fieldset.view-settings__group")).toHaveLength(1);
       expect([...host.querySelectorAll("fieldset legend")].map((node) => node.textContent)).toEqual(
-        VIEW_SETTING_GROUP_ORDER.map((group) => VIEW_SETTING_GROUP_LABELS[group]),
+        DIALOG_VIEW_SETTING_GROUP_ORDER.map((group) => VIEW_SETTING_GROUP_LABELS[group]),
       );
       expect(host.querySelector(".review-backdrop")).toBeNull();
       expect(host.querySelector('[role="dialog"]')).toBeNull();
       expect(host.querySelector("h2")).toBeNull();
 
       const ranges = [...host.querySelectorAll('input[type="range"]')] as HTMLInputElement[];
-      expect(ranges).toHaveLength(VIEW_SETTING_ORDER.length);
+      expect(ranges).toHaveLength(dialogKeys.length);
       ranges.forEach((range, index) => {
-        const key = VIEW_SETTING_ORDER[index]!;
+        const key = dialogKeys[index]!;
         const spec = VIEW_SETTING_SPECS[key];
         expect(range.min).toBe(String(spec.min));
         expect(range.max).toBe(String(spec.max));
@@ -63,7 +66,7 @@ describe("ViewSettings", () => {
         expect(range.parentElement?.querySelector("label")?.getAttribute("for")).toBe(range.id);
       });
       expect([...host.querySelectorAll(".view-setting-row__value")].map((node) => node.textContent)).toEqual(
-        VIEW_SETTING_ORDER.map((key) => formatViewSetting(key, DEFAULT_VIEW_SETTINGS[key])),
+        dialogKeys.map((key) => formatViewSetting(key, DEFAULT_VIEW_SETTINGS[key])),
       );
     } finally {
       await act(async () => root.unmount());
@@ -74,9 +77,9 @@ describe("ViewSettings", () => {
     const { root, host } = await render();
     try {
       const first = host.querySelector('input[type="range"]') as HTMLInputElement;
-      first.value = "5";
+      first.value = "2";
       await act(async () => first.dispatchEvent(new Event("input", { bubbles: true })));
-      expect(useViewSettingsStore.getState().settings.strokeWidth).toBe(5);
+      expect(useViewSettingsStore.getState().settings.dollySensitivity).toBe(2);
       const firstRow = host.querySelector(".view-setting-row") as HTMLElement;
       expect(firstRow.dataset.changed).toBe("true");
       const reset = [...firstRow.querySelectorAll("button")][0] as HTMLButtonElement;
@@ -87,13 +90,17 @@ describe("ViewSettings", () => {
       expect(resetAll.disabled).toBe(false);
 
       await act(async () => reset.click());
-      expect(useViewSettingsStore.getState().settings.strokeWidth).toBe(3);
+      expect(useViewSettingsStore.getState().settings.dollySensitivity).toBe(1);
       expect(firstRow.dataset.changed).toBe("false");
       expect(reset.disabled).toBe(true);
 
-      await act(async () => useViewSettingsStore.getState().setSetting("strokeWidth", 5));
+      await act(async () => {
+        useViewSettingsStore.getState().setSetting("dollySensitivity", 2);
+        useViewSettingsStore.getState().setSetting("strokeWidth", 5);
+      });
       await act(async () => resetAll.click());
-      expect(useViewSettingsStore.getState().settings).toEqual(DEFAULT_VIEW_SETTINGS);
+      expect(useViewSettingsStore.getState().settings.dollySensitivity).toBe(1);
+      expect(useViewSettingsStore.getState().settings.strokeWidth).toBe(5);
       expect(resetAll.disabled).toBe(true);
       expect([...host.querySelectorAll(".view-setting-row button")].every((button) => (button as HTMLButtonElement).disabled)).toBe(true);
     } finally {

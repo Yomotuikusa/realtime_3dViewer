@@ -14,11 +14,11 @@ Canvas、モデル、カメラ、ライティング、焦点距離、内蔵ア�
 - FocalLengthSlider.tsx: HUD 内で焦点距離を 14〜300mm の範囲で変更するスライダー。ラベルと値を上段、入力を下段に配置する
 - focal-length.ts: 固定センサー高を使う焦点距離／垂直画角の換算と既定画角
 - CameraMenu.tsx: 焦点距離、枠と影を持つ十字配置の既定視点・全体表示・視点リセットを3ブロックに分けて描画するカメラメニュー本体。操作後もメニューを閉じない
-- ViewerHud.tsx: ペン／コメントの toggle ボタンとペン道具、常設のメッシュ表示モードバー・ジョイント表示バー・モーション軌跡バー、排他的に開閉する半透明のカメラメニュー、CameraMenu、LightGizmo、Follow 中の参加者色フレーム、描画基準、操作ヒントを各ストアと keymap に接続する。再生 UI はビュー下部の timeline 機能へ委譲する
+- ViewerHud.tsx: ペン／コメントの toggle ボタンとペン道具、常設のメッシュ表示モードバー・ジョイント表示バー・モーション軌跡バー、排他的に開閉するカメラ／表示メニュー、CameraMenu、ViewSettingsMenu、LightGizmo、Follow 中の参加者色フレーム、描画基準、操作ヒントを各ストアと keymap に接続する。再生 UI はビュー下部の timeline 機能へ委譲する
 - DisplayModeBar.tsx: `useDisplayStore` のメッシュ表示方法をアイコン3択バーへ反映し、選択時にローカル更新して `mesh:display` をルームへ送信する
 - display-icons.tsx: 共通の正六角形アイソメ立方体から、メッシュ・ワイヤフレーム・メッシュ+ワイヤのインライン SVG アイコンを描画する
-- HudMenu.tsx: カメラのトグルボタンと、開いているときだけ表示する `role="group"` パネルを描画する制御コンポーネント。開閉用の chevron を表示し、Escape の閉じ処理を親へ通知する
-- hud-menu.ts: HUD のカメラメニューの ID・順序・表示名、初期状態と排他的トグルの純粋な状態遷移
+- HudMenu.tsx: カメラ／表示のトグルボタンと、開いているときだけ表示する `role="group"` パネルを描画する制御コンポーネント。開閉用の chevron を表示し、Escape の閉じ処理を親へ通知する
+- hud-menu.ts: HUD のカメラ／表示メニューの ID・順序・表示名、初期状態と排他的トグルの純粋な状態遷移
 - playback.ts: AnimationClip の名前・長さの要約、選択クリップ長、時刻の clamp とループ前進を提供する純粋関数
 - playback-frames.ts: glTF のキー時刻から fps を判定し、秒と表示フレームを変換する純粋関数
 - playback-driver.ts: AnimationMixer の単一クリップ action の切替、絶対時刻適用、対象外の停止と破棄を担う Three.js ドライバ
@@ -50,7 +50,7 @@ Canvas、モデル、カメラ、ライティング、焦点距離、内蔵ア�
 - useCameraBroadcast.ts: `selfCamera` または焦点距離の変更を `camera-throttle` へ渡し、`camera` メッセージへ焦点距離を載せる。送信成功時に自分の presence カメラと焦点距離も更新する。`shouldSendCamera` は従来の判定インターフェイスとして公開する
 - useLightBroadcast.ts: lighting ストアの local 更新を汎用 throttle 経由で `light` メッセージへ送り、remote 更新は `markSent` で保留値を破棄してエコーを防ぐ。50ms 間隔で角度を送信する
 - useLightBrightnessBroadcast.ts: lighting ストアの local な明るさ更新を角度と同じ汎用 throttle 経由で `light:brightness` メッセージへ送り、remote 更新は `markSent` でエコーを防ぐ
-- viewer.css: HUD のモード選択、枠線と影付きの常設メッシュ表示モードバーと右上カメラメニュー、焦点距離スライダー、各メニューのブロック区切りと十字配置、表示モードの押下状態、Follow 中の参加者色フレームと操作ヒント、160px の枠を持たないライトギズモとテーマ色の明るさスライダーのプレーン CSS
+- viewer.css: HUD のモード選択、枠線と影付きの常設メッシュ表示モードバーと右上のカメラ／表示メニュー、メニューを縦に押し下げるスタック、焦点距離スライダー、各メニューのブロック区切りと十字配置、表示モードの押下状態、Follow 中の参加者色フレームと操作ヒント、160px の枠を持たないライトギズモとテーマ色の明るさスライダーのプレーン CSS
 
 ## 公開インターフェイス
 - ViewerCanvas.tsx: `ViewerCanvas({ children? })`。theme ストアの `background` を hex 文字列のまま Canvas 背景へ渡す
@@ -63,10 +63,10 @@ Canvas、モデル、カメラ、ライティング、焦点距離、内蔵ア�
 - FocalLengthSlider.tsx: `FocalLengthSlider()`。ラベル・値とスライダーを別段に描画する
 - CameraMenu.tsx: `CameraMenu()`。焦点距離、十字の既定視点／全体表示、視点リセットを描画し、操作後もカメラ要求だけを行う
 - focal-length.ts: `SENSOR_HEIGHT_MM`、`FOCAL_LENGTH_STEP_MM`、`fovFromFocalLength`、`focalLengthFromFov`、`DEFAULT_FOV`
-- ViewerHud.tsx: `ViewerHud({ send })`。常設メッシュ表示モードバーを `DisplayModeBar` に、ジョイント表示バーを `JointDisplayBar` に、モーション軌跡バーを `TrailBar` に、カメラメニュー本体を `CameraMenu` に、ライト操作ギズモを `LightGizmo` に委譲する
+- ViewerHud.tsx: `ViewerHud({ send })`。常設メッシュ表示モードバーを `DisplayModeBar` に、ジョイント表示バーを `JointDisplayBar` に、モーション軌跡バーを `TrailBar` に、カメラメニュー本体を `CameraMenu` に、表示設定メニューを `ViewSettingsMenu` に、ライト操作ギズモを `LightGizmo` に委譲する
 - DisplayModeBar.tsx: `DisplayModeBar({ send })`。メッシュ表示のアイコン3択を描画し、ローカルストア更新後に `mesh:display` を送信する
 - display-icons.tsx: `SolidIcon()`、`WireframeIcon()`、`SolidWireframeIcon()`、`MESH_DISPLAY_ICONS` と共通立方体パス定数
-- HudMenu.tsx: `HudMenu({ id, open, onToggle, onClose, children })`。カメラメニューの開閉 state を持たず、Escape を親へ通知する
+- HudMenu.tsx: `HudMenu({ id, open, onToggle, onClose, children })`。カメラ／表示メニューの開閉 state を持たず、Escape を親へ通知する
 - hud-menu.ts: `HudMenuId`、`HUD_MENU_ORDER`、`HUD_MENU_LABELS`、`HUD_MENU_INITIAL`、`toggleHudMenu`
 - hud-labels.ts: `ToolMode`、`MODE_LABELS`、`MODE_ORDER`、`VIEW_PRESET_LABELS`、`FIT_SHORT_LABEL`、`VIEW_PRESETS_LABEL`、`PLACEMENT_LABELS`、`PLACEMENT_ORDER`、`MESH_DISPLAY_LABEL`、`MESH_DISPLAY_LABELS`、`MESH_DISPLAY_ORDER`、カメラ／ライト／Follow のラベル、`focalLengthText`、`brightnessText`、`colorName`、`followingLabel`、`HintInput`、`hint`、`withShortcut`
 - view-presets.ts: `ViewPreset`、`VIEW_PRESET_ORDER`、`GridCell`、`VIEW_CROSS_CENTER`、`VIEW_PRESET_CELLS`、`VIEW_PRESET_DIRECTIONS`、`MIN_PRESET_DISTANCE`、`PRESET_MATCH_EPSILON`、`presetCamera`、`matchViewPreset`、`rotationLocked`
@@ -104,7 +104,7 @@ Canvas、モデル、カメラ、ライティング、焦点距離、内蔵ア�
 `CameraRig` は Reset 発生時に未消費の `pendingCamera` も破棄し、Reset 後の古い再現要求が補間を開始しないようにする。`selfCamera` の派生 boolean で既定視点ちょうどの向きだけ `OrbitControls.enableRotate` を無効化する。Follow 中は、回転無効時には OrbitControls の `start` が発火せず操作で `presence.unfollow()` できなくなるためロックしない。
 CameraRig の毎フレーム処理は D27 の優先順位に従う。
 
-`ViewerHud` は右上のカメラメニューを単一のローカル state で排他的に管理し、常設のメッシュ表示モードバー、ジョイント表示バー、モーション軌跡バーをその左へ置く。初期状態では半透明のカメラパネルを展開して右下へ `LightGizmo` を常設する。
+`ViewerHud` は右上のカメラ／表示メニューを単一のローカル state で排他的に管理し、カメラと表示の `HudMenu` は縦スタックにして、カメラパネルが表示トグルを覆わないよう通常フローで押し下げる。常設のメッシュ表示モードバー、ジョイント表示バー、モーション軌跡バーはその左へ置く。初期状態では半透明のカメラパネルを展開して右下へ `LightGizmo` を常設する。表示設定の値は端末ローカルの view-settings ストアから読み書きする。
 3D ビューや他の HUD の pointerdown では閉じず、トグルボタンまたはメニュー内の Escape だけで折りたたむ。Escape はショートカットの
 `clearMode` へ伝播せずメニューだけを閉じる。
 `selfCamera` をクリック時に読み、`presetCamera` で注視点と距離を保った視点を作ってカメラストアの
@@ -163,7 +163,7 @@ Canvas のクライアント座標を NDC 化して再帰的にモデルをレ�
 - tests/fit-camera.test.ts: Fit 方向・距離・中心の非破壊性、既定視点非一致、CameraRig の Bounds 内部補間を使わないことのソース検査
 - tests/hud-labels.test.ts: HUD のモード・操作・透過表示・描画基準・メッシュ表示・Follow・ライト明るさ文言と値表示・既定視点文言とヒントのテスト
 - tests/display-mode-bar.test.ts: 共通立方体パス、3種類の SVG アイコン、アイコン対応表、表示モードバーのソース構造と旧表示メニュー削除のテスト
-- tests/hud-menu.test.ts: HUD カメラメニューの初期表示、順序・表示名、排他的トグルの純粋関数テスト
+- tests/hud-menu.test.ts: HUD カメラ／表示メニューの初期表示、順序・表示名、排他的トグルの純粋関数テスト
 - tests/playback.test.ts: クリップ要約、選択中クリップ長、時刻 clamp、ループ前進のテスト
 - tests/playback-driver.test.ts: AnimationMixer の絶対時刻適用、action 切替、停止と再開、無効 index、破棄のテスト
 - tests/playback-source.test.ts: アニメーション付き版の抽出・優先解決、source 切替、クリップ要約同期のテスト

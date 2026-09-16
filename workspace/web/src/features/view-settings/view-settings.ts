@@ -18,6 +18,9 @@ export type ViewSettingKey =
 export type ViewSettingGroup = "annotation" | "viewer" | "input" | "joint" | "outliner";
 export type ViewSettingUnit = "px" | "rem" | "ratio" | "scale";
 
+/** 設定を表示する面。hud = 3D ビュー HUD、dialog = 設定ダイアログ。 */
+export type ViewSettingSurface = "hud" | "dialog";
+
 export interface ViewSettingSpec {
   group: ViewSettingGroup;
   unit: ViewSettingUnit;
@@ -30,6 +33,22 @@ export interface ViewSettingSpec {
 export const VIEW_SETTING_GROUP_ORDER: readonly ViewSettingGroup[] = [
   "annotation", "viewer", "input", "joint", "outliner",
 ];
+
+export const VIEW_SETTING_GROUP_SURFACE: Readonly<Record<ViewSettingGroup, ViewSettingSurface>> = {
+  annotation: "hud",
+  viewer: "hud",
+  input: "dialog",
+  joint: "hud",
+  outliner: "hud",
+};
+
+/** HUD の「表示」メニューに上から並べるグループ。 */
+export const HUD_VIEW_SETTING_GROUP_ORDER: readonly ViewSettingGroup[] = [
+  "annotation", "viewer", "joint", "outliner",
+];
+
+/** 設定ダイアログに上から並べるグループ。 */
+export const DIALOG_VIEW_SETTING_GROUP_ORDER: readonly ViewSettingGroup[] = ["input"];
 
 export const VIEW_SETTING_ORDER: readonly ViewSettingKey[] = [
   "strokeWidth",
@@ -80,4 +99,14 @@ export function clampViewSetting(key: ViewSettingKey, value: number): number {
   const spec = VIEW_SETTING_SPECS[key];
   if (!Number.isFinite(value)) return spec.defaultValue;
   return Math.min(spec.max, Math.max(spec.min, value));
+}
+
+/** グループに属するキーを VIEW_SETTING_ORDER の順で返す。 */
+export function viewSettingKeysInGroup(group: ViewSettingGroup): readonly ViewSettingKey[] {
+  return VIEW_SETTING_ORDER.filter((key) => VIEW_SETTING_SPECS[key].group === group);
+}
+
+/** 面に属するキーを VIEW_SETTING_ORDER の順で返す。 */
+export function viewSettingKeysOnSurface(surface: ViewSettingSurface): readonly ViewSettingKey[] {
+  return VIEW_SETTING_ORDER.filter((key) => VIEW_SETTING_GROUP_SURFACE[VIEW_SETTING_SPECS[key].group] === surface);
 }

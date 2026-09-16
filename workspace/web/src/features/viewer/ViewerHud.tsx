@@ -7,12 +7,14 @@ import { useSessionStore } from "../../store/session";
 import { useShortcutsStore } from "../../store/shortcuts";
 import { AnnotationToolbar } from "../annotation/AnnotationToolbar";
 import { JointDisplayBar } from "../joint/JointDisplayBar";
+import { ViewSettingsMenu } from "../view-settings/ViewSettingsMenu";
 import { TrailBar } from "../trail/TrailBar";
 import { CameraMenu } from "./CameraMenu";
 import { DisplayModeBar } from "./DisplayModeBar";
 import { HudMenu } from "./HudMenu";
 import { LightGizmo } from "./LightGizmo";
 import {
+  HUD_MENU_ORDER,
   HUD_MENU_INITIAL,
   toggleHudMenu,
   type HudMenuId,
@@ -62,14 +64,19 @@ export function ViewerHud({ send }: { send: (msg: ClientMessage) => boolean }): 
         <DisplayModeBar send={send} />
         <JointDisplayBar send={send} />
         <TrailBar send={send} />
-        <HudMenu
-          id="camera"
-          open={openMenu === "camera"}
-          onToggle={() => setOpenMenu((open) => toggleHudMenu(open, "camera"))}
-          onClose={() => setOpenMenu(null)}
-        >
-          <CameraMenu />
-        </HudMenu>
+        <div className="hud-menu-stack">
+          {HUD_MENU_ORDER.map((id) => (
+            <HudMenu
+              key={id}
+              id={id}
+              open={openMenu === id}
+              onToggle={() => setOpenMenu((open) => toggleHudMenu(open, id))}
+              onClose={() => setOpenMenu(null)}
+            >
+              {id === "camera" ? <CameraMenu /> : <ViewSettingsMenu />}
+            </HudMenu>
+          ))}
+        </div>
       </div>
       <LightGizmo />
       {followingUserId !== null && (
