@@ -71,6 +71,12 @@ export interface LightAngles {
   pitch: number;
 }
 
+/** ルームで共有するライトの明るさ。web 側の既定の光の強さに掛ける倍率 */
+export const MIN_LIGHT_BRIGHTNESS = 0.25;
+export const MAX_LIGHT_BRIGHTNESS = 4;
+/** 誰も変えていないルームの明るさ */
+export const DEFAULT_LIGHT_BRIGHTNESS = 1;
+
 /** ルームで共有するメッシュの表示方法。solid=通常、wireframe=線のみ、solid-wireframe=通常描画に線を重ねる */
 export type MeshDisplayMode = "solid" | "wireframe" | "solid-wireframe";
 /** 誰も切り替えていないルームの表示方法 */
@@ -172,6 +178,9 @@ export const LightAnglesSchema = z.object({
   yaw: z.number(),
   pitch: z.number(),
 }) satisfies z.ZodType<LightAngles>;
+
+/** 有限数で MIN_LIGHT_BRIGHTNESS 以上 MAX_LIGHT_BRIGHTNESS 以下の倍率 */
+export const LightBrightnessSchema = z.number().min(MIN_LIGHT_BRIGHTNESS).max(MAX_LIGHT_BRIGHTNESS);
 
 export const MeshDisplayModeSchema = z.enum(["solid", "wireframe", "solid-wireframe"]) satisfies z.ZodType<MeshDisplayMode>;
 

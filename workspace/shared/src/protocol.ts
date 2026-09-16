@@ -4,6 +4,7 @@ import {
   CommentSchema,
   FocalLengthSchema,
   JointDisplaySchema,
+  LightBrightnessSchema,
   LightAnglesSchema,
   MeshCompareSchema,
   MeshDisplayModeSchema,
@@ -35,6 +36,7 @@ export type ClientMessage =
   | { type: "join"; name: string }
   | { type: "camera"; camera: CameraState; focalLength?: number }
   | { type: "light"; angles: LightAngles }
+  | { type: "light:brightness"; brightness: number }
   | { type: "stroke:add"; stroke: Stroke }
   | { type: "stroke:remove"; strokeId: string }
   | { type: "stroke:clear" }
@@ -60,6 +62,8 @@ export type ServerMessage =
       users: PresenceUser[];
       strokes: Stroke[];
       light?: LightAngles;
+      /** ルームのライトの明るさ。誰も変えていなければ省略される */
+      lightBrightness?: number;
       /** ルームで非表示になっているオブジェクトの versionId。空なら省略される */
       hiddenObjectIds?: string[];
       /** ルームで非表示になっている部位。空なら省略される */
@@ -79,6 +83,7 @@ export type ServerMessage =
   | { type: "user:left"; userId: string }
   | { type: "camera"; userId: string; camera: CameraState; focalLength?: number }
   | { type: "light"; userId: string; angles: LightAngles }
+  | { type: "light:brightness"; userId: string; brightness: number }
   | { type: "stroke:add"; stroke: Stroke }
   | { type: "stroke:remove"; strokeId: string }
   | { type: "stroke:clear"; userId: string }
@@ -110,6 +115,7 @@ export const ClientMessageSchema = z.discriminatedUnion("type", [
   z.object({ type: z.literal("join"), name: z.string().max(MAX_NAME_LENGTH) }),
   z.object({ type: z.literal("camera"), camera: CameraStateSchema, focalLength: FocalLengthSchema.optional() }),
   z.object({ type: z.literal("light"), angles: LightAnglesSchema }),
+  z.object({ type: z.literal("light:brightness"), brightness: LightBrightnessSchema }),
   z.object({ type: z.literal("stroke:add"), stroke: StrokeSchema }),
   z.object({ type: z.literal("stroke:remove"), strokeId: IdSchema }),
   z.object({ type: z.literal("stroke:clear") }),
@@ -129,6 +135,7 @@ export const ServerMessageSchema = z.discriminatedUnion("type", [
     users: z.array(PresenceUserSchema),
     strokes: z.array(StrokeSchema),
     light: LightAnglesSchema.optional(),
+    lightBrightness: LightBrightnessSchema.optional(),
     hiddenObjectIds: z.array(IdSchema).optional(),
     hiddenObjectParts: z.array(ObjectPartRefSchema).optional(),
     meshDisplay: MeshDisplayModeSchema.optional(),
@@ -146,6 +153,7 @@ export const ServerMessageSchema = z.discriminatedUnion("type", [
     focalLength: FocalLengthSchema.optional(),
   }),
   z.object({ type: z.literal("light"), userId: IdSchema, angles: LightAnglesSchema }),
+  z.object({ type: z.literal("light:brightness"), userId: IdSchema, brightness: LightBrightnessSchema }),
   z.object({ type: z.literal("stroke:add"), stroke: StrokeSchema }),
   z.object({ type: z.literal("stroke:remove"), strokeId: IdSchema }),
   z.object({ type: z.literal("stroke:clear"), userId: IdSchema }),
