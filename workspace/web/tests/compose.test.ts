@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { CreateCommentInput } from "@shared/api";
 import { cameraEquals } from "@shared/camera";
+import { MAX_COMMENT_STROKES } from "@shared/types";
 import type { CameraState, Stroke, Vec3 } from "@shared/types";
 import {
   CLICK_MOVE_THRESHOLD_PX,
@@ -54,6 +55,19 @@ describe("comment composition", () => {
     expect(selected[0]?.id).toBe("s50");
     expect(selected.at(-1)?.id).toBe("s249");
     expect(selected.every((item, index) => index === 0 || item.createdAt >= selected[index - 1]!.createdAt)).toBe(true);
+  });
+
+  it("uses the shared stroke limit at both boundaries", () => {
+    const strokes: Record<string, Stroke> = {};
+    for (let index = 0; index < MAX_COMMENT_STROKES + 1; index += 1) {
+      strokes[`s${index}`] = stroke(`s${index}`, "u1", index);
+    }
+    expect(ownStrokesForComment(strokes, "u1")).toEqual(Object.values(strokes).slice(1));
+
+    const atLimit = Object.fromEntries(
+      Object.values(strokes).slice(0, MAX_COMMENT_STROKES).map((item) => [item.id, item]),
+    );
+    expect(ownStrokesForComment(atLimit, "u1")).toEqual(Object.values(atLimit));
   });
 
   it("trims the body and preserves the requested metadata", () => {

@@ -7,10 +7,10 @@
 - CommentList.tsx: `CommentList({ projectId })` として REST でコメントを取得し、未解決フィルタ、時刻・状態・再生フレームバッジ付き一覧、選択領域、解決 / 再開操作、API エラーと空状態を提供。選択領域は native button、状態変更ボタンは兄弟要素として分離し、layout effect cleanup で無効化したアンマウントまたは projectId 世代変更後の非同期結果はストアへ反映しない
 - comment-labels.ts: コメント見出し、状態/空状態/Composer/ピン/フレーム/吹き出し、空シーン投稿欄の日本語ラベル、Intl による時刻整形
 - comments.css: コメント一覧を枠線・ドロップシャドウ付きカードとして表示し、Composer に同じ影を与えるトークン CSS。コメント領域を縦グリッド化し、カードを上から積み上げ、非選択カードの本文領域を 2 行分の高さに揃え、選択中のみ本文を全文展開する。Composer 不在時は親を単独の可変行へ切り替えて一覧が全高を使い、一覧だけをスクロールさせる。3D ビューの選択コメント吹き出しはピン横の固定幅カードとして表示し、長文本文だけをスクロールさせ、吹き出しの閉じるボタンは円形アウトライン付きにする
-- compose.ts: クリック移動量の判定、自分の線の時系列順・最新200本への制限、再生位置と再生対象 versionId の投稿値算出、コメント投稿入力の組み立てを提供する
+- compose.ts: クリック移動量の判定、自分の線の時系列順・最新 `MAX_COMMENT_STROKES` 本への制限、再生位置と再生対象 versionId の投稿値算出、コメント投稿入力の組み立てを提供する
 - frame-switch.ts: フレーム自動記録スイッチの localStorage 読み書きと既定値を提供する
 - CommentPickLayer.tsx: Comment モード中だけ Canvas の pointerdown / pointerup を購読し、Alt なしの5px 以下のクリックをモデルへレイキャストして投稿アンカーを設定する。ドラッグやモデル外の操作は無視し、Composer 表示中は既存アンカーを保護する
-- CommentComposer.tsx: アンカー選択後に自動フォーカスする本文入力カードと REST コメント投稿を提供し、現在のカメラ・自分の線・スイッチで選択した再生位置を入力へ含める。フレーム記録設定は localStorage に保存し、クリップがある場合だけ本文下にスイッチを表示する。成功時にコメントを upsert・選択する。layout effect cleanup で無効化したアンマウントまたは projectId 世代変更後の非同期結果はストアへ反映しない。接続状態に関係なく投稿する
+- CommentComposer.tsx: アンカー選択後に自動フォーカスする本文入力カードと REST コメント投稿を提供し、本文の入力上限は `MAX_COMMENT_BODY_LENGTH` から取得する。現在のカメラ・自分の線・スイッチで選択した再生位置を入力へ含める。フレーム記録設定は localStorage に保存し、クリップがある場合だけ本文下にスイッチを表示する。成功時にコメントを upsert・選択する。layout effect cleanup で無効化したアンマウントまたは projectId 世代変更後の非同期結果はストアへ反映しない。接続状態に関係なく投稿する
 - CommentPins.tsx: 表示対象コメントを author/status 付きアンカー位置の drei `Html` native button ピンとして描画し、クリック選択、選択強調、resolved の薄表示を提供する。pointerdown/up の伝播停止を維持する
 - CommentCallout.tsx: 選択中コメントの投稿者・時刻・状態・再生フレーム・全文をアンカー位置横の drei `Html` ダイアログとして描画し、閉じるボタンで選択を解除する。吹き出し上の pointerdown/up は Canvas へ伝播させない
 - replay.ts: 選択コメントのカメラ要求・Follow 解除・再現線設定と、必要なら再生対象を切り替えた上で範囲内の再生位置の pause・クリップ選択・フレーム seek を各ストアへ反映する入口、再現線の透明度を提供
@@ -42,5 +42,5 @@ store_Summary.md と viewer_Summary.md を参照。
 - tests/comment-replay.test.ts: コメント選択時のカメラ要求、Follow 解除、再現線、再生対象切替を含む再生位置、透明度のテスト
 - tests/compose.test.ts: クリック判定、自分の線の順序・上限、再生位置・対象 versionId、投稿入力の組み立てテスト
 - tests/frame-switch.test.ts: フレーム自動記録スイッチの既定値、保存値、不正値、localStorage 例外のテスト
-- tests/comments-styles.test.ts: コメント一覧カード、Composer の影とフレームスイッチ、右パネル背景を含む CSS 契約のテスト
+- tests/comments-styles.test.ts: コメント一覧カード、Composer の共有本文長上限・影とフレームスイッチ、右パネル背景を含む CSS 契約のテスト
 - tests/comment-callout.test.ts: CommentCallout の Html/DOM/メタデータ/閉じる操作と CommentPins の選択吹き出し配置をソース検査するテスト

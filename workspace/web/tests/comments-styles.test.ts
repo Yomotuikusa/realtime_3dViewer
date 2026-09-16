@@ -171,6 +171,13 @@ describe("comments styles", () => {
     expect(commentList).toContain("playbackBadge");
   });
 
+  it("uses the shared comment body length in the composer", () => {
+    expect(commentComposer).toContain('import { MAX_COMMENT_BODY_LENGTH } from "@shared/types";');
+    expect(commentComposer).toContain("maxLength={MAX_COMMENT_BODY_LENGTH}");
+    expect(commentComposer).not.toMatch(/maxLength=\{\d+\}/);
+    expect(commentComposer).toContain("rows={4}");
+  });
+
   it("preserves pin focus outline and panel background", () => {
     expect(selectorBlock(commentsCss, ".comments-pin")).not.toContain("outline");
     expect(selectorBlock(commentsCss, '.comments-pin[aria-pressed="true"]')).toContain("outline:");
