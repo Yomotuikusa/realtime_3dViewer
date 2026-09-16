@@ -1,5 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { isSendableStroke, simplify, simplifyTolerance } from "../src/stroke";
+import {
+  isSendableStroke,
+  SIMPLIFY_TOLERANCE_RATIO,
+  simplify,
+  simplifyTolerance,
+} from "../src/stroke";
+import { MAX_STROKE_POINTS, MIN_STROKE_POINTS } from "../src/types";
 import type { Vec3 } from "../src/types";
 
 describe("simplify", () => {
@@ -39,6 +45,11 @@ describe("simplify", () => {
   it("uses model size to calculate tolerance", () => {
     expect(simplifyTolerance(10)).toBe(0.01);
   });
+
+  it("uses the shared simplify tolerance ratio", () => {
+    expect(SIMPLIFY_TOLERANCE_RATIO).toBe(0.001);
+    expect(simplifyTolerance(10)).toBe(10 * SIMPLIFY_TOLERANCE_RATIO);
+  });
 });
 
 describe("isSendableStroke", () => {
@@ -49,5 +60,12 @@ describe("isSendableStroke", () => {
     const oversizedStroke: Vec3[] = Array.from({ length: 2001 }, () => [0, 0, 0]);
     expect(isSendableStroke(maximumStroke)).toBe(true);
     expect(isSendableStroke(oversizedStroke)).toBe(false);
+  });
+
+  it("uses the shared point-count bounds", () => {
+    expect(isSendableStroke(Array.from({ length: MIN_STROKE_POINTS - 1 }, () => [0, 0, 0]))).toBe(false);
+    expect(isSendableStroke(Array.from({ length: MIN_STROKE_POINTS }, () => [0, 0, 0]))).toBe(true);
+    expect(isSendableStroke(Array.from({ length: MAX_STROKE_POINTS }, () => [0, 0, 0]))).toBe(true);
+    expect(isSendableStroke(Array.from({ length: MAX_STROKE_POINTS + 1 }, () => [0, 0, 0]))).toBe(false);
   });
 });
