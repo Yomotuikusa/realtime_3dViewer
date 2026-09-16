@@ -1,6 +1,6 @@
 import { useEffect, useState, type CSSProperties, type ReactElement } from "react";
 import { ColorWheel } from "./ColorWheel";
-import { normalizeHex } from "./viewer-colors";
+import { HEX_INPUT_MAX_LENGTH, normalizeHex } from "./viewer-colors";
 import {
   HEX_INPUT_LABEL,
   PALETTE_LABEL,
@@ -58,7 +58,7 @@ export function ColorPicker({ value, onChange, label }: ColorPickerProps): React
         value={draft}
         onChange={(event) => handleInput(event.currentTarget.value)}
         onBlur={handleBlur}
-        maxLength={7}
+        maxLength={HEX_INPUT_MAX_LENGTH}
       />
     </div>
   );

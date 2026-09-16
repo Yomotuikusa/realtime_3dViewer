@@ -1,5 +1,6 @@
 import { cloneCamera } from "@shared/camera";
 import type { CreateCommentInput } from "@shared/api";
+import { MAX_COMMENT_STROKES } from "@shared/types";
 import type { CameraState, CommentPlayback, Stroke, Vec3 } from "@shared/types";
 import { frameOfTime } from "../viewer/playback-frames";
 import type { PlaybackClip } from "../viewer/playback";
@@ -20,7 +21,7 @@ function compareStrokes(left: Stroke, right: Stroke): number {
     || (left.id < right.id ? -1 : left.id > right.id ? 1 : 0);
 }
 
-/** 自分の線を時系列順にし、コメントに含める最新200本だけを返す。 */
+/** 自分の線を時系列順にし、コメントに含める最新 MAX_COMMENT_STROKES 本だけを返す。 */
 export function ownStrokesForComment(
   strokes: Record<string, Stroke>,
   userId: string | null,
@@ -31,7 +32,9 @@ export function ownStrokesForComment(
   const ownStrokes = Object.values(strokes)
     .filter((stroke) => stroke.userId === userId)
     .sort(compareStrokes);
-  return ownStrokes.length <= 200 ? ownStrokes : ownStrokes.slice(-200);
+  return ownStrokes.length <= MAX_COMMENT_STROKES
+    ? ownStrokes
+    : ownStrokes.slice(-MAX_COMMENT_STROKES);
 }
 
 /** 投稿に載せる再生位置。スイッチ OFF またはクリップ無しなら null。 */
