@@ -9,6 +9,8 @@ Canvas、モデル、カメラ、ライティング、焦点距離、内蔵ア�
 - LightGizmo.tsx: 枠なしで3Dビュー右下へ重ねる、Y軸まわりに45°回転した立方体ギズモを描画し、水平ドラッグ・矢印キー・リセットをライトストアへ接続する
 - light-gizmo.ts: ギズモの寸法・回転・カメラ定数、マーカー座標、ドラッグ／キー入力、yaw 表示の純粋関数
 - FocalLengthRig.tsx: camera ストアの焦点距離を PerspectiveCamera の垂直画角へ反映する描画なしの Rig。Bounds の計算対象外
+- ClipPlanesRig.tsx: camera ストアのモデル最大辺長から PerspectiveCamera の near / far を反映する描画なしの Rig。Bounds の計算対象外
+- clip-planes.ts: モデルサイズからカメラの near / far を求める比率と `clipPlanesFor` を提供する
 - FocalLengthSlider.tsx: HUD 内で焦点距離を 14〜300mm の範囲で変更するスライダー。ラベルと値を上段、入力を下段に配置する
 - focal-length.ts: 固定センサー高を使う焦点距離／垂直画角の換算と既定画角
 - CameraMenu.tsx: 焦点距離、枠と影を持つ十字配置の既定視点・全体表示・視点リセットを3ブロックに分けて描画するカメラメニュー本体。操作後もメニューを閉じない
@@ -55,6 +57,8 @@ Canvas、モデル、カメラ、ライティング、焦点距離、内蔵ア�
 - LightGizmo.tsx: `LightGizmo()`。回転した立方体、固定カメラに収まるライトマーカー、水平入力、リセットボタンを描画する
 - light-gizmo.ts: `GIZMO_SIZE_PX`、`GIZMO_BOX_ROTATION_Y` などのギズモ定数、`gizmoMarkerPosition`、`gizmoDragStep`、`gizmoKeyDeltaX`、`yawDegrees`、`yawText`
 - FocalLengthRig.tsx: `FocalLengthRig()`
+- ClipPlanesRig.tsx: `ClipPlanesRig()`。camera ストアの `modelSize` から PerspectiveCamera の near / far を更新する
+- clip-planes.ts: `NEAR_PLANE_RATIO`、`FAR_PLANE_RATIO`、`ClipPlanes`、`clipPlanesFor`
 - FocalLengthSlider.tsx: `FocalLengthSlider()`。ラベル・値とスライダーを別段に描画する
 - CameraMenu.tsx: `CameraMenu()`。焦点距離、十字の既定視点／全体表示、視点リセットを描画し、操作後もカメラ要求だけを行う
 - focal-length.ts: `SENSOR_HEIGHT_MM`、`FOCAL_LENGTH_STEP_MM`、`fovFromFocalLength`、`focalLengthFromFov`、`DEFAULT_FOV`
@@ -148,6 +152,7 @@ Canvas のクライアント座標を NDC 化して再帰的にモデルをレ�
 - tests/send-throttle.test.ts: 汎用 throttle の先頭送信、最新値のトレーリング、`markSent` による保留破棄・送信済み判定・間隔維持、破棄、失敗後の mark、複製のテスト
 - tests/light-broadcast.test.ts: ライト角度の厳密比較と local／remote 更新の throttle 呼び分け・順序のテスト
 - tests/focal-length.test.ts: 焦点距離と垂直画角の換算テスト
+- tests/clip-planes.test.ts: モデルサイズからの near / far 計算、無効値の既定値、比率、Rig と Canvas の結線を検証
 - tests/follow.test.ts: Follow 対象のカメラ・焦点距離の判定、複製、補間、収束テスト
 - tests/camera-animation.test.ts: ease-out補間、独立複製、時間基準の開始前・途中・到達・NaN、CameraRig の減衰無効化のソース検査
 - tests/fit-camera.test.ts: Fit 方向・距離・中心の非破壊性、既定視点非一致、CameraRig の Bounds 内部補間を使わないことのソース検査

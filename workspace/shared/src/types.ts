@@ -131,6 +131,12 @@ export const MAX_FILE_NAME_LENGTH = 255;
 export const MAX_PROJECT_NAME_LENGTH = 100;
 export const MAX_AUTHOR_NAME_LENGTH = 50;
 export const MAX_COMMENT_BODY_LENGTH = 2000;
+/** ストロークの点数の下限(D15)。simplify 後にこれ未満なら送らない */
+export const MIN_STROKE_POINTS = 2;
+/** ストロークの点数の上限(D15) */
+export const MAX_STROKE_POINTS = 2000;
+/** 1 件のコメントに添付できるストロークの本数の上限 */
+export const MAX_COMMENT_STROKES = 200;
 
 /** 焦点距離(mm)の下限。これより広角にはしない */
 export const MIN_FOCAL_LENGTH_MM = 14;
@@ -184,7 +190,7 @@ export const StrokeSchema = z.object({
   id: IdSchema,
   userId: IdSchema,
   color: ColorSchema,
-  points: z.array(Vec3Schema).min(2).max(2000),
+  points: z.array(Vec3Schema).min(MIN_STROKE_POINTS).max(MAX_STROKE_POINTS),
   createdAt: TimestampSchema,
 }) satisfies z.ZodType<Stroke>;
 
