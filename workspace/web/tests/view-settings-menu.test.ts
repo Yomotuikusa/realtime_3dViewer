@@ -44,16 +44,16 @@ beforeEach(() => {
 afterEach(() => document.body.replaceChildren());
 
 describe("ViewSettingsMenu", () => {
-  it("renders four grouped HUD sections and eight labelled ranges", async () => {
+  it("renders three grouped HUD sections and six labelled ranges", async () => {
     const { root, host } = await render();
     try {
       const hudKeys = viewSettingKeysOnSurface("hud");
       expect(host.querySelector(".view-settings-menu__help")?.textContent).toBe(VIEW_SETTINGS_HELP);
-      expect(host.querySelectorAll(".view-settings-menu__group")).toHaveLength(4);
+      expect(host.querySelectorAll(".view-settings-menu__group")).toHaveLength(3);
       expect([...host.querySelectorAll(".view-settings-menu__group")].map((group) => group.getAttribute("aria-label"))).toEqual(
         HUD_VIEW_SETTING_GROUP_ORDER.map((group) => VIEW_SETTING_GROUP_LABELS[group]),
       );
-      expect(host.querySelectorAll(".view-setting-hud-row")).toHaveLength(8);
+      expect(host.querySelectorAll(".view-setting-hud-row")).toHaveLength(6);
       expect([...host.querySelectorAll(".view-setting-hud-row__name")].map((node) => node.textContent)).toEqual(
         hudKeys.map((key) => VIEW_SETTING_LABELS[key]),
       );
@@ -114,8 +114,8 @@ describe("view-settings-menu.css", () => {
 });
 
 describe("HUD surface completeness", () => {
-  it("covers the eight non-input keys", () => {
-    expect(viewSettingKeysOnSurface("hud")).toHaveLength(8);
+  it("covers the six non-input keys", () => {
+    expect(viewSettingKeysOnSurface("hud")).toHaveLength(6);
     const allSurfaceKeys = [...viewSettingKeysOnSurface("hud"), ...viewSettingKeysOnSurface("dialog")];
     expect(allSurfaceKeys).toHaveLength(VIEW_SETTING_ORDER.length);
     expect(new Set(allSurfaceKeys)).toEqual(new Set(VIEW_SETTING_ORDER));

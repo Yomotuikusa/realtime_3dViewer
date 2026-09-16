@@ -11,12 +11,10 @@ export type ViewSettingKey =
   | "dollySensitivity"
   | "lightRotateSensitivity"
   | "jointRadiusScale"
-  | "jointPickRadiusPx"
-  | "outlinerRowHeightRem"
-  | "outlinerIndentPx";
+  | "jointPickRadiusPx";
 
-export type ViewSettingGroup = "annotation" | "viewer" | "input" | "joint" | "outliner";
-export type ViewSettingUnit = "px" | "rem" | "ratio" | "scale";
+export type ViewSettingGroup = "annotation" | "viewer" | "input" | "joint";
+export type ViewSettingUnit = "px" | "ratio" | "scale";
 
 /** 設定を表示する面。hud = 3D ビュー HUD、dialog = 設定ダイアログ。 */
 export type ViewSettingSurface = "hud" | "dialog";
@@ -31,7 +29,7 @@ export interface ViewSettingSpec {
 }
 
 export const VIEW_SETTING_GROUP_ORDER: readonly ViewSettingGroup[] = [
-  "annotation", "viewer", "input", "joint", "outliner",
+  "annotation", "viewer", "input", "joint",
 ];
 
 export const VIEW_SETTING_GROUP_SURFACE: Readonly<Record<ViewSettingGroup, ViewSettingSurface>> = {
@@ -39,12 +37,11 @@ export const VIEW_SETTING_GROUP_SURFACE: Readonly<Record<ViewSettingGroup, ViewS
   viewer: "hud",
   input: "dialog",
   joint: "hud",
-  outliner: "hud",
 };
 
 /** HUD の「表示」メニューに上から並べるグループ。 */
 export const HUD_VIEW_SETTING_GROUP_ORDER: readonly ViewSettingGroup[] = [
-  "annotation", "viewer", "joint", "outliner",
+  "annotation", "viewer", "joint",
 ];
 
 /** 設定ダイアログに上から並べるグループ。 */
@@ -59,8 +56,6 @@ export const VIEW_SETTING_ORDER: readonly ViewSettingKey[] = [
   "lightRotateSensitivity",
   "jointRadiusScale",
   "jointPickRadiusPx",
-  "outlinerRowHeightRem",
-  "outlinerIndentPx",
 ];
 
 export const VIEW_SETTING_SPECS: Readonly<Record<ViewSettingKey, ViewSettingSpec>> = {
@@ -72,8 +67,6 @@ export const VIEW_SETTING_SPECS: Readonly<Record<ViewSettingKey, ViewSettingSpec
   lightRotateSensitivity: { group: "input", unit: "scale", defaultValue: 1, min: 0.25, max: 4, step: 0.25 },
   jointRadiusScale: { group: "joint", unit: "scale", defaultValue: 1, min: 0.25, max: 4, step: 0.25 },
   jointPickRadiusPx: { group: "joint", unit: "px", defaultValue: 12, min: 4, max: 32, step: 1 },
-  outlinerRowHeightRem: { group: "outliner", unit: "rem", defaultValue: 1.75, min: 1.25, max: 2.5, step: 0.125 },
-  outlinerIndentPx: { group: "outliner", unit: "px", defaultValue: 16, min: 8, max: 32, step: 4 },
 };
 
 export type ViewSettings = Readonly<Record<ViewSettingKey, number>>;
@@ -87,8 +80,6 @@ export const DEFAULT_VIEW_SETTINGS: ViewSettings = {
   lightRotateSensitivity: VIEW_SETTING_SPECS.lightRotateSensitivity.defaultValue,
   jointRadiusScale: VIEW_SETTING_SPECS.jointRadiusScale.defaultValue,
   jointPickRadiusPx: VIEW_SETTING_SPECS.jointPickRadiusPx.defaultValue,
-  outlinerRowHeightRem: VIEW_SETTING_SPECS.outlinerRowHeightRem.defaultValue,
-  outlinerIndentPx: VIEW_SETTING_SPECS.outlinerIndentPx.defaultValue,
 };
 
 export function isViewSettingKey(value: unknown): value is ViewSettingKey {

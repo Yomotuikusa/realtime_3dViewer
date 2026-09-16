@@ -1,4 +1,4 @@
-import { useMemo, useState, type CSSProperties, type ReactElement } from "react";
+import { useMemo, useState, type ReactElement } from "react";
 import type { ClientMessage } from "@shared/protocol";
 import {
   hiddenObjectPaths,
@@ -18,7 +18,6 @@ import {
 } from "./outliner-labels";
 import { EyeIcon } from "./outliner-icons";
 import { isSelected, useSelectionStore } from "./selection";
-import { selectViewSetting, useViewSettingsStore } from "../../store/view-settings";
 import "./outliner.css";
 
 export function Outliner({ send }: { send: (msg: ClientMessage) => boolean }): ReactElement {
@@ -30,8 +29,6 @@ export function Outliner({ send }: { send: (msg: ClientMessage) => boolean }): R
   const scenes = useModelScenesStore((state) => state.scenes);
   const selected = useSelectionStore((state) => state.selected);
   const toggleSelection = useSelectionStore((state) => state.toggleSelection);
-  const rowHeightRem = useViewSettingsStore(selectViewSetting("outlinerRowHeightRem"));
-  const indentPx = useViewSettingsStore(selectViewSetting("outlinerIndentPx"));
   const [expandedIds, setExpandedIds] = useState<string[]>([]);
   const trees = useMemo(() => {
     const next: Record<string, OutlinerNode> = {};
@@ -59,7 +56,6 @@ export function Outliner({ send }: { send: (msg: ClientMessage) => boolean }): R
     <section
       className="outliner"
       aria-label={OUTLINER_HEADING}
-      style={{ "--outliner-row-height": `${rowHeightRem}rem`, "--outliner-indent": `${indentPx}px` } as CSSProperties}
     >
       <div className="outliner__head">
         <h2 className="outliner__heading">{OUTLINER_HEADING}</h2>

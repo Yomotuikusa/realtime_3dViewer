@@ -12,7 +12,6 @@ export const VIEW_SETTING_GROUP_LABELS: Readonly<Record<ViewSettingGroup, string
   viewer: "3D ビュー",
   input: "操作",
   joint: "ジョイント",
-  outliner: "アウトライナ",
 };
 export const VIEW_SETTING_LABELS: Readonly<Record<ViewSettingKey, string>> = {
   strokeWidth: "線の太さ",
@@ -23,8 +22,6 @@ export const VIEW_SETTING_LABELS: Readonly<Record<ViewSettingKey, string>> = {
   lightRotateSensitivity: "ライト回転の感度",
   jointRadiusScale: "ジョイント球の大きさ",
   jointPickRadiusPx: "ジョイントを拾う半径",
-  outlinerRowHeightRem: "行の高さ",
-  outlinerIndentPx: "階層の字下げ",
 };
 export const RESET_VIEW_SETTING_LABEL = "既定に戻す";
 export const RESET_VIEW_SETTINGS_LABEL = "すべて既定に戻す";
@@ -32,7 +29,6 @@ export const RESET_VIEW_SETTINGS_LABEL = "すべて既定に戻す";
 export function formatViewSetting(key: ViewSettingKey, value: number): string {
   const unit = VIEW_SETTING_SPECS[key].unit;
   if (unit === "px") return `${Number(value.toFixed(1))}px`;
-  if (unit === "rem") return `${Number(value.toFixed(3))}rem`;
   if (unit === "ratio") return `${Math.round(value * 100)}%`;
   return `×${value.toFixed(2)}`;
 }

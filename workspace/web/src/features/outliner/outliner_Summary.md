@@ -17,8 +17,8 @@
 - outliner-labels.ts: 見出し、表示列、状態、種別、名前、展開操作の表示文言を提供する
 - outliner-icons.tsx: 7 種別のインライン SVG アイコン、表示列の瞳、展開用山形を提供する
 - OutlinerRow.tsx: 1 行と再帰的なノード枝を treeitem/group として描画し、行ごとの表示チェックボックスを提供する
-- Outliner.tsx: objects / model-scenes / selection / view-settings ストアを購読し、版と scene 木を描画する。`outlinerRowHeightRem` と `outlinerIndentPx` を CSS カスタムプロパティへ渡し、`send` で `object:visibility` と `object:part-visibility` を共有する
-- outliner.css: アウトライナのレイアウト、インデント、展開、選択、非表示状態、表示列とチェックボックスを定義する。行高と字下げは CSS カスタムプロパティを使い、それぞれ `1.75rem` と `16px` をフォールバックにする
+- Outliner.tsx: objects / model-scenes / selection ストアを購読し、版と scene 木を描画する。`send` で `object:visibility` と `object:part-visibility` を共有する
+- outliner.css: アウトライナのレイアウト、インデント、展開、選択、非表示状態、表示列とチェックボックスを定義する。行高は `1.75rem`、字下げ 1 段は `16px` の固定値とする
 
 ## 公開インターフェイス
 
@@ -33,13 +33,13 @@
 - outliner-labels.ts: アウトライナ文言定数、`KIND_LABELS`、`nodeLabel`、`expandAriaLabel`、`visibilityAriaLabel`
 - outliner-icons.tsx: `OUTLINER_ICON_VIEW_BOX`、各種アイコン、`EyeIcon`、`OUTLINER_KIND_ICONS`、`OutlinerKindIcon`
 - OutlinerRow.tsx: `OutlinerRowProps`、`OutlinerRow`、`OutlinerBranchProps`、`OutlinerBranch`
-- Outliner.tsx: `Outliner`。view-settings の `outlinerRowHeightRem` と `outlinerIndentPx` を CSS カスタムプロパティへ渡す
+- Outliner.tsx: `Outliner`
 
 ## 他機能との関係
 
 版一覧は objects ストア、scene は compare の model-scenes ストア、選択は selection ストアで SelectionRig が読む。3D クリック選択は ReviewPage(105) の ViewerCanvas 内に配置し、ジョイントが見えているときは画面上の近さで Bone を優先選択する。
 選択重ね描きは `VIEWER_OVERLAY_KEY` を持つので表示モード・比較・アウトライナ木から除外される。選択色は theme ストアの `selectViewerColor("selection")`、メッシュ不透明度は view-settings ストアの `selectViewSetting("selectionOpacity")` から SelectionRig が購読し、値変更時に重ね描きを再生成する。Rig の配置は ReviewPage(096)。
-ビューア重ね描きの除外判定とメッシュアイコンの図案は viewer の既存公開インターフェイスを利用する。選択・展開状態はルームへ送信しない。表示・非表示は送信する(設計書 §13.5)。表示設定は view-settings ストアが管理し、アウトライナは行高・字下げを CSS カスタムプロパティへ、SelectionPickLayer はジョイント選択半径をピック関数へ渡す。
+ビューア重ね描きの除外判定とメッシュアイコンの図案は viewer の既存公開インターフェイスを利用する。選択・展開状態はルームへ送信しない。表示・非表示は送信する(設計書 §13.5)。表示設定は view-settings ストアが管理し、SelectionPickLayer はジョイント選択半径をピック関数へ渡す。
 部位の表示・非表示はルーム共有(設計書 §13.5)。鍵は uuid ではなく `path`(重ね描きを数えない子インデックス)。Rig は objects ストアの `hiddenParts` を読む。配置は ReviewPage(102)。
 既知の制限として、Rig は hidden path にない部位を一律 `visible = true` に戻すため、読み込み時点で `visible = false` だったオブジェクトの状態は保持しない。
 

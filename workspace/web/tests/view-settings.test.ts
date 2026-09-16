@@ -16,11 +16,11 @@ import { BASE_LINE_WIDTH, OVERLAY_OPACITY_RATIO } from "../src/features/annotati
 
 describe("view setting definitions", () => {
   it("defines every setting in grouped display order", () => {
-    expect(VIEW_SETTING_ORDER).toHaveLength(10);
+    expect(VIEW_SETTING_ORDER).toHaveLength(8);
     expect(new Set(VIEW_SETTING_ORDER).size).toBe(VIEW_SETTING_ORDER.length);
-    expect(VIEW_SETTING_GROUP_ORDER).toEqual(["annotation", "viewer", "input", "joint", "outliner"]);
+    expect(VIEW_SETTING_GROUP_ORDER).toEqual(["annotation", "viewer", "input", "joint"]);
     expect(VIEW_SETTING_ORDER.map((key) => VIEW_SETTING_SPECS[key].group)).toEqual([
-      "annotation", "annotation", "viewer", "viewer", "input", "input", "joint", "joint", "outliner", "outliner",
+      "annotation", "annotation", "viewer", "viewer", "input", "input", "joint", "joint",
     ]);
     for (const key of VIEW_SETTING_ORDER) {
       expect(DEFAULT_VIEW_SETTINGS[key]).toBe(VIEW_SETTING_SPECS[key].defaultValue);
@@ -32,6 +32,8 @@ describe("view setting definitions", () => {
   it("recognizes keys and clamps only to the declared range", () => {
     expect(isViewSettingKey("strokeWidth")).toBe(true);
     expect(isViewSettingKey("foo")).toBe(false);
+    expect(isViewSettingKey("outlinerRowHeightRem")).toBe(false);
+    expect(isViewSettingKey("outlinerIndentPx")).toBe(false);
     expect(isViewSettingKey(1)).toBe(false);
     expect(clampViewSetting("strokeWidth", 100)).toBe(8);
     expect(clampViewSetting("strokeWidth", 0)).toBe(1);
@@ -46,14 +48,13 @@ describe("view setting definitions", () => {
       viewer: "hud",
       input: "dialog",
       joint: "hud",
-      outliner: "hud",
     });
-    expect(HUD_VIEW_SETTING_GROUP_ORDER).toEqual(["annotation", "viewer", "joint", "outliner"]);
+    expect(HUD_VIEW_SETTING_GROUP_ORDER).toEqual(["annotation", "viewer", "joint"]);
     expect(DIALOG_VIEW_SETTING_GROUP_ORDER).toEqual(["input"]);
     expect(viewSettingKeysInGroup("viewer")).toEqual(["selectionOpacity", "wireframeOverlayOpacity"]);
     expect(viewSettingKeysOnSurface("hud")).toEqual([
       "strokeWidth", "overlayOpacityRatio", "selectionOpacity", "wireframeOverlayOpacity",
-      "jointRadiusScale", "jointPickRadiusPx", "outlinerRowHeightRem", "outlinerIndentPx",
+      "jointRadiusScale", "jointPickRadiusPx",
     ]);
     expect(viewSettingKeysOnSurface("dialog")).toEqual(["dollySensitivity", "lightRotateSensitivity"]);
     const allSurfaceKeys = [...viewSettingKeysOnSurface("hud"), ...viewSettingKeysOnSurface("dialog")];

@@ -114,7 +114,6 @@ describe("view setting labels", () => {
     for (const key of VIEW_SETTING_ORDER) expect(VIEW_SETTING_LABELS[key]).not.toBe("");
     for (const group of VIEW_SETTING_GROUP_ORDER) expect(VIEW_SETTING_GROUP_LABELS[group]).not.toBe("");
     expect(formatViewSetting("strokeWidth", 3)).toBe("3px");
-    expect(formatViewSetting("outlinerRowHeightRem", 1.75)).toBe("1.75rem");
     expect(formatViewSetting("overlayOpacityRatio", 0.35)).toBe("35%");
     expect(formatViewSetting("dollySensitivity", 1)).toBe("×1.00");
   });
