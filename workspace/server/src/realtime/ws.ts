@@ -64,7 +64,7 @@ export function attachRealtime(server: Server, hub: RoomHub, options: RealtimeOp
   const sockets = new Map<string, SocketConnection>();
   const wss = new WebSocketServer({ server, path: "/ws", maxPayload: MAX_WS_PAYLOAD_BYTES });
   const heartbeatIntervalMs = options.heartbeatIntervalMs ?? DEFAULT_WS_HEARTBEAT_INTERVAL_MS;
-  const heartbeatTimer = heartbeatIntervalMs > 0
+  const heartbeatTimer = heartbeatIntervalMs >= 1
     ? setInterval(() => {
       for (const connection of sockets.values()) {
         if (!connection.isAlive) {

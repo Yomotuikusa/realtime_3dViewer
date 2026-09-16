@@ -60,4 +60,14 @@ describe("WebSocket heartbeat", () => {
     expect(client.ws.readyState).toBe(WebSocket.OPEN);
     expect(fixture.hub.connectionsIn("p1")).toEqual([client.id]);
   });
+
+  it("does not create a heartbeat timer for intervals below one millisecond", async () => {
+    const fixture = await startRealtime({ heartbeatIntervalMs: 0.5 });
+    fixtures.push(fixture);
+    const client = await join(fixture, "p1", "A", { autoPong: false });
+
+    await waitMs(300);
+    expect(client.ws.readyState).toBe(WebSocket.OPEN);
+    expect(fixture.hub.connectionsIn("p1")).toEqual([client.id]);
+  });
 });
