@@ -50,6 +50,21 @@ describe("joint pick", () => {
     expect(pickJoint(camera(), { x: 0, y: 0 }, viewport, { outside: outside.root })).toBeNull();
   });
 
+  it("uses the requested pixel radius while keeping the default", () => {
+    const thirteenPixelsAway = sceneAt(0.27);
+    expect(pickJoint(camera(), { x: 0, y: 0 }, viewport, {
+      defaultRadius: thirteenPixelsAway.root,
+    })).toBeNull();
+    expect(pickJoint(camera(), { x: 0, y: 0 }, viewport, {
+      customRadius: thirteenPixelsAway.root,
+    }, 20)).toEqual({ versionId: "customRadius", bone: thirteenPixelsAway.bone });
+
+    const fivePixelsAway = sceneAt(0.11);
+    expect(pickJoint(camera(), { x: 0, y: 0 }, viewport, {
+      customRadius: fivePixelsAway.root,
+    }, 4)).toBeNull();
+  });
+
   it("keeps the first scene when distances are equal and follows matrixWorld", () => {
     const first = sceneAt(0.1);
     const second = sceneAt(0.1);

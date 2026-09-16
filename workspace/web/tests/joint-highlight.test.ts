@@ -27,8 +27,8 @@ describe("joint highlight", () => {
     root.add(body);
     const bone = new Bone();
     root.add(bone);
-    const radius = jointRadius(root);
-    const marker = addSelectedJointMarker(root, bone, SELECTED_JOINT_COLOR);
+    const radius = jointRadius(root, 2);
+    const marker = addSelectedJointMarker(root, bone, SELECTED_JOINT_COLOR, 2);
     const material = marker.material as MeshBasicMaterial;
 
     expect(root.children).toContain(marker);

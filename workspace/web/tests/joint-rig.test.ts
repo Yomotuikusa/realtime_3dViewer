@@ -17,6 +17,7 @@ describe("joint rig", () => {
     const source = readSource("features/joint/JointRig.tsx");
     expect(source).toContain("export function JointRig(): null");
     expect(source).toContain("useDisplayStore(");
+    expect(source).toContain('selectViewSetting("jointRadiusScale")');
     expect(source).toContain("useModelScenesStore(");
     expect(source).toContain("useFrame(");
     expect(source).toContain("addJointOverlay(");
@@ -25,7 +26,7 @@ describe("joint rig", () => {
     expect(source).toContain("updateJointOverlay(");
     expect(source).not.toContain("send");
     expect(source).not.toContain("props");
-    expect(source).toContain("}, [scenes, jointDisplay.visible, jointColor, linkColor]);");
+    expect(source).toContain("}, [scenes, jointDisplay.visible, jointColor, linkColor, radiusScale]);");
     expect(source).toContain("}, [scenes, jointDisplay.visible, jointDisplay.xray]);");
   });
 
