@@ -1,3 +1,8 @@
+/// <reference types="node" />
+
+import { readFileSync } from "node:fs";
+import { fileURLToPath } from "node:url";
+import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { CreateCommentInput } from "@shared/api";
 import { cameraEquals } from "@shared/camera";
@@ -13,6 +18,11 @@ import {
 
 const camera: CameraState = { position: [1, 2, 3], target: [0, 0, 0] };
 const anchor: Vec3 = [4, 5, 6];
+const srcUrl = new URL("../src", import.meta.url);
+const srcDir = srcUrl.protocol === "file:"
+  ? fileURLToPath(srcUrl)
+  : join(process.cwd(), "web/src");
+const composeSource = readFileSync(join(srcDir, "features/comments/compose.ts"), "utf8");
 
 function stroke(id: string, userId: string, createdAt: number): Stroke {
   return { id, userId, color: "#ff0000", points: [[0, 0, 0], [1, 1, 1]], createdAt };
@@ -68,6 +78,10 @@ describe("comment composition", () => {
       Object.values(strokes).slice(0, MAX_COMMENT_STROKES).map((item) => [item.id, item]),
     );
     expect(ownStrokesForComment(atLimit, "u1")).toEqual(Object.values(atLimit));
+  });
+
+  it("does not hard-code the shared stroke limit", () => {
+    expect(composeSource).not.toMatch(/\b200\b/);
   });
 
   it("trims the body and preserves the requested metadata", () => {
