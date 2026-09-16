@@ -4,7 +4,8 @@ import {
   type ViewSettingKey,
 } from "./view-settings";
 
-export const VIEW_SETTINGS_TITLE = "表示と操作";
+/** 設定ダイアログ第 3 タブの名前。表示系は HUD に移したため操作だけを指す。 */
+export const VIEW_SETTINGS_TITLE = "操作";
 export const VIEW_SETTINGS_HELP = "この端末だけに保存され、他の参加者の見え方は変わりません。";
 export const VIEW_SETTING_GROUP_LABELS: Readonly<Record<ViewSettingGroup, string>> = {
   annotation: "注釈",

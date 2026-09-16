@@ -2,9 +2,10 @@ import { useId, type ReactElement } from "react";
 import { useViewSettingsStore } from "../../store/view-settings";
 import {
   DEFAULT_VIEW_SETTINGS,
-  VIEW_SETTING_GROUP_ORDER,
-  VIEW_SETTING_ORDER,
+  DIALOG_VIEW_SETTING_GROUP_ORDER,
   VIEW_SETTING_SPECS,
+  viewSettingKeysInGroup,
+  viewSettingKeysOnSurface,
 } from "./view-settings";
 import {
   RESET_VIEW_SETTING_LABEL,
@@ -19,15 +20,16 @@ import "./view-settings.css";
 export function ViewSettings(): ReactElement {
   const baseId = useId();
   const settings = useViewSettingsStore((state) => state.settings);
-  const changedCount = VIEW_SETTING_ORDER.filter((key) => settings[key] !== DEFAULT_VIEW_SETTINGS[key]).length;
+  const dialogKeys = viewSettingKeysOnSurface("dialog");
+  const changedCount = dialogKeys.filter((key) => settings[key] !== DEFAULT_VIEW_SETTINGS[key]).length;
 
   return (
     <div className="view-settings">
       <p className="review-dialog__help">{VIEW_SETTINGS_HELP}</p>
-      {VIEW_SETTING_GROUP_ORDER.map((group) => (
+      {DIALOG_VIEW_SETTING_GROUP_ORDER.map((group) => (
         <fieldset className="view-settings__group" key={group}>
           <legend>{VIEW_SETTING_GROUP_LABELS[group]}</legend>
-          {VIEW_SETTING_ORDER.filter((key) => VIEW_SETTING_SPECS[key].group === group).map((key) => {
+          {viewSettingKeysInGroup(group).map((key) => {
             const spec = VIEW_SETTING_SPECS[key];
             const value = settings[key];
             const changed = value !== DEFAULT_VIEW_SETTINGS[key];
@@ -65,7 +67,7 @@ export function ViewSettings(): ReactElement {
           className="btn btn--quiet"
           type="button"
           disabled={changedCount === 0}
-          onClick={() => useViewSettingsStore.getState().resetAll()}
+          onClick={() => dialogKeys.forEach((key) => useViewSettingsStore.getState().resetSetting(key))}
         >
           {RESET_VIEW_SETTINGS_LABEL}
         </button>

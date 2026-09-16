@@ -1,11 +1,16 @@
 import { describe, expect, it } from "vitest";
 import {
   DEFAULT_VIEW_SETTINGS,
+  DIALOG_VIEW_SETTING_GROUP_ORDER,
+  HUD_VIEW_SETTING_GROUP_ORDER,
+  VIEW_SETTING_GROUP_SURFACE,
   VIEW_SETTING_GROUP_ORDER,
   VIEW_SETTING_ORDER,
   VIEW_SETTING_SPECS,
   clampViewSetting,
   isViewSettingKey,
+  viewSettingKeysInGroup,
+  viewSettingKeysOnSurface,
 } from "../src/features/view-settings/view-settings";
 import { BASE_LINE_WIDTH, OVERLAY_OPACITY_RATIO } from "../src/features/annotation/stroke-overlay";
 
@@ -33,5 +38,26 @@ describe("view setting definitions", () => {
     expect(clampViewSetting("strokeWidth", Number.NaN)).toBe(3);
     expect(clampViewSetting("strokeWidth", Number.POSITIVE_INFINITY)).toBe(3);
     expect(clampViewSetting("strokeWidth", 2.3)).toBe(2.3);
+  });
+
+  it("classifies and orders settings by their display surface", () => {
+    expect(VIEW_SETTING_GROUP_SURFACE).toEqual({
+      annotation: "hud",
+      viewer: "hud",
+      input: "dialog",
+      joint: "hud",
+      outliner: "hud",
+    });
+    expect(HUD_VIEW_SETTING_GROUP_ORDER).toEqual(["annotation", "viewer", "joint", "outliner"]);
+    expect(DIALOG_VIEW_SETTING_GROUP_ORDER).toEqual(["input"]);
+    expect(viewSettingKeysInGroup("viewer")).toEqual(["selectionOpacity", "wireframeOverlayOpacity"]);
+    expect(viewSettingKeysOnSurface("hud")).toEqual([
+      "strokeWidth", "overlayOpacityRatio", "selectionOpacity", "wireframeOverlayOpacity",
+      "jointRadiusScale", "jointPickRadiusPx", "outlinerRowHeightRem", "outlinerIndentPx",
+    ]);
+    expect(viewSettingKeysOnSurface("dialog")).toEqual(["dollySensitivity", "lightRotateSensitivity"]);
+    const allSurfaceKeys = [...viewSettingKeysOnSurface("hud"), ...viewSettingKeysOnSurface("dialog")];
+    expect(allSurfaceKeys).toHaveLength(VIEW_SETTING_ORDER.length);
+    expect(new Set(allSurfaceKeys)).toEqual(new Set(VIEW_SETTING_ORDER));
   });
 });
