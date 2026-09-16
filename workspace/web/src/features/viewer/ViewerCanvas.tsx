@@ -8,6 +8,7 @@ import { isObjectVisible, primaryObjectId, useObjectsStore } from "../../store/o
 import { useDisplayStore } from "../../store/display";
 import { selectViewerColor, useThemeStore } from "../../store/theme";
 import { CameraRig } from "./CameraRig";
+import { ClipPlanesRig } from "./ClipPlanesRig";
 import { DEFAULT_FOV } from "./focal-length";
 import { FocalLengthRig } from "./FocalLengthRig";
 import { ModelMesh } from "./ModelMesh";
@@ -35,6 +36,7 @@ export function ViewerCanvas({ children }: { children?: ReactNode }): ReactEleme
       <color attach="background" args={[background]} />
       <SceneLights />
       <FocalLengthRig />
+      <ClipPlanesRig />
       <Bounds fit={false} clip>
         <CameraRig />
         <group ref={registerModelTarget}>
