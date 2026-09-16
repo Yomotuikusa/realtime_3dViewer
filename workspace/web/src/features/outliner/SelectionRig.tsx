@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import { selectModelScene, useModelScenesStore } from "../compare/model-scenes";
 import { hexToNumber } from "../theme/viewer-colors";
 import { selectViewerColor, useThemeStore } from "../../store/theme";
+import { selectViewSetting, useViewSettingsStore } from "../../store/view-settings";
 import { applySelectionHighlight, clearSelectionHighlight } from "./selection-highlight";
 import { useSelectionStore } from "./selection";
 
@@ -11,14 +12,18 @@ export function SelectionRig(): null {
   const scenes = useModelScenesStore((state) => state.scenes);
   const scene = selectModelScene(scenes, selected?.versionId ?? null);
   const color = useThemeStore(selectViewerColor("selection"));
+  const opacity = useViewSettingsStore(selectViewSetting("selectionOpacity"));
 
   useEffect(() => {
     if (scene === null || selected === null) return;
     const target = scene.getObjectByProperty("uuid", selected.objectId);
     if (target === undefined) return;
-    applySelectionHighlight(target, hexToNumber(color));
+    // The optional opacity preserves the previous two-argument call shape.
+    // applySelectionHighlight(target, hexToNumber(color));
+    applySelectionHighlight(target, hexToNumber(color), opacity);
     return () => clearSelectionHighlight(scene);
-  }, [scene, selected, color]);
+    // Opacity is added to the previous effect dependency set: }, [scene, selected, color]);
+  }, [scene, selected, color, opacity]);
 
   return null;
 }

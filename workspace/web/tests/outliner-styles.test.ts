@@ -11,6 +11,7 @@ import {
   OUTLINER_KIND_ICONS,
 } from "../src/features/outliner/outliner-icons";
 import type { OutlinerNodeKind } from "../src/features/outliner/outliner-tree";
+import { DEFAULT_VIEW_SETTINGS } from "../src/features/view-settings/view-settings";
 
 const sourceRoot = existsSync(join(process.cwd(), "web", "src")) ? join(process.cwd(), "web", "src") : join(process.cwd(), "src");
 const cssText = readFileSync(join(sourceRoot, "features/outliner/outliner.css"), "utf8");
@@ -53,6 +54,10 @@ describe("outliner styles and source contracts", () => {
   it("keeps the required CSS state rules", () => {
     expect(ruleBody(cssText, '.outliner__select[aria-pressed="true"]')).toContain("var(--color-accent-subtle)");
     expect(ruleBody(cssText, ".outliner__row")).toContain("var(--outliner-depth, 0)");
+    expect(ruleBody(cssText, ".outliner__row")).toContain("var(--outliner-row-height, 1.75rem)");
+    expect(ruleBody(cssText, ".outliner__row")).toContain("var(--outliner-indent, 16px)");
+    expect(cssText).toContain(`${DEFAULT_VIEW_SETTINGS.outlinerRowHeightRem}rem`);
+    expect(cssText).toContain(`${DEFAULT_VIEW_SETTINGS.outlinerIndentPx}px`);
     expect(ruleBody(cssText, '.outliner__expand[aria-expanded="true"] .outliner__chevron')).toContain("rotate(90deg)");
     expect(ruleBody(cssText, '.outliner__item[data-hidden="true"] > .outliner__row')).not.toBeNull();
     expect(ruleBody(cssText, ".outliner__head")).toContain("justify-content: space-between");
@@ -69,6 +74,10 @@ describe("outliner styles and source contracts", () => {
     expect(outlinerText).toContain('role="tree"');
     expect(outlinerText).toContain("useModelScenesStore");
     expect(outlinerText).toContain("useSelectionStore");
+    expect(outlinerText).toContain('selectViewSetting("outlinerRowHeightRem")');
+    expect(outlinerText).toContain('selectViewSetting("outlinerIndentPx")');
+    expect(outlinerText).toContain('"--outliner-row-height"');
+    expect(outlinerText).toContain('"--outliner-indent"');
     expect(outlinerText).toContain("buildOutlinerTree(");
     expect(outlinerText).toContain("toggleId(");
     expect(outlinerText).toContain("versionTag(");
