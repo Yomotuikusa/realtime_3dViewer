@@ -51,13 +51,19 @@ describe("outliner styles and source contracts", () => {
   });
 
   it("keeps the required CSS state rules", () => {
+    expect(ruleBody(cssText, ".outliner")).toContain("--outliner-kind-width: 5rem");
+    expect(ruleBody(cssText, ".outliner__head-kind")).toContain("var(--outliner-kind-width)");
+    expect(ruleBody(cssText, ".outliner__kind")).toContain("var(--outliner-kind-width)");
+    expect(ruleBody(cssText, ".outliner__kind")).not.toContain("margin-left: auto");
+    expect(ruleBody(cssText, ".outliner__name")).toContain("flex: 1 1 auto");
+    expect(ruleBody(cssText, ".outliner__eye")).toContain("margin-right: var(--space-1)");
+    expect(ruleBody(cssText, ".outliner__head-indent")).toContain("1.25rem");
     expect(ruleBody(cssText, '.outliner__select[aria-pressed="true"]')).toContain("var(--color-accent-subtle)");
     expect(ruleBody(cssText, ".outliner__row")).toContain("var(--outliner-depth, 0)");
     expect(ruleBody(cssText, ".outliner__row")).toContain("min-height: 1.75rem");
     expect(ruleBody(cssText, ".outliner__row")).toContain("calc(var(--outliner-depth, 0) * 16px)");
     expect(ruleBody(cssText, '.outliner__expand[aria-expanded="true"] .outliner__chevron')).toContain("rotate(90deg)");
     expect(ruleBody(cssText, '.outliner__item[data-hidden="true"] > .outliner__row')).not.toBeNull();
-    expect(ruleBody(cssText, ".outliner__head")).toContain("justify-content: flex-end");
     expect(ruleBody(cssText, ".outliner__visible")).toContain("accent-color: var(--color-accent)");
     expect(ruleBody(cssText, ".outliner__visible[disabled]")).not.toBeNull();
     expect(iconText).toContain("CUBE_OUTLINE");
@@ -87,6 +93,9 @@ describe("outliner styles and source contracts", () => {
     expect(outlinerText).toContain("isObjectPartVisible(");
     expect(outlinerText).toContain("<EyeIcon");
     expect(outlinerText).toContain("OUTLINER_VISIBILITY_HEADING");
+    expect(outlinerText).toContain("OUTLINER_NAME_HEADING");
+    expect(outlinerText).toContain("OUTLINER_KIND_HEADING");
+    expect(outlinerText).not.toContain('role="columnheader"');
     expect(outlinerText).toContain("ClientMessage");
     expect(outlinerText).not.toContain("hidden={");
     expect(outlinerText).toContain('import "./outliner.css"');

@@ -14,11 +14,11 @@
 - SelectionPickLayer.tsx: annotation が通常モードのとき、Canvas の左クリックをジョイント優先の選択、版全体の選択、または空クリックの解除へ結び付ける描画なし部品。ジョイント選択には view-settings の `jointPickRadiusPx` を渡す
 - selection-highlight.ts: 表示色設定由来の選択色と表示設定の不透明度(既定 0.6)で、メッシュの選択対象と子孫へ重ね描きを付け外しする純粋関数を提供する。線・点の重ね描きは従来どおり
 - SelectionRig.tsx: 選択ストア・scene レジストリ・theme ストア・view-settings ストアを購読し、選択重ね描きを管理する Canvas 用 Rig
-- outliner-labels.ts: 見出し、表示列、状態、種別、名前、展開操作の表示文言を提供する
+- outliner-labels.ts: 見出し、名前列、タイプ列、表示列、状態、種別、名前、展開操作の表示文言を提供する
 - outliner-icons.tsx: 7 種別のインライン SVG アイコン、表示列の瞳、展開用山形を提供する
 - OutlinerRow.tsx: 1 行と再帰的なノード枝を treeitem/group として描画し、行ごとの表示チェックボックスを提供する
-- Outliner.tsx: objects / model-scenes / selection ストアを購読し、見出しはドックバーへ委譲したうえで版と scene 木を描画する。`send` で `object:visibility` と `object:part-visibility` を共有する
-- outliner.css: アウトライナのレイアウト、目アイコンの右寄せ、インデント、展開、選択、非表示状態、表示列とチェックボックスを定義する。行高は `1.75rem`、字下げ 1 段は `16px` の固定値とする
+- Outliner.tsx: objects / model-scenes / selection ストアを購読し、ドックバーへ委譲したタイトルとは別に名前 / タイプ / 表示の列見出しを描画して版と scene 木を描画する。`send` で `object:visibility` と `object:part-visibility` を共有する
+- outliner.css: アウトライナのレイアウト、名前 / タイプ / 表示の列見出し、インデント、展開、選択、非表示状態、表示列とチェックボックスを定義する。`--outliner-kind-width: 5rem` を見出しと行のタイプ列で共有し、行高は `1.75rem`、字下げ 1 段は `16px` の固定値とする
 
 ## 公開インターフェイス
 
@@ -30,7 +30,7 @@
 - SelectionRig.tsx: `SelectionRig`
 - visibility.ts: `applyPartVisibility`
 - VisibilityRig.tsx: `VisibilityRig`
-- outliner-labels.ts: アウトライナ文言定数、`KIND_LABELS`、`nodeLabel`、`expandAriaLabel`、`visibilityAriaLabel`
+- outliner-labels.ts: アウトライナ文言定数(`OUTLINER_NAME_HEADING` / `OUTLINER_KIND_HEADING` を含む)、`KIND_LABELS`、`nodeLabel`、`expandAriaLabel`、`visibilityAriaLabel`
 - outliner-icons.tsx: `OUTLINER_ICON_VIEW_BOX`、各種アイコン、`EyeIcon`、`OUTLINER_KIND_ICONS`、`OutlinerKindIcon`
 - OutlinerRow.tsx: `OutlinerRowProps`、`OutlinerRow`、`OutlinerBranchProps`、`OutlinerBranch`
 - Outliner.tsx: `Outliner`
