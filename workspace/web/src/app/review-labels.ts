@@ -1,5 +1,8 @@
 import type { ConnectionStatus } from "../store/session";
 
+/** ヘッダのドック開閉ボタン。aria-label は開閉状態によらず同じ。 */
+export const OUTLINER_TOGGLE_LABEL = "アウトライナドックの表示";
+export const PANEL_TOGGLE_LABEL = "サイドパネルの表示";
 /** ヘッダの設定ボタン。 */
 export const SETTINGS_OPEN_LABEL = "設定";
 /** ダイアログのフッタ。 */

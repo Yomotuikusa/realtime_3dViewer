@@ -28,6 +28,7 @@ import { useLightBrightnessBroadcast } from "../features/viewer/useLightBrightne
 import { useShortcuts } from "../features/shortcuts/useShortcuts";
 import { ResizeHandle } from "../features/layout/ResizeHandle";
 import { useElementSize } from "../features/layout/useElementSize";
+import { useLayoutFlag } from "../features/layout/useLayoutFlag";
 import { useLayoutSize } from "../features/layout/useLayoutSize";
 import {
   clampSize,
@@ -79,9 +80,11 @@ export function ReviewPage({ projectId }: { projectId: string }): ReactElement {
   const bodySize = useElementSize(bodyRef);
   const [panelWidth, setPanelWidth] = useLayoutSize("panelWidth");
   const [outlinerWidth, setOutlinerWidth] = useLayoutSize("outlinerWidth");
-  const maxPanelWidth = panelWidthMax(bodySize.width, OUTLINER_WIDTH_MIN_PX);
+  const [outlinerOpen, setOutlinerOpen] = useLayoutFlag("outlinerOpen");
+  const [panelOpen, setPanelOpen] = useLayoutFlag("panelOpen");
+  const maxPanelWidth = panelWidthMax(bodySize.width, outlinerOpen ? OUTLINER_WIDTH_MIN_PX : 0);
   const effectivePanelWidth = clampSize(panelWidth, PANEL_WIDTH_MIN_PX, maxPanelWidth);
-  const maxOutlinerWidth = outlinerWidthMax(bodySize.width, effectivePanelWidth);
+  const maxOutlinerWidth = outlinerWidthMax(bodySize.width, panelOpen ? effectivePanelWidth : 0);
   const effectiveOutlinerWidth = clampSize(
     outlinerWidth,
     OUTLINER_WIDTH_MIN_PX,
@@ -156,30 +159,38 @@ export function ReviewPage({ projectId }: { projectId: string }): ReactElement {
         projectName={state.project.name}
         joined={joinName !== null}
         onOpenSettings={() => setSettingsOpen(true)}
+        outlinerOpen={outlinerOpen}
+        panelOpen={panelOpen}
+        onToggleOutliner={() => setOutlinerOpen(!outlinerOpen)}
+        onTogglePanel={() => setPanelOpen(!panelOpen)}
       />
       {lastError && <p className="alert review-page__alert" role="alert">{lastError}</p>}
       <div
         ref={bodyRef}
         className="review-body"
         style={{
-          "--outliner-width": effectiveOutlinerWidth + "px",
-          "--panel-width": effectivePanelWidth + "px",
+          "--outliner-width": outlinerOpen ? effectiveOutlinerWidth + "px" : "0px",
+          "--panel-width": panelOpen ? effectivePanelWidth + "px" : "0px",
         } as CSSProperties}
       >
-        <aside className="review-outliner" aria-label="アウトライナドック">
-          <Outliner send={realtime.send} />
-        </aside>
-        <ResizeHandle
-          axis="x"
-          side="start"
-          className="review-body__resize review-body__resize--outliner"
-          value={effectiveOutlinerWidth}
-          min={OUTLINER_WIDTH_MIN_PX}
-          max={maxOutlinerWidth}
-          defaultValue={OUTLINER_WIDTH_DEFAULT_PX}
-          label={OUTLINER_RESIZE_LABEL}
-          onChange={setOutlinerWidth}
-        />
+        {outlinerOpen && (
+          <aside className="review-outliner" aria-label="アウトライナドック">
+            <Outliner send={realtime.send} />
+          </aside>
+        )}
+        {outlinerOpen && (
+          <ResizeHandle
+            axis="x"
+            side="start"
+            className="review-body__resize review-body__resize--outliner"
+            value={effectiveOutlinerWidth}
+            min={OUTLINER_WIDTH_MIN_PX}
+            max={maxOutlinerWidth}
+            defaultValue={OUTLINER_WIDTH_DEFAULT_PX}
+            label={OUTLINER_RESIZE_LABEL}
+            onChange={setOutlinerWidth}
+          />
+        )}
         <section className="review-viewer" aria-label="3D ビューア">
           <div className="review-stage">
             <div className="review-hud">
@@ -215,26 +226,30 @@ export function ReviewPage({ projectId }: { projectId: string }): ReactElement {
           {joinName === null && <JoinDialog onJoin={handleJoin} />}
           {settingsOpen && <SettingsDialog onClose={() => setSettingsOpen(false)} />}
         </section>
-        <ResizeHandle
-          axis="x"
-          className="review-body__resize"
-          value={effectivePanelWidth}
-          min={PANEL_WIDTH_MIN_PX}
-          max={maxPanelWidth}
-          defaultValue={PANEL_WIDTH_DEFAULT_PX}
-          label={PANEL_RESIZE_LABEL}
-          onChange={setPanelWidth}
-        />
-        <aside className="review-panel" aria-label="サイドパネル">
-          <PresenceList />
-          <ObjectList projectId={projectId} send={realtime.send} />
-          <section className="review-panel__comments" aria-label="コメント">
-            {composerVersionId === null
-              ? <p className="comments__empty" role="status">{COMPOSER_NO_OBJECTS_MESSAGE}</p>
-              : <CommentComposer projectId={projectId} versionId={composerVersionId} />}
-            <CommentList projectId={projectId} />
-          </section>
-        </aside>
+        {panelOpen && (
+          <ResizeHandle
+            axis="x"
+            className="review-body__resize"
+            value={effectivePanelWidth}
+            min={PANEL_WIDTH_MIN_PX}
+            max={maxPanelWidth}
+            defaultValue={PANEL_WIDTH_DEFAULT_PX}
+            label={PANEL_RESIZE_LABEL}
+            onChange={setPanelWidth}
+          />
+        )}
+        {panelOpen && (
+          <aside className="review-panel" aria-label="サイドパネル">
+            <PresenceList />
+            <ObjectList projectId={projectId} send={realtime.send} />
+            <section className="review-panel__comments" aria-label="コメント">
+              {composerVersionId === null
+                ? <p className="comments__empty" role="status">{COMPOSER_NO_OBJECTS_MESSAGE}</p>
+                : <CommentComposer projectId={projectId} versionId={composerVersionId} />}
+              <CommentList projectId={projectId} />
+            </section>
+          </aside>
+        )}
       </div>
     </main>
   );

@@ -1,5 +1,12 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { loadLayoutSize, LAYOUT_STORAGE_KEY, saveLayoutSize } from "../src/features/layout/layout-storage";
+import {
+  LAYOUT_FLAG_DEFAULTS,
+  loadLayoutFlag,
+  loadLayoutSize,
+  LAYOUT_STORAGE_KEY,
+  saveLayoutFlag,
+  saveLayoutSize,
+} from "../src/features/layout/layout-storage";
 
 describe("layout storage", () => {
   beforeEach(() => localStorage.clear());
@@ -48,5 +55,40 @@ describe("layout storage", () => {
     });
     expect(() => saveLayoutSize("panelWidth", 500)).not.toThrow();
     setItem.mockRestore();
+  });
+
+  it("returns null for missing, invalid, or malformed flags", () => {
+    expect(loadLayoutFlag("outlinerOpen")).toBeNull();
+    for (const value of ["{", '{"outlinerOpen":"no"}', '{"outlinerOpen":null}', '{"outlinerOpen":1}']) {
+      localStorage.setItem(LAYOUT_STORAGE_KEY, value);
+      expect(loadLayoutFlag("outlinerOpen")).toBeNull();
+    }
+  });
+
+  it("loads saved boolean flags independently", () => {
+    localStorage.setItem(LAYOUT_STORAGE_KEY, '{"outlinerOpen":false}');
+    expect(loadLayoutFlag("outlinerOpen")).toBe(false);
+    expect(loadLayoutFlag("panelOpen")).toBeNull();
+  });
+
+  it("preserves saved sizes when saving flags", () => {
+    saveLayoutFlag("outlinerOpen", false);
+    saveLayoutSize("panelWidth", 400);
+    expect(JSON.parse(localStorage.getItem(LAYOUT_STORAGE_KEY) ?? "null")).toEqual({
+      outlinerOpen: false,
+      panelWidth: 400,
+    });
+  });
+
+  it("tolerates storage exceptions when saving flags", () => {
+    const setItem = vi.spyOn(Storage.prototype, "setItem").mockImplementation(() => {
+      throw new Error("blocked");
+    });
+    expect(() => saveLayoutFlag("outlinerOpen", false)).not.toThrow();
+    setItem.mockRestore();
+  });
+
+  it("uses open defaults for both flags", () => {
+    expect(LAYOUT_FLAG_DEFAULTS).toEqual({ outlinerOpen: true, panelOpen: true });
   });
 });
