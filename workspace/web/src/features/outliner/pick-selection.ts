@@ -1,5 +1,5 @@
 import { Vector2, type Camera, type Object3D, type Raycaster } from "three";
-import { isVisibleInScene, type Ndc } from "../viewer/pick";
+import { invalidateSkinnedBounds, isVisibleInScene, type Ndc } from "../viewer/pick";
 import { isViewerOverlay } from "../viewer/mesh-display";
 import type { OutlinerSelection } from "./selection";
 
@@ -28,6 +28,7 @@ export function pickSelection(
 ): OutlinerSelection | null {
   if (target === null) return null;
 
+  invalidateSkinnedBounds(target);
   raycaster.setFromCamera(new Vector2(ndc.x, ndc.y), camera);
   const intersection = raycaster.intersectObject(target, true)
     .find((hit) => isVisibleInScene(hit.object) && !isViewerOverlay(hit.object));

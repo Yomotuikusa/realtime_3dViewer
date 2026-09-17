@@ -18,6 +18,7 @@ import { attachViewerPointer, type ViewerControlsLike } from "./viewer-pointer";
 import { rotationLocked } from "./view-presets";
 import { fitCamera } from "./fit-camera";
 import { getModelTarget } from "./model-target";
+import { invalidateSkinnedBounds } from "./pick";
 import type { Camera } from "three";
 import { DOLLY_SPEED } from "./camera-input";
 import { useViewSettingsStore } from "../../store/view-settings";
@@ -79,7 +80,9 @@ export function CameraRig(): ReactElement {
       return;
     }
     lastFitSeq.current = fitSeq;
-    const size = bounds.refresh(getModelTarget() ?? undefined).clip().getSize();
+    const target = getModelTarget();
+    invalidateSkinnedBounds(target);
+    const size = bounds.refresh(target ?? undefined).clip().getSize();
     useCameraStore.getState().requestCamera(
       fitCamera([size.center.x, size.center.y, size.center.z], size.distance),
     );

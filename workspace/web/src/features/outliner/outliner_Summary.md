@@ -10,7 +10,7 @@
 - visibility.ts: scene ルートを除く重ね描きでないオブジェクトへ、共有された非表示 path を再帰的に適用する
 - VisibilityRig.tsx: objects ストアの `hiddenParts` と model-scenes ストアを購読し、版ごとの scene へ部位表示状態を同期する Canvas 用 Rig
 - selection.ts: 選択中の版と Object3D uuid を保持する Zustand ストアと選択判定を提供する
-- pick-selection.ts: 3D ビューのレイキャスト交点から、登録済み scene の版全体に対応する選択を解決する純粋関数を提供する
+- pick-selection.ts: 3D ビューのレイキャスト交点から、登録済み scene の版全体に対応する選択を解決する純粋関数を提供する。レイキャスト直前に配下の SkinnedMesh の boundingBox / boundingSphere を無効化する
 - SelectionPickLayer.tsx: annotation が通常モードのとき、Canvas の左クリックをジョイント優先の選択、版全体の選択、または空クリックの解除へ結び付ける描画なし部品。ジョイント選択には view-settings の `jointPickRadiusPx` を渡す
 - selection-highlight.ts: 表示色設定由来の選択色と表示設定の不透明度(既定 0.6)で、メッシュの選択対象と子孫へ重ね描きを付け外しする純粋関数を提供する。線・点の重ね描きは従来どおり
 - SelectionRig.tsx: 選択ストア・scene レジストリ・theme ストア・view-settings ストアを購読し、選択重ね描きを管理する Canvas 用 Rig
@@ -24,7 +24,7 @@
 
 - outliner-tree.ts: `OutlinerNodeKind`、`OutlinerNode`、`classifyObject`、`buildOutlinerTree`、`plainChildren`、`childPath`、`objectAtPath`、`toggleId`
 - selection.ts: `OutlinerSelection`、`SelectionStoreState`、`useSelectionStore`、`isSelected`。`select` は同じ選択の再設定で state を更新しない
-- pick-selection.ts: `versionOfObject`、`pickSelection`
+- pick-selection.ts: `versionOfObject`、`pickSelection`。viewer の `invalidateSkinnedBounds` を使い、アニメーション中のスキンメッシュも選択できるようにする
 - SelectionPickLayer.tsx: `SelectionPickLayer`。ジョイント選択半径は view-settings の `jointPickRadiusPx` を使用する
 - selection-highlight.ts: `SELECTION_OVERLAY_KEY`、`SELECTION_COLOR`、`SELECTION_MESH_OPACITY`、`isSelectionOverlay`、`createSelectionOverlay(object, color, opacity?)`、`applySelectionHighlight(target, color, opacity?)`、`clearSelectionHighlight`
 - SelectionRig.tsx: `SelectionRig`
