@@ -58,6 +58,7 @@ const tokenNames = [
   "--shadow-card",
   "--focus-ring-color",
   "--duration-fast",
+  "--duration-medium",
   "--panel-width",
   "--outliner-width",
   "--header-height",

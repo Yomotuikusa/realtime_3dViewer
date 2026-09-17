@@ -11,6 +11,7 @@
 - useLayoutSize.ts: 保存済み寸法を初期値にする React state hook
 - useLayoutFlag.ts: 保存済み開閉フラグを初期値にする React state hook
 - useElementSize.ts: ResizeObserver または初回の DOM 測定で要素サイズを追従する hook
+- useDockAnimation.ts: ドック開閉直後だけ列幅の CSS transition を有効にする hook
 - ResizeHandle.tsx: pointer capture、ダブルクリック、キーボード操作を扱う separator 要素
 - layout.css: ハンドルの共通配置寸法、カーソル、状態表示
 
@@ -21,6 +22,7 @@
 - useLayoutSize.ts: `useLayoutSize(name)`
 - useLayoutFlag.ts: `useLayoutFlag(name)`
 - useElementSize.ts: `ElementSize`、`useElementSize(ref)`
+- useDockAnimation.ts: `DOCK_ANIMATION_MS`、`DOCK_ANIMATION_RELEASE_MS`、`useDockAnimation()`
 - ResizeHandle.tsx: `ResizeHandleProps`（`side` は省略時 `"end"`）、`ResizeHandle(props)`
 
 ## 他機能との関係
@@ -35,3 +37,4 @@
 - tests/layout-tokens.test.ts: パネル／アウトライナ幅の CSS rem フォールバックとリサイズ既定値、ReviewPage の inline style 配線をソース検査
 - tests/dock-toggle.test.ts: ヘッダのドックトグルと開閉 hook、ReviewPage の開閉配線を検証
 - tests/dock-structure.test.ts: DockColumn の DOM と ReviewPage／ドック CSS の構造契約を検証
+- tests/dock-animation.test.ts: ドック開閉アニメーション hook と CSS／ReviewPage の接続契約を検証

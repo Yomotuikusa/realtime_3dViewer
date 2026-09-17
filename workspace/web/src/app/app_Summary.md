@@ -15,14 +15,14 @@
 - UploadPage.tsx: `.glb`/`.gltf`/`.fbx`/`.obj` のアップロード画面。プロジェクト名の入力上限は `MAX_PROJECT_NAME_LENGTH` 由来で、`accept` は `ALLOWED_MODEL_EXTENSIONS` 由来。OBJ が材質なし表示になる注記を常時出す
 - upload-labels.ts: アップロード画面と NotFound の表示文言、OBJ 材質なし表示注記、ファイル検証・複数ファイル容量表示 helper の純粋関数
 - upload.css: アップロード画面と NotFound の狭い幅のレイアウト CSS
-- ReviewPage.tsx: プロジェクト取得、レビュー画面の骨格、ロード状態・エラーカード、`.review-stage` とビュー下部タイムラインを含むビューア／サイズ変更可能な左ドックとサイドパネルのレイアウトを担当する。左右ドックは `DockColumn` で常時 DOM に置き、開閉状態を `useLayoutFlag` で保持・保存し、閉じた列を `0px` と `inert` で畳む。左ドックには realtime の `send` を渡した `Outliner`、右ドックには上部バーと `.review-panel__body` 内の PresenceList / ObjectList / `.review-panel__comments` を順に配置する。幅の上限計算では閉じている側の予約幅を 0 にする。Canvas に RemoteCameras / RoomStrokes / ReplayStrokes / AnnotationLayer / CommentPickLayer / CommentPins / `SelectionRig` / `VisibilityRig` / `JointRig` を配置し、閉じたドックの `DockExpandButton` は `.review-hud` の左右に表示する。コメント欄はストアの最新オブジェクトに追随し、空シーンでは投稿案内を表示する。`.review-hud` を HUD 差し込み口、`.review-panel__comments` をコメント領域差し込み口として提供し、カメラとライトの向き・明るさの変更、コメント再生を realtime の `send` へ結線し、入室後だけショートカットを有効にする。設定表示中は `SettingsDialog` を表示し、タイムラインへ realtime の `send` を渡す
+- ReviewPage.tsx: プロジェクト取得、レビュー画面の骨格、ロード状態・エラーカード、`.review-stage` とビュー下部タイムラインを含むビューア／サイズ変更可能な左ドックとサイドパネルのレイアウトを担当する。左右ドックは `DockColumn` で常時 DOM に置き、開閉状態を `useLayoutFlag` で保持・保存し、`useDockAnimation` でトグル直後だけ列幅を 200ms 補間しながら、閉じた列を `0px` と `inert` で畳む。左ドックには realtime の `send` を渡した `Outliner`、右ドックには上部バーと `.review-panel__body` 内の PresenceList / ObjectList / `.review-panel__comments` を順に配置する。幅の上限計算では閉じている側の予約幅を 0 にする。Canvas に RemoteCameras / RoomStrokes / ReplayStrokes / AnnotationLayer / CommentPickLayer / CommentPins / `SelectionRig` / `VisibilityRig` / `JointRig` を配置し、閉じたドックの `DockExpandButton` は `.review-hud` の左右に表示する。コメント欄はストアの最新オブジェクトに追随し、空シーンでは投稿案内を表示する。`.review-hud` を HUD 差し込み口、`.review-panel__comments` をコメント領域差し込み口として提供し、カメラとライトの向き・明るさの変更、コメント再生を realtime の `send` へ結線し、入室後だけショートカットを有効にする。設定表示中は `SettingsDialog` を表示し、タイムラインへ realtime の `send` を渡す
 - ReviewHeader.tsx: 接続状態バッジ、入室後の自分の表示名・色、レビュー URL のコピーと失敗時の手動コピー欄を表示し、入室後だけ設定ダイアログを開くボタンを表示する。ドック開閉トグルは持たない
 - ReviewDock.tsx: `DockColumn` でドックの `<aside>`、固定幅の内側、折りたたみバーと children を集約し、閉じた列を `inert` にする。`DockCollapseBar` と `DockExpandButton` は `DockSide` に応じた向きのシェブロンと aria 属性を設定する
-- review-dock.css: 列幅 0 でも内側の開時幅を保つドック列、右ドックの grid、タイトル付き折りたたみバー、HUD 再表示ボタン、シェブロンの CSS
+- review-dock.css: 列幅 0 でも内側の開時幅を保つドック列、右ドックの grid、タイトル付き折りたたみバー、閉じ切ってから現れる HUD 再表示ボタン、シェブロンの CSS
 - review-icons.tsx: ドックの折りたたみ／再表示ボタンに使うシェブロン SVG。viewBox・path 定数、`ChevronDirection`、`ChevronIcon` を公開する
 - SettingsDialog.tsx: `ShortcutSettings`、`ThemeSettings`、`ViewSettings` をキー操作／表示色／表示と操作タブで切り替える設定ダイアログの枠を担当する
 - review-labels.ts: 接続状態・コピー状態・ロード/エラー文言、設定ダイアログと 3 タブのラベル、ドック上部／HUD 再表示ボタンで共有する左右ドック開閉ラベル、サイドパネル幅ハンドルのラベルを定義する JSX 非依存の純粋関数と定数
-- review.css: レビュー画面のヘッダ、3列 grid の左ドック／`.review-stage` を含むビューア／右パネル、3 列の `grid-column` 明示、`.review-panel__body`、HUD、モデル読み込み失敗用の `.review-stage__error` オーバーレイ、設定／入室 backdrop/dialog、境界ハンドル、ロード/エラー状態のプレーン CSS
+- review.css: レビュー画面のヘッダ、3列 grid の左ドック／`.review-stage` を含むビューア／右パネル、3 列の `grid-column` 明示、開閉トグル時だけ列幅を補間する `.review-body`、`.review-panel__body`、HUD、モデル読み込み失敗用の `.review-stage__error` オーバーレイ、設定／入室 backdrop/dialog、境界ハンドル、ロード/エラー状態のプレーン CSS
 - ErrorBoundary.tsx: React/three の描画例外を捕捉し、フォールバックを表示
 
 ## 公開インターフェイス
@@ -30,7 +30,7 @@
 - App.tsx: `App`。内部の `routeContent` がルート別の画面を返し、`App` は `ThemeEffect` を全ルートへ適用する
 - UploadPage.tsx: `UploadPage`
 - upload-labels.ts: `APP_NAME` など画面文言、`FILE_TOO_LARGE`、`NO_FILE_SELECTED`、`UNSUPPORTED_EXTENSION`、`OBJ_MATERIAL_NOTE`、`FileLike`、`fileHelp`、`fileSummary`、`validateModelFiles`、`filesSummary`
-- ReviewPage.tsx: `ReviewPage({ projectId })`。`features/layout` の `ResizeHandle`、`useLayoutSize`、`useLayoutFlag` を使い左ドック／サイドパネルの寸法と開閉を保存し、右パネル優先でレイアウト幅を計算する
+- ReviewPage.tsx: `ReviewPage({ projectId })`。`features/layout` の `ResizeHandle`、`useLayoutSize`、`useLayoutFlag`、`useDockAnimation` を使い左ドック／サイドパネルの寸法と開閉を保存し、トグル時だけ列幅を補間しながら右パネル優先でレイアウト幅を計算する
 - ReviewHeader.tsx: `ReviewHeader({ projectName, joined, onOpenSettings })`
 - ReviewDock.tsx: `DockSide`、`DockColumn`、`DockCollapseBar`、`DockExpandButton`
 - review-icons.tsx: `CHEVRON_ICON_VIEW_BOX`、`CHEVRON_LEFT_PATH`、`CHEVRON_RIGHT_PATH`、`ChevronDirection`、`ChevronIcon`

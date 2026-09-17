@@ -54,10 +54,22 @@
   padding: var(--space-1);
   background: var(--color-surface-translucent);
   box-shadow: var(--shadow-overlay);
+  animation: review-dock-expand-in var(--duration-fast) ease var(--duration-medium) backwards;
 }
 
 .review-chevron-icon {
   flex: 0 0 auto;
   width: 1rem;
   height: 1rem;
+}
+
+/* 列が閉じ切ってから現れる。開くときは即座に消えるのでアニメーションしない。 */
+@keyframes review-dock-expand-in {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
 }
