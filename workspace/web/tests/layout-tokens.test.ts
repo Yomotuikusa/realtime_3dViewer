@@ -27,7 +27,7 @@ describe("layout token defaults", () => {
 
   it("passes effective widths to the review body", () => {
     const reviewPage = readSource("app/ReviewPage.tsx");
-    expect(reviewPage).toContain('"--outliner-width": effectiveOutlinerWidth + "px"');
-    expect(reviewPage).toContain('"--panel-width": effectivePanelWidth + "px"');
+    expect(reviewPage).toContain('"--outliner-width": outlinerOpen ? effectiveOutlinerWidth + "px" : "0px"');
+    expect(reviewPage).toContain('"--panel-width": panelOpen ? effectivePanelWidth + "px" : "0px"');
   });
 });

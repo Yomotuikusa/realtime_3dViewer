@@ -57,8 +57,8 @@ describe("layout resize styles and wiring", () => {
     expect(page).toContain('className="review-body__resize review-body__resize--outliner"');
     expect(page).toContain("label={OUTLINER_RESIZE_LABEL}");
     expect(page.match(/<ResizeHandle/g)).toHaveLength(2);
-    expect(page).toContain("panelWidthMax(bodySize.width, OUTLINER_WIDTH_MIN_PX)");
-    expect(page).toContain("outlinerWidthMax(bodySize.width, effectivePanelWidth)");
+    expect(page).toContain("panelWidthMax(bodySize.width, outlinerOpen ? OUTLINER_WIDTH_MIN_PX : 0)");
+    expect(page).toContain("outlinerWidthMax(bodySize.width, panelOpen ? effectivePanelWidth : 0)");
   });
 
   it("orders the outliner, viewer, and panel columns", () => {
