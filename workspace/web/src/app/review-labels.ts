@@ -1,6 +1,6 @@
 import type { ConnectionStatus } from "../store/session";
 
-/** ヘッダのドック開閉ボタン。aria-label は開閉状態によらず同じ。 */
+/** ドック上部の折りたたみボタンと、閉じている間 HUD に出す再表示ボタンが共有する aria-label。開閉状態によらず同じ。 */
 export const OUTLINER_TOGGLE_LABEL = "アウトライナドックの表示";
 export const PANEL_TOGGLE_LABEL = "サイドパネルの表示";
 /** ヘッダの設定ボタン。 */

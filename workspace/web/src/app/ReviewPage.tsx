@@ -43,6 +43,7 @@ import { useSessionStore } from "../store/session";
 import { latestObjectId, useObjectsStore } from "../store/objects";
 import { ErrorBoundary } from "./ErrorBoundary";
 import { JoinDialog } from "./JoinDialog";
+import { DockCollapseBar, DockExpandButton } from "./ReviewDock";
 import { ReviewHeader } from "./ReviewHeader";
 import { SettingsDialog } from "./SettingsDialog";
 import { resetReviewStores } from "./review-stores";
@@ -50,7 +51,9 @@ import { useRealtime } from "./useRealtime";
 import {
   LOADING_MESSAGE,
   MODEL_LOAD_FAILED,
+  OUTLINER_TOGGLE_LABEL,
   PANEL_RESIZE_LABEL,
+  PANEL_TOGGLE_LABEL,
   PROJECT_LOAD_FAILED,
   RELOAD_LABEL,
 } from "./review-labels";
@@ -159,10 +162,6 @@ export function ReviewPage({ projectId }: { projectId: string }): ReactElement {
         projectName={state.project.name}
         joined={joinName !== null}
         onOpenSettings={() => setSettingsOpen(true)}
-        outlinerOpen={outlinerOpen}
-        panelOpen={panelOpen}
-        onToggleOutliner={() => setOutlinerOpen(!outlinerOpen)}
-        onTogglePanel={() => setPanelOpen(!panelOpen)}
       />
       {lastError && <p className="alert review-page__alert" role="alert">{lastError}</p>}
       <div
@@ -175,6 +174,11 @@ export function ReviewPage({ projectId }: { projectId: string }): ReactElement {
       >
         {outlinerOpen && (
           <aside className="review-outliner" aria-label="アウトライナドック">
+            <DockCollapseBar
+              side="outliner"
+              label={OUTLINER_TOGGLE_LABEL}
+              onCollapse={() => setOutlinerOpen(false)}
+            />
             <Outliner send={realtime.send} />
           </aside>
         )}
@@ -194,7 +198,21 @@ export function ReviewPage({ projectId }: { projectId: string }): ReactElement {
         <section className="review-viewer" aria-label="3D ビューア">
           <div className="review-stage">
             <div className="review-hud">
+              {!outlinerOpen && (
+                <DockExpandButton
+                  side="outliner"
+                  label={OUTLINER_TOGGLE_LABEL}
+                  onExpand={() => setOutlinerOpen(true)}
+                />
+              )}
               <ViewerHud send={realtime.send} />
+              {!panelOpen && (
+                <DockExpandButton
+                  side="panel"
+                  label={PANEL_TOGGLE_LABEL}
+                  onExpand={() => setPanelOpen(true)}
+                />
+              )}
             </div>
             <ErrorBoundary
               key={projectId}
@@ -240,14 +258,21 @@ export function ReviewPage({ projectId }: { projectId: string }): ReactElement {
         )}
         {panelOpen && (
           <aside className="review-panel" aria-label="サイドパネル">
-            <PresenceList />
-            <ObjectList projectId={projectId} send={realtime.send} />
-            <section className="review-panel__comments" aria-label="コメント">
-              {composerVersionId === null
-                ? <p className="comments__empty" role="status">{COMPOSER_NO_OBJECTS_MESSAGE}</p>
-                : <CommentComposer projectId={projectId} versionId={composerVersionId} />}
-              <CommentList projectId={projectId} />
-            </section>
+            <DockCollapseBar
+              side="panel"
+              label={PANEL_TOGGLE_LABEL}
+              onCollapse={() => setPanelOpen(false)}
+            />
+            <div className="review-panel__body">
+              <PresenceList />
+              <ObjectList projectId={projectId} send={realtime.send} />
+              <section className="review-panel__comments" aria-label="コメント">
+                {composerVersionId === null
+                  ? <p className="comments__empty" role="status">{COMPOSER_NO_OBJECTS_MESSAGE}</p>
+                  : <CommentComposer projectId={projectId} versionId={composerVersionId} />}
+                <CommentList projectId={projectId} />
+              </section>
+            </div>
           </aside>
         )}
       </div>

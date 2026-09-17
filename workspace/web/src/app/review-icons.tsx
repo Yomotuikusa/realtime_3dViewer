@@ -1,43 +1,26 @@
 import type { ReactElement } from "react";
 
-export const DOCK_ICON_VIEW_BOX = "0 0 16 16";
-/** アイコン外周の枠。 */
-export const DOCK_FRAME_PATH = "M2.5 3.5h11v9h-11Z";
-/** 左ドックを表す塗り。 */
-export const DOCK_LEFT_FILL_PATH = "M2.5 3.5h3.5v9H2.5Z";
-/** 右ドックを表す塗り。 */
-export const DOCK_RIGHT_FILL_PATH = "M10 3.5h3.5v9H10Z";
+export const CHEVRON_ICON_VIEW_BOX = "0 0 16 16";
+/** 左向きのシェブロン。 */
+export const CHEVRON_LEFT_PATH = "M10 3.5 5.5 8l4.5 4.5";
+/** 右向きのシェブロン。 */
+export const CHEVRON_RIGHT_PATH = "M6 3.5 10.5 8 6 12.5";
 
-export function OutlinerDockIcon(): ReactElement {
+export type ChevronDirection = "left" | "right";
+
+/** class="review-chevron-icon"、aria-hidden="true"、focusable="false"、stroke="currentColor" の SVG を返す。 */
+export function ChevronIcon({ direction }: { direction: ChevronDirection }): ReactElement {
   return (
     <svg
-      className="review-header__dock-icon"
-      viewBox={DOCK_ICON_VIEW_BOX}
+      className="review-chevron-icon"
+      viewBox={CHEVRON_ICON_VIEW_BOX}
       aria-hidden="true"
       focusable="false"
       fill="none"
       stroke="currentColor"
-      strokeWidth="1.25"
+      strokeWidth="1.5"
     >
-      <path d={DOCK_FRAME_PATH} />
-      <path d={DOCK_LEFT_FILL_PATH} fill="currentColor" stroke="none" />
-    </svg>
-  );
-}
-
-export function PanelDockIcon(): ReactElement {
-  return (
-    <svg
-      className="review-header__dock-icon"
-      viewBox={DOCK_ICON_VIEW_BOX}
-      aria-hidden="true"
-      focusable="false"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.25"
-    >
-      <path d={DOCK_FRAME_PATH} />
-      <path d={DOCK_RIGHT_FILL_PATH} fill="currentColor" stroke="none" />
+      <path d={direction === "left" ? CHEVRON_LEFT_PATH : CHEVRON_RIGHT_PATH} />
     </svg>
   );
 }
