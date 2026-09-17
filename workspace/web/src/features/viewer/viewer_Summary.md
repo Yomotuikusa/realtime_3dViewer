@@ -41,10 +41,10 @@ Canvas、モデル、カメラ、ライティング、焦点距離、内蔵ア�
 - model-loading.ts: glTF の `buffers` / `images` などが参照する data/blob URI と同一オリジン URL だけを許可する LoadingManager を作り、外部 URL を `about:blank` に置換する
 - model-target.ts: React や Zustand に依存せず、現在のレイキャスト対象 `Object3D` を保持する `setModelTarget` / `getModelTarget`
 - fit-camera.ts: 初期視点と同じ斜め方向からモデル全体を見る Fit カメラ目標を純粋関数で作る
-- pick.ts: Canvas 座標を NDC に変換し、共通モデルターゲットへ可視な祖先だけを対象に最近傍レイキャストを行う。交点と、逆転置の法線行列で変換して正規化したワールド系法線を返す
+- pick.ts: Canvas 座標を NDC に変換し、共通モデルターゲットへ可視な祖先だけを対象に最近傍レイキャストを行う。ピック直前に配下の SkinnedMesh の boundingBox / boundingSphere を無効化する。交点と、逆転置の法線行列で変換して正規化したワールド系法線を返す
 - follow.ts: Follow 対象のカメラと焦点距離の妥当性判定、共有カメラ関数を使った 1 フレーム分の補間
 - camera-animation.ts: 既定視点・視点再現の400ms時間基準アニメーションと ease-out 補間を提供する
-- CameraRig.tsx: OrbitControls を常時有効にしてカメラストアと同期し、Reset・Fit・時間基準のカメラ再現・Follow を処理する。Fit はモデル本体の箱から `fitCamera` で目標を作り `requestCamera` に積む(`Bounds` 内部補間は使わない)。既定視点ちょうどの向きでは `enableRotate` を false にし、Follow 中は回転ロックしない。OrbitControls の減衰を無効にし操作は即時反映する。補間中のユーザー操作で補間を中断する。Follow 中だけ対象の焦点距離もカメラストアへ反映し、controls.domElement に Alt 操作、view-settings の dolly 感度を掛ける右ドラッグ dolly、ライト回転感度を掛ける Shift+右ドラッグを接続する
+- CameraRig.tsx: OrbitControls を常時有効にしてカメラストアと同期し、Reset・Fit・時間基準のカメラ再現・Follow を処理する。Fit はモデル本体の箱から `fitCamera` で目標を作り `requestCamera` に積む(`Bounds` 内部補間は使わない)。Fit 前には配下の SkinnedMesh の boundingBox / boundingSphere を無効化する。既定視点ちょうどの向きでは `enableRotate` を false にし、Follow 中は回転ロックしない。OrbitControls の減衰を無効にし操作は即時反映する。補間中のユーザー操作で補間を中断する。Follow 中だけ対象の焦点距離もカメラストアへ反映し、controls.domElement に Alt 操作、view-settings の dolly 感度を掛ける右ドラッグ dolly、ライト回転感度を掛ける Shift+右ドラッグを接続する
 - camera-input.ts: OrbitControls の Alt／非 Alt 時のマウス割り当てと、指定または既定の 1px 係数で target からの距離を指数的に変える右ドラッグ dolly の純粋関数
 - viewer-pointer.ts: controls.domElement へ Maya 式の pointer、contextmenu、マウス抑止イベントを接続し、移動ごとに指定可能な dolly 係数を使う右ドラッグ dolly／Shift+右ドラッグのライト回転と後始末を提供する
 - send-throttle.ts: 値の複製・同値判定を差し替え可能な汎用送信 throttle。先頭送信と窓明けトレーリング送信、送信失敗の再試行、受信値を送信済みとして扱う `markSent`、破棄時の保留送信キャンセルを提供する
@@ -94,7 +94,7 @@ Canvas、モデル、カメラ、ライティング、焦点距離、内蔵ア�
 - useLightBrightnessBroadcast.ts: `LightBrightnessChange`、`onLightBrightnessChange`、`useLightBrightnessBroadcast`
 - model-loading.ts: `BLOCKED_RESOURCE_URL`、`resolveModelResourceUrl`、`createModelLoadingManager`
 - model-target.ts: `setModelTarget(obj)`、`getModelTarget()`
-- pick.ts: `toNdc(rect, clientX, clientY)`、`isVisibleInScene(object)`、`pickModel(raycaster, camera, ndc, target)`
+- pick.ts: `toNdc(rect, clientX, clientY)`、`isVisibleInScene(object)`、`invalidateSkinnedBounds(target)`、`pickModel(raycaster, camera, ndc, target)`
 - follow.ts: `FOLLOW_LERP_T`、`FollowTarget`、`followTargetCamera`、`followStep`
 - camera-animation.ts: `CAMERA_ANIMATION_DURATION_MS`、`CameraAnimation`、`easeOutCubic`、`startCameraAnimation`、`stepCameraAnimation`
 - CameraRig.tsx: `CameraRig()`
@@ -176,6 +176,7 @@ Canvas のクライアント座標を NDC 化して再帰的にモデルをレ�
 - tests/model-loading.test.ts: 埋め込み・同一オリジン URL の許可、外部 URL の遮断、LoadingManager の URL modifier のテスト
 - tests/model-target.test.ts: モデルターゲットの登録・取得テスト
 - tests/pick.test.ts: NDC 変換、可視な交点だけの再帰レイキャスト、ワールド法線変換、useModelScene／PlaybackClock／PlaybackRig／ViewerCanvas／ReviewPage のソース検査
+- tests/skinned-pick.test.ts: SkinnedMesh の入れ子バウンディング無効化、ポーズ移動後のコメント系レイキャスト・手動 boundingBox・アウトライナ選択、CameraRig の Fit 前呼び出しを検証する
 - tests/fbx-compat.test.ts: Group / Bone への no-op bind、SkinnedMesh の本来の bind の維持、冪等なインストールをテスト
 - tests/model-scene.test.ts: FBX / OBJ / glTF ローダーの選択、同一オリジン manager、形式対応表、OBJ の不変アニメーション配列、共通副作用の分離、ViewerCanvas の fileName 受け渡し、FBX 互換処理の読み込み前呼び出しをソース検査し、useModelScene のクリップ登録・条件付き解除を実マウントで検証する
 - tests/mesh-display.test.ts: MeshDisplayMode ごとの材質切替、ワイヤフレーム重ね描きの共有状態・raycast 無効化・冪等性・破棄、対象外オブジェクトと結線のテスト

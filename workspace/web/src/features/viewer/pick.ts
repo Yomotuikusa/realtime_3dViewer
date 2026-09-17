@@ -1,4 +1,5 @@
-import { Matrix3, Vector2, type Camera, type Object3D, type Raycaster, Vector3 } from "three";
+import { Matrix3, Vector2, Vector3 } from "three";
+import type { Camera, Object3D, Raycaster, SkinnedMesh } from "three";
 import type { Vec3 } from "@shared/types";
 
 export interface Ndc {
@@ -9,6 +10,28 @@ export interface Ndc {
 export interface PickHit {
   point: Vec3;
   normal: Vec3 | null;
+}
+
+type NullableSkinnedBounds = Omit<SkinnedMesh, "boundingBox" | "boundingSphere"> & {
+  boundingBox: SkinnedMesh["boundingBox"] | null;
+  boundingSphere: SkinnedMesh["boundingSphere"] | null;
+};
+
+/**
+ * 配下のスキンメッシュのバウンディングを捨てる。
+ * three はレイキャスト時に boundingSphere が null なら現在のポーズで計算し直し、
+ * boundingBox が null なら箱の足切りを行わない。アニメーション中のピックの直前に呼ぶ。
+ */
+export function invalidateSkinnedBounds(target: Object3D | null): void {
+  if (target === null) return;
+
+  target.traverse((object) => {
+    if ((object as Object3D & { isSkinnedMesh?: boolean }).isSkinnedMesh !== true) return;
+
+    const mesh = object as NullableSkinnedBounds;
+    mesh.boundingBox = null;
+    mesh.boundingSphere = null;
+  });
 }
 
 /** object 自身から scene root まで、すべて visible な交点だけを採用する。 */
@@ -42,6 +65,7 @@ export function pickModel(
     return null;
   }
 
+  invalidateSkinnedBounds(target);
   raycaster.setFromCamera(new Vector2(ndc.x, ndc.y), camera);
   const intersection = raycaster.intersectObject(target, true).find((hit) => isVisibleInScene(hit.object));
   if (!intersection) {
