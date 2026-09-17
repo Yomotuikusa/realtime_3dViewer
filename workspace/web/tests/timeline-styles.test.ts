@@ -94,4 +94,16 @@ describe("timeline layout styles", () => {
   it("sizes the playback source select", () => {
     expect(ruleBody(timelineCss, ".timeline__source")).toContain("max-width: 12rem");
   });
+
+  it("separates the three tick kinds by stroke color", () => {
+    expect(ruleBody(timelineCss, ".timeline__tick")).toContain("stroke: var(--color-border-strong)");
+    expect(ruleBody(timelineCss, ".timeline__tick")).toContain("stroke-width: 1");
+    expect(ruleBody(timelineCss, ".timeline__tick--accent")).toContain("stroke: var(--color-text-muted)");
+    expect(ruleBody(timelineCss, ".timeline__tick--label")).toContain("stroke: var(--color-text)");
+    expect(timelineCss).not.toContain(".timeline__tick--minor");
+    const base = timelineCss.indexOf(".timeline__tick {");
+    expect(base).toBeGreaterThan(-1);
+    expect(timelineCss.indexOf(".timeline__tick--accent")).toBeGreaterThan(base);
+    expect(timelineCss.indexOf(".timeline__tick--label")).toBeGreaterThan(base);
+  });
 });

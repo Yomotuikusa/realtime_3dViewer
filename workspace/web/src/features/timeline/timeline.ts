@@ -1,12 +1,11 @@
 export const TIMELINE_PAD_PX = 8;
-export const MIN_LABEL_PX = 48;
+export const MIN_LABEL_PX = 50;
 export const MIN_TICK_PX = 5;
-export const STEP_SERIES: readonly number[] = [1, 2, 5, 10, 20, 50, 100, 200, 500, 1000, 2000, 5000, 10000];
+export const LABEL_STEP_SERIES: readonly number[] = [1, 2, 10, 20, 50, 100, 200, 500, 1000, 2000, 5000, 10000];
+export const ACCENT_LABEL_DIVISOR = 2;
 export const FPS_OPTIONS: readonly number[] = [12, 15, 24, 25, 30, 48, 50, 60, 120];
 /** 帯の上端に数字ラベル用として空けておく高さ */
 export const TICK_LABEL_BAND_PX = 16;
-/** tickStep の何倍ごとにアクセント目盛りにするか */
-export const ACCENT_TICK_MULTIPLE = 5;
 /** (高さ - TICK_LABEL_BAND_PX) に掛ける長さの比率 */
 export const TICK_LENGTH_RATIO = { label: 0.55, accent: 0.35, minor: 0.105 } as const;
 /** 目盛りの種類ごとの最小の長さ(px)。ただし利用可能な高さを超えない */
@@ -21,21 +20,28 @@ export interface RulerTick {
 
 export interface TimelineTicks {
   labelStep: number;
+  accentStep: number;
   tickStep: number;
+}
+
+export function accentStepFor(labelStep: number, tickStep: number): number {
+  const accentStep = labelStep / ACCENT_LABEL_DIVISOR;
+  if (!Number.isFinite(tickStep) || tickStep <= 0) return 0;
+  if (!Number.isInteger(accentStep) || accentStep <= tickStep) return 0;
+  return accentStep % tickStep === 0 && labelStep % accentStep === 0 ? accentStep : 0;
 }
 
 export function timelineTicks(lastFrame: number, widthPx: number): TimelineTicks {
   const innerWidth = widthPx - 2 * TIMELINE_PAD_PX;
   if (!Number.isFinite(lastFrame) || lastFrame <= 0 || !Number.isFinite(innerWidth) || innerWidth <= 0) {
-    return { labelStep: 1, tickStep: 1 };
+    return { labelStep: 1, accentStep: 0, tickStep: 1 };
   }
   const pxPerFrame = innerWidth / lastFrame;
-  const labelStep = STEP_SERIES.find((step) => step * pxPerFrame >= MIN_LABEL_PX)
-    ?? STEP_SERIES[STEP_SERIES.length - 1]!;
-  if (labelStep < 10) return { labelStep, tickStep: 1 };
-  const tickStep = [labelStep / 10, labelStep / 5, labelStep]
+  const labelStep = LABEL_STEP_SERIES.find((step) => step * pxPerFrame >= MIN_LABEL_PX)
+    ?? LABEL_STEP_SERIES[LABEL_STEP_SERIES.length - 1]!;
+  const tickStep = labelStep < 10 ? 1 : [labelStep / 10, labelStep / 5, labelStep]
     .find((step) => step * pxPerFrame >= MIN_TICK_PX) ?? labelStep;
-  return { labelStep, tickStep };
+  return { labelStep, accentStep: accentStepFor(labelStep, tickStep), tickStep };
 }
 
 export function tickFrames(lastFrame: number, step: number): number[] {
@@ -50,7 +56,7 @@ export function rulerTicks(lastFrame: number, ticks: TimelineTicks): RulerTick[]
     frame,
     kind: frame % ticks.labelStep === 0
       ? "label"
-      : frame % (ACCENT_TICK_MULTIPLE * ticks.tickStep) === 0
+      : ticks.accentStep > 0 && frame % ticks.accentStep === 0
         ? "accent"
         : "minor",
   }));
