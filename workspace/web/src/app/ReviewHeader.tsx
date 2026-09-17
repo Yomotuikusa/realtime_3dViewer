@@ -1,25 +1,18 @@
 import { useEffect, useState, type CSSProperties, type ReactElement } from "react";
 import { useSessionStore } from "../store/session";
-import { OutlinerDockIcon, PanelDockIcon } from "./review-icons";
 import {
   connectionLabel,
   connectionTone,
   copyLabel,
   copyText,
-  OUTLINER_TOGGLE_LABEL,
-  PANEL_TOGGLE_LABEL,
   SETTINGS_OPEN_LABEL,
   type CopyState,
 } from "./review-labels";
 
-export function ReviewHeader({ projectName, joined, onOpenSettings, outlinerOpen, panelOpen, onToggleOutliner, onTogglePanel }: {
+export function ReviewHeader({ projectName, joined, onOpenSettings }: {
   projectName: string;
   joined: boolean;
   onOpenSettings: () => void;
-  outlinerOpen: boolean;
-  panelOpen: boolean;
-  onToggleOutliner: () => void;
-  onTogglePanel: () => void;
 }): ReactElement {
   const connection = useSessionStore((session) => session.connection);
   const color = useSessionStore((session) => session.color);
@@ -41,15 +34,6 @@ export function ReviewHeader({ projectName, joined, onOpenSettings, outlinerOpen
 
   return (
     <header className="review-header">
-      <button
-        className="btn btn--quiet review-header__dock"
-        type="button"
-        aria-pressed={outlinerOpen}
-        aria-label={OUTLINER_TOGGLE_LABEL}
-        onClick={onToggleOutliner}
-      >
-        <OutlinerDockIcon />
-      </button>
       <h1 className="review-header__title">{projectName}</h1>
       <span className="review-header__kind">レビュー</span>
       <div className="review-header__actions">
@@ -74,15 +58,6 @@ export function ReviewHeader({ projectName, joined, onOpenSettings, outlinerOpen
             {SETTINGS_OPEN_LABEL}
           </button>
         )}
-        <button
-          className="btn btn--quiet review-header__dock"
-          type="button"
-          aria-pressed={panelOpen}
-          aria-label={PANEL_TOGGLE_LABEL}
-          onClick={onTogglePanel}
-        >
-          <PanelDockIcon />
-        </button>
         {copyState === "failed" && (
           <input
             className="input review-header__url"
