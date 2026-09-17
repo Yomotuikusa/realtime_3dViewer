@@ -1,4 +1,5 @@
 .outliner {
+  --outliner-kind-width: 5rem;
   display: grid;
   grid-template-rows: auto minmax(0, 1fr);
   gap: var(--space-2);
@@ -10,13 +11,42 @@
 .outliner__head {
   display: flex;
   align-items: center;
-  justify-content: flex-end;
+  gap: var(--space-1);
+  border-bottom: 1px solid var(--color-border);
+  color: var(--color-text-muted);
+  font-size: var(--text-xs);
+}
+
+.outliner__head-indent {
+  flex: 0 0 1.25rem;
+}
+
+.outliner__head-labels {
+  display: flex;
+  flex: 1 1 auto;
+  align-items: center;
   gap: var(--space-2);
-  padding-right: var(--space-1);
+  min-width: 0;
+  padding: var(--space-1) var(--space-2);
+}
+
+.outliner__head-name {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.outliner__head-kind {
+  flex: 0 0 var(--outliner-kind-width);
 }
 
 .outliner__eye {
   display: inline-flex;
+  flex: 0 0 0.875rem;
+  justify-content: center;
+  margin-right: var(--space-1);
   color: var(--color-text-muted);
 }
 
@@ -127,6 +157,7 @@
 }
 
 .outliner__name {
+  flex: 1 1 auto;
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -134,10 +165,12 @@
 }
 
 .outliner__kind {
-  flex: 0 0 auto;
-  margin-left: auto;
+  flex: 0 0 var(--outliner-kind-width);
+  overflow: hidden;
   color: var(--color-text-muted);
   font-size: var(--text-xs);
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .outliner__item[data-hidden="true"] > .outliner__row {

@@ -5,7 +5,9 @@ import {
   nodeLabel,
   OUTLINER_EMPTY,
   OUTLINER_HEADING,
+  OUTLINER_KIND_HEADING,
   OUTLINER_LOADING,
+  OUTLINER_NAME_HEADING,
   OUTLINER_RESIZE_LABEL,
   OUTLINER_VISIBILITY_HEADING,
   UNNAMED_LABEL,
@@ -18,6 +20,8 @@ describe("outliner labels", () => {
     expect(OUTLINER_RESIZE_LABEL).toBe("アウトライナの幅");
     expect(OUTLINER_EMPTY).toBe("オブジェクトがありません");
     expect(OUTLINER_LOADING).toBe("読み込み中…");
+    expect(OUTLINER_NAME_HEADING).toBe("名前");
+    expect(OUTLINER_KIND_HEADING).toBe("タイプ");
     expect(OUTLINER_VISIBILITY_HEADING).toBe("表示");
     expect(UNNAMED_LABEL).toBe("(名前なし)");
     expect(Object.keys(KIND_LABELS).sort()).toEqual(["bone", "camera", "curve", "group", "light", "mesh", "points"]);

@@ -1,6 +1,10 @@
 import type { OutlinerNodeKind } from "./outliner-tree";
 
 export const OUTLINER_HEADING = "アウトライナ";
+/** 上部列見出しの「名前」列。 */
+export const OUTLINER_NAME_HEADING = "名前";
+/** 上部列見出しの「タイプ」列。値は KIND_LABELS と OUTLINER_LOADING が入る列を指す。 */
+export const OUTLINER_KIND_HEADING = "タイプ";
 export const OUTLINER_VISIBILITY_HEADING = "表示";
 export const OUTLINER_RESIZE_LABEL = "アウトライナの幅";
 export const OUTLINER_EMPTY = "オブジェクトがありません";

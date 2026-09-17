@@ -13,6 +13,8 @@ import { OutlinerBranch, OutlinerRow } from "./OutlinerRow";
 import {
   OUTLINER_EMPTY,
   OUTLINER_HEADING,
+  OUTLINER_KIND_HEADING,
+  OUTLINER_NAME_HEADING,
   OUTLINER_VISIBILITY_HEADING,
   nodeLabel,
 } from "./outliner-labels";
@@ -58,6 +60,11 @@ export function Outliner({ send }: { send: (msg: ClientMessage) => boolean }): R
       aria-label={OUTLINER_HEADING}
     >
       <div className="outliner__head">
+        <span className="outliner__head-indent" aria-hidden="true"></span>
+        <div className="outliner__head-labels">
+          <span className="outliner__head-name">{OUTLINER_NAME_HEADING}</span>
+          <span className="outliner__head-kind">{OUTLINER_KIND_HEADING}</span>
+        </div>
         <span className="outliner__eye" role="img" aria-label={OUTLINER_VISIBILITY_HEADING} title={OUTLINER_VISIBILITY_HEADING}>
           <EyeIcon />
         </span>
