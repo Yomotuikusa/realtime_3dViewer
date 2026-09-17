@@ -17,8 +17,8 @@
 - outliner-labels.ts: 見出し、表示列、状態、種別、名前、展開操作の表示文言を提供する
 - outliner-icons.tsx: 7 種別のインライン SVG アイコン、表示列の瞳、展開用山形を提供する
 - OutlinerRow.tsx: 1 行と再帰的なノード枝を treeitem/group として描画し、行ごとの表示チェックボックスを提供する
-- Outliner.tsx: objects / model-scenes / selection ストアを購読し、版と scene 木を描画する。`send` で `object:visibility` と `object:part-visibility` を共有する
-- outliner.css: アウトライナのレイアウト、インデント、展開、選択、非表示状態、表示列とチェックボックスを定義する。行高は `1.75rem`、字下げ 1 段は `16px` の固定値とする
+- Outliner.tsx: objects / model-scenes / selection ストアを購読し、見出しはドックバーへ委譲したうえで版と scene 木を描画する。`send` で `object:visibility` と `object:part-visibility` を共有する
+- outliner.css: アウトライナのレイアウト、目アイコンの右寄せ、インデント、展開、選択、非表示状態、表示列とチェックボックスを定義する。行高は `1.75rem`、字下げ 1 段は `16px` の固定値とする
 
 ## 公開インターフェイス
 

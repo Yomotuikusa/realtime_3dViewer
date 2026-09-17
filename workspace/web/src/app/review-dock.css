@@ -1,0 +1,63 @@
+/* 列幅が 0 に縮んでも中身が潰れないよう、開いていたときの幅を内側で保つ。 */
+.review-outliner .review-dock__inner {
+  width: var(--outliner-open-width);
+}
+
+/* 右ドックは 162 までの .review-panel が持っていた 2 行 grid をここで持つ。 */
+.review-panel .review-dock__inner {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  width: var(--panel-open-width);
+  height: 100%;
+}
+
+.review-dock-bar {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  display: flex;
+  padding: var(--space-2);
+  border-bottom: 1px solid var(--color-border);
+  background: var(--color-surface-subtle);
+}
+
+.review-dock-bar__button {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  min-width: 0;
+  padding: var(--space-1) var(--space-2);
+}
+
+/* 右ドックは矢印をビューア側(左端)に置く。DOM 順はタイトルが先のまま保つ。 */
+.review-dock-bar[data-side="panel"] .review-dock-bar__button {
+  flex-direction: row-reverse;
+}
+
+.review-dock-bar__title {
+  overflow: hidden;
+  color: var(--color-text-muted);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.review-hud .review-dock-expand {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  min-width: 2rem;
+  padding: var(--space-1);
+  background: var(--color-surface-translucent);
+  box-shadow: var(--shadow-overlay);
+}
+
+.review-chevron-icon {
+  flex: 0 0 auto;
+  width: 1rem;
+  height: 1rem;
+}

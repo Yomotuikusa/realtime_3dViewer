@@ -58,7 +58,6 @@ export function Outliner({ send }: { send: (msg: ClientMessage) => boolean }): R
       aria-label={OUTLINER_HEADING}
     >
       <div className="outliner__head">
-        <h2 className="outliner__heading">{OUTLINER_HEADING}</h2>
         <span className="outliner__eye" role="img" aria-label={OUTLINER_VISIBILITY_HEADING} title={OUTLINER_VISIBILITY_HEADING}>
           <EyeIcon />
         </span>

@@ -15,13 +15,14 @@
 - UploadPage.tsx: `.glb`/`.gltf`/`.fbx`/`.obj` のアップロード画面。プロジェクト名の入力上限は `MAX_PROJECT_NAME_LENGTH` 由来で、`accept` は `ALLOWED_MODEL_EXTENSIONS` 由来。OBJ が材質なし表示になる注記を常時出す
 - upload-labels.ts: アップロード画面と NotFound の表示文言、OBJ 材質なし表示注記、ファイル検証・複数ファイル容量表示 helper の純粋関数
 - upload.css: アップロード画面と NotFound の狭い幅のレイアウト CSS
-- ReviewPage.tsx: プロジェクト取得、レビュー画面の骨格、ロード状態・エラーカード、`.review-stage` とビュー下部タイムラインを含むビューア／サイズ変更可能な左ドックとサイドパネルのレイアウトを担当する。左ドック `.review-outliner` に上部の `DockCollapseBar` と realtime の `send` を渡した `Outliner` を配置し、`outlinerWidth` を保存する。右パネル優先で幅を計算し、左右ドックの開閉状態を `useLayoutFlag` で保持・保存する。閉じている側は `<aside>` と対応する `ResizeHandle` を描画せず、列幅を `0px` にする。幅の上限計算では閉じている側の予約幅を 0 にする。Canvas に RemoteCameras / RoomStrokes / ReplayStrokes / AnnotationLayer / CommentPickLayer / CommentPins / `SelectionRig` / `VisibilityRig` / `JointRig` を配置し、右ドックに上部の `DockCollapseBar`、`.review-panel__body` 内の PresenceList / ObjectList / `.review-panel__comments` を順に配置する。閉じたドックの `DockExpandButton` は `.review-hud` の左右に表示する。コメント欄はストアの最新オブジェクトに追随し、空シーンでは投稿案内を表示する。`.review-hud` を HUD 差し込み口、`.review-panel__comments` をコメント領域差し込み口として提供し、カメラとライトの向き・明るさの変更、コメント再生を realtime の `send` へ結線し、入室後だけショートカットを有効にする。設定表示中は `SettingsDialog` を表示し、タイムラインへ realtime の `send` を渡す
+- ReviewPage.tsx: プロジェクト取得、レビュー画面の骨格、ロード状態・エラーカード、`.review-stage` とビュー下部タイムラインを含むビューア／サイズ変更可能な左ドックとサイドパネルのレイアウトを担当する。左右ドックは `DockColumn` で常時 DOM に置き、開閉状態を `useLayoutFlag` で保持・保存し、閉じた列を `0px` と `inert` で畳む。左ドックには realtime の `send` を渡した `Outliner`、右ドックには上部バーと `.review-panel__body` 内の PresenceList / ObjectList / `.review-panel__comments` を順に配置する。幅の上限計算では閉じている側の予約幅を 0 にする。Canvas に RemoteCameras / RoomStrokes / ReplayStrokes / AnnotationLayer / CommentPickLayer / CommentPins / `SelectionRig` / `VisibilityRig` / `JointRig` を配置し、閉じたドックの `DockExpandButton` は `.review-hud` の左右に表示する。コメント欄はストアの最新オブジェクトに追随し、空シーンでは投稿案内を表示する。`.review-hud` を HUD 差し込み口、`.review-panel__comments` をコメント領域差し込み口として提供し、カメラとライトの向き・明るさの変更、コメント再生を realtime の `send` へ結線し、入室後だけショートカットを有効にする。設定表示中は `SettingsDialog` を表示し、タイムラインへ realtime の `send` を渡す
 - ReviewHeader.tsx: 接続状態バッジ、入室後の自分の表示名・色、レビュー URL のコピーと失敗時の手動コピー欄を表示し、入室後だけ設定ダイアログを開くボタンを表示する。ドック開閉トグルは持たない
-- ReviewDock.tsx: ドック上部の折りたたみバーと、閉じたドックを HUD の角から再表示するボタンを提供する。`DockSide` に応じた向きのシェブロンと aria 属性を設定する
+- ReviewDock.tsx: `DockColumn` でドックの `<aside>`、固定幅の内側、折りたたみバーと children を集約し、閉じた列を `inert` にする。`DockCollapseBar` と `DockExpandButton` は `DockSide` に応じた向きのシェブロンと aria 属性を設定する
+- review-dock.css: 列幅 0 でも内側の開時幅を保つドック列、右ドックの grid、タイトル付き折りたたみバー、HUD 再表示ボタン、シェブロンの CSS
 - review-icons.tsx: ドックの折りたたみ／再表示ボタンに使うシェブロン SVG。viewBox・path 定数、`ChevronDirection`、`ChevronIcon` を公開する
 - SettingsDialog.tsx: `ShortcutSettings`、`ThemeSettings`、`ViewSettings` をキー操作／表示色／表示と操作タブで切り替える設定ダイアログの枠を担当する
 - review-labels.ts: 接続状態・コピー状態・ロード/エラー文言、設定ダイアログと 3 タブのラベル、ドック上部／HUD 再表示ボタンで共有する左右ドック開閉ラベル、サイドパネル幅ハンドルのラベルを定義する JSX 非依存の純粋関数と定数
-- review.css: レビュー画面のヘッダ、3列 grid の左ドック／`.review-stage` を含むビューア／右パネル、3 列の `grid-column` 明示、ドック上部バーと HUD 再表示ボタン、`.review-panel__body`、HUD、モデル読み込み失敗用の `.review-stage__error` オーバーレイ、設定／入室 backdrop/dialog、境界ハンドル、ロード/エラー状態のプレーン CSS
+- review.css: レビュー画面のヘッダ、3列 grid の左ドック／`.review-stage` を含むビューア／右パネル、3 列の `grid-column` 明示、`.review-panel__body`、HUD、モデル読み込み失敗用の `.review-stage__error` オーバーレイ、設定／入室 backdrop/dialog、境界ハンドル、ロード/エラー状態のプレーン CSS
 - ErrorBoundary.tsx: React/three の描画例外を捕捉し、フォールバックを表示
 
 ## 公開インターフェイス
@@ -31,9 +32,9 @@
 - upload-labels.ts: `APP_NAME` など画面文言、`FILE_TOO_LARGE`、`NO_FILE_SELECTED`、`UNSUPPORTED_EXTENSION`、`OBJ_MATERIAL_NOTE`、`FileLike`、`fileHelp`、`fileSummary`、`validateModelFiles`、`filesSummary`
 - ReviewPage.tsx: `ReviewPage({ projectId })`。`features/layout` の `ResizeHandle`、`useLayoutSize`、`useLayoutFlag` を使い左ドック／サイドパネルの寸法と開閉を保存し、右パネル優先でレイアウト幅を計算する
 - ReviewHeader.tsx: `ReviewHeader({ projectName, joined, onOpenSettings })`
-- ReviewDock.tsx: `DockSide`、`DockCollapseBar`、`DockExpandButton`
+- ReviewDock.tsx: `DockSide`、`DockColumn`、`DockCollapseBar`、`DockExpandButton`
 - review-icons.tsx: `CHEVRON_ICON_VIEW_BOX`、`CHEVRON_LEFT_PATH`、`CHEVRON_RIGHT_PATH`、`ChevronDirection`、`ChevronIcon`
-- review-labels.ts: `connectionLabel`、`connectionTone`、`copyLabel`、`copyText`、`OUTLINER_TOGGLE_LABEL`、`PANEL_TOGGLE_LABEL`、`SETTINGS_OPEN_LABEL`、`CLOSE_LABEL`、`SETTINGS_DIALOG_TITLE`、`SETTINGS_TABS_LABEL`、`SettingsTab`、`SETTINGS_TAB_ORDER`、`PANEL_RESIZE_LABEL`、ロード/エラー文言定数
+- review-labels.ts: `connectionLabel`、`connectionTone`、`copyLabel`、`copyText`、ドックタイトルと開閉用の `OUTLINER_TOGGLE_LABEL` / `PANEL_TOGGLE_LABEL` / `PANEL_DOCK_TITLE` / `dockRegionLabel`、`SETTINGS_OPEN_LABEL`、`CLOSE_LABEL`、`SETTINGS_DIALOG_TITLE`、`SETTINGS_TABS_LABEL`、`SettingsTab`、`SETTINGS_TAB_ORDER`、`PANEL_RESIZE_LABEL`、ロード/エラー文言定数
 - display-name.ts: `loadStoredName`、`saveName`、`guestName`、`resolveDisplayName`
 - JoinDialog.tsx: `JoinDialog({ onJoin })`
 - SettingsDialog.tsx: `SettingsDialog({ onClose })`
@@ -70,4 +71,5 @@
 - tests/upload-page.test.ts: UploadPage のプロジェクト名入力が共有の `MAX_PROJECT_NAME_LENGTH` を使うことをソース検査
 - tests/use-realtime.test.ts: 接続状態、open 時のエラー解除と join、closed 時の非送信を検証
 - tests/settings-dialog.test.ts: 設定ダイアログの枠、3 タブ切り替え、表示内容、ショートカット捕捉抑止、閉じる操作を検証
-- tests/dock-toggle.test.ts: ドック上部の折りたたみバー、HUD 再表示ボタン、シェブロン、ヘッダからのトグル削除、開閉状態 hook の保存、条件付きドック描画と CSS／ソース契約を検証
+- tests/dock-toggle.test.ts: ドック上部のタイトル付き折りたたみバー、HUD 再表示ボタン、シェブロン、ヘッダからのトグル削除、開閉状態 hook の保存を検証
+- tests/dock-structure.test.ts: `DockColumn` の常時描画・`inert`・タイトル／aria、ReviewPage の集約構造、ドック CSS の配置を検証

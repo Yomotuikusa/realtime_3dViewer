@@ -1,5 +1,7 @@
-import type { ReactElement } from "react";
+import type { ReactElement, ReactNode } from "react";
 import { ChevronIcon } from "./review-icons";
+import { dockRegionLabel } from "./review-labels";
+import "./review-dock.css";
 
 /**
  * どちらのドックか。outliner = 左、panel = 右。
@@ -9,11 +11,44 @@ import { ChevronIcon } from "./review-icons";
 export type DockSide = "outliner" | "panel";
 
 /**
- * ドック上部に置く折りたたみバー。ボタンはビューア側の端に寄せる(CSS 側で制御)。
- * シェブロンは畳む向き: outliner は左、panel は右。
+ * ドック 1 列。閉じている間もアンマウントせず、列幅 0 と inert で畳む。
+ * 内側の `.review-dock__inner` が開いていたときの幅を保つので、
+ * 幅が 0 へ縮んでも中身は潰れずスライドして見える(アニメーションは 164)。
  */
-export function DockCollapseBar({ side, label, onCollapse }: {
+export function DockColumn({ side, open, title, label, onToggle, children }: {
   side: DockSide;
+  open: boolean;
+  /** バーに出す可視タイトル。`<aside>` の aria-label にも使う。 */
+  title: string;
+  /** 折りたたみボタンの aria-label。 */
+  label: string;
+  onToggle: (open: boolean) => void;
+  children: ReactNode;
+}): ReactElement {
+  return (
+    <aside
+      className={side === "outliner" ? "review-outliner" : "review-panel"}
+      data-open={open}
+      aria-label={dockRegionLabel(title)}
+      inert={!open}
+    >
+      <div className="review-dock__inner">
+        <DockCollapseBar
+          side={side}
+          title={title}
+          label={label}
+          onCollapse={() => onToggle(false)}
+        />
+        {children}
+      </div>
+    </aside>
+  );
+}
+
+/** ドック上部に置く折りたたみバー。矢印はビューア側の端に置き、畳む向きを指す。 */
+export function DockCollapseBar({ side, title, label, onCollapse }: {
+  side: DockSide;
+  title: string;
   label: string;
   onCollapse: () => void;
 }): ReactElement {
@@ -26,13 +61,14 @@ export function DockCollapseBar({ side, label, onCollapse }: {
         aria-label={label}
         onClick={onCollapse}
       >
+        <span className="review-dock-bar__title">{title}</span>
         <ChevronIcon direction={side === "outliner" ? "left" : "right"} />
       </button>
     </div>
   );
 }
 
-/** 閉じている間だけ HUD に出す再表示ボタン。シェブロンは開く向き: outliner は右、panel は左。 */
+/** 閉じている間だけ HUD に出す再表示ボタン。現行のまま変更しない。 */
 export function DockExpandButton({ side, label, onExpand }: {
   side: DockSide;
   label: string;

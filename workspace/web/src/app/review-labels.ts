@@ -1,8 +1,16 @@
 import type { ConnectionStatus } from "../store/session";
 
-/** ドック上部の折りたたみボタンと、閉じている間 HUD に出す再表示ボタンが共有する aria-label。開閉状態によらず同じ。 */
+/** 左ドックの開閉ボタンの aria-label。 */
 export const OUTLINER_TOGGLE_LABEL = "アウトライナドックの表示";
-export const PANEL_TOGGLE_LABEL = "サイドパネルの表示";
+/** 右ドックの開閉ボタンの aria-label。可視タイトル PANEL_DOCK_TITLE を含めること。 */
+export const PANEL_TOGGLE_LABEL = "インスペクタの表示";
+/** 右ドック上部バーの可視タイトル。左ドックは outliner-labels.ts の OUTLINER_HEADING を使う。 */
+export const PANEL_DOCK_TITLE = "インスペクタ";
+
+/** ドック領域(`<aside>`)の aria-label。 */
+export function dockRegionLabel(title: string): string {
+  return title + "ドック";
+}
 /** ヘッダの設定ボタン。 */
 export const SETTINGS_OPEN_LABEL = "設定";
 /** ダイアログのフッタ。 */
