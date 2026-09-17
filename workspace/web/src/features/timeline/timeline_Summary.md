@@ -10,21 +10,22 @@
 
 - PlaybackTimeline.tsx: playback ストアを購読し、クリップがあるときだけビュー下部のタイムライン帯を描画する。スライダーの上に操作欄を置き、再生対象切替 UI をアニメーション選択の前に配置する
 - PlaybackSourceSelect.tsx: アニメーション付き版が複数あるとき、見えるラベル付きでルーム共有の再生対象を切り替える select を描画する
-- TimelineRuler.tsx: `useElementSize` で幅と高さに追従する SVG 目盛り、PlayHead、ドラッグ／キーシークを描画する。目盛り線は帯の高さに比例して伸縮し、ラベル／アクセント／通常の3段階の長さを持つ
-- timeline.ts: 目盛り間隔・分類・高さ比例と種類別最小長 (label 6px / accent 4px / minor 3px) の長さ、座標変換、キー操作、fps 選択肢の純粋関数
+- TimelineRuler.tsx: `useElementSize` で幅と高さに追従する SVG 目盛り、PlayHead、ドラッグ／キーシークを描画する。目盛り線は帯の高さに比例して伸縮し、長さと色でラベル／アクセント／通常の3段階を区別する
+- timeline.ts: 目盛り間隔・分類・高さ比例と種類別最小長 (label 13px / accent 9px / minor 3px) の長さ、座標変換、キー操作、fps 選択肢の純粋関数。アクセント間隔はラベル間隔の半分で決まり、置けないときは 0 になる
 - timeline-labels.ts: タイムライン操作・高さ変更・再生対象・アニメーションの日本語ラベルとフレーム表示 helper
 - transport-icons.tsx: 再生・停止・先頭・最終へを表す inline SVG アイコン
-- timeline.css: タイムライン帯、ルーラー、操作欄のトークンベース CSS
+- timeline.css: タイムライン帯、ルーラー、操作欄のトークンベース CSS。目盛りを長さと色で3段階に区別する
 
 ## 公開インターフェイス
 
 - PlaybackTimeline.tsx: `PlaybackTimeline({ send })`。`useLayoutSize("timelineHeight")` と `ResizeHandle` でルーラー帯の高さを保存・変更し、操作欄をルーラーの上に描画して `PlaybackSourceSelect` に realtime 送信関数を渡す
 - PlaybackSourceSelect.tsx: `PlaybackSourceSelect({ send })`。アニメーション付き版が2件未満なら `null`、それ以外は `SOURCE_LABEL` の見えるラベル付き select を描画し、`switchPlaybackSource` へ変更を委譲する
 - TimelineRuler.tsx: `RULER_HEIGHT_PX`、`TimelineRuler({ frame, lastFrame, onSeek })`
-- timeline.ts: `TIMELINE_PAD_PX`、`MIN_LABEL_PX`、`MIN_TICK_PX`、`STEP_SERIES`、`FPS_OPTIONS`、
-  `TICK_LABEL_BAND_PX`、`ACCENT_TICK_MULTIPLE`、`TICK_LENGTH_RATIO` (label 0.55 / accent 0.35 / minor 0.105)、
+- timeline.ts: `TIMELINE_PAD_PX`、`MIN_LABEL_PX` (50 = `MIN_TICK_PX` × 10)、`MIN_TICK_PX`、
+  `LABEL_STEP_SERIES`、`ACCENT_LABEL_DIVISOR`、`FPS_OPTIONS`、`TICK_LABEL_BAND_PX`、
+  `TICK_LENGTH_RATIO` (label 0.55 / accent 0.35 / minor 0.105)、
   `TICK_MIN_LENGTH_PX` (label 13px / accent 9px / minor 3px)、`TimelineTicks`、`TickKind`、
-  `RulerTick`、`timelineTicks`、`tickFrames`、`rulerTicks`、`tickLength`、`frameToX`、`frameAtX`、
+  `RulerTick`、`accentStepFor`、`timelineTicks`、`tickFrames`、`rulerTicks`、`tickLength`、`frameToX`、`frameAtX`、
   `timelineKeyFrame`、`fpsOptions`
 - timeline-labels.ts: タイムラインの各ラベル、`SOURCE_LABEL`、`TIMELINE_RESIZE_LABEL`、`frameText`、`lastFrameText`
 - transport-icons.tsx: `PlayIcon`、`PauseIcon`、`SkipStartIcon`、`SkipEndIcon`
@@ -43,5 +44,5 @@ PlaybackTimeline は viewer/playback の `currentDuration` と viewer/playback-f
 - tests/timeline.test.ts: 目盛り間隔、tick、座標変換、キー操作、fps 選択肢のテスト
 - tests/timeline-labels.test.ts: タイムラインのラベルと表示 helper のテスト
 - tests/playback-source-select.test.ts: 再生対象 select の表示、切替、外部同期、登録解除を検証
-- tests/timeline-styles.test.ts: ビュー下部の配置、ステージ境界、Canvas 高さ、タイムライン CSS のソース検査
+- tests/timeline-styles.test.ts: ビュー下部の配置、ステージ境界、Canvas 高さ、タイムライン CSS のソース検査、目盛り3段階の色分け
 - tests/playback-frames.test.ts: キー時刻からの fps 判定と秒／フレーム変換のテスト

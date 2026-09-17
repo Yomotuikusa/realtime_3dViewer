@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   TICK_LENGTH_RATIO,
   TICK_MIN_LENGTH_PX,
+  accentStepFor,
   tickLength,
   frameAtX,
   frameToX,
@@ -16,16 +17,47 @@ const width = 816;
 
 describe("timeline calculations", () => {
   it("selects readable label and tick steps", () => {
-    expect(timelineTicks(48, width)).toEqual({ labelStep: 5, tickStep: 1 });
-    expect(timelineTicks(240, width)).toEqual({ labelStep: 20, tickStep: 2 });
-    expect(timelineTicks(1000, width)).toEqual({ labelStep: 100, tickStep: 10 });
-    expect(timelineTicks(10000, width)).toEqual({ labelStep: 1000, tickStep: 100 });
-    expect(timelineTicks(24, 216)).toEqual({ labelStep: 10, tickStep: 1 });
-    expect(timelineTicks(10, width)).toEqual({ labelStep: 1, tickStep: 1 });
-    expect(timelineTicks(1000000, width)).toEqual({ labelStep: 10000, tickStep: 10000 });
-    expect(timelineTicks(0, width)).toEqual({ labelStep: 1, tickStep: 1 });
-    expect(timelineTicks(48, 10)).toEqual({ labelStep: 1, tickStep: 1 });
-    expect(timelineTicks(48, 16)).toEqual({ labelStep: 1, tickStep: 1 });
+    expect(timelineTicks(48, width)).toEqual({ labelStep: 10, accentStep: 5, tickStep: 1 });
+    expect(timelineTicks(240, width)).toEqual({ labelStep: 20, accentStep: 10, tickStep: 2 });
+    expect(timelineTicks(1000, width)).toEqual({ labelStep: 100, accentStep: 50, tickStep: 10 });
+    expect(timelineTicks(10000, width)).toEqual({ labelStep: 1000, accentStep: 500, tickStep: 100 });
+    expect(timelineTicks(24, 216)).toEqual({ labelStep: 10, accentStep: 5, tickStep: 1 });
+    expect(timelineTicks(24, width)).toEqual({ labelStep: 2, accentStep: 0, tickStep: 1 });
+    expect(timelineTicks(10, width)).toEqual({ labelStep: 1, accentStep: 0, tickStep: 1 });
+    expect(timelineTicks(1000000, width)).toEqual({ labelStep: 10000, accentStep: 0, tickStep: 10000 });
+    expect(timelineTicks(0, width)).toEqual({ labelStep: 1, accentStep: 0, tickStep: 1 });
+    expect(timelineTicks(48, 10)).toEqual({ labelStep: 1, accentStep: 0, tickStep: 1 });
+    expect(timelineTicks(48, 16)).toEqual({ labelStep: 1, accentStep: 0, tickStep: 1 });
+    expect(timelineTicks(100, 1280)).toEqual({ labelStep: 10, accentStep: 5, tickStep: 1 });
+    expect(timelineTicks(150, 1920)).toEqual({ labelStep: 10, accentStep: 5, tickStep: 1 });
+    expect(timelineTicks(165, width)).toEqual({ labelStep: 20, accentStep: 10, tickStep: 2 });
+  });
+
+  it("calculates accent steps from label intervals", () => {
+    expect(accentStepFor(10, 1)).toBe(5);
+    expect(accentStepFor(20, 2)).toBe(10);
+    expect(accentStepFor(100, 10)).toBe(50);
+    expect(accentStepFor(10, 2)).toBe(0);
+    expect(accentStepFor(10, 5)).toBe(0);
+    expect(accentStepFor(5, 1)).toBe(0);
+    expect(accentStepFor(1, 1)).toBe(0);
+    expect(accentStepFor(10, 0)).toBe(0);
+    expect(accentStepFor(10, Number.NaN)).toBe(0);
+  });
+
+  it("always places an accent step between the tick and label steps", () => {
+    const violations: string[] = [];
+    for (let widthPx = 320; widthPx <= 3840; widthPx += 8) {
+      for (let lastFrame = 1; lastFrame <= 2000; lastFrame += 1) {
+        const { labelStep, accentStep, tickStep } = timelineTicks(lastFrame, widthPx);
+        const ok = accentStep > 0
+          ? tickStep < accentStep && accentStep < labelStep
+            && accentStep % tickStep === 0 && labelStep % accentStep === 0
+          : labelStep < 10;
+        if (!ok) violations.push(`${lastFrame}@${widthPx}: ${labelStep}/${accentStep}/${tickStep}`);
+      }
+    }
+    expect(violations).toEqual([]);
   });
 
   it("generates tick frames", () => {
@@ -37,20 +69,22 @@ describe("timeline calculations", () => {
   });
 
   it("classifies ruler ticks by label and accent intervals", () => {
-    expect(rulerTicks(24, { labelStep: 10, tickStep: 1 })).toHaveLength(25);
-    expect(rulerTicks(24, { labelStep: 10, tickStep: 1 }).filter(({ kind }) => kind === "label").map(({ frame }) => frame))
+    expect(rulerTicks(24, { labelStep: 10, accentStep: 5, tickStep: 1 })).toHaveLength(25);
+    expect(rulerTicks(24, { labelStep: 10, accentStep: 5, tickStep: 1 }).filter(({ kind }) => kind === "label").map(({ frame }) => frame))
       .toEqual([0, 10, 20]);
-    expect(rulerTicks(24, { labelStep: 10, tickStep: 1 }).filter(({ kind }) => kind === "accent").map(({ frame }) => frame))
+    expect(rulerTicks(24, { labelStep: 10, accentStep: 5, tickStep: 1 }).filter(({ kind }) => kind === "accent").map(({ frame }) => frame))
       .toEqual([5, 15]);
-    expect(rulerTicks(24, { labelStep: 10, tickStep: 1 }).filter(({ kind }) => kind === "minor").map(({ frame }) => frame))
+    expect(rulerTicks(24, { labelStep: 10, accentStep: 5, tickStep: 1 }).filter(({ kind }) => kind === "minor").map(({ frame }) => frame))
       .toEqual([1, 2, 3, 4, 6, 7, 8, 9, 11, 12, 13, 14, 16, 17, 18, 19, 21, 22, 23, 24]);
-    expect(rulerTicks(240, { labelStep: 20, tickStep: 2 })).toHaveLength(121);
-    expect(rulerTicks(240, { labelStep: 20, tickStep: 2 }).at(-1)).toEqual({ frame: 240, kind: "label" });
-    expect(rulerTicks(240, { labelStep: 20, tickStep: 2 }).find(({ frame }) => frame === 10)?.kind).toBe("accent");
-    expect(rulerTicks(240, { labelStep: 20, tickStep: 2 }).find(({ frame }) => frame === 2)?.kind).toBe("minor");
-    expect(rulerTicks(10, { labelStep: 5, tickStep: 1 }).filter(({ kind }) => kind === "accent")).toEqual([]);
-    expect(rulerTicks(4, { labelStep: 1, tickStep: 1 }).every(({ kind }) => kind === "label")).toBe(true);
-    expect(rulerTicks(0, { labelStep: 1, tickStep: 1 })).toEqual([{ frame: 0, kind: "label" }]);
+    expect(rulerTicks(240, { labelStep: 20, accentStep: 10, tickStep: 2 })).toHaveLength(121);
+    expect(rulerTicks(240, { labelStep: 20, accentStep: 10, tickStep: 2 }).at(-1)).toEqual({ frame: 240, kind: "label" });
+    expect(rulerTicks(240, { labelStep: 20, accentStep: 10, tickStep: 2 }).find(({ frame }) => frame === 10)?.kind).toBe("accent");
+    expect(rulerTicks(240, { labelStep: 20, accentStep: 10, tickStep: 2 }).find(({ frame }) => frame === 2)?.kind).toBe("minor");
+    expect(rulerTicks(10, { labelStep: 2, accentStep: 0, tickStep: 1 }).filter(({ kind }) => kind === "accent")).toEqual([]);
+    expect(rulerTicks(10, { labelStep: 2, accentStep: 0, tickStep: 1 }).map(({ kind }) => kind))
+      .toEqual(["label", "minor", "label", "minor", "label", "minor", "label", "minor", "label", "minor", "label"]);
+    expect(rulerTicks(4, { labelStep: 1, accentStep: 0, tickStep: 1 }).every(({ kind }) => kind === "label")).toBe(true);
+    expect(rulerTicks(0, { labelStep: 1, accentStep: 0, tickStep: 1 })).toEqual([{ frame: 0, kind: "label" }]);
   });
 
   it("scales tick lengths from the ruler height", () => {
