@@ -45,6 +45,7 @@
   --shadow-card: 0 1px 2px rgba(16, 24, 40, 0.06), 0 1px 3px rgba(16, 24, 40, 0.10);
   --focus-ring-color: var(--color-accent);
   --duration-fast: 120ms;
+  --duration-medium: 200ms;
   --panel-width: 22rem;
   --outliner-width: 16rem;
   --header-height: 3rem;
@@ -76,4 +77,18 @@
   --shadow-overlay: 0 4px 16px rgba(0, 0, 0, 0.55);
   --shadow-control: 1px 2px 3px rgba(0, 0, 0, 0.45);
   --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.35), 0 1px 3px rgba(0, 0, 0, 0.45);
+}
+
+/* 列幅を transition できるよう型付きで登録する。
+   実効値は :root の既定と ReviewPage の inline style が与える。 */
+@property --outliner-width {
+  syntax: "<length>";
+  inherits: true;
+  initial-value: 0px;
+}
+
+@property --panel-width {
+  syntax: "<length>";
+  inherits: true;
+  initial-value: 0px;
 }

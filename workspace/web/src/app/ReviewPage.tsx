@@ -30,6 +30,7 @@ import { ResizeHandle } from "../features/layout/ResizeHandle";
 import { useElementSize } from "../features/layout/useElementSize";
 import { useLayoutFlag } from "../features/layout/useLayoutFlag";
 import { useLayoutSize } from "../features/layout/useLayoutSize";
+import { useDockAnimation } from "../features/layout/useDockAnimation";
 import {
   clampSize,
   OUTLINER_WIDTH_DEFAULT_PX,
@@ -86,6 +87,7 @@ export function ReviewPage({ projectId }: { projectId: string }): ReactElement {
   const [outlinerWidth, setOutlinerWidth] = useLayoutSize("outlinerWidth");
   const [outlinerOpen, setOutlinerOpen] = useLayoutFlag("outlinerOpen");
   const [panelOpen, setPanelOpen] = useLayoutFlag("panelOpen");
+  const [dockAnimating, toggleDock] = useDockAnimation();
   const maxPanelWidth = panelWidthMax(bodySize.width, outlinerOpen ? OUTLINER_WIDTH_MIN_PX : 0);
   const effectivePanelWidth = clampSize(panelWidth, PANEL_WIDTH_MIN_PX, maxPanelWidth);
   const maxOutlinerWidth = outlinerWidthMax(bodySize.width, panelOpen ? effectivePanelWidth : 0);
@@ -168,6 +170,7 @@ export function ReviewPage({ projectId }: { projectId: string }): ReactElement {
       <div
         ref={bodyRef}
         className="review-body"
+        data-dock-animating={dockAnimating}
         style={{
           "--outliner-width": outlinerOpen ? effectiveOutlinerWidth + "px" : "0px",
           "--panel-width": panelOpen ? effectivePanelWidth + "px" : "0px",
@@ -180,7 +183,7 @@ export function ReviewPage({ projectId }: { projectId: string }): ReactElement {
           open={outlinerOpen}
           title={OUTLINER_HEADING}
           label={OUTLINER_TOGGLE_LABEL}
-          onToggle={setOutlinerOpen}
+          onToggle={(open) => toggleDock(setOutlinerOpen, open)}
         >
           <Outliner send={realtime.send} />
         </DockColumn>
@@ -204,7 +207,7 @@ export function ReviewPage({ projectId }: { projectId: string }): ReactElement {
                 <DockExpandButton
                   side="outliner"
                   label={OUTLINER_TOGGLE_LABEL}
-                  onExpand={() => setOutlinerOpen(true)}
+                  onExpand={() => toggleDock(setOutlinerOpen, true)}
                 />
               )}
               <ViewerHud send={realtime.send} />
@@ -212,7 +215,7 @@ export function ReviewPage({ projectId }: { projectId: string }): ReactElement {
                 <DockExpandButton
                   side="panel"
                   label={PANEL_TOGGLE_LABEL}
-                  onExpand={() => setPanelOpen(true)}
+                  onExpand={() => toggleDock(setPanelOpen, true)}
                 />
               )}
             </div>
@@ -263,7 +266,7 @@ export function ReviewPage({ projectId }: { projectId: string }): ReactElement {
           open={panelOpen}
           title={PANEL_DOCK_TITLE}
           label={PANEL_TOGGLE_LABEL}
-          onToggle={setPanelOpen}
+          onToggle={(open) => toggleDock(setPanelOpen, open)}
         >
           <div className="review-panel__body">
             <PresenceList />

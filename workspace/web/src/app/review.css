@@ -81,6 +81,13 @@
   --panel-open-width: var(--panel-width);
 }
 
+/* 開閉トグルの直後だけ列幅を補間する。リサイズのドラッグやキー操作では補間しない。 */
+.review-body[data-dock-animating="true"] {
+  transition:
+    --outliner-width var(--duration-medium) ease,
+    --panel-width var(--duration-medium) ease;
+}
+
 .review-body__resize {
   right: calc(var(--panel-width) - 4px);
 }
