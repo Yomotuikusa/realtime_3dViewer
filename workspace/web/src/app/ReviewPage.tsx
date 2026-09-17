@@ -15,7 +15,7 @@ import { SelectionPickLayer } from "../features/outliner/SelectionPickLayer";
 import { VisibilityRig } from "../features/outliner/VisibilityRig";
 import { JointRig } from "../features/joint/JointRig";
 import { TrailRig } from "../features/trail/TrailRig";
-import { OUTLINER_RESIZE_LABEL } from "../features/outliner/outliner-labels";
+import { OUTLINER_HEADING, OUTLINER_RESIZE_LABEL } from "../features/outliner/outliner-labels";
 import { PresenceList } from "../features/presence/PresenceList";
 import { ObjectList } from "../features/objects/ObjectList";
 import { RemoteCameras } from "../features/presence/RemoteCameras";
@@ -43,7 +43,7 @@ import { useSessionStore } from "../store/session";
 import { latestObjectId, useObjectsStore } from "../store/objects";
 import { ErrorBoundary } from "./ErrorBoundary";
 import { JoinDialog } from "./JoinDialog";
-import { DockCollapseBar, DockExpandButton } from "./ReviewDock";
+import { DockColumn, DockExpandButton } from "./ReviewDock";
 import { ReviewHeader } from "./ReviewHeader";
 import { SettingsDialog } from "./SettingsDialog";
 import { resetReviewStores } from "./review-stores";
@@ -52,6 +52,7 @@ import {
   LOADING_MESSAGE,
   MODEL_LOAD_FAILED,
   OUTLINER_TOGGLE_LABEL,
+  PANEL_DOCK_TITLE,
   PANEL_RESIZE_LABEL,
   PANEL_TOGGLE_LABEL,
   PROJECT_LOAD_FAILED,
@@ -170,18 +171,19 @@ export function ReviewPage({ projectId }: { projectId: string }): ReactElement {
         style={{
           "--outliner-width": outlinerOpen ? effectiveOutlinerWidth + "px" : "0px",
           "--panel-width": panelOpen ? effectivePanelWidth + "px" : "0px",
+          "--outliner-open-width": effectiveOutlinerWidth + "px",
+          "--panel-open-width": effectivePanelWidth + "px",
         } as CSSProperties}
       >
-        {outlinerOpen && (
-          <aside className="review-outliner" aria-label="アウトライナドック">
-            <DockCollapseBar
-              side="outliner"
-              label={OUTLINER_TOGGLE_LABEL}
-              onCollapse={() => setOutlinerOpen(false)}
-            />
-            <Outliner send={realtime.send} />
-          </aside>
-        )}
+        <DockColumn
+          side="outliner"
+          open={outlinerOpen}
+          title={OUTLINER_HEADING}
+          label={OUTLINER_TOGGLE_LABEL}
+          onToggle={setOutlinerOpen}
+        >
+          <Outliner send={realtime.send} />
+        </DockColumn>
         {outlinerOpen && (
           <ResizeHandle
             axis="x"
@@ -256,25 +258,24 @@ export function ReviewPage({ projectId }: { projectId: string }): ReactElement {
             onChange={setPanelWidth}
           />
         )}
-        {panelOpen && (
-          <aside className="review-panel" aria-label="サイドパネル">
-            <DockCollapseBar
-              side="panel"
-              label={PANEL_TOGGLE_LABEL}
-              onCollapse={() => setPanelOpen(false)}
-            />
-            <div className="review-panel__body">
-              <PresenceList />
-              <ObjectList projectId={projectId} send={realtime.send} />
-              <section className="review-panel__comments" aria-label="コメント">
-                {composerVersionId === null
-                  ? <p className="comments__empty" role="status">{COMPOSER_NO_OBJECTS_MESSAGE}</p>
-                  : <CommentComposer projectId={projectId} versionId={composerVersionId} />}
-                <CommentList projectId={projectId} />
-              </section>
-            </div>
-          </aside>
-        )}
+        <DockColumn
+          side="panel"
+          open={panelOpen}
+          title={PANEL_DOCK_TITLE}
+          label={PANEL_TOGGLE_LABEL}
+          onToggle={setPanelOpen}
+        >
+          <div className="review-panel__body">
+            <PresenceList />
+            <ObjectList projectId={projectId} send={realtime.send} />
+            <section className="review-panel__comments" aria-label="コメント">
+              {composerVersionId === null
+                ? <p className="comments__empty" role="status">{COMPOSER_NO_OBJECTS_MESSAGE}</p>
+                : <CommentComposer projectId={projectId} versionId={composerVersionId} />}
+              <CommentList projectId={projectId} />
+            </section>
+          </div>
+        </DockColumn>
       </div>
     </main>
   );

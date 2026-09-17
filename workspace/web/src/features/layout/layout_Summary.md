@@ -25,7 +25,7 @@
 
 ## 他機能との関係
 
-`ReviewPage` は `.review-body` の幅を `useElementSize` で測り、`panelWidthMax` と `useLayoutSize("panelWidth")` を使って右サイドパネルの幅を決める。左右ドックの開閉は `useLayoutFlag` で保持し、閉じている側はハンドルごと描画しない。タスク 065 のタイムライン高さも同じ寸法仕様・ハンドル・保存 API を利用できる。左ドック（outliner）は `useLayoutSize("outlinerWidth")` と `side="start"` を使う。
+`ReviewPage` は `.review-body` の幅を `useElementSize` で測り、`panelWidthMax` と `useLayoutSize("panelWidth")` を使って右サイドパネルの幅を決める。左右ドックの開閉は `useLayoutFlag` で保持し、ドック列は閉じても DOM に残したまま幅 0 と `inert` で畳み、ハンドルだけ開時に描画する。タスク 065 のタイムライン高さも同じ寸法仕様・ハンドル・保存 API を利用できる。左ドック（outliner）は `useLayoutSize("outlinerWidth")` と `side="start"` を使う。
 
 ## テスト
 
@@ -34,3 +34,4 @@
 - tests/layout-styles.test.ts: 共通ハンドル CSS と ReviewPage の接続をソース検査
 - tests/layout-tokens.test.ts: パネル／アウトライナ幅の CSS rem フォールバックとリサイズ既定値、ReviewPage の inline style 配線をソース検査
 - tests/dock-toggle.test.ts: ヘッダのドックトグルと開閉 hook、ReviewPage の開閉配線を検証
+- tests/dock-structure.test.ts: DockColumn の DOM と ReviewPage／ドック CSS の構造契約を検証

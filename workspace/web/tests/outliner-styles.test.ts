@@ -57,7 +57,7 @@ describe("outliner styles and source contracts", () => {
     expect(ruleBody(cssText, ".outliner__row")).toContain("calc(var(--outliner-depth, 0) * 16px)");
     expect(ruleBody(cssText, '.outliner__expand[aria-expanded="true"] .outliner__chevron')).toContain("rotate(90deg)");
     expect(ruleBody(cssText, '.outliner__item[data-hidden="true"] > .outliner__row')).not.toBeNull();
-    expect(ruleBody(cssText, ".outliner__head")).toContain("justify-content: space-between");
+    expect(ruleBody(cssText, ".outliner__head")).toContain("justify-content: flex-end");
     expect(ruleBody(cssText, ".outliner__visible")).toContain("accent-color: var(--color-accent)");
     expect(ruleBody(cssText, ".outliner__visible[disabled]")).not.toBeNull();
     expect(iconText).toContain("CUBE_OUTLINE");

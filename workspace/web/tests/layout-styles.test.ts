@@ -63,9 +63,9 @@ describe("layout resize styles and wiring", () => {
 
   it("orders the outliner, viewer, and panel columns", () => {
     const page = readSource("app/ReviewPage.tsx");
-    expect(page.indexOf('className="review-outliner"')).toBeLessThan(page.indexOf('side="start"'));
+    expect(page.indexOf('side="outliner"')).toBeLessThan(page.indexOf('side="start"'));
     expect(page.indexOf('side="start"')).toBeLessThan(page.indexOf('className="review-viewer"'));
-    expect(page.indexOf('className="review-viewer"')).toBeLessThan(page.indexOf('className="review-panel"'));
+    expect(page.indexOf('className="review-viewer"')).toBeLessThan(page.lastIndexOf('side="panel"'));
     expect(page.match(/<Outliner send=\{realtime\.send\} \/>/g)).toHaveLength(1);
     expect(page.match(/<SelectionRig \/>/g)).toHaveLength(1);
     expect(page.indexOf("<SelectionRig />")).toBeGreaterThan(page.indexOf("<CommentPins />"));

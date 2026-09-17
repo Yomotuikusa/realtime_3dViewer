@@ -76,6 +76,9 @@
   display: grid;
   grid-template-columns: var(--outliner-width) minmax(0, 1fr) var(--panel-width);
   min-height: 0;
+  /* 実効値は ReviewPage の inline style が与える。ここは宣言と既定値だけ持つ */
+  --outliner-open-width: var(--outliner-width);
+  --panel-open-width: var(--panel-width);
 }
 
 .review-body__resize {
@@ -93,6 +96,7 @@
   min-width: 0;
   min-height: 0;
   overflow: auto;
+  overflow-x: hidden;
   border-right: 1px solid var(--color-border);
   background: var(--color-surface-subtle);
 }
@@ -187,8 +191,6 @@
 
 .review-panel {
   grid-column: 3;
-  display: grid;
-  grid-template-rows: auto minmax(0, 1fr);
   min-height: 0;
   overflow: hidden;
   border-left: 1px solid var(--color-border);
@@ -206,44 +208,6 @@
 
 .review-panel__comments {
   min-height: 0;
-}
-
-.review-dock-bar {
-  position: sticky;
-  top: 0;
-  z-index: 1;
-  display: flex;
-  padding: var(--space-2);
-  border-bottom: 1px solid var(--color-border);
-  background: var(--color-surface-subtle);
-}
-
-.review-dock-bar[data-side="outliner"] {
-  justify-content: flex-end;
-}
-
-.review-dock-bar[data-side="panel"] {
-  justify-content: flex-start;
-}
-
-.review-dock-bar__button,
-.review-hud .review-dock-expand {
-  display: inline-flex;
-  flex: 0 0 auto;
-  align-items: center;
-  justify-content: center;
-  min-width: 2rem;
-  padding: var(--space-1);
-}
-
-.review-hud .review-dock-expand {
-  background: var(--color-surface-translucent);
-  box-shadow: var(--shadow-overlay);
-}
-
-.review-chevron-icon {
-  width: 1rem;
-  height: 1rem;
 }
 
 .review-stage__error {
