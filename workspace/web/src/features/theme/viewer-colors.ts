@@ -42,7 +42,7 @@ export const VIEWER_COLOR_DEFAULTS: Readonly<Record<ResolvedThemeMode, ViewerCol
   light: {
     background: "#f5f7fa",
     selection: "#f97316",
-    wireframe: "#1f2937",
+    wireframe: "#c026d3",
     joint: "#22d3ee",
     jointLink: "#0e7490",
     jointSelected: "#f97316",
@@ -55,7 +55,7 @@ export const VIEWER_COLOR_DEFAULTS: Readonly<Record<ResolvedThemeMode, ViewerCol
   dark: {
     background: "#14171f",
     selection: "#fb923c",
-    wireframe: "#cbd5e1",
+    wireframe: "#e879f9",
     joint: "#22d3ee",
     jointLink: "#38bdf8",
     jointSelected: "#fb923c",
