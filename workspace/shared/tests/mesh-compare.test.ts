@@ -35,11 +35,28 @@ describe("mesh compare", () => {
       expect(result.success).toBe(true);
       if (result.success) expect(result.data.baseVisible).toBe(baseVisible);
     }
+    for (const differencesOnly of [true, false]) {
+      const result = MeshCompareSchema.safeParse({ ...active, differencesOnly });
+      expect(result.success).toBe(true);
+      if (result.success) expect(result.data.differencesOnly).toBe(differencesOnly);
+    }
     const withoutBaseVisible = MeshCompareSchema.safeParse(active);
     expect(withoutBaseVisible.success).toBe(true);
     if (withoutBaseVisible.success) expect("baseVisible" in withoutBaseVisible.data).toBe(false);
     for (const baseVisible of ["yes", 1, null]) {
       expect(MeshCompareSchema.safeParse({ ...active, baseVisible }).success).toBe(false);
+    }
+    const withoutDifferencesOnly = MeshCompareSchema.safeParse(active);
+    expect(withoutDifferencesOnly.success).toBe(true);
+    if (withoutDifferencesOnly.success) expect("differencesOnly" in withoutDifferencesOnly.data).toBe(false);
+    for (const differencesOnly of ["yes", 1, null]) {
+      expect(MeshCompareSchema.safeParse({ ...active, differencesOnly }).success).toBe(false);
+    }
+    const bothCompareFlags = MeshCompareSchema.safeParse({ ...active, baseVisible: true, differencesOnly: true });
+    expect(bothCompareFlags.success).toBe(true);
+    if (bothCompareFlags.success) {
+      expect(bothCompareFlags.data.baseVisible).toBe(true);
+      expect(bothCompareFlags.data.differencesOnly).toBe(true);
     }
     for (const thresholdPermille of [0.05, 2.55, -1, 51, "5"]) {
       expect(MeshCompareSchema.safeParse({ ...active, thresholdPermille }).success).toBe(false);
@@ -95,15 +112,23 @@ describe("mesh compare", () => {
     expect(meshCompareEquals(active, { ...active, baseVisible: false })).toBe(true);
     expect(meshCompareEquals(active, { ...active, baseVisible: true })).toBe(false);
     expect(meshCompareEquals({ ...active, baseVisible: true }, { ...active, baseVisible: true })).toBe(true);
+    expect(meshCompareEquals(active, { ...active, differencesOnly: false })).toBe(true);
+    expect(meshCompareEquals(active, { ...active, differencesOnly: true })).toBe(false);
+    expect(meshCompareEquals({ ...active, differencesOnly: true }, { ...active, differencesOnly: true })).toBe(true);
+    expect(meshCompareEquals({ ...active, baseVisible: true }, { ...active, baseVisible: true, differencesOnly: true })).toBe(false);
     expect(meshCompareEquals(active, { ...active, baseId: "v3" })).toBe(false);
     expect(meshCompareEquals(active, { ...active, targetId: "v3" })).toBe(false);
     expect(meshCompareEquals(active, { ...active, thresholdPermille: 10 })).toBe(false);
     expect(meshCompareEquals(active, { ...active, thresholdPermille: 0.3 })).toBe(false);
     expect(meshCompareEquals({ ...active, baseVisible: true }, { ...active, baseVisible: true, thresholdPermille: 10 })).toBe(false);
-    expect(isMeshCompareActive({ ...active, baseVisible: true })).toBe(true);
+    expect(meshCompareEquals({ ...active, differencesOnly: true }, { ...active, differencesOnly: true, thresholdPermille: 10 })).toBe(false);
+    expect(isMeshCompareActive({ ...active, differencesOnly: true })).toBe(true);
     const visibleCompare = { ...active, baseVisible: true };
     expect(cloneMeshCompare(visibleCompare)).toEqual(visibleCompare);
     expect(cloneMeshCompare(visibleCompare)).not.toBe(visibleCompare);
+    const differencesCompare = { ...active, differencesOnly: true };
+    expect(cloneMeshCompare(differencesCompare)).toEqual(differencesCompare);
+    expect(cloneMeshCompare(differencesCompare)).not.toBe(differencesCompare);
     expect(cloneMeshCompare(active)).toEqual(active);
     expect(cloneMeshCompare(active)).not.toBe(active);
   });
@@ -125,6 +150,13 @@ describe("mesh compare", () => {
     if (withCompare.success && withCompare.data.type === "welcome") {
       expect(withCompare.data.meshCompare).toEqual({ ...active, baseVisible: true, thresholdPermille: 0.3 });
     }
+    const withDifferencesOnly = ServerMessageSchema.safeParse({
+      type: "welcome", selfId: "u1", users: [], strokes: [], meshCompare: { ...active, differencesOnly: true },
+    });
+    expect(withDifferencesOnly.success).toBe(true);
+    if (withDifferencesOnly.success && withDifferencesOnly.data.type === "welcome") {
+      expect(withDifferencesOnly.data.meshCompare?.differencesOnly).toBe(true);
+    }
     expect(ServerMessageSchema.safeParse({
       type: "welcome", selfId: "u1", users: [], strokes: [], meshCompare: { baseId: "v1" },
     }).success).toBe(false);
@@ -135,6 +167,11 @@ describe("mesh compare", () => {
     expect(parseClientMessage(JSON.stringify({ type: "mesh:compare", compare: visibleCompare }))).toEqual({
       ok: true,
       msg: { type: "mesh:compare", compare: visibleCompare },
+    });
+    const differencesCompare = { ...active, differencesOnly: true };
+    expect(parseClientMessage(JSON.stringify({ type: "mesh:compare", compare: differencesCompare }))).toEqual({
+      ok: true,
+      msg: { type: "mesh:compare", compare: differencesCompare },
     });
     const zeroThreshold = { ...active, thresholdPermille: 0 };
     expect(parseClientMessage(JSON.stringify({ type: "mesh:compare", compare: zeroThreshold }))).toEqual({
