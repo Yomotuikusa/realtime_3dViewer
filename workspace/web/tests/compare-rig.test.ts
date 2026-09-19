@@ -31,8 +31,8 @@ describe("mesh compare rig", () => {
     expect(source).toContain("useModelScenesStore");
     expect(source).toContain("isMeshCompareActive(");
     expect(source).toContain("computeDeviation(");
-    expect(source).toContain("clearCompareOverlays(");
-    expect(source).toContain("applyCompareOverlay(");
+    expect(source).toContain("clearCompareDifferences(");
+    expect(source).toContain("applyCompareDifference(");
     expect(source).toContain("setCompareSurfacesHidden(");
     expect(source).not.toContain("useFrame");
   });
@@ -47,8 +47,11 @@ describe("mesh compare rig", () => {
     expect(source).not.toContain("hideSurfaces");
     expect(source).toContain("const differencesOnly = compare.differencesOnly === true;");
     expect(source).toContain("const colorized = compare.colorized !== false;");
-    expect(source).toContain("applyCompareOverlay(mesh, signedDistance, threshold, colors, { depthWrite: differencesOnly, visible: colorized })");
-    expect(source).toContain("}, [result, compare.thresholdPermille, outsideColor, insideColor, differencesOnly, colorized]);");
+    expect(source).toContain("applyCompareDifference(mesh, signedDistance, threshold, colors, { visible: colorized })");
+    expect(source).toContain("}, [result, compare.thresholdPermille, outsideColor, insideColor, colorized]);");
+    expect(source).not.toContain("applyCompareOverlay");
+    expect(source).not.toContain("clearCompareOverlays");
+    expect(source).not.toContain("depthWrite");
     expect(source).toContain("if (result === null || !differencesOnly) return;");
     expect(source).toContain("}, [result, differencesOnly]);");
   });

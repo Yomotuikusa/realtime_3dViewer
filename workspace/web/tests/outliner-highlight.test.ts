@@ -247,6 +247,6 @@ describe("outliner selection highlight", () => {
     expect(source).toContain('VIEWER_OVERLAY_KEY, isViewerOverlay } from "../viewer/mesh-display"');
     expect(readSource("features/viewer/ViewerCanvas.tsx")).not.toContain("SelectionRig");
     expect(readSource("features/viewer/mesh-display.ts")).not.toContain("SELECTION_OVERLAY_KEY");
-    expect(readSource("features/compare/overlay.ts")).not.toContain("SELECTION_OVERLAY_KEY");
+    expect(readSource("features/compare/difference-mesh.ts")).not.toContain("SELECTION_OVERLAY_KEY");
   });
 });

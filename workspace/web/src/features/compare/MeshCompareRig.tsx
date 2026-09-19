@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { isMeshCompareActive } from "@shared/compare";
 import type { DeviationResult } from "./deviation";
 import { computeDeviation } from "./deviation";
-import { clearCompareOverlays, applyCompareOverlay } from "./overlay";
+import { clearCompareDifferences, applyCompareDifference } from "./difference-mesh";
 import { useDisplayStore } from "../../store/display";
 import { selectViewerColor, useThemeStore } from "../../store/theme";
 import { hexToNumber } from "../theme/viewer-colors";
@@ -34,7 +34,7 @@ export function MeshCompareRig(): null {
     if (base === null || target === null) return;
     setResult(computeDeviation(target, base));
     return () => {
-      clearCompareOverlays(target);
+      clearCompareDifferences(target);
       setResult(null);
     };
   }, [base, target]);
@@ -44,9 +44,9 @@ export function MeshCompareRig(): null {
     const threshold = thresholdWorld(result.baseSize, compare.thresholdPermille);
     const colors = { outside: hexToNumber(outsideColor), inside: hexToNumber(insideColor) };
     for (const { mesh, signedDistance } of result.meshes) {
-      applyCompareOverlay(mesh, signedDistance, threshold, colors, { depthWrite: differencesOnly, visible: colorized });
+      applyCompareDifference(mesh, signedDistance, threshold, colors, { visible: colorized });
     }
-  }, [result, compare.thresholdPermille, outsideColor, insideColor, differencesOnly, colorized]);
+  }, [result, compare.thresholdPermille, outsideColor, insideColor, colorized]);
 
   useEffect(() => {
     if (result === null || !differencesOnly) return;

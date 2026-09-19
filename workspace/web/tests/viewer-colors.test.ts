@@ -4,7 +4,7 @@ import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { COMPARE_INSIDE_COLOR, COMPARE_OUTSIDE_COLOR } from "../src/features/compare/overlay";
+import { COMPARE_INSIDE_COLOR, COMPARE_OUTSIDE_COLOR } from "../src/features/compare/difference-material";
 import { JOINT_COLOR, JOINT_LINK_COLOR } from "../src/features/joint/joint-display";
 import { SELECTED_JOINT_COLOR } from "../src/features/joint/joint-highlight";
 import { SELECTION_COLOR } from "../src/features/outliner/selection-highlight";

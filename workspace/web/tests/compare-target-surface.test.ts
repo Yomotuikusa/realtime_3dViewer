@@ -8,7 +8,7 @@ import {
   Vector3,
 } from "three";
 import { describe, expect, it } from "vitest";
-import { applyCompareOverlay } from "../src/features/compare/overlay";
+import { applyCompareDifference } from "../src/features/compare/difference-mesh";
 import { setCompareSurfacesHidden } from "../src/features/compare/target-surface";
 
 function box(): Mesh {
@@ -62,7 +62,7 @@ describe("compare target surfaces", () => {
 
   it("keeps overlay children visible while the parent is hidden", () => {
     const source = box();
-    const overlay = applyCompareOverlay(source, new Float32Array(24), 0.5, { outside: 1, inside: 2 });
+    const overlay = applyCompareDifference(source, new Float32Array(24), 0.5, { outside: 1, inside: 2 });
     const root = new Group();
     root.add(source);
     root.updateMatrixWorld(true);
