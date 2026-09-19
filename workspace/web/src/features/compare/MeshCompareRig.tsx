@@ -7,6 +7,7 @@ import { useDisplayStore } from "../../store/display";
 import { selectViewerColor, useThemeStore } from "../../store/theme";
 import { hexToNumber } from "../theme/viewer-colors";
 import { selectModelScene, useModelScenesStore } from "./model-scenes";
+import { setCompareSurfacesHidden } from "./target-surface";
 
 /** しきい値 0 のときにも計算誤差を着色しないための下限。基準サイズに対する比 */
 export const ZERO_THRESHOLD_RATIO = 1e-6;
@@ -25,6 +26,7 @@ export function MeshCompareRig(): null {
   const active = isMeshCompareActive(compare);
   const base = active ? selectModelScene(scenes, compare.baseId) : null;
   const target = active ? selectModelScene(scenes, compare.targetId) : null;
+  const differencesOnly = compare.differencesOnly === true;
   const [result, setResult] = useState<DeviationResult | null>(null);
 
   useEffect(() => {
@@ -40,8 +42,15 @@ export function MeshCompareRig(): null {
     if (result === null) return;
     const threshold = thresholdWorld(result.baseSize, compare.thresholdPermille);
     const colors = { outside: hexToNumber(outsideColor), inside: hexToNumber(insideColor) };
-    for (const { mesh, signedDistance } of result.meshes) applyCompareOverlay(mesh, signedDistance, threshold, colors);
-  }, [result, compare.thresholdPermille, outsideColor, insideColor]);
+    for (const { mesh, signedDistance } of result.meshes) applyCompareOverlay(mesh, signedDistance, threshold, colors, differencesOnly);
+  }, [result, compare.thresholdPermille, outsideColor, insideColor, differencesOnly]);
+
+  useEffect(() => {
+    if (result === null || !differencesOnly) return;
+    const meshes = result.meshes.map(({ mesh }) => mesh);
+    setCompareSurfacesHidden(meshes, true);
+    return () => setCompareSurfacesHidden(meshes, false);
+  }, [result, differencesOnly]);
 
   return null;
 }

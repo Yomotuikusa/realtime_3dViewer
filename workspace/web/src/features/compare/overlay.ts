@@ -63,6 +63,7 @@ export function applyCompareOverlay(
   signedDistance: Float32Array,
   threshold: number,
   colors: CompareColors,
+  differencesOnly = false,
 ): Mesh {
   let overlay = mesh.children.find(
     (child): child is Mesh => child instanceof Mesh && isMeshCompareOverlay(child),
@@ -71,6 +72,7 @@ export function applyCompareOverlay(
     overlay = createCompareOverlay(mesh);
     mesh.add(overlay);
   }
+  (overlay.material as Material).depthWrite = differencesOnly;
   writeCompareDistance(overlay.geometry, signedDistance);
   setCompareOverlayUniforms(overlay.material as Material, threshold, colors);
   return overlay;

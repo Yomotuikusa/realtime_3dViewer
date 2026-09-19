@@ -60,7 +60,7 @@ describe("compare overlay colors", () => {
     expect(source).toContain('useThemeStore(selectViewerColor("compareOutside"))');
     expect(source).toContain('useThemeStore(selectViewerColor("compareInside"))');
     expect(source).toContain("const colors = { outside: hexToNumber(outsideColor), inside: hexToNumber(insideColor) }");
-    expect(source).toContain("}, [result, compare.thresholdPermille, outsideColor, insideColor]);");
+    expect(source).toContain("}, [result, compare.thresholdPermille, outsideColor, insideColor, differencesOnly]);");
     expect(source).toContain("}, [base, target]);");
   });
 });

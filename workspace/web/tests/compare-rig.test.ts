@@ -33,6 +33,7 @@ describe("mesh compare rig", () => {
     expect(source).toContain("computeDeviation(");
     expect(source).toContain("clearCompareOverlays(");
     expect(source).toContain("applyCompareOverlay(");
+    expect(source).toContain("setCompareSurfacesHidden(");
     expect(source).not.toContain("useFrame");
   });
 
@@ -43,6 +44,8 @@ describe("mesh compare rig", () => {
     expect(calculationEffect?.[1]).toContain("computeDeviation(target, base)");
     expect(calculationEffect?.[1]).not.toContain("thresholdPermille");
     expect(source).toContain("}, [base, target]);");
-    expect(source).toContain("}, [result, compare.thresholdPermille, outsideColor, insideColor]);");
+    expect(source).toContain("applyCompareOverlay(mesh, signedDistance, threshold, colors, differencesOnly)");
+    expect(source).toContain("}, [result, compare.thresholdPermille, outsideColor, insideColor, differencesOnly]);");
+    expect(source).toContain("}, [result, differencesOnly]);");
   });
 });

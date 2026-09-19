@@ -138,6 +138,28 @@ describe("compare overlay", () => {
     expect(first.geometry.getAttribute(COMPARE_DISTANCE_ATTRIBUTE).getX(0)).toBe(-1);
   });
 
+  it("writes depthWrite for difference-only rendering and reuses the overlay", () => {
+    const source = mesh();
+    const first = applyCompareOverlay(source, new Float32Array(24), 0.5, { outside: 1, inside: 2 });
+    const material = first.material as MeshBasicMaterial;
+    expect(material.depthWrite).toBe(false);
+    expect(material.transparent).toBe(true);
+    expect(material.opacity).toBe(0.85);
+    expect(first.renderOrder).toBe(-1);
+
+    const second = applyCompareOverlay(source, new Float32Array(24), 0.5, { outside: 1, inside: 2 }, true);
+    expect(second).toBe(first);
+    expect(source.children).toHaveLength(1);
+    expect(material.depthWrite).toBe(true);
+    expect(material.transparent).toBe(true);
+    expect(material.opacity).toBe(0.85);
+    expect(second.renderOrder).toBe(-1);
+
+    applyCompareOverlay(source, new Float32Array(24), 0.5, { outside: 1, inside: 2 }, false);
+    expect(source.children).toHaveLength(1);
+    expect(material.depthWrite).toBe(false);
+  });
+
   it("clears only comparison overlays and releases shared geometry safely", () => {
     const root = new Group();
     const first = mesh();
