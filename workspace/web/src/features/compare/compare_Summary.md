@@ -7,6 +7,8 @@
 ## ファイル一覧と役割
 
 - deviation.ts: 比較対象 Mesh の収集、ワールド座標への三角形ベイク、基準表面の BVH 最近点からの符号付き頂点距離計算を提供する
+- triangle-clip.ts: 三角形を距離しきい値の等値線で切り、しきい値以上側の三角形へ分割する純粋関数を提供する
+- difference-geometry.ts: 符号付き距離から飛び出し側・へこみ側のパッチを切り出した非 index geometry を生成する純粋関数を提供する
 - overlay-geometry.ts: 比較重ね描き用 geometry に元 geometry の position / index / 変形属性を共有させ、所有する compareDistance 属性へ符号付き距離を書き込む
 - overlay-material.ts: compareDistance の補間値をフラグメントシェーダで赤・青・透明に判定する共有しない MeshBasicMaterial と uniform 更新 API を提供する。既定の比較色は viewer color defaults から取得する
 - overlay.ts: 比較重ね描き Mesh の作成・再利用・取り外し・破棄を提供し、geometry の距離属性と material の uniform を更新する
@@ -18,6 +20,8 @@
 ## 公開インターフェイス
 
 - deviation.ts: `isComparableMesh`、`collectComparableMeshes`、`bakeWorldTriangles`、`MeshDeviation`、`DeviationResult`、`computeDeviation`
+- triangle-clip.ts: `Corner`、`ClipVertex`、`ClipTriangle`、`clipTriangleAtOrAbove`
+- difference-geometry.ts: `DIFFERENCE_OUTSIDE_MATERIAL`、`DIFFERENCE_INSIDE_MATERIAL`、`buildDifferenceGeometry`
 - overlay-geometry.ts: `COMPARE_DISTANCE_ATTRIBUTE`、`createCompareOverlayGeometry`、`writeCompareDistance`
 - overlay-material.ts: `COMPARE_OUTSIDE_COLOR`、`COMPARE_INSIDE_COLOR`、`COMPARE_OVERLAY_OPACITY`、`COMPARE_OVERLAY_UNIFORMS_KEY`、`COMPARE_PROGRAM_CACHE_KEY`、`CompareColors`、`CompareOverlayUniforms`、`createCompareOverlayMaterial`、`compareOverlayUniforms`、`setCompareOverlayUniforms`
 - overlay.ts: 上記 overlay-geometry.ts / overlay-material.ts の再 export に加え、`MESH_COMPARE_OVERLAY_KEY`、`isMeshCompareOverlay`、`createCompareOverlay`、`applyCompareOverlay(mesh, signedDistance, threshold, colors, options)`、`CompareOverlayOptions`、`clearCompareOverlays`
@@ -33,6 +37,8 @@
 ## テスト
 
 - tests/compare-deviation.test.ts: 比較対象の識別・収集、ワールド座標ベイク、基準サイズ、箱・球・SkinnedMesh の符号付き距離を検証する
+- tests/compare-triangle-clip.test.ts: 距離しきい値で三角形を切る各頂点分類と切断点を検証する
+- tests/compare-difference-geometry.test.ts: 差分 geometry の切り出し、属性補間、groups、index・morph・skinning 対応を検証する
 - tests/compare-overlay.test.ts: 比較重ね描きの geometry / 共有属性 / 距離属性、SkinnedMesh、再利用、raycast 無効化、mesh-display との共存、破棄を検証する
 - tests/compare-target-surface.test.ts: 対象本体の layer 0 を切り替える描画・レイキャスト抑止、他 layer と子の維持、冪等性を検証する
 - tests/compare-overlay-shader.test.ts: MeshBasicMaterial の設定、GLSL の頂点距離補間・三値判定、uniform の同一参照を検証する
