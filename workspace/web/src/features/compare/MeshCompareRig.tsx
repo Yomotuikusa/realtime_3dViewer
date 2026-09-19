@@ -27,6 +27,8 @@ export function MeshCompareRig(): null {
   const base = active ? selectModelScene(scenes, compare.baseId) : null;
   const target = active ? selectModelScene(scenes, compare.targetId) : null;
   const differencesOnly = compare.differencesOnly === true;
+  const colorized = compare.colorized !== false;
+  const hideSurfaces = differencesOnly && colorized;
   const [result, setResult] = useState<DeviationResult | null>(null);
 
   useEffect(() => {
@@ -42,15 +44,17 @@ export function MeshCompareRig(): null {
     if (result === null) return;
     const threshold = thresholdWorld(result.baseSize, compare.thresholdPermille);
     const colors = { outside: hexToNumber(outsideColor), inside: hexToNumber(insideColor) };
-    for (const { mesh, signedDistance } of result.meshes) applyCompareOverlay(mesh, signedDistance, threshold, colors, differencesOnly);
-  }, [result, compare.thresholdPermille, outsideColor, insideColor, differencesOnly]);
+    for (const { mesh, signedDistance } of result.meshes) {
+      applyCompareOverlay(mesh, signedDistance, threshold, colors, { depthWrite: hideSurfaces, visible: colorized });
+    }
+  }, [result, compare.thresholdPermille, outsideColor, insideColor, hideSurfaces, colorized]);
 
   useEffect(() => {
-    if (result === null || !differencesOnly) return;
+    if (result === null || !hideSurfaces) return;
     const meshes = result.meshes.map(({ mesh }) => mesh);
     setCompareSurfacesHidden(meshes, true);
     return () => setCompareSurfacesHidden(meshes, false);
-  }, [result, differencesOnly]);
+  }, [result, hideSurfaces]);
 
   return null;
 }

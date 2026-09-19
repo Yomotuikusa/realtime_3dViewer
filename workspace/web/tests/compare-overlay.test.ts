@@ -16,6 +16,7 @@ import {
   applyCompareOverlay,
   clearCompareOverlays,
   COMPARE_DISTANCE_ATTRIBUTE,
+  compareOverlayUniforms,
   createCompareOverlay,
   createCompareOverlayGeometry,
   isMeshCompareOverlay,
@@ -115,6 +116,7 @@ describe("compare overlay", () => {
     expect(overlay.userData[VIEWER_OVERLAY_KEY]).toBe(true);
     expect(overlay.userData[MESH_DISPLAY_OVERLAY_KEY]).toBeUndefined();
     expect(overlay.renderOrder).toBe(-1);
+    expect(overlay.visible).toBe(true);
     expect(source.children).toHaveLength(0);
     expect(raycaster.intersectObject(overlay)).toEqual([]);
     expect(isMeshCompareOverlay(overlay)).toBe(true);
@@ -138,26 +140,54 @@ describe("compare overlay", () => {
     expect(first.geometry.getAttribute(COMPARE_DISTANCE_ATTRIBUTE).getX(0)).toBe(-1);
   });
 
-  it("writes depthWrite for difference-only rendering and reuses the overlay", () => {
+  it("writes depthWrite and visible for each rendering mode", () => {
     const source = mesh();
     const first = applyCompareOverlay(source, new Float32Array(24), 0.5, { outside: 1, inside: 2 });
     const material = first.material as MeshBasicMaterial;
     expect(material.depthWrite).toBe(false);
+    expect(first.visible).toBe(true);
     expect(material.transparent).toBe(true);
     expect(material.opacity).toBe(0.85);
     expect(first.renderOrder).toBe(-1);
 
-    const second = applyCompareOverlay(source, new Float32Array(24), 0.5, { outside: 1, inside: 2 }, true);
+    const second = applyCompareOverlay(source, new Float32Array(24), 0.5, { outside: 1, inside: 2 }, { depthWrite: true });
     expect(second).toBe(first);
     expect(source.children).toHaveLength(1);
     expect(material.depthWrite).toBe(true);
+    expect(second.visible).toBe(true);
     expect(material.transparent).toBe(true);
     expect(material.opacity).toBe(0.85);
     expect(second.renderOrder).toBe(-1);
 
-    applyCompareOverlay(source, new Float32Array(24), 0.5, { outside: 1, inside: 2 }, false);
+    applyCompareOverlay(source, new Float32Array(24), 0.5, { outside: 1, inside: 2 }, {});
     expect(source.children).toHaveLength(1);
     expect(material.depthWrite).toBe(false);
+    expect(first.visible).toBe(true);
+  });
+
+  it("hides without removing the overlay and updates distance and uniforms", () => {
+    const source = mesh();
+    const distance = new Float32Array(24).fill(1);
+    const first = applyCompareOverlay(source, distance, 0.5, { outside: 1, inside: 2 }, {
+      depthWrite: true,
+      visible: false,
+    });
+    const material = first.material as MeshBasicMaterial;
+    expect(source.children).toHaveLength(1);
+    expect(first.visible).toBe(false);
+    expect(material.depthWrite).toBe(true);
+    expect(first.geometry.getAttribute(COMPARE_DISTANCE_ATTRIBUTE).getX(0)).toBe(1);
+    expect(compareOverlayUniforms(material)?.compareThreshold.value).toBe(0.5);
+
+    const second = applyCompareOverlay(source, new Float32Array(24).fill(-1), 0.25, { outside: 3, inside: 4 }, {
+      visible: true,
+    });
+    expect(second).toBe(first);
+    expect(source.children).toHaveLength(1);
+    expect(first.visible).toBe(true);
+    expect(material.depthWrite).toBe(false);
+    expect(first.geometry.getAttribute(COMPARE_DISTANCE_ATTRIBUTE).getX(0)).toBe(-1);
+    expect(compareOverlayUniforms(material)?.compareThreshold.value).toBe(0.25);
   });
 
   it("clears only comparison overlays and releases shared geometry safely", () => {

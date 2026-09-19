@@ -20,7 +20,7 @@
 - deviation.ts: `isComparableMesh`、`collectComparableMeshes`、`bakeWorldTriangles`、`MeshDeviation`、`DeviationResult`、`computeDeviation`
 - overlay-geometry.ts: `COMPARE_DISTANCE_ATTRIBUTE`、`createCompareOverlayGeometry`、`writeCompareDistance`
 - overlay-material.ts: `COMPARE_OUTSIDE_COLOR`、`COMPARE_INSIDE_COLOR`、`COMPARE_OVERLAY_OPACITY`、`COMPARE_OVERLAY_UNIFORMS_KEY`、`COMPARE_PROGRAM_CACHE_KEY`、`CompareColors`、`CompareOverlayUniforms`、`createCompareOverlayMaterial`、`compareOverlayUniforms`、`setCompareOverlayUniforms`
-- overlay.ts: 上記 overlay-geometry.ts / overlay-material.ts の再 export に加え、`MESH_COMPARE_OVERLAY_KEY`、`isMeshCompareOverlay`、`createCompareOverlay`、`applyCompareOverlay(mesh, signedDistance, threshold, colors, differencesOnly)`、`clearCompareOverlays`
+- overlay.ts: 上記 overlay-geometry.ts / overlay-material.ts の再 export に加え、`MESH_COMPARE_OVERLAY_KEY`、`isMeshCompareOverlay`、`createCompareOverlay`、`applyCompareOverlay(mesh, signedDistance, threshold, colors, options)`、`CompareOverlayOptions`、`clearCompareOverlays`
 - target-surface.ts: `setCompareSurfacesHidden(meshes, hidden)`
 - model-scenes.ts: `ModelScenesState`、`useModelScenesStore`、`selectModelScene`
 - compare-visibility.ts: `isHiddenByCompare`
@@ -28,7 +28,7 @@
 
 ## 他フォルダとの関係
 
-`viewer/mesh-display.ts` の `isViewerOverlay` を共有し、ビューアが後付けしたワイヤフレームや比較重ね描きを比較対象から除外する。比較中は `ViewerCanvas` が `isHiddenByCompare` で基準の版の描画を止め、`baseVisible` で戻す。`differencesOnly` 中は対象の本体を layer 0 から外すので描画とレイキャストの両方から外れる。ワイヤーフレーム重ね描きの子は残る。差分は陰影なしのべた塗りである。overlay.ts は元 geometry の位置・index・変形属性を共有し、compareDistance だけを所有する。比較色としきい値は `MeshCompareRig` が渡し、overlay-material.ts の uniform に更新するため距離計算なしに色を変えられる。符号付き距離は頂点間で線形補間されるので、基準面が強く曲がる大きな三角形では交線位置がずれる。また、薄い基準で最近点の面が隣接頂点ごとに変わり符号反転した場合は三角形途中に透明帯が出る。これらは許容する近似である。計算はレスト姿勢で行い、ボーンの現在姿勢やモーフは反映しない。面の表裏が反転したモデルでは符号が逆になる。計算は同期的にメインスレッドを止めるため、Worker 化は今後の課題とする。
+`viewer/mesh-display.ts` の `isViewerOverlay` を共有し、ビューアが後付けしたワイヤフレームや比較重ね描きを比較対象から除外する。比較中は `ViewerCanvas` が `isHiddenByCompare` で基準の版の描画を止め、`baseVisible` で戻す。`differencesOnly` 中は対象の本体を layer 0 から外すので描画とレイキャストの両方から外れる。ワイヤーフレーム重ね描きの子は残る。`colorized` が false のあいだは重ね描きを `visible = false` にして描画から外し、`differencesOnly` は無視して対象の本体を描く。差分は陰影なしのべた塗りである。overlay.ts は元 geometry の位置・index・変形属性を共有し、compareDistance だけを所有する。比較色としきい値は `MeshCompareRig` が渡し、overlay-material.ts の uniform に更新するため距離計算なしに色を変えられる。符号付き距離は頂点間で線形補間されるので、基準面が強く曲がる大きな三角形では交線位置がずれる。また、薄い基準で最近点の面が隣接頂点ごとに変わり符号反転した場合は三角形途中に透明帯が出る。これらは許容する近似である。計算はレスト姿勢で行い、ボーンの現在姿勢やモーフは反映しない。面の表裏が反転したモデルでは符号が逆になる。計算は同期的にメインスレッドを止めるため、Worker 化は今後の課題とする。
 
 ## テスト
 

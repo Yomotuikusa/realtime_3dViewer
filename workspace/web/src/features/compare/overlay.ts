@@ -28,6 +28,14 @@ export {
 } from "./overlay-material";
 export type { CompareColors, CompareOverlayUniforms } from "./overlay-material";
 
+/** 比較重ね描きの見え方。呼び出しごとに必ず書き直す(省略時は既定値を書く) */
+export interface CompareOverlayOptions {
+  /** 材質の depthWrite。未指定は false */
+  depthWrite?: boolean;
+  /** 重ね描き Mesh の visible。未指定は true */
+  visible?: boolean;
+}
+
 /** 比較重ね描き Mesh の userData キー。値は true */
 export const MESH_COMPARE_OVERLAY_KEY = "meshCompareOverlay";
 
@@ -63,7 +71,7 @@ export function applyCompareOverlay(
   signedDistance: Float32Array,
   threshold: number,
   colors: CompareColors,
-  differencesOnly = false,
+  options: CompareOverlayOptions = {},
 ): Mesh {
   let overlay = mesh.children.find(
     (child): child is Mesh => child instanceof Mesh && isMeshCompareOverlay(child),
@@ -72,7 +80,9 @@ export function applyCompareOverlay(
     overlay = createCompareOverlay(mesh);
     mesh.add(overlay);
   }
-  (overlay.material as Material).depthWrite = differencesOnly;
+  const { depthWrite = false, visible = true } = options;
+  (overlay.material as Material).depthWrite = depthWrite;
+  overlay.visible = visible;
   writeCompareDistance(overlay.geometry, signedDistance);
   setCompareOverlayUniforms(overlay.material as Material, threshold, colors);
   return overlay;
