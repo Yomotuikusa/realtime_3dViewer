@@ -44,10 +44,12 @@ describe("mesh compare rig", () => {
     expect(calculationEffect?.[1]).toContain("computeDeviation(target, base)");
     expect(calculationEffect?.[1]).not.toContain("thresholdPermille");
     expect(source).toContain("}, [base, target]);");
+    expect(source).not.toContain("hideSurfaces");
+    expect(source).toContain("const differencesOnly = compare.differencesOnly === true;");
     expect(source).toContain("const colorized = compare.colorized !== false;");
-    expect(source).toContain("const hideSurfaces = differencesOnly && colorized;");
-    expect(source).toContain("applyCompareOverlay(mesh, signedDistance, threshold, colors, { depthWrite: hideSurfaces, visible: colorized })");
-    expect(source).toContain("}, [result, compare.thresholdPermille, outsideColor, insideColor, hideSurfaces, colorized]);");
-    expect(source).toContain("}, [result, hideSurfaces]);");
+    expect(source).toContain("applyCompareOverlay(mesh, signedDistance, threshold, colors, { depthWrite: differencesOnly, visible: colorized })");
+    expect(source).toContain("}, [result, compare.thresholdPermille, outsideColor, insideColor, differencesOnly, colorized]);");
+    expect(source).toContain("if (result === null || !differencesOnly) return;");
+    expect(source).toContain("}, [result, differencesOnly]);");
   });
 });

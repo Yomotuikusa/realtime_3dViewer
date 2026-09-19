@@ -148,10 +148,6 @@
   font-size: var(--text-sm);
 }
 
-.compare__checkbox:disabled + .compare__label {
-  opacity: 0.5;
-}
-
 .compare__legend {
   color: var(--color-text-muted);
   font-size: var(--text-xs);

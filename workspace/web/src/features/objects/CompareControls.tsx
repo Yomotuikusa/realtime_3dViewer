@@ -108,7 +108,6 @@ export function CompareControls({ send }: { send: (msg: ClientMessage) => boolea
           type="checkbox"
           className="compare__checkbox"
           checked={meshCompare.differencesOnly === true}
-          disabled={meshCompare.colorized === false}
           onChange={(event) => update({ differencesOnly: event.target.checked })}
         />
         <span className="compare__label">{COMPARE_DIFFERENCES_ONLY_LABEL}</span>

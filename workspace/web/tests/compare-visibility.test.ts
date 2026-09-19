@@ -87,7 +87,6 @@ describe("compare visibility", () => {
     expect(controls).toContain("checked={meshCompare.colorized !== false}");
     expect(controls).toContain("colorized: event.target.checked");
     expect(controls).toContain("checked={meshCompare.differencesOnly === true}");
-    expect(controls).toContain("disabled={meshCompare.colorized === false}");
     expect(controls).toContain("differencesOnly: event.target.checked");
     expect(controls.match(/<select\b/g)).toHaveLength(2);
     expect(controls.match(/type="range"/g)).toHaveLength(1);
@@ -137,7 +136,7 @@ describe("compare visibility", () => {
     expect(send).not.toHaveBeenCalled();
   });
 
-  it("disables differences-only while colorized is off", () => {
+  it("toggles differences-only while colorized is off", () => {
     const compare = { ...active, colorized: false };
     setup(compare);
     const send = vi.fn(() => true);
@@ -146,10 +145,14 @@ describe("compare visibility", () => {
     const differencesOnly = host.querySelectorAll<HTMLInputElement>('input[type="checkbox"]')[2]!;
 
     expect(colorized.checked).toBe(false);
-    expect(differencesOnly.disabled).toBe(true);
+    expect(differencesOnly.disabled).toBe(false);
     act(() => differencesOnly.click());
-    expect(send).not.toHaveBeenCalled();
-    expect(useDisplayStore.getState().meshCompare).toEqual(compare);
+    expect(useDisplayStore.getState().meshCompare).toEqual({ ...compare, differencesOnly: true });
+    expect(send).toHaveBeenCalledTimes(1);
+    expect(send).toHaveBeenLastCalledWith({
+      type: "mesh:compare",
+      compare: { ...compare, differencesOnly: true },
+    });
   });
 
   it("preserves other compare fields when toggling colorized", () => {

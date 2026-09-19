@@ -28,7 +28,6 @@ export function MeshCompareRig(): null {
   const target = active ? selectModelScene(scenes, compare.targetId) : null;
   const differencesOnly = compare.differencesOnly === true;
   const colorized = compare.colorized !== false;
-  const hideSurfaces = differencesOnly && colorized;
   const [result, setResult] = useState<DeviationResult | null>(null);
 
   useEffect(() => {
@@ -45,16 +44,16 @@ export function MeshCompareRig(): null {
     const threshold = thresholdWorld(result.baseSize, compare.thresholdPermille);
     const colors = { outside: hexToNumber(outsideColor), inside: hexToNumber(insideColor) };
     for (const { mesh, signedDistance } of result.meshes) {
-      applyCompareOverlay(mesh, signedDistance, threshold, colors, { depthWrite: hideSurfaces, visible: colorized });
+      applyCompareOverlay(mesh, signedDistance, threshold, colors, { depthWrite: differencesOnly, visible: colorized });
     }
-  }, [result, compare.thresholdPermille, outsideColor, insideColor, hideSurfaces, colorized]);
+  }, [result, compare.thresholdPermille, outsideColor, insideColor, differencesOnly, colorized]);
 
   useEffect(() => {
-    if (result === null || !hideSurfaces) return;
+    if (result === null || !differencesOnly) return;
     const meshes = result.meshes.map(({ mesh }) => mesh);
     setCompareSurfacesHidden(meshes, true);
     return () => setCompareSurfacesHidden(meshes, false);
-  }, [result, hideSurfaces]);
+  }, [result, differencesOnly]);
 
   return null;
 }
