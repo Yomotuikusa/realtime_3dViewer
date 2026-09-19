@@ -94,6 +94,8 @@ export interface MeshCompare {
   baseVisible?: boolean;
   /** 対象の本体を描かず、しきい値を超えた差分だけを描くか。未指定は false(本体も描く) */
   differencesOnly?: boolean;
+  /** しきい値を超えた差分を赤・青で着色するか。未指定は true(着色する) */
+  colorized?: boolean;
 }
 /** しきい値の下限。0 は「換算後の誤差下限を超えた差分をすべて着色」を意味する */
 export const MIN_COMPARE_THRESHOLD_PERMILLE = 0;
@@ -205,6 +207,7 @@ export const MeshCompareSchema = z.object({
   thresholdPermille: z.number().refine(isCompareThresholdPermille),
   baseVisible: z.boolean().optional(),
   differencesOnly: z.boolean().optional(),
+  colorized: z.boolean().optional(),
 }) satisfies z.ZodType<MeshCompare>;
 
 export const JointDisplaySchema = z.object({
