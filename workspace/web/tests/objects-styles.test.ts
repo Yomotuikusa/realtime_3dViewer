@@ -27,6 +27,7 @@ describe("objects styles and placement", () => {
     expect(objectsCss).toContain(".compare__field {");
     expect(objectsCss).toContain(".compare__range {");
     expect(objectsCss).toContain(".compare__check {");
+    expect(objectsCss).toContain(".compare__checkbox:disabled + .compare__label {");
     expect(objectsCss).toContain(".compare__legend {");
     expect(objectsCss).toContain("grid-template-columns: 3rem minmax(0, 1fr);");
   });
@@ -45,10 +46,13 @@ describe("objects styles and placement", () => {
     expect(compareControls).toContain("meshCompareEquals(");
     expect(compareControls.match(/<select\b/g)).toHaveLength(2);
     expect(compareControls.match(/type="range"/g)).toHaveLength(1);
-    expect(compareControls.match(/type="checkbox"/g)).toHaveLength(2);
+    expect(compareControls.match(/type="checkbox"/g)).toHaveLength(3);
     expect(compareControls).toContain("checked={meshCompare.baseVisible === true}");
     expect(compareControls).toContain("baseVisible: event.target.checked");
+    expect(compareControls).toContain("checked={meshCompare.colorized !== false}");
+    expect(compareControls).toContain("colorized: event.target.checked");
     expect(compareControls).toContain("checked={meshCompare.differencesOnly === true}");
+    expect(compareControls).toContain("disabled={meshCompare.colorized === false}");
     expect(compareControls).toContain("differencesOnly: event.target.checked");
     expect(compareControls).toContain("min={0}");
     expect(compareControls).toContain("max={COMPARE_THRESHOLD_STEPS_PERMILLE.length - 1}");

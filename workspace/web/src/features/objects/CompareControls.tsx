@@ -7,6 +7,7 @@ import { useObjectsStore } from "../../store/objects";
 import {
   COMPARE_BASE_LABEL,
   COMPARE_BASE_VISIBLE_LABEL,
+  COMPARE_COLORIZED_LABEL,
   COMPARE_DIFFERENCES_ONLY_LABEL,
   COMPARE_HEADING,
   COMPARE_LEGEND,
@@ -97,7 +98,17 @@ export function CompareControls({ send }: { send: (msg: ClientMessage) => boolea
         <input
           type="checkbox"
           className="compare__checkbox"
+          checked={meshCompare.colorized !== false}
+          onChange={(event) => update({ colorized: event.target.checked })}
+        />
+        <span className="compare__label">{COMPARE_COLORIZED_LABEL}</span>
+      </label>
+      <label className="compare__check">
+        <input
+          type="checkbox"
+          className="compare__checkbox"
           checked={meshCompare.differencesOnly === true}
+          disabled={meshCompare.colorized === false}
           onChange={(event) => update({ differencesOnly: event.target.checked })}
         />
         <span className="compare__label">{COMPARE_DIFFERENCES_ONLY_LABEL}</span>

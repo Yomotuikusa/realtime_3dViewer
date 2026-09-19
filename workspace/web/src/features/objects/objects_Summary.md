@@ -7,10 +7,10 @@
 ## ファイル一覧と役割
 
 - ObjectList.tsx: `useObjectsStore` の版一覧と可視性を表示し、表示切替の WebSocket 共有、検証済みモデルファイルの順次版追加、削除確認からの版削除を提供する。ファイル選択の `accept` は `ALLOWED_MODEL_EXTENSIONS` 由来とし、末尾に比較コントロールを配置する
-- CompareControls.tsx: 基準・対象の版と比較しきい値を表示・更新し、しきい値は shared の目盛一覧の添字で動かす。比較中も基準を表示するチェックボックスと、差分だけを表示するチェックボックス(`differencesOnly`)を備え、`mesh:compare` を WebSocket 共有する
+- CompareControls.tsx: 基準・対象の版と比較しきい値を表示・更新し、しきい値は shared の目盛一覧の添字で動かす。比較中も基準を表示するチェックボックス、差分を着色するチェックボックス(`colorized`、未指定は着色する)、着色 OFF のあいだ差分だけを表示を無効化するチェックボックス(`differencesOnly`)を備え、`mesh:compare` を WebSocket 共有する
 - DeleteObjectDialog.tsx: オブジェクト削除の確認文、危険操作ボタン、キャンセルを含む alertdialog を表示する
-- objects-labels.ts: オブジェクト見出し、可視性、ファイル追加、削除、比較の文言（比較中も基準を表示するラベルと差分だけを表示するラベルを含む）と、しきい値は小数 2 桁の百分率で表す表示用 helper
-- objects.css: オブジェクト一覧、可視性状態、ファイル追加、削除確認ダイアログ、比較コントロールのトークン CSS。比較のチェック行は `.compare__check` で配置する
+- objects-labels.ts: オブジェクト見出し、可視性、ファイル追加、削除、比較の文言（比較中も基準を表示するラベル、着色ラベル、差分だけを表示するラベルを含む）と、しきい値は小数 2 桁の百分率で表す表示用 helper
+- objects.css: オブジェクト一覧、可視性状態、ファイル追加、削除確認ダイアログ、比較コントロールのトークン CSS。比較のチェック行は `.compare__check` で配置し、無効なチェックのラベルは薄く表示する
 
 ## 公開インターフェイス
 
