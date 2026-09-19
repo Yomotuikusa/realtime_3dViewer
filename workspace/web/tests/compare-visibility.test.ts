@@ -42,12 +42,15 @@ describe("compare visibility", () => {
   it("adds the shared base visibility checkbox to compare controls", () => {
     const controls = readSource("features/objects/CompareControls.tsx");
 
-    expect(controls.match(/type="checkbox"/g)).toHaveLength(1);
+    expect(controls.match(/type="checkbox"/g)).toHaveLength(2);
     expect(controls).toContain("checked={meshCompare.baseVisible === true}");
     expect(controls).toContain("baseVisible: event.target.checked");
+    expect(controls).toContain("checked={meshCompare.differencesOnly === true}");
+    expect(controls).toContain("differencesOnly: event.target.checked");
     expect(controls.match(/<select\b/g)).toHaveLength(2);
     expect(controls.match(/type="range"/g)).toHaveLength(1);
     expect(controls.indexOf("compare__threshold")).toBeLessThan(controls.indexOf("compare__check"));
-    expect(controls.indexOf("compare__check")).toBeLessThan(controls.indexOf("compare__legend"));
+    expect(controls.lastIndexOf("COMPARE_BASE_VISIBLE_LABEL")).toBeLessThan(controls.lastIndexOf("COMPARE_DIFFERENCES_ONLY_LABEL"));
+    expect(controls.lastIndexOf("COMPARE_DIFFERENCES_ONLY_LABEL")).toBeLessThan(controls.indexOf("compare__legend"));
   });
 });
