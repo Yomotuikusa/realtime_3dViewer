@@ -1,10 +1,18 @@
 /// <reference types="node" />
 
+import { act, createElement } from "react";
+import { createRoot, type Root } from "react-dom/client";
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
-import { describe, expect, it } from "vitest";
-import { DEFAULT_MESH_COMPARE, type MeshCompare } from "@shared/types";
+import { afterEach, describe, expect, it, vi } from "vitest";
+import type { ClientMessage } from "@shared/protocol";
+import { DEFAULT_MESH_COMPARE, type MeshCompare, type ModelVersion } from "@shared/types";
+import { CompareControls } from "../src/features/objects/CompareControls";
 import { isHiddenByCompare } from "../src/features/compare/compare-visibility";
+import { useDisplayStore } from "../src/store/display";
+import { useObjectsStore } from "../src/store/objects";
+
+Object.assign(globalThis, { IS_REACT_ACT_ENVIRONMENT: true });
 
 const srcDir = existsSync(join(process.cwd(), "web", "src"))
   ? join(process.cwd(), "web", "src")
@@ -15,6 +23,37 @@ function readSource(path: string): string {
 }
 
 const active: MeshCompare = { baseId: "v1", targetId: "v2", thresholdPermille: 5 };
+
+const version = (id: string, number: number): ModelVersion => ({
+  id,
+  projectId: "project",
+  number,
+  fileName: `${id}.glb`,
+  byteSize: 1,
+  createdAt: number,
+});
+
+let mountedRoot: Root | null = null;
+
+function renderControls(send: (message: ClientMessage) => boolean): HTMLDivElement {
+  const host = document.createElement("div");
+  mountedRoot = createRoot(host);
+  act(() => mountedRoot?.render(createElement(CompareControls, { send })));
+  return host;
+}
+
+function setup(compare: MeshCompare): void {
+  useObjectsStore.getState().setObjects([version("v1", 1), version("v2", 2)]);
+  useDisplayStore.getState().setMeshCompare(compare);
+}
+
+afterEach(() => {
+  act(() => mountedRoot?.unmount());
+  mountedRoot = null;
+  useObjectsStore.getState().reset();
+  useDisplayStore.getState().reset();
+  vi.restoreAllMocks();
+});
 
 describe("compare visibility", () => {
   it("hides only the active base while its target is visible", () => {
@@ -52,5 +91,36 @@ describe("compare visibility", () => {
     expect(controls.indexOf("compare__threshold")).toBeLessThan(controls.indexOf("compare__check"));
     expect(controls.lastIndexOf("COMPARE_BASE_VISIBLE_LABEL")).toBeLessThan(controls.lastIndexOf("COMPARE_DIFFERENCES_ONLY_LABEL"));
     expect(controls.lastIndexOf("COMPARE_DIFFERENCES_ONLY_LABEL")).toBeLessThan(controls.indexOf("compare__legend"));
+  });
+
+  it("toggles and broadcasts differences-only while preserving base visibility", () => {
+    const compare = { ...active, baseVisible: true };
+    setup(compare);
+    const send = vi.fn(() => true);
+    const host = renderControls(send);
+    const differencesOnly = host.querySelectorAll<HTMLInputElement>('input[type="checkbox"]')[1]!;
+
+    act(() => differencesOnly.click());
+
+    expect(useDisplayStore.getState().meshCompare).toEqual({ ...compare, differencesOnly: true });
+    expect(send).toHaveBeenCalledTimes(1);
+    expect(send).toHaveBeenLastCalledWith({
+      type: "mesh:compare",
+      compare: { ...compare, differencesOnly: true },
+    });
+
+    send.mockClear();
+    act(() => differencesOnly.dispatchEvent(new Event("change", { bubbles: true })));
+    expect(send).not.toHaveBeenCalled();
+
+    act(() => differencesOnly.click());
+
+    expect(useDisplayStore.getState().meshCompare).toEqual({ ...compare, differencesOnly: false });
+    expect(send).toHaveBeenCalledTimes(1);
+    expect(send).toHaveBeenLastCalledWith({
+      type: "mesh:compare",
+      compare: { ...compare, differencesOnly: false },
+    });
+    expect(useDisplayStore.getState().meshCompare.baseVisible).toBe(true);
   });
 });
