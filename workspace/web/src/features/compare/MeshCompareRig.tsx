@@ -20,6 +20,7 @@ export function thresholdWorld(baseSize: number, thresholdPermille: number): num
 /** Canvas に1つだけ置く描画なしの部品。比較設定とロード済みシーンから重ね描きを管理する */
 export function MeshCompareRig(): null {
   const compare = useDisplayStore((state) => state.meshCompare);
+  const meshDisplay = useDisplayStore((state) => state.meshDisplay);
   const outsideColor = useThemeStore(selectViewerColor("compareOutside"));
   const insideColor = useThemeStore(selectViewerColor("compareInside"));
   const scenes = useModelScenesStore((state) => state.scenes);
@@ -44,9 +45,9 @@ export function MeshCompareRig(): null {
     const threshold = thresholdWorld(result.baseSize, compare.thresholdPermille);
     const colors = { outside: hexToNumber(outsideColor), inside: hexToNumber(insideColor) };
     for (const { mesh, signedDistance } of result.meshes) {
-      applyCompareDifference(mesh, signedDistance, threshold, colors, { visible: colorized });
+      applyCompareDifference(mesh, signedDistance, threshold, colors, { colorized });
     }
-  }, [result, compare.thresholdPermille, outsideColor, insideColor, colorized]);
+  }, [result, compare.thresholdPermille, outsideColor, insideColor, colorized, meshDisplay]);
 
   useEffect(() => {
     if (result === null || !differencesOnly) return;

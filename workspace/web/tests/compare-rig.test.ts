@@ -47,8 +47,9 @@ describe("mesh compare rig", () => {
     expect(source).not.toContain("hideSurfaces");
     expect(source).toContain("const differencesOnly = compare.differencesOnly === true;");
     expect(source).toContain("const colorized = compare.colorized !== false;");
-    expect(source).toContain("applyCompareDifference(mesh, signedDistance, threshold, colors, { visible: colorized })");
-    expect(source).toContain("}, [result, compare.thresholdPermille, outsideColor, insideColor, colorized]);");
+    expect(source).toContain("const meshDisplay = useDisplayStore((state) => state.meshDisplay);");
+    expect(source).toContain("applyCompareDifference(mesh, signedDistance, threshold, colors, { colorized })");
+    expect(source).toContain("}, [result, compare.thresholdPermille, outsideColor, insideColor, colorized, meshDisplay]);");
     expect(source).not.toContain("applyCompareOverlay");
     expect(source).not.toContain("clearCompareOverlays");
     expect(source).not.toContain("depthWrite");

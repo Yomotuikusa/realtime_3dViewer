@@ -17,7 +17,9 @@ import {
   createCompareDifference,
   isMeshCompareDifference,
   MESH_COMPARE_DIFFERENCE_KEY,
+  MESH_COMPARE_DIFFERENCE_MATERIALS_KEY,
   MESH_COMPARE_DIFFERENCE_SOURCE_KEY,
+  sourceDifferenceMaterials,
 } from "../src/features/compare/difference-mesh";
 import { applyMeshDisplay } from "../src/features/viewer/mesh-display";
 
@@ -59,6 +61,7 @@ describe("compare difference mesh", () => {
     expect(difference.raycast(new Raycaster(), [])).toBeUndefined();
     expect(difference.frustumCulled).toBe(false);
     expect(difference.userData[MESH_COMPARE_DIFFERENCE_KEY]).toBe(true);
+    expect(difference.userData[MESH_COMPARE_DIFFERENCE_MATERIALS_KEY]).toBe(difference.material);
     expect(difference.userData.viewerOverlay).toBe(true);
     expect(source.children).toHaveLength(0);
   });
@@ -74,14 +77,16 @@ describe("compare difference mesh", () => {
     expect(difference.morphTargetDictionary).toBe(source.morphTargetDictionary);
   });
 
-  it("creates, reuses, recolors, hides, and rebuilds the difference geometry", () => {
+  it("creates, reuses, recolors, switches materials, and rebuilds the difference geometry", () => {
     const source = box();
     const first = applyCompareDifference(source, d1, 0.5, colors);
+    const compareMaterials = first.userData[MESH_COMPARE_DIFFERENCE_MATERIALS_KEY] as MeshStandardMaterial[];
     expect(source.children).toEqual([first]);
     expect(isMeshCompareDifference(first)).toBe(true);
     expect(first.geometry.getAttribute("position").count).toBe(36);
     expect(groups(first)).toEqual([[0, 36, 0], [36, 0, 1]]);
-    expect((first.material as MeshStandardMaterial[])[0]!.color.getHex()).toBe(0xff0000);
+    expect(compareMaterials[0]!.color.getHex()).toBe(0xff0000);
+    expect(first.material).toBe(compareMaterials);
     expect(first.visible).toBe(true);
     expect(first.userData[MESH_COMPARE_DIFFERENCE_SOURCE_KEY]).toMatchObject({ signedDistance: d1, threshold: 0.5 });
     expect((first.userData[MESH_COMPARE_DIFFERENCE_SOURCE_KEY] as { signedDistance: Float32Array }).signedDistance).toBe(d1);
@@ -89,12 +94,22 @@ describe("compare difference mesh", () => {
     const same = applyCompareDifference(source, d1, 0.5, { outside: 1, inside: 2 });
     expect(same).toBe(first);
     expect(same.geometry).toBe(first.geometry);
-    applyCompareDifference(source, d1, 0.5, colors, { visible: false });
-    expect(first.visible).toBe(false);
-    applyCompareDifference(source, d1, 0.5, colors);
+    const originalGeometry = first.geometry;
+    applyCompareDifference(source, d1, 0.5, colors, { colorized: false });
     expect(first.visible).toBe(true);
-    expect((first.material as MeshStandardMaterial[])[0]!.color.getHex()).toBe(0xff0000);
-    expect((first.material as MeshStandardMaterial[])[1]!.color.getHex()).toBe(0x0000ff);
+    expect(first.geometry).toBe(originalGeometry);
+    expect(first.material).toEqual([source.material, source.material]);
+    expect((first.material as MeshStandardMaterial[])[0]).toBe(source.material);
+    expect((first.material as MeshStandardMaterial[])[1]).toBe(source.material);
+
+    applyCompareDifference(source, d1, 0.5, { outside: 1, inside: 2 }, { colorized: false });
+    expect(first.material).toEqual([source.material, source.material]);
+    expect(compareMaterials[0]!.color.getHex()).toBe(1);
+    expect(compareMaterials[1]!.color.getHex()).toBe(2);
+    applyCompareDifference(source, d1, 0.5, colors, { colorized: true });
+    expect(first.material).toBe(compareMaterials);
+    expect(compareMaterials[0]!.color.getHex()).toBe(0xff0000);
+    expect(compareMaterials[1]!.color.getHex()).toBe(0x0000ff);
 
     const oldGeometry = first.geometry;
     const dispose = vi.spyOn(oldGeometry, "dispose");
@@ -120,6 +135,25 @@ describe("compare difference mesh", () => {
     expect(skinned.geometry.getAttribute("skinWeight").itemSize).toBe(4);
     expect(skinned.geometry.morphAttributes.position).toHaveLength(1);
     expect(skinned.geometry.morphTargetsRelative).toBe(true);
+
+    const skinnedSource = skinnedMesh();
+    const skinnedDifference = applyCompareDifference(skinnedSource, d1, 0.5, colors, { colorized: false });
+    expect(skinnedDifference).toBeInstanceOf(SkinnedMesh);
+    expect(skinnedDifference.material).toEqual([skinnedSource.material, skinnedSource.material]);
+  });
+
+  it("uses the first source material for both difference groups", () => {
+    const first = new MeshStandardMaterial();
+    const second = new MeshStandardMaterial();
+    const source = new Mesh(new BoxGeometry(), [first, second]);
+    const difference = applyCompareDifference(source, d1, 0.5, colors, { colorized: false });
+    expect(sourceDifferenceMaterials(source)).toEqual([first, first]);
+    expect(difference.material).toEqual([first, first]);
+
+    const empty = new Mesh(new BoxGeometry(), []);
+    expect(sourceDifferenceMaterials(empty)).toBeNull();
+    const emptyDifference = applyCompareDifference(empty, d1, 0.5, colors, { colorized: false });
+    expect(emptyDifference.material).toBe(emptyDifference.userData[MESH_COMPARE_DIFFERENCE_MATERIALS_KEY]);
   });
 
   it("does not add difference hits and coexists with mesh display", () => {
@@ -161,5 +195,23 @@ describe("compare difference mesh", () => {
     for (const dispose of disposals) expect(dispose).toHaveBeenCalledOnce();
     expect(root.children).toEqual([first, second]);
     expect(() => clearCompareDifferences(new Group())).not.toThrow();
+  });
+
+  it("does not dispose a source material used while colorized is off", () => {
+    const sourceMaterial = new MeshStandardMaterial();
+    const source = new Mesh(new BoxGeometry(), sourceMaterial);
+    const difference = applyCompareDifference(source, d1, 0.5, colors, { colorized: false });
+    const sourceDispose = vi.spyOn(sourceMaterial, "dispose");
+    const compareDispose = vi.spyOn(
+      (difference.userData[MESH_COMPARE_DIFFERENCE_MATERIALS_KEY] as MeshStandardMaterial[])[0]!,
+      "dispose",
+    );
+    const root = new Group();
+    root.add(source);
+
+    clearCompareDifferences(root);
+
+    expect(sourceDispose).not.toHaveBeenCalled();
+    expect(compareDispose).toHaveBeenCalledOnce();
   });
 });

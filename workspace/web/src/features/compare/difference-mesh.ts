@@ -1,4 +1,4 @@
-import { BufferGeometry, Mesh, MeshStandardMaterial, Object3D, SkinnedMesh } from "three";
+import { BufferGeometry, Material, Mesh, MeshStandardMaterial, Object3D, SkinnedMesh } from "three";
 import { VIEWER_OVERLAY_KEY } from "../viewer/mesh-display";
 import { buildDifferenceGeometry } from "./difference-geometry";
 import {
@@ -9,12 +9,14 @@ import {
 
 /** 差分 Mesh の見え方。 */
 export interface CompareDifferenceOptions {
-  /** 差分 Mesh の visible。未指定は true */
-  visible?: boolean;
+  /** 差分を比較色で着色するか。false なら対象本体の材質で描く。未指定は true */
+  colorized?: boolean;
 }
 
 /** 差分 Mesh の userData キー。値は true */
 export const MESH_COMPARE_DIFFERENCE_KEY = "meshCompareDifference";
+/** 比較色の材質 [飛び出し用, へこみ用] を覚える userData キー。 */
+export const MESH_COMPARE_DIFFERENCE_MATERIALS_KEY = "meshCompareDifferenceMaterials";
 /** 前回 geometry を作った入力を覚える userData キー。 */
 export const MESH_COMPARE_DIFFERENCE_SOURCE_KEY = "meshCompareDifferenceSource";
 
@@ -40,6 +42,7 @@ export function createCompareDifference(mesh: Mesh): Mesh {
   difference.raycast = () => undefined;
   difference.frustumCulled = false;
   difference.userData[MESH_COMPARE_DIFFERENCE_KEY] = true;
+  difference.userData[MESH_COMPARE_DIFFERENCE_MATERIALS_KEY] = materials;
   difference.userData[VIEWER_OVERLAY_KEY] = true;
   return difference;
 }
@@ -55,11 +58,13 @@ function differenceChildren(mesh: Mesh): Mesh[] {
   );
 }
 
-function differenceMaterials(mesh: Mesh): MeshStandardMaterial[] {
-  return (Array.isArray(mesh.material) ? mesh.material : [mesh.material]) as MeshStandardMaterial[];
+export function sourceDifferenceMaterials(mesh: Mesh): [Material, Material] | null {
+  const materials = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
+  const source = materials[0];
+  return source === undefined ? null : [source, source];
 }
 
-/** 差分 Mesh を作成または再利用し、必要な geometry と表示状態を更新する。 */
+/** 差分 Mesh を作成または再利用し、必要な geometry と材質を更新する。 */
 export function applyCompareDifference(
   mesh: Mesh,
   signedDistance: Float32Array,
@@ -81,15 +86,19 @@ export function applyCompareDifference(
     difference.userData[MESH_COMPARE_DIFFERENCE_SOURCE_KEY] = { signedDistance, threshold } satisfies DifferenceSource;
   }
 
-  setDifferenceColors(differenceMaterials(difference), colors);
-  difference.visible = options.visible ?? true;
+  const materials = difference.userData[MESH_COMPARE_DIFFERENCE_MATERIALS_KEY] as MeshStandardMaterial[];
+  setDifferenceColors(materials, colors);
+  difference.material = options.colorized === false
+    ? sourceDifferenceMaterials(mesh) ?? materials
+    : materials;
+  difference.visible = true;
   return difference;
 }
 
 function disposeDifference(difference: Mesh): void {
   difference.geometry.dispose();
-  const materials = Array.isArray(difference.material) ? difference.material : [difference.material];
-  for (const material of materials) material.dispose();
+  const materials = difference.userData[MESH_COMPARE_DIFFERENCE_MATERIALS_KEY] as MeshStandardMaterial[] | undefined;
+  for (const material of materials ?? []) material.dispose();
 }
 
 /** root 配下の差分 Mesh を取り外して破棄する。 */
