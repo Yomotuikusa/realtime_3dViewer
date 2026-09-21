@@ -4,6 +4,7 @@ import { selectVisible, useCommentsStore } from "../../store/comments";
 import type { CommentStatus } from "@shared/types";
 import { CommentCallout } from "./CommentCallout";
 import { pinLabel } from "./comment-labels";
+import { CANVAS_OVERLAY_Z_RANGE } from "../layout/layers";
 import "./comments.css";
 
 function CommentPin({ id, anchor, authorName, selected, status }: {
@@ -14,7 +15,7 @@ function CommentPin({ id, anchor, authorName, selected, status }: {
   status: CommentStatus;
 }): ReactElement {
   return (
-    <Html position={anchor} center>
+    <Html position={anchor} center zIndexRange={CANVAS_OVERLAY_Z_RANGE}>
       <button
         type="button"
         className="comments-pin"

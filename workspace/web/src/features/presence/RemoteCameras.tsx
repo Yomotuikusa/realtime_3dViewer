@@ -5,6 +5,7 @@ import type { CameraState, PresenceUser } from "@shared/types";
 import { useCameraStore } from "../../store/camera";
 import { usePresenceStore } from "../../store/presence";
 import { useSessionStore } from "../../store/session";
+import { CANVAS_OVERLAY_Z_RANGE } from "../layout/layers";
 import { REMOTE_CAMERA_SEGMENTS, remoteCameraSize } from "./remote-camera-size";
 
 function cameraOrientation(camera: CameraState): Quaternion {
@@ -27,7 +28,7 @@ function RemoteCamera({ user }: { user: PresenceUser }): ReactElement {
         <coneGeometry args={[radius, height, REMOTE_CAMERA_SEGMENTS]} />
         <meshStandardMaterial color={user.color} />
       </mesh>
-      <Html position={[0, tagOffset, 0]} center>
+      <Html position={[0, tagOffset, 0]} center zIndexRange={CANVAS_OVERLAY_Z_RANGE}>
         <span className="presence-tag" style={{ "--user-color": user.color } as CSSProperties}>
           {user.name}
         </span>

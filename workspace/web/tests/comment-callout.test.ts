@@ -13,10 +13,12 @@ const callout = readFileSync(join(srcDir, "features/comments/CommentCallout.tsx"
 const pins = readFileSync(join(srcDir, "features/comments/CommentPins.tsx"), "utf8");
 
 describe("comment callout source", () => {
-  it("renders the selected comment with a fixed, high Html layer", () => {
+  it("renders the selected comment with the shared canvas callout layer", () => {
     expect(callout).toContain("export function CommentCallout");
     expect(callout).toContain('from "@react-three/drei"');
-    expect(callout).toContain("<Html position={comment.anchor} zIndexRange={[16777272, 16777272]}>");
+    expect(callout).toContain('from "../layout/layers"');
+    expect(callout).toContain("CANVAS_CALLOUT_Z_RANGE");
+    expect(callout).toContain("<Html position={comment.anchor} zIndexRange={CANVAS_CALLOUT_Z_RANGE}>");
     expect(callout).toContain('className="comments-callout"');
     expect(callout).toContain('role="dialog"');
     expect(callout).toContain("data-status={comment.status}");

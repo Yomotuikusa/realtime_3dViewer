@@ -81,7 +81,6 @@
 
 .objects-delete__backdrop {
   position: fixed;
-  z-index: 3;
 }
 
 .objects-delete__actions {

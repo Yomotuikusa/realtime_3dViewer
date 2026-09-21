@@ -29,12 +29,8 @@ describe("review model error styles", () => {
   });
 
   it("places the model error above the HUD", () => {
-    const errorZIndex = ruleBody(reviewCssText, ".review-stage__error")?.match(/z-index:\s*(\d+)/)?.[1];
-    const hudZIndex = ruleBody(reviewCssText, ".review-hud")?.match(/z-index:\s*(\d+)/)?.[1];
-
-    expect(errorZIndex).toBeDefined();
-    expect(hudZIndex).toBeDefined();
-    expect(Number(errorZIndex)).toBeGreaterThan(Number(hudZIndex));
+    expect(ruleBody(reviewCssText, ".review-stage__error")).toContain("z-index: var(--z-stage-error)");
+    expect(ruleBody(reviewCssText, ".review-hud")).toContain("z-index: var(--z-hud)");
   });
 
   it("restores pointer interaction on the model error card", () => {

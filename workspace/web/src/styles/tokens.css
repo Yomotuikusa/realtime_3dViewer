@@ -50,6 +50,16 @@
   --outliner-width: 16rem;
   --header-height: 3rem;
   --follow-frame-width: 4px;
+
+  /* 重なり順の段。数値が大きいほど手前。出典はここ 1 か所で、
+     drei の zIndexRange に渡す数値だけ features/layout/layers.ts が同じ値を持つ */
+  --z-canvas-overlay: 1000;
+  --z-canvas-callout: 1001;
+  --z-hud: 1100;
+  --z-resize-handle: 1200;
+  --z-stage-error: 1300;
+  --z-modal: 1400;
+  --z-alert: 1500;
 }
 
 :root[data-theme="dark"] {

@@ -22,7 +22,7 @@
 - review-icons.tsx: ドックの折りたたみ／再表示ボタンに使うシェブロン SVG。viewBox・path 定数、`ChevronDirection`、`ChevronIcon` を公開する
 - SettingsDialog.tsx: `ShortcutSettings`、`ThemeSettings`、`ViewSettings` をキー操作／表示色／表示と操作タブで切り替える設定ダイアログの枠を担当する
 - review-labels.ts: 接続状態・コピー状態・ロード/エラー文言、設定ダイアログと 3 タブのラベル、ドック上部／HUD 再表示ボタンで共有する左右ドック開閉ラベル、サイドパネル幅ハンドルのラベルを定義する JSX 非依存の純粋関数と定数
-- review.css: レビュー画面のヘッダ、3列 grid の左ドック／`.review-stage` を含むビューア／右パネル、3 列の `grid-column` 明示、開閉トグル時だけ列幅を補間する `.review-body`、`.review-panel__body`、HUD、モデル読み込み失敗用の `.review-stage__error` オーバーレイ、設定／入室 backdrop/dialog、境界ハンドル、ロード/エラー状態のプレーン CSS
+- review.css: レビュー画面のヘッダ、3列 grid の左ドック／`.review-stage` を含むビューア／右パネル、3 列の `grid-column` 明示、開閉トグル時だけ列幅を補間する `.review-body`、`.review-panel__body`、HUD、モデル読み込み失敗用の `.review-stage__error` オーバーレイ、設定／入室 backdrop/dialog、境界ハンドル、ロード/エラー状態のプレーン CSS。重なり順の段は `styles/tokens.css` を出典とする
 - ErrorBoundary.tsx: React/three の描画例外を捕捉し、フォールバックを表示
 
 ## 公開インターフェイス
@@ -66,6 +66,7 @@
 - tests/review-labels.test.ts: 接続状態・コピー状態・ロード/エラー文言のテスト
 - tests/review-stores.test.ts: 10個のレビュー用ストアをまとめて初期化する reset の検証
 - tests/review-styles.test.ts: モデル読み込み失敗オーバーレイのCSS配置・重なり順・操作性と、ErrorBoundary フォールバックのJSX配置をソース検査
+- tests/ui-layers.test.ts: UI の z-index トークン、CSS 参照、3D 内 Html のレイヤー定数を検証
 - tests/routes.test.ts: ルート解析と履歴遷移テスト
 - tests/upload-labels.test.ts: 4形式のアップロード/NotFound 文言、OBJ 材質注記、対応形式の accept とヘルプ、容量エラー定数、複数ファイル検証とファイル helper の単位・丸め結果を検証
 - tests/upload-page.test.ts: UploadPage のプロジェクト名入力が共有の `MAX_PROJECT_NAME_LENGTH` を使うことをソース検査

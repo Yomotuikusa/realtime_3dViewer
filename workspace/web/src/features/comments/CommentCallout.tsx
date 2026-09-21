@@ -2,6 +2,7 @@ import { Html } from "@react-three/drei";
 import type { ReactElement } from "react";
 import type { Comment } from "@shared/types";
 import { useCommentsStore } from "../../store/comments";
+import { CANVAS_CALLOUT_Z_RANGE } from "../layout/layers";
 import {
   CLOSE_CALLOUT_LABEL,
   formatCommentTime,
@@ -18,7 +19,7 @@ export function CommentCallout({ comment }: { comment: Comment }): ReactElement 
   const playback = comment.playback ?? null;
 
   return (
-    <Html position={comment.anchor} zIndexRange={[16777272, 16777272]}>
+    <Html position={comment.anchor} zIndexRange={CANVAS_CALLOUT_Z_RANGE}>
       <div
         className="comments-callout"
         role="dialog"
