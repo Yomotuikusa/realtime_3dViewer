@@ -23,6 +23,7 @@
 - tests/lighting.test.ts: 共有ライト角度の有限数検証、範囲外値の受理、余分なキー除去のテスト
 - tests/types-bounds.test.ts: 識別子、ファイル名、プロジェクト名、コメント文字列の長さ・文字種上限テスト
 - tests/api.test.ts: REST スキーマ、定数、trim・境界値のテスト
+- tests/rename-project-input.test.ts: 名前変更入力の trim・空白／長さ制約と FORBIDDEN エラーコードをテストする
 - tests/protocol.test.ts: Client/Server の全メッセージ種別と parse 関数のテスト
 - tests/protocol-object-removed.test.ts: `object:removed` の Server スキーマ受理、必須 versionId、JSON parse のテスト
 - tests/mesh-compare.test.ts: mesh compare の 0.1‰ 格子の受理・拒否と目盛一覧・最寄り添字、baseVisible と differencesOnly と colorized の任意指定と同値判定、純粋関数、protocol の受信・parse テスト

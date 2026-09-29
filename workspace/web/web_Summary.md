@@ -37,7 +37,7 @@ glTF/GLB の 3D レビュー画面を提供する。レビュー画面は表示�
 対応するテストの追加時は同じ Summary の「テスト」を更新する。
 
 ## 共通ファイル
-- src/api/client.ts: REST の URL（各パスセグメントを URI エンコード）、JSON/FormData リクエスト、プロジェクトの作成・一覧取得・名前変更・削除・一覧から外す・版追加、レスポンス検証、`ApiClientError`
+- src/api/client.ts: REST の URL（各パスセグメントを URI エンコード）、JSON/FormData リクエスト、プロジェクトの作成・一覧取得・名前変更・削除・一覧から外す・版追加、レスポンス検証、`ApiClientError`。本文なし DELETE は共通処理で扱う
 - src/api/ws.ts: `WsClient`、WebSocket URL、接続状態通知、指数バックオフによる再接続
 - src/main.tsx: React アプリのエントリーポイント。tokens → base → controls の順で全体スタイルを読み込む
 - src/styles/tokens.css: 色・文字・間隔・角丸・動き・レイアウトのセマンティックトークン。既存 inline 値を引き継ぎ、`:root` にライト値を定義し、`:root[data-theme="dark"]` にダーク値の上書きブロックを持つ
@@ -59,6 +59,7 @@ API クライアントは同一オリジンの `/api/...` を使い、URL の pr
 ## テスト
 - tests/api-client.test.ts: API クライアントの URL、body、エラー、スキーマ検証テスト
 - tests/api-projects.test.ts: プロジェクト一覧 API クライアントの取得とスキーマ検証テスト
+- tests/api-project-management.test.ts: プロジェクト名前変更・削除・membership 除去の HTTP メソッド、URI エンコード、応答検証、FORBIDDEN 変換テスト
 - tests/project-list-page.test.ts: プロジェクト一覧画面の状態表示とリンク遷移テスト
 - tests/projects-labels.test.ts: プロジェクト一覧の文言・日時・メタ情報テスト
 - tests/review-header-projects-link.test.ts: レビュー画面から一覧への導線テスト

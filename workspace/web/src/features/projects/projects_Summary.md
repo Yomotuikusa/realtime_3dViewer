@@ -30,3 +30,5 @@
 
 - tests/project-list-page.test.ts: 読み込み、失敗と再試行、空、一覧順、共有バッジ、リンク遷移、アンマウント後の取得完了を検証
 - tests/projects-labels.test.ts: 日時と一覧メタ情報の表示を検証
+- tests/project-management-ui.test.ts: 管理ボタンの権限表示と名前変更・削除ダイアログのアクセシビリティ、busy/error 表示を検証
+- tests/project-actions.test.ts: 名前変更・削除・一覧から外すの成功、入力検証、busy/error、404 による行除去を検証

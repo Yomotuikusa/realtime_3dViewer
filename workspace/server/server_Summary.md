@@ -89,6 +89,7 @@ server の基盤。本番は `npm run build && npm run start` で起動する。
   HEAD、API 非横取り、パストラバーサル、未存在 root のテスト。
 - `tests/errors.test.ts`: HTTP / Zod / 未知エラーの応答変換テスト。
 - `tests/db-projects.test.ts`: SQLite 接続、スキーマ、トランザクション、projects 層の空 project・全版一覧・検索・版削除テスト。
+- `tests/db-project-management.test.ts`: 所有者検索・名前変更、管理権限、membership 除去、project とコメント・版の cascade 前提削除をテストする。
 - `tests/db-identity.test.ts`: users / sessions の登録検索、project_members の upsert・外部キー・
   cascade、projects owner、および旧 projects 定義からの identity テーブル移行と再移行の冪等性をテストする。
 - `tests/routes-project-identity.test.ts`: 匿名 Cookie の発行・再利用、owner / membership 記録、
@@ -113,6 +114,7 @@ server の基盤。本番は `npm run build && npm run start` で起動する。
 - `tests/routes-project-versions.test.ts`: 既存 project への版追加、2回追加後の全版取得と採番、publish、
   空 project への版追加、存在しない project、単一ファイル制約、形式不正、DB 失敗時の後始末のテスト。
 - `tests/routes-project-delete.test.ts`: 版削除時のコメント・モデルファイル・project 状態・publish、存在しない対象、二重削除のテスト。
+- `tests/routes-project-manage.test.ts`: project の名前変更・権限・入力／body limit、cascade 削除とモデルファイル、membership 除去・再表示をテストする。
 - `tests/routes-comments.test.ts`: コメント一覧の順序・絞り込み、投稿・status 更新、入力検証、
   project/version スコープ、publish 呼び出しのテスト。
 - `tests/routes-comments-playback.test.ts`: コメント投稿の playback 保存・応答・publish・一覧反映、
