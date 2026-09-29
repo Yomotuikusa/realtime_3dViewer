@@ -29,8 +29,6 @@ describe("shared public exports", () => {
       "simplify",
       "simplifyTolerance",
       "isSendableStroke",
-      "ProjectRoleSchema",
-      "ProjectSummarySchema",
     ] as const;
 
     for (const name of exportedNames) {
