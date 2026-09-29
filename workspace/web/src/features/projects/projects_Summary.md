@@ -20,7 +20,7 @@
 - ProjectListItem: `ProjectSummary` 1件の表示と管理操作 callback
 - `useProjectActions`: 一覧操作の状態、ダイアログ、更新 callback
 - RenameProjectDialog / DeleteProjectDialog: 名前変更・削除確認ダイアログ
-- projects-labels.ts: 一覧・操作の文言、エラー、`formatOpenedAt`、`projectMeta`
+- projects-labels.ts: 一覧・操作の文言、エラー、aria-label・削除確認文、`formatOpenedAt`、`projectMeta`
 
 ## 他機能との関係
 
@@ -28,7 +28,6 @@
 
 ## テスト
 
-- tests/project-list-page.test.ts: 読み込み、失敗と再試行、空、一覧順、共有バッジ、リンク遷移、アンマウント後の取得完了を検証
-- tests/projects-labels.test.ts: 日時と一覧メタ情報の表示を検証
-- tests/project-management-ui.test.ts: 管理ボタンの権限表示と名前変更・削除ダイアログのアクセシビリティ、busy/error 表示を検証
+- tests/project-list-page.test.ts: 読み込み、失敗と再試行、空、一覧順、共有バッジ、リンク遷移、管理ボタン、名前変更・削除ダイアログ、アンマウント後の取得完了を検証
+- tests/projects-labels.test.ts: 日時と一覧メタ情報、操作文言、削除確認文、権限エラー文を検証
 - tests/project-actions.test.ts: 名前変更・削除・一覧から外すの成功、入力検証、busy/error、404 による行除去を検証

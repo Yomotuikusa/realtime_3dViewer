@@ -59,9 +59,9 @@ API クライアントは同一オリジンの `/api/...` を使い、URL の pr
 ## テスト
 - tests/api-client.test.ts: API クライアントの URL、body、エラー、スキーマ検証テスト
 - tests/api-projects.test.ts: プロジェクト一覧 API クライアントの取得とスキーマ検証テスト
-- tests/api-project-management.test.ts: プロジェクト名前変更・削除・membership 除去の HTTP メソッド、URI エンコード、応答検証、FORBIDDEN 変換テスト
-- tests/project-list-page.test.ts: プロジェクト一覧画面の状態表示とリンク遷移テスト
-- tests/projects-labels.test.ts: プロジェクト一覧の文言・日時・メタ情報テスト
+- tests/api-project-manage.test.ts: プロジェクト名前変更・削除・membership 除去の HTTP メソッド、URI エンコード、応答検証、FORBIDDEN 変換テスト
+- tests/project-list-page.test.ts: プロジェクト一覧の状態表示、リンク遷移、管理ボタン、名前変更・削除ダイアログテスト
+- tests/projects-labels.test.ts: プロジェクト一覧の文言・日時・メタ情報・操作エラーテスト
 - tests/review-header-projects-link.test.ts: レビュー画面から一覧への導線テスト
 - tests/ws-client.test.ts: JSON 送受信、入力破棄、再接続バックオフ、明示 close のテスト
 - tests/styles-rules.test.ts: `src/**/*.css` を再帰走査し、トークンの `:root` 定義、tokens.css 以外の生色禁止、CSS 変数の宣言/フォールバック、`!important` / `@import` 規約、main.tsx の import 順を検証

@@ -30,22 +30,6 @@ function addProject(db: Db, id: string, createdAt: number, openedAt: number, use
 }
 
 describe("listProjectSummaries", () => {
-  it("uses the shared management rule for owned and legacy projects", () => {
-    const db = database();
-    for (const userId of ["u1", "u2"]) {
-      db.prepare("INSERT INTO users (id, created_at) VALUES (?, ?)").run(userId, 1);
-    }
-    insertProject(db, { id: "owned-by-other", name: "Owned", createdAt: 1, ownerId: "u2" });
-    insertProject(db, { id: "legacy", name: "Legacy", createdAt: 2 });
-    touchProjectMembership(db, { projectId: "owned-by-other", userId: "u1", openedAt: 1 });
-    touchProjectMembership(db, { projectId: "legacy", userId: "u1", openedAt: 2 });
-
-    expect(listProjectSummaries(db, "u1")).toMatchObject([
-      { id: "legacy", role: "member", canManage: true },
-      { id: "owned-by-other", role: "member", canManage: false },
-    ]);
-  });
-
   it("sorts by last opened time descending", () => {
     const db = database();
     db.prepare("INSERT INTO users (id, created_at) VALUES (?, ?)").run("u1", 1);

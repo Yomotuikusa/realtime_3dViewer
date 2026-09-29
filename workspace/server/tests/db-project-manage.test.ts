@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it } from "vitest";
 import { openDb, type Db } from "../src/db/connection";
 import {
   canManageProject,
+  listProjectSummaries,
   removeProjectMembership,
   touchProjectMembership,
 } from "../src/db/project-members";
@@ -51,7 +52,23 @@ describe("project management database operations", () => {
     expect(renameProject(db, "missing", "Nope")).toBe(false);
   });
 
-  it("uses owner-or-null management rules and removes one membership", () => {
+  it("uses the shared management rule for project summaries", () => {
+    const db = database();
+    for (const userId of ["u1", "u2"]) {
+      db.prepare("INSERT INTO users (id, created_at) VALUES (?, ?)").run(userId, 1);
+    }
+    insertProject(db, { id: "owned-by-other", name: "Owned", createdAt: 1, ownerId: "u2" });
+    insertProject(db, { id: "legacy", name: "Legacy", createdAt: 2 });
+    touchProjectMembership(db, { projectId: "owned-by-other", userId: "u1", openedAt: 1 });
+    touchProjectMembership(db, { projectId: "legacy", userId: "u1", openedAt: 2 });
+
+    expect(listProjectSummaries(db, "u1")).toMatchObject([
+      { id: "legacy", role: "member", canManage: true },
+      { id: "owned-by-other", role: "member", canManage: false },
+    ]);
+  });
+
+  it("uses owner-or-null rules and removes one membership", () => {
     expect(canManageProject("u1", "u1")).toBe(true);
     expect(canManageProject("u1", "u2")).toBe(false);
     expect(canManageProject(null, "u2")).toBe(true);
@@ -91,9 +108,11 @@ describe("project management database operations", () => {
     expect(deleteProject(db, "p1")).toEqual(["v1", "v2"]);
     expect(deleteProject(db, "p1")).toBeNull();
     for (const table of ["model_versions", "comments", "project_members"]) {
-      expect(db.prepare(`SELECT COUNT(*) AS count FROM ${table} WHERE project_id = ?`).get("p1")).toEqual({ count: 0 });
+      expect(db.prepare(`SELECT COUNT(*) AS count FROM ${table} WHERE project_id = ?`).get("p1"))
+        .toEqual({ count: 0 });
     }
-    expect(db.prepare("SELECT COUNT(*) AS count FROM projects WHERE id = ?").get("p1")).toEqual({ count: 0 });
+    expect(db.prepare("SELECT COUNT(*) AS count FROM projects WHERE id = ?").get("p1"))
+      .toEqual({ count: 0 });
     expect(db.prepare("SELECT id FROM projects").all()).toEqual([{ id: "p2" }]);
     expect(db.prepare("SELECT id FROM model_versions").all()).toEqual([{ id: "other-v1" }]);
   });
