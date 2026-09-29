@@ -1,8 +1,9 @@
 # server
 
 ## 目的
-環境設定、HTTP エラー応答、SQLite のスキーマ適用と projects / model_versions /
-comments の永続化、ファイル保存、プロジェクト取得 API、web/dist の静的配信を提供する
+環境設定、HTTP エラー応答、SQLite のスキーマ適用と users / sessions /
+projects / project_members / model_versions / comments の永続化、匿名セッション識別、
+ファイル保存、プロジェクト取得 API、web/dist の静的配信を提供する
 server の基盤。本番は `npm run build && npm run start` で起動する。
 
 ## ファイル一覧と役割
@@ -13,10 +14,15 @@ server の基盤。本番は `npm run build && npm run start` で起動する。
   `WS_HEARTBEAT_INTERVAL_MS` (0で無効)、`MAX_UPLOAD_FILES` (1以上) を設定できる。
 - `src/errors.ts`: `HttpError` と未知エラーを API エラー応答へ変換する。
 - `src/db/connection.ts`: `node:sqlite` の接続、PRAGMA、スキーマ適用、既存 DB への
-  `playback_json` 列追加移行、トランザクション。`migrate` は schema.sql を適用した後に
-  `addColumnIfMissing` で不足列だけを `ALTER TABLE` する。
-- `src/db/schema.sql`: projects、model_versions、comments とコメント検索用 index の DDL。
-  comments は `strokes_json` の後に nullable な `playback_json` を持つ。
+  `owner_id` / `playback_json` 列追加移行、トランザクション。`migrate` は schema.sql を
+  適用した後に `addColumnIfMissing` で不足列だけを `ALTER TABLE` する。
+- `src/db/schema.sql`: users、sessions、projects、project_members、model_versions、comments
+  と検索用 index の DDL。projects は nullable な `owner_id` を持ち、project_members は
+  project と user の参加記録を保持する。comments は `strokes_json` の後に nullable な
+  `playback_json` を持つ。
+- `src/db/users.ts`: users の匿名行と sessions の SHA-256 token hash を登録し、hash から
+  user id を検索する。
+- `src/db/project-members.ts`: project を開いた user の joined / last-opened 時刻を upsert する。
 - `src/db/projects.ts`: projects / model_versions の登録、全版の番号順一覧と検索、コメントを含む版削除、および行の型変換。版が無い project も返す。
 - `src/db/comments.ts`: コメントの登録、project 単位の一覧、status 更新。JSON 列と
   shared の `Comment` の相互変換を担い、playback は `playback_json` へ nullable JSON として
@@ -24,8 +30,14 @@ server の基盤。本番は `npm run build && npm run start` で起動する。
 - `src/storage/files.ts`: `dataDir/uploads/<versionId>.glb` への一時ファイル経由の非同期保存・削除。拡張子 `.glb` は内部名で、中身の形式とは無関係。
 - `src/routes/projects.ts`: multipart モデルアップロード、既存 project への版追加・削除、project JSON
   の取得とモデル本体の配信を提供する。複数ファイルの保存と projects / model_versions 登録を
-  同一処理で行い、失敗時は保存済みファイルを削除する。版追加・削除成功後は `object:added` / `object:removed` を publish
-  し、`MODEL_CONTENT_TYPES` 由来の Content-Type と immutable キャッシュヘッダを設定する。
+  同一処理で行い、作成時は owner と project_members も同じ DB トランザクションで登録し、
+  失敗時は保存済みファイルを削除する。project 取得時は project_members の最終閲覧時刻を
+  更新する。版追加・削除成功後は `object:added` / `object:removed` を publish し、
+  `MODEL_CONTENT_TYPES` 由来の Content-Type と immutable キャッシュヘッダを設定する。
+- `src/identity/session.ts`: `rv_session` Cookie の SHA-256 hash を sessions から解決し、
+  未知または未指定の Cookie では匿名 users / sessions をトランザクションで作成して
+  HttpOnly・SameSite=Lax・Path=/・400日 Max-Age の Cookie を設定する。現状は LAN の HTTP
+  運用のため `Secure` を付けていない。HTTPS 化時に付与する。
 - `src/routes/project-upload.ts`: multipart の file フィールド(単一または配列)を件数上限内で
   全件検証し、検証済みのファイル名・バイト列へ変換する。File 以外、件数超過、形式不正、
   サイズ超過を API エラーへ変換し、件数超過はファイルのバイト列を読む前に拒否する。
@@ -76,6 +88,10 @@ server の基盤。本番は `npm run build && npm run start` で起動する。
   HEAD、API 非横取り、パストラバーサル、未存在 root のテスト。
 - `tests/errors.test.ts`: HTTP / Zod / 未知エラーの応答変換テスト。
 - `tests/db-projects.test.ts`: SQLite 接続、スキーマ、トランザクション、projects 層の空 project・全版一覧・検索・版削除テスト。
+- `tests/db-users.test.ts` / `tests/db-project-members.test.ts`: users / sessions の登録検索、
+  project_members の upsert・外部キー・cascade、projects owner のテスト。
+- `tests/routes-project-identity.test.ts`: 匿名 Cookie の発行・再利用、owner / membership 記録、
+  入力検証・存在確認の前後関係、識別対象外ルートのテスト。
 - `tests/db-comments.test.ts`: comments 層の JSON 往復、FK、一覧順序・status 絞り込み、
   project スコープ、status トグル、playback の保存・null・status 更新維持のテスト。
 - `tests/db-migrate.test.ts`: playback_json 列の新規作成、旧 comments 定義からの nullable 列移行、
@@ -130,9 +146,11 @@ server の基盤。本番は `npm run build && npm run start` で起動する。
 - `HttpError` / `toErrorResponse`: API のエラーコード・HTTP ステータス・メッセージを統一する。
 - `openDb` / `migrate` / `withTransaction`: SQLite 接続とトランザクションを管理する。
 - `addColumnIfMissing`: 指定テーブルの PRAGMA 列一覧を確認し、列が無い場合だけ指定定義で
-  `ALTER TABLE ... ADD COLUMN` を実行する。`migrate` は schema.sql の後に comments の
-  `playback_json TEXT` 移行を適用する。
-- `insertProject` / `insertModelVersion`: プロジェクトと版を登録する。
+  `ALTER TABLE ... ADD COLUMN` を実行する。`migrate` は schema.sql の後に projects の
+  `owner_id TEXT REFERENCES users(id)` と comments の `playback_json TEXT` 移行を適用する。
+- `insertUser` / `insertSession` / `findUserIdBySessionHash`: 匿名ユーザーとセッションを
+  登録・検索する。`touchProjectMembership`: project の参加・最終閲覧を upsert する。
+- `insertProject` / `insertModelVersion`: owner を任意指定できるプロジェクトと版を登録する。
 - `listModelVersions` / `findProject` / `findModelVersion` / `deleteModelVersion`: 全版を番号昇順で列挙し、空 project を含む shared の `Project` / `ModelVersion` へ変換して検索し、コメントと版本体をトランザクションで削除する。
 - `insertComment`: `NewComment` を status `open` として登録し、playback を nullable JSON として
   保存した `Comment` を返す。未指定・null は `playback: null` になる。
@@ -140,8 +158,9 @@ server の基盤。本番は `npm run build && npm run start` で起動する。
 - `updateCommentStatus`: project と comment を指定して status と更新時刻を変更する。
 - `Storage` / `createFileStorage`: モデルファイルを atomic rename で保存し、保存先を返す。
 - `AppDeps` / `createApp`: DB、Storage、Config、publish、時刻、ID 生成を注入して Hono を構築する。
-  multipart とコメント JSON の本体上限を強制し、全レスポンスに `X-Content-Type-Options: nosniff`
-  を付ける。未知の 500 は `request_failed` の JSON 1 行を記録する。
+  multipart とコメント JSON の本体上限を強制し、project 作成・閲覧用の `newUserId` と
+  `newSessionToken` は `newId` と独立して注入できる。全レスポンスに
+  `X-Content-Type-Options: nosniff` を付け、未知の 500 は `request_failed` の JSON 1 行を記録する。
 - `MAX_JSON_BODY_BYTES` / `MULTIPART_OVERHEAD_BYTES`: コメント JSON の 1 MiB 上限と、
   multipart 本体上限へ加える 64 KiB の余裕を公開する。
 - `projectRoutes`: `GET /api/projects/:projectId` と
@@ -152,7 +171,12 @@ server の基盤。本番は `npm run build && npm run start` で起動する。
   する。名前は trim して保存し、不正な入力は `VALIDATION`、非 glTF/GLB/FBX/OBJ は
   拡張子不正は HTTP 415 の `UNSUPPORTED_FORMAT`、内容不正は HTTP 400 の
   `UNSUPPORTED_FORMAT`、上限超過は `PAYLOAD_TOO_LARGE`、保存後の DB 失敗など予期しないエラーは
-  `INTERNAL` を返す。削除はコメント、版本体、ファイルを順に処理して `object:removed` を publish する。
+  `INTERNAL` を返す。作成は入力検証後に匿名ユーザーを解決して owner / membership を登録し、
+  閲覧は存在確認後に membership の最終閲覧を記録する。版追加・版削除・モデル配信では
+  セッション Cookie を作らない。削除はコメント、版本体、ファイルを順に処理して
+  `object:removed` を publish する。
+- `SESSION_COOKIE` / `SESSION_MAX_AGE_SECONDS` / `hashSessionToken` / `ensureUser`: 匿名
+  セッション Cookie の名前・有効期間、ハッシュ化、HTTP リクエストからの user 解決を提供する。
 - `readUploadedModels`: multipart の file フィールドを検証済み `UploadedModel[]` へ変換する。
 - `commentRoutes`: `GET /api/projects/:projectId/comments` は `Comment[]` を返し、任意の
   `status=open|resolved` で絞り込む。POST は `CreateCommentInput` を検証し、対象 version が

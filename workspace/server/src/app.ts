@@ -26,6 +26,10 @@ export interface AppDeps {
   publish: (projectId: string, msg: ServerMessage) => void;
   now?: () => number;
   newId?: () => string;
+  /** 匿名ユーザー id の生成。newId とは独立 */
+  newUserId?: () => string;
+  /** セッショントークンの生成。newId とは独立 */
+  newSessionToken?: () => string;
 }
 
 export function createApp(deps: AppDeps): HonoType {
@@ -33,6 +37,8 @@ export function createApp(deps: AppDeps): HonoType {
     ...deps,
     now: deps.now ?? (() => Date.now()),
     newId: deps.newId ?? (() => nanoid(12)),
+    newUserId: deps.newUserId ?? (() => nanoid(12)),
+    newSessionToken: deps.newSessionToken ?? (() => nanoid(32)),
   };
   const app = new Hono();
   const config = resolved.config;

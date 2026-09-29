@@ -29,11 +29,11 @@ function toModelVersion(row: VersionRow): ModelVersion {
 
 export function insertProject(
   db: Db,
-  input: { id: string; name: string; createdAt: number },
+  input: { id: string; name: string; createdAt: number; ownerId?: string | null },
 ): void {
   db.prepare(
-    "INSERT INTO projects (id, name, created_at) VALUES (?, ?, ?)",
-  ).run(input.id, input.name, input.createdAt);
+    "INSERT INTO projects (id, name, created_at, owner_id) VALUES (?, ?, ?, ?)",
+  ).run(input.id, input.name, input.createdAt, input.ownerId ?? null);
 }
 
 export function insertModelVersion(

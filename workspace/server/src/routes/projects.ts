@@ -13,7 +13,9 @@ import {
   insertProject,
 } from "../db/projects";
 import { withTransaction } from "../db/connection";
+import { touchProjectMembership } from "../db/project-members";
 import { HttpError } from "../errors";
+import { ensureUser } from "../identity/session";
 import { readUploadedModels } from "./project-upload";
 
 function notFound(message: string): never {
@@ -42,6 +44,12 @@ export function projectRoutes(deps: Required<AppDeps>): Hono {
       deps.config.maxUploadBytes,
       deps.config.maxUploadFiles ?? DEFAULT_MAX_UPLOAD_FILES,
     );
+    const userId = ensureUser(c, {
+      db: deps.db,
+      now: deps.now,
+      newUserId: deps.newUserId,
+      newSessionToken: deps.newSessionToken,
+    });
 
     const projectId = deps.newId();
     const createdAt = deps.now();
@@ -57,7 +65,7 @@ export function projectRoutes(deps: Required<AppDeps>): Hono {
         await deps.storage.saveModelFile(version.id, version.bytes);
       }
       withTransaction(deps.db, () => {
-        insertProject(deps.db, { id: projectId, name, createdAt });
+        insertProject(deps.db, { id: projectId, name, createdAt, ownerId: userId });
         for (const version of versions) {
           insertModelVersion(deps.db, {
             id: version.id,
@@ -67,6 +75,7 @@ export function projectRoutes(deps: Required<AppDeps>): Hono {
             createdAt,
           });
         }
+        touchProjectMembership(deps.db, { projectId, userId, openedAt: createdAt });
       });
     } catch (error) {
       await Promise.all(savedVersionIds.map((id) => deps.storage.deleteModelFile(id)));
@@ -141,6 +150,17 @@ export function projectRoutes(deps: Required<AppDeps>): Hono {
     if (!project) {
       notFound("Project not found");
     }
+    const userId = ensureUser(c, {
+      db: deps.db,
+      now: deps.now,
+      newUserId: deps.newUserId,
+      newSessionToken: deps.newSessionToken,
+    });
+    touchProjectMembership(deps.db, {
+      projectId: c.req.param("projectId"),
+      userId,
+      openedAt: deps.now(),
+    });
     return c.json(project);
   });
 

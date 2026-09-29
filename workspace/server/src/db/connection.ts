@@ -30,6 +30,7 @@ export function addColumnIfMissing(
 export function migrate(db: Db): void {
   const schema = readFileSync(new URL("./schema.sql", import.meta.url), "utf8");
   db.exec(schema);
+  addColumnIfMissing(db, "projects", "owner_id", "TEXT REFERENCES users(id)");
   addColumnIfMissing(db, "comments", "playback_json", "TEXT");
 }
 
