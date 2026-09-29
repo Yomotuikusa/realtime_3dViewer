@@ -88,8 +88,8 @@ server の基盤。本番は `npm run build && npm run start` で起動する。
   HEAD、API 非横取り、パストラバーサル、未存在 root のテスト。
 - `tests/errors.test.ts`: HTTP / Zod / 未知エラーの応答変換テスト。
 - `tests/db-projects.test.ts`: SQLite 接続、スキーマ、トランザクション、projects 層の空 project・全版一覧・検索・版削除テスト。
-- `tests/db-users.test.ts` / `tests/db-project-members.test.ts`: users / sessions の登録検索、
-  project_members の upsert・外部キー・cascade、projects owner のテスト。
+- `tests/db-identity.test.ts`: users / sessions の登録検索、project_members の upsert・外部キー・
+  cascade、projects owner、および旧 projects 定義からの identity テーブル移行と再移行の冪等性をテストする。
 - `tests/routes-project-identity.test.ts`: 匿名 Cookie の発行・再利用、owner / membership 記録、
   入力検証・存在確認の前後関係、識別対象外ルートのテスト。
 - `tests/db-comments.test.ts`: comments 層の JSON 往復、FK、一覧順序・status 絞り込み、
