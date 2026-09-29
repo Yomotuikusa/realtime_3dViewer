@@ -43,6 +43,14 @@ export type DisplayWelcomeFields = Pick<
   "light" | "lightBrightness" | "hiddenObjectIds" | "hiddenObjectParts" | "meshDisplay" | "meshCompare" | "jointDisplay" | "motionTrail" | "playbackSource"
 >;
 
+/** 表示状態の保存先。RoomHub に注入する */
+export interface RoomDisplayStore {
+  /** 保存が無い(または読めない)なら null */
+  load(projectId: string): DisplayWelcomeFields | null;
+  /** 例外を投げない(失敗時はアダプタがログを出す) */
+  save(projectId: string, fields: DisplayWelcomeFields): void;
+}
+
 /** すべて未設定の初期状態を作る(Set は呼び出しごとに新しいインスタンス) */
 export function createRoomDisplayState(): RoomDisplayState {
   return {
@@ -56,6 +64,27 @@ export function createRoomDisplayState(): RoomDisplayState {
     motionTrail: null,
     playbackSource: null,
   };
+}
+
+/** 保存済みの welcome フィールドから、独立した表示状態を復元する。 */
+export function restoreRoomDisplayState(fields: DisplayWelcomeFields | null): RoomDisplayState {
+  const state = createRoomDisplayState();
+  if (!fields) return state;
+
+  if (fields.light !== undefined) state.light = { ...fields.light };
+  if (fields.lightBrightness !== undefined) state.lightBrightness = fields.lightBrightness;
+  if (fields.hiddenObjectIds !== undefined) state.hiddenObjects = new Set(fields.hiddenObjectIds);
+  if (fields.hiddenObjectParts !== undefined) {
+    state.hiddenParts = new Map(
+      fields.hiddenObjectParts.map((part) => [objectPartKey(part), { ...part }]),
+    );
+  }
+  if (fields.meshDisplay !== undefined) state.meshDisplay = fields.meshDisplay;
+  if (fields.meshCompare !== undefined) state.meshCompare = { ...fields.meshCompare };
+  if (fields.jointDisplay !== undefined) state.jointDisplay = { ...fields.jointDisplay };
+  if (fields.motionTrail !== undefined) state.motionTrail = cloneMotionTrail(fields.motionTrail);
+  if (fields.playbackSource !== undefined) state.playbackSource = fields.playbackSource;
+  return state;
 }
 
 /** 表示状態を更新し、送信元以外へ中継するメッセージを作る。 */

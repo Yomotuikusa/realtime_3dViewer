@@ -16,6 +16,12 @@ CREATE TABLE IF NOT EXISTS projects (
   owner_id TEXT REFERENCES users(id)
 );
 
+CREATE TABLE IF NOT EXISTS project_room_state (
+  project_id TEXT PRIMARY KEY REFERENCES projects(id) ON DELETE CASCADE,
+  display_json TEXT NOT NULL,
+  updated_at INTEGER NOT NULL
+);
+
 CREATE TABLE IF NOT EXISTS project_members (
   project_id TEXT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
   user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,

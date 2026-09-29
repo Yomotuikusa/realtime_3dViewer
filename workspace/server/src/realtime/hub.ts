@@ -7,6 +7,8 @@ import {
   displayWelcomeFields,
   forgetObjectInDisplay,
   hiddenPartsOf,
+  restoreRoomDisplayState,
+  type RoomDisplayStore,
 } from "./room-display";
 import { addStroke, clearStrokes, removeStroke } from "./room-strokes";
 import {
@@ -29,6 +31,8 @@ export interface RoomHubOptions {
   now?: () => number;
   newId?: () => string;
   guestDigits?: () => string;
+  /** 指定したときだけ表示状態を保存・復元する */
+  displayStore?: RoomDisplayStore;
 }
 
 function defaultGuestDigits(): string {
@@ -39,6 +43,7 @@ export class RoomHub {
   private readonly now: () => number;
   private readonly newId: () => string;
   private readonly guestDigits: () => string;
+  private readonly displayStore?: RoomDisplayStore;
   private readonly connections = new Map<string, Connection>();
   private readonly rooms = new Map<string, Room>();
 
@@ -46,6 +51,7 @@ export class RoomHub {
     this.now = options.now ?? (() => Date.now());
     this.newId = options.newId ?? (() => nanoid(12));
     this.guestDigits = options.guestDigits ?? defaultGuestDigits;
+    this.displayStore = options.displayStore;
   }
 
   connect(projectId: string): string | null {
@@ -104,7 +110,11 @@ export class RoomHub {
       case "joint:display":
       case "trail:display":
       case "playback:source":
-        return [{ target: "others", msg: applyDisplayMessage(room.display, connId, msg) }];
+        {
+          const relay = applyDisplayMessage(room.display, connId, msg);
+          this.saveDisplay(connection.projectId, room);
+          return [{ target: "others", msg: relay }];
+        }
       case "stroke:add":
         return addStroke(room, connId, msg.stroke, this.now());
       case "stroke:remove":
@@ -172,7 +182,17 @@ export class RoomHub {
   /** Forget a deleted version from an existing room without broadcasting. */
   forgetObject(projectId: string, versionId: string): void {
     const room = this.rooms.get(projectId);
-    if (room) forgetObjectInDisplay(room.display, versionId);
+    if (room) {
+      forgetObjectInDisplay(room.display, versionId);
+      this.saveDisplay(projectId, room);
+      return;
+    }
+    if (!this.displayStore) return;
+    const fields = this.displayStore.load(projectId);
+    if (fields === null) return;
+    const display = restoreRoomDisplayState(fields);
+    forgetObjectInDisplay(display, versionId);
+    this.displayStore.save(projectId, displayWelcomeFields(display));
   }
 
   private join(connId: string, connection: Connection, name: string): Outbound[] {
@@ -192,6 +212,9 @@ export class RoomHub {
     }
 
     const room = existingRoom ?? createRoom();
+    if (!existingRoom && this.displayStore) {
+      room.display = restoreRoomDisplayState(this.displayStore.load(connection.projectId));
+    }
     this.rooms.set(connection.projectId, room);
 
     const trimmedName = name.trim();
@@ -219,5 +242,9 @@ export class RoomHub {
       },
       { target: "others", msg: { type: "user:joined", user: copyUser(user) } },
     ];
-}
+  }
+
+  private saveDisplay(projectId: string, room: Room): void {
+    this.displayStore?.save(projectId, displayWelcomeFields(room.display));
+  }
 }

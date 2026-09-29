@@ -6,6 +6,7 @@ import { createApp } from "./app";
 import { loadConfig } from "./config";
 import { openDb } from "./db/connection";
 import { findProject } from "./db/projects";
+import { createRoomDisplayStore } from "./db/room-display";
 import { attachRealtime, type Realtime } from "./realtime/ws";
 import { RoomHub } from "./realtime/hub";
 import { createFileStorage } from "./storage/files";
@@ -14,7 +15,7 @@ const config = loadConfig(process.env);
 mkdirSync(config.dataDir, { recursive: true });
 const db = openDb(join(config.dataDir, "app.db"));
 const storage = createFileStorage(config.dataDir);
-const hub = new RoomHub();
+const hub = new RoomHub({ displayStore: createRoomDisplayStore(db, () => Date.now()) });
 let realtime: Realtime | null = null;
 const app = createApp({
   db,

@@ -2,7 +2,7 @@
 
 ## 目的
 環境設定、HTTP エラー応答、SQLite のスキーマ適用と users / sessions /
-projects / project_members / model_versions / comments の永続化、匿名セッション識別、
+projects / project_members / model_versions / comments / project_room_state の永続化、匿名セッション識別、
 ファイル保存、プロジェクト取得 API、web/dist の静的配信を提供する
 server の基盤。本番は `npm run build && npm run start` で起動する。
 
@@ -16,10 +16,11 @@ server の基盤。本番は `npm run build && npm run start` で起動する。
 - `src/db/connection.ts`: `node:sqlite` の接続、PRAGMA、スキーマ適用、既存 DB への
   `owner_id` / `playback_json` 列追加移行、トランザクション。`migrate` は schema.sql を
   適用した後に `addColumnIfMissing` で不足列だけを `ALTER TABLE` する。
-- `src/db/schema.sql`: users、sessions、projects、project_members、model_versions、comments
-  と検索用 index の DDL。projects は nullable な `owner_id` を持ち、project_members は
+- `src/db/schema.sql`: users、sessions、projects、project_members、model_versions、comments、
+  project_room_state と検索用 index の DDL。projects は nullable な `owner_id` を持ち、project_members は
   project と user の参加記録を保持する。comments は `strokes_json` の後に nullable な
-  `playback_json` を持つ。
+  `playback_json` を持ち、project_room_state は project ごとの共有表示状態 JSON と更新時刻を
+  `projects` の削除に追従して保持する。
 - `src/db/users.ts`: users の匿名行と sessions の SHA-256 token hash を登録し、hash から
   user id を検索する。
 - `src/db/project-members.ts`: project を開いた user の joined / last-opened 時刻を upsert し、管理権限判定、一覧からの membership 削除、user 別の project 一覧を最終閲覧時刻・作成時刻・ID順で返す。
@@ -27,6 +28,8 @@ server の基盤。本番は `npm run build && npm run start` で起動する。
 - `src/db/comments.ts`: コメントの登録、project 単位の一覧、status 更新。JSON 列と
   shared の `Comment` の相互変換を担い、playback は `playback_json` へ nullable JSON として
   保存して常に `playback` キーを返す。
+- `src/db/room-display.ts`: `project_room_state` の表示状態 JSON を共有スキーマで検証して
+  読み書きし、壊れた保存値を警告し、保存時の DB 失敗をログへ記録して吸収する。
 - `src/storage/files.ts`: `dataDir/uploads/<versionId>.glb` への一時ファイル経由の非同期保存・削除。拡張子 `.glb` は内部名で、中身の形式とは無関係。
 - `src/routes/projects.ts`: project 一覧、multipart モデルアップロード、既存 project への版追加・削除、project JSON
   の取得とモデル本体の配信を提供する。複数ファイルの保存と projects / model_versions 登録を
@@ -192,7 +195,8 @@ server の基盤。本番は `npm run build && npm run start` で起動する。
 - `projectManageRoutes`: `PATCH /api/projects/:projectId` の名前変更、`DELETE /api/projects/:projectId` の project と関連ファイル削除、`DELETE /api/projects/:projectId/membership` の一覧からの離脱を提供する。所有者以外の管理操作は `FORBIDDEN`、不正 JSON・名前は `VALIDATION`、成功時の削除応答は本文なしの204とする。
 - `contentTypeFor` / `resolveStaticPath` / `staticRoutes`: 静的ファイルの Content-Type 判定、
   root 配下の安全なパス解決、`index.html` を使った SPA フォールバック付き配信を提供する。
-- `RoomDisplayState` / `createRoomDisplayState` / `applyDisplayMessage` / `displayWelcomeFields` / `hiddenPartsOf` / `forgetObjectInDisplay`:
+- `RoomDisplayState` / `RoomDisplayStore` / `createRoomDisplayState` / `restoreRoomDisplayState` /
+  `applyDisplayMessage` / `displayWelcomeFields` / `hiddenPartsOf` / `forgetObjectInDisplay`:
   ルーム共有の表示状態を更新・中継し、ライト明るさ倍率を含む welcome の復元フィールドと非表示部位の挿入順複製配列を作る。`forgetObjectInDisplay` は削除版を hidden / 部位 / compare / playback から除く。`lightBrightness` / `playbackSource` は未設定時 null とする。
 - `Room` / `Connection` / `createRoom` / `colorFor` / `copyCamera` / `copyUser` / `copyStroke`:
   `room-state.ts` でルーム構造と複製・色割り当てを提供する。`PRESENCE_PALETTE`、`MAX_CONNECTIONS`、`MAX_ROOMS`、
@@ -204,6 +208,7 @@ server の基盤。本番は `npm run build && npm run start` で起動する。
   camera の `focalLength` は参加者単位で最後に指定された値を保持し、未指定の camera 中継でも
   その値を維持する。未指定の参加者はキーを持たず、保持値は `welcome` / `user:joined` /
   `usersIn` の Presence に反映される。表示状態の更新・中継・welcome 復元は `room-display.ts` が担い、
+  `displayStore` が指定された場合は project 単位で表示状態を保存・復元する。カメラ・ストローク・presence は保存しない。
   `hiddenObjectsIn` / `hiddenObjectPartsIn` / `meshDisplayIn` / `meshCompareIn` / `jointDisplayIn` / `motionTrailIn` / `playbackSourceIn` は現在値を参照する。`light:brightness` を含む表示状態の更新・中継・welcome 復元は `room-display.ts` が担い、`forgetObject` は削除版の表示参照を配信せずに掃除する。
   `motionTrailIn` は未設定または存在しないルームでは `null`、設定済みの場合はルーム内の実体を複製して返す。
   `Outbound.target` は `self` (送信元のみ)、`others` (送信元以外)、`all` (ルーム全員) を表す。

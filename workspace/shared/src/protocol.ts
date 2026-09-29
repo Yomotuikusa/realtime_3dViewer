@@ -109,7 +109,26 @@ export type ServerMessage =
   | { type: "playback:source"; userId: string; versionId: string }
   | { type: "error"; code: string; message: string };
 
+/** welcome に載るルーム共有の表示状態のフィールド。すべて省略可能 */
+export type DisplayStateFields = Pick<
+  Extract<ServerMessage, { type: "welcome" }>,
+  "light" | "lightBrightness" | "hiddenObjectIds" | "hiddenObjectParts" | "meshDisplay"
+  | "meshCompare" | "jointDisplay" | "motionTrail" | "playbackSource"
+>;
+
 const IdSchema = z.string().min(1);
+
+export const DisplayStateFieldsSchema = z.object({
+  light: LightAnglesSchema.optional(),
+  lightBrightness: LightBrightnessSchema.optional(),
+  hiddenObjectIds: z.array(IdSchema).optional(),
+  hiddenObjectParts: z.array(ObjectPartRefSchema).optional(),
+  meshDisplay: MeshDisplayModeSchema.optional(),
+  meshCompare: MeshCompareSchema.optional(),
+  jointDisplay: JointDisplaySchema.optional(),
+  motionTrail: MotionTrailSchema.optional(),
+  playbackSource: IdSchema.optional(),
+}) satisfies z.ZodType<DisplayStateFields>;
 
 export const ClientMessageSchema = z.discriminatedUnion("type", [
   z.object({ type: z.literal("join"), name: z.string().max(MAX_NAME_LENGTH) }),
@@ -134,15 +153,7 @@ export const ServerMessageSchema = z.discriminatedUnion("type", [
     selfId: IdSchema,
     users: z.array(PresenceUserSchema),
     strokes: z.array(StrokeSchema),
-    light: LightAnglesSchema.optional(),
-    lightBrightness: LightBrightnessSchema.optional(),
-    hiddenObjectIds: z.array(IdSchema).optional(),
-    hiddenObjectParts: z.array(ObjectPartRefSchema).optional(),
-    meshDisplay: MeshDisplayModeSchema.optional(),
-    meshCompare: MeshCompareSchema.optional(),
-    jointDisplay: JointDisplaySchema.optional(),
-    motionTrail: MotionTrailSchema.optional(),
-    playbackSource: IdSchema.optional(),
+    ...DisplayStateFieldsSchema.shape,
   }),
   z.object({ type: z.literal("user:joined"), user: PresenceUserSchema }),
   z.object({ type: z.literal("user:left"), userId: IdSchema }),
