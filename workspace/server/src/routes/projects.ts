@@ -13,7 +13,7 @@ import {
   insertProject,
 } from "../db/projects";
 import { withTransaction } from "../db/connection";
-import { touchProjectMembership } from "../db/project-members";
+import { listProjectSummaries, touchProjectMembership } from "../db/project-members";
 import { HttpError } from "../errors";
 import { ensureUser } from "../identity/session";
 import { readUploadedModels } from "./project-upload";
@@ -35,6 +35,16 @@ async function readModelFile(path: string): Promise<Uint8Array> {
 
 export function projectRoutes(deps: Required<AppDeps>): Hono {
   const routes = new HonoApp();
+
+  routes.get("/", (c) => {
+    const userId = ensureUser(c, {
+      db: deps.db,
+      now: deps.now,
+      newUserId: deps.newUserId,
+      newSessionToken: deps.newSessionToken,
+    });
+    return c.json(listProjectSummaries(deps.db, userId));
+  });
 
   routes.post("/", async (c) => {
     const body = await c.req.parseBody({ all: true });

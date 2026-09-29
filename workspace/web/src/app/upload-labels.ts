@@ -6,7 +6,8 @@ export const MODEL_FILES_HELP_SUFFIX = "複数選択できます";
 export const SUBMIT_LABEL = "レビューを開始";
 export const SUBMITTING_LABEL = "アップロード中…";
 export const NOT_FOUND_TITLE = "ページが見つかりません";
-export const NOT_FOUND_HOME = "アップロード画面へ";
+export const NOT_FOUND_HOME = "プロジェクト一覧へ";
+export const BACK_TO_PROJECTS_LABEL = "← プロジェクト一覧";
 export const NO_FILE_SELECTED = "モデルファイルを選択してください。";
 export const UNSUPPORTED_EXTENSION = "対応しているモデル形式は .glb / .gltf / .fbx / .obj です。";
 /** OBJ は材質ファイルを読み込まない旨の注記。アップロード画面のヘルプ下に常時出す */

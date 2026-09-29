@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { ALLOWED_MODEL_EXTENSIONS } from "@shared/api";
 import {
   APP_NAME,
+  BACK_TO_PROJECTS_LABEL,
   FILE_TOO_LARGE,
   MODEL_FILE_LABEL,
   MODEL_FILES_HELP_SUFFIX,
@@ -34,7 +35,8 @@ describe("upload labels", () => {
     expect(SUBMIT_LABEL).toBe("レビューを開始");
     expect(SUBMITTING_LABEL).toBe("アップロード中…");
     expect(NOT_FOUND_TITLE).toBe("ページが見つかりません");
-    expect(NOT_FOUND_HOME).toBe("アップロード画面へ");
+    expect(NOT_FOUND_HOME).toBe("プロジェクト一覧へ");
+    expect(BACK_TO_PROJECTS_LABEL).toBe("← プロジェクト一覧");
   });
 
   it("exposes supported model formats and the OBJ material note", () => {

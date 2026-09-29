@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { navigate, parseRoute, projectPath } from "../src/app/routes";
+import { isPlainLeftClick, navigate, parseRoute, projectPath } from "../src/app/routes";
 
 describe("routes", () => {
   beforeEach(() => {
@@ -10,8 +10,10 @@ describe("routes", () => {
     window.history.replaceState({}, "", "/");
   });
 
-  it("maps the root path to the upload route", () => {
-    expect(parseRoute("/")).toEqual({ name: "upload" });
+  it("maps the root and new paths to the projects and upload routes", () => {
+    expect(parseRoute("/")).toEqual({ name: "projects" });
+    expect(parseRoute("/new")).toEqual({ name: "upload" });
+    expect(parseRoute("/new/x")).toEqual({ name: "notFound", pathname: "/new/x" });
   });
 
   it("maps a valid project path to the review route", () => {
@@ -37,5 +39,13 @@ describe("routes", () => {
     expect(window.location.pathname).toBe("/p/p1");
     expect(listener).toHaveBeenCalledTimes(1);
     window.removeEventListener("popstate", listener);
+  });
+
+  it("accepts only an unmodified left click", () => {
+    expect(isPlainLeftClick({ button: 0, metaKey: false, ctrlKey: false, shiftKey: false, altKey: false })).toBe(true);
+    for (const key of ["metaKey", "ctrlKey", "shiftKey", "altKey"] as const) {
+      expect(isPlainLeftClick({ button: 0, metaKey: false, ctrlKey: false, shiftKey: false, altKey: false, [key]: true })).toBe(false);
+    }
+    expect(isPlainLeftClick({ button: 1, metaKey: false, ctrlKey: false, shiftKey: false, altKey: false })).toBe(false);
   });
 });

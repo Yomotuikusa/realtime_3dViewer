@@ -2,6 +2,7 @@ import type React from "react";
 import { navigate, useRoute, type Route } from "./routes";
 import { ReviewPage } from "./ReviewPage";
 import { UploadPage } from "./UploadPage";
+import { ProjectListPage } from "../features/projects/ProjectListPage";
 import { NOT_FOUND_HOME, NOT_FOUND_TITLE } from "./upload-labels";
 import { ThemeEffect } from "../features/theme/ThemeEffect";
 
@@ -16,6 +17,9 @@ export function App(): React.ReactElement {
 }
 
 function routeContent(route: Route): React.ReactElement {
+  if (route.name === "projects") {
+    return <ProjectListPage />;
+  }
   if (route.name === "upload") {
     return <UploadPage />;
   }

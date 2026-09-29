@@ -22,13 +22,13 @@ server の基盤。本番は `npm run build && npm run start` で起動する。
   `playback_json` を持つ。
 - `src/db/users.ts`: users の匿名行と sessions の SHA-256 token hash を登録し、hash から
   user id を検索する。
-- `src/db/project-members.ts`: project を開いた user の joined / last-opened 時刻を upsert する。
+- `src/db/project-members.ts`: project を開いた user の joined / last-opened 時刻を upsert し、user 別の project 一覧を最終閲覧時刻・作成時刻・ID順で返す。
 - `src/db/projects.ts`: projects / model_versions の登録、全版の番号順一覧と検索、コメントを含む版削除、および行の型変換。版が無い project も返す。
 - `src/db/comments.ts`: コメントの登録、project 単位の一覧、status 更新。JSON 列と
   shared の `Comment` の相互変換を担い、playback は `playback_json` へ nullable JSON として
   保存して常に `playback` キーを返す。
 - `src/storage/files.ts`: `dataDir/uploads/<versionId>.glb` への一時ファイル経由の非同期保存・削除。拡張子 `.glb` は内部名で、中身の形式とは無関係。
-- `src/routes/projects.ts`: multipart モデルアップロード、既存 project への版追加・削除、project JSON
+- `src/routes/projects.ts`: project 一覧、multipart モデルアップロード、既存 project への版追加・削除、project JSON
   の取得とモデル本体の配信を提供する。複数ファイルの保存と projects / model_versions 登録を
   同一処理で行い、作成時は owner と project_members も同じ DB トランザクションで登録し、
   失敗時は保存済みファイルを削除する。project 取得時は project_members の最終閲覧時刻を
@@ -92,6 +92,8 @@ server の基盤。本番は `npm run build && npm run start` で起動する。
   cascade、projects owner、および旧 projects 定義からの identity テーブル移行と再移行の冪等性をテストする。
 - `tests/routes-project-identity.test.ts`: 匿名 Cookie の発行・再利用、owner / membership 記録、
   入力検証・存在確認の前後関係、識別対象外ルートのテスト。
+- `tests/routes-project-list.test.ts`: Cookie と membership に基づく project 一覧 API の役割・件数・時刻を検証する。
+- `tests/db-project-list.test.ts`: project 一覧の last-opened / created / ID 順序と version 数を検証する。
 - `tests/db-comments.test.ts`: comments 層の JSON 往復、FK、一覧順序・status 絞り込み、
   project スコープ、status トグル、playback の保存・null・status 更新維持のテスト。
 - `tests/db-migrate.test.ts`: playback_json 列の新規作成、旧 comments 定義からの nullable 列移行、
@@ -149,7 +151,7 @@ server の基盤。本番は `npm run build && npm run start` で起動する。
   `ALTER TABLE ... ADD COLUMN` を実行する。`migrate` は schema.sql の後に projects の
   `owner_id TEXT REFERENCES users(id)` と comments の `playback_json TEXT` 移行を適用する。
 - `insertUser` / `insertSession` / `findUserIdBySessionHash`: 匿名ユーザーとセッションを
-  登録・検索する。`touchProjectMembership`: project の参加・最終閲覧を upsert する。
+  登録・検索する。`touchProjectMembership` / `listProjectSummaries`: project の参加・最終閲覧を upsert し、一覧を返す。
 - `insertProject` / `insertModelVersion`: owner を任意指定できるプロジェクトと版を登録する。
 - `listModelVersions` / `findProject` / `findModelVersion` / `deleteModelVersion`: 全版を番号昇順で列挙し、空 project を含む shared の `Project` / `ModelVersion` へ変換して検索し、コメントと版本体をトランザクションで削除する。
 - `insertComment`: `NewComment` を status `open` として登録し、playback を nullable JSON として
@@ -163,7 +165,7 @@ server の基盤。本番は `npm run build && npm run start` で起動する。
   `X-Content-Type-Options: nosniff` を付け、未知の 500 は `request_failed` の JSON 1 行を記録する。
 - `MAX_JSON_BODY_BYTES` / `MULTIPART_OVERHEAD_BYTES`: コメント JSON の 1 MiB 上限と、
   multipart 本体上限へ加える 64 KiB の余裕を公開する。
-- `projectRoutes`: `GET /api/projects/:projectId` と
+- `projectRoutes`: `GET /api/projects`、`GET /api/projects/:projectId` と
   `GET /api/projects/:projectId/versions/:versionId/model`、`POST /api/projects`、
   `POST /api/projects/:projectId/versions`、`DELETE /api/projects/:projectId/versions/:versionId` を提供する。作成 POST は multipart の `name` と
   1件以上の `file` を送信順に受け、201 で全 `versions` を含む `Project` を返す。版追加 POST は

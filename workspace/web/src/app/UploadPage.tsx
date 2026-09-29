@@ -3,9 +3,10 @@ import type React from "react";
 import { ALLOWED_MODEL_EXTENSIONS, MAX_UPLOAD_BYTES_DEFAULT } from "@shared/api";
 import { MAX_PROJECT_NAME_LENGTH } from "@shared/types";
 import { ApiClientError, createProject } from "../api/client";
-import { navigate, projectPath } from "./routes";
+import { isPlainLeftClick, navigate, projectPath, PROJECTS_PATH } from "./routes";
 import {
   APP_NAME,
+  BACK_TO_PROJECTS_LABEL,
   MODEL_FILE_LABEL,
   MODEL_FILES_HELP_SUFFIX,
   OBJ_MATERIAL_NOTE,
@@ -57,6 +58,17 @@ export function UploadPage(): React.ReactElement {
   return (
     <main className="upload">
       <header className="upload__head">
+        <a
+          className="upload__back"
+          href={PROJECTS_PATH}
+          onClick={(event) => {
+            if (!isPlainLeftClick(event)) return;
+            event.preventDefault();
+            navigate(PROJECTS_PATH);
+          }}
+        >
+          {BACK_TO_PROJECTS_LABEL}
+        </a>
         <h1 className="upload__title">{APP_NAME}</h1>
         <p className="upload__lead">{UPLOAD_LEAD}</p>
       </header>

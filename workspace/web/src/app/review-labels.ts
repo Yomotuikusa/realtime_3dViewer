@@ -13,6 +13,7 @@ export function dockRegionLabel(title: string): string {
 }
 /** ヘッダの設定ボタン。 */
 export const SETTINGS_OPEN_LABEL = "設定";
+export const PROJECTS_LINK_LABEL = "プロジェクト一覧";
 /** ダイアログのフッタ。 */
 export const CLOSE_LABEL = "閉じる";
 /** ダイアログの見出し。 */

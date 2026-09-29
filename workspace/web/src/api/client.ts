@@ -1,5 +1,7 @@
 import type { Comment, CommentStatus, ModelVersion, Project } from "@shared/types";
 import { CommentSchema, ModelVersionSchema, ProjectSchema } from "@shared/types";
+import type { ProjectSummary } from "@shared/project-list";
+import { ProjectSummarySchema } from "@shared/project-list";
 import { ApiErrorSchema } from "@shared/api";
 import type { CreateCommentInput } from "@shared/api";
 import { z } from "zod";
@@ -120,6 +122,11 @@ export async function deleteModelVersion(projectId: string, versionId: string): 
 
 export function getProject(projectId: string): Promise<Project> {
   return requestJson(`/api/projects/${encodeURIComponent(projectId)}`, { method: "GET" }, ProjectSchema);
+}
+
+/** GET /api/projects を検証して返す */
+export function listProjects(): Promise<ProjectSummary[]> {
+  return requestJson("/api/projects", { method: "GET" }, z.array(ProjectSummarySchema));
 }
 
 export function listComments(projectId: string, status?: CommentStatus): Promise<Comment[]> {

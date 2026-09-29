@@ -1,6 +1,8 @@
 import { useEffect, useState, type CSSProperties, type ReactElement } from "react";
 import { useSessionStore } from "../store/session";
+import { isPlainLeftClick, navigate, PROJECTS_PATH } from "./routes";
 import {
+  PROJECTS_LINK_LABEL,
   connectionLabel,
   connectionTone,
   copyLabel,
@@ -37,6 +39,17 @@ export function ReviewHeader({ projectName, joined, onOpenSettings }: {
       <h1 className="review-header__title">{projectName}</h1>
       <span className="review-header__kind">レビュー</span>
       <div className="review-header__actions">
+        <a
+          className="btn btn--quiet"
+          href={PROJECTS_PATH}
+          onClick={(event) => {
+            if (!isPlainLeftClick(event)) return;
+            event.preventDefault();
+            navigate(PROJECTS_PATH);
+          }}
+        >
+          {PROJECTS_LINK_LABEL}
+        </a>
         <span className="badge" data-tone={connectionTone(connection, joined)} role="status">
           {connectionLabel(connection, joined)}
         </span>

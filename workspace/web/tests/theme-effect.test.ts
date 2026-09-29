@@ -134,14 +134,22 @@ describe("ThemeEffect", () => {
 });
 
 describe("App theme placement", () => {
-  it("renders the theme effect once around the upload and not-found routes", async () => {
+  it("renders the theme effect once around the projects, upload, and not-found routes", async () => {
     const source = readFileSync(appSourcePath, "utf8");
     expect(source.match(/<ThemeEffect\s*\/>/g)).toHaveLength(1);
 
+    const projects = await render(createElement(App));
+    try {
+      expect(projects.host.querySelector(".projects")).not.toBeNull();
+      expect(document.documentElement.dataset.theme).toBe("light");
+    } finally {
+      await act(async () => projects.root.unmount());
+    }
+
+    window.history.replaceState({}, "", "/new");
     const upload = await render(createElement(App));
     try {
       expect(upload.host.querySelector(".upload")).not.toBeNull();
-      expect(document.documentElement.dataset.theme).toBe("light");
     } finally {
       await act(async () => upload.root.unmount());
     }
