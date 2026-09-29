@@ -8,6 +8,7 @@ import type { Db } from "./db/connection";
 import { HttpError, toErrorResponse } from "./errors";
 import { commentRoutes } from "./routes/comments";
 import { projectRoutes } from "./routes/projects";
+import { projectManageRoutes } from "./routes/project-manage";
 import { staticRoutes } from "./routes/static";
 import type { Storage } from "./storage/files";
 
@@ -83,6 +84,11 @@ export function createApp(deps: AppDeps): HonoType {
     "/api/projects/:projectId/comments/*",
     bodyLimit({ maxSize: MAX_JSON_BODY_BYTES, onError: tooLarge }),
   );
+  app.use("/api/projects/:projectId", validateContentLength);
+  app.use(
+    "/api/projects/:projectId",
+    bodyLimit({ maxSize: MAX_JSON_BODY_BYTES, onError: tooLarge }),
+  );
 
   app.onError((error, c) => {
     const response = toErrorResponse(error);
@@ -104,6 +110,7 @@ export function createApp(deps: AppDeps): HonoType {
     c.json({ error: { code: "NOT_FOUND", message: "Not Found" } }, 404),
   );
   app.route("/api/projects", projectRoutes(resolved));
+  app.route("/api/projects", projectManageRoutes(resolved));
   app.route("/api/projects/:projectId/comments", commentRoutes(resolved));
   app.route("/", staticRoutes(config.webDistDir ?? DEFAULT_WEB_DIST_DIR));
 

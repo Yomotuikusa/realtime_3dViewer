@@ -19,6 +19,7 @@ export const ErrorCode = {
   PAYLOAD_TOO_LARGE: "PAYLOAD_TOO_LARGE",
   BAD_REQUEST: "BAD_REQUEST",
   INTERNAL: "INTERNAL",
+  FORBIDDEN: "FORBIDDEN",
 } as const;
 export type ErrorCode = (typeof ErrorCode)[keyof typeof ErrorCode];
 
@@ -59,6 +60,8 @@ export function modelFormat(fileName: string): ModelFormat | null {
     : null;
 }
 export const ProjectNameSchema = z.string().trim().min(1).max(MAX_PROJECT_NAME_LENGTH);
+export const RenameProjectInput = z.object({ name: ProjectNameSchema });
+export type RenameProjectInput = z.infer<typeof RenameProjectInput>;
 
 export const CreateCommentInput = z.object({
   versionId: IdSchema,

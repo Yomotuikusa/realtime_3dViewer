@@ -13,6 +13,9 @@ import {
   PROJECTS_RETRY_LABEL,
 } from "./projects-labels";
 import { ProjectListItem } from "./ProjectListItem";
+import { DeleteProjectDialog } from "./DeleteProjectDialog";
+import { RenameProjectDialog } from "./RenameProjectDialog";
+import { useProjectActions } from "./useProjectActions";
 import "./projects.css";
 
 type ListState =
@@ -23,6 +26,11 @@ type ListState =
 export function ProjectListPage(): ReactElement {
   const [reloadSeq, setReloadSeq] = useState(0);
   const [state, setState] = useState<ListState>({ status: "loading" });
+  const actions = useProjectActions((update) => {
+    setState((current) => current.status === "ready"
+      ? { ...current, projects: update(current.projects) }
+      : current);
+  });
 
   useEffect(() => {
     let cancelled = false;
@@ -66,6 +74,7 @@ export function ProjectListPage(): ReactElement {
           </button>
         </div>
       )}
+      {actions.pageError && <div className="alert" role="alert">{actions.pageError}</div>}
       {state.status === "ready" && state.projects.length === 0 && (
         <div className="projects__empty">
           <p>{PROJECTS_EMPTY}</p>
@@ -74,8 +83,34 @@ export function ProjectListPage(): ReactElement {
       )}
       {state.status === "ready" && state.projects.length > 0 && (
         <ul className="projects__list">
-          {state.projects.map((project) => <ProjectListItem key={project.id} project={project} />)}
+          {state.projects.map((project) => (
+            <ProjectListItem
+              key={project.id}
+              project={project}
+              onRename={actions.openRename}
+              onDelete={actions.openDelete}
+              onLeave={actions.leave}
+            />
+          ))}
         </ul>
+      )}
+      {actions.dialog?.kind === "rename" && (
+        <RenameProjectDialog
+          project={actions.dialog.project}
+          busy={actions.busy}
+          error={actions.dialogError}
+          onSubmit={(name) => void actions.submitRename(name)}
+          onCancel={actions.closeDialog}
+        />
+      )}
+      {actions.dialog?.kind === "delete" && (
+        <DeleteProjectDialog
+          project={actions.dialog.project}
+          busy={actions.busy}
+          error={actions.dialogError}
+          onConfirm={() => void actions.confirmDelete()}
+          onCancel={actions.closeDialog}
+        />
       )}
     </main>
   );

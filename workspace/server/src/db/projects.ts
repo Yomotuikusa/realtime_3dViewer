@@ -91,6 +91,35 @@ export function findProject(db: Db, projectId: string): Project | null {
   };
 }
 
+/** Return undefined for a missing project, null for a project without an owner. */
+export function findProjectOwnerId(db: Db, projectId: string): string | null | undefined {
+  const row = db.prepare("SELECT owner_id FROM projects WHERE id = ?").get(projectId) as
+    | { owner_id: string | null }
+    | undefined;
+  return row?.owner_id;
+}
+
+/** Rename an existing project. */
+export function renameProject(db: Db, projectId: string, name: string): boolean {
+  if (findProjectOwnerId(db, projectId) === undefined) return false;
+  db.prepare("UPDATE projects SET name = ? WHERE id = ?").run(name, projectId);
+  return true;
+}
+
+/** Delete a project and its non-cascading children, returning version ids in order. */
+export function deleteProject(db: Db, projectId: string): string[] | null {
+  return withTransaction(db, () => {
+    if (findProjectOwnerId(db, projectId) === undefined) return null;
+    const versions = db
+      .prepare("SELECT id FROM model_versions WHERE project_id = ? ORDER BY number ASC")
+      .all(projectId) as Array<{ id: string }>;
+    db.prepare("DELETE FROM comments WHERE project_id = ?").run(projectId);
+    db.prepare("DELETE FROM model_versions WHERE project_id = ?").run(projectId);
+    db.prepare("DELETE FROM projects WHERE id = ?").run(projectId);
+    return versions.map((version) => version.id);
+  });
+}
+
 /** Delete a version and its comments atomically when it belongs to the project. */
 export function deleteModelVersion(
   db: Db,

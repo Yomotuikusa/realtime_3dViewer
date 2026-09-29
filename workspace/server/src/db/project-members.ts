@@ -14,6 +14,16 @@ export function touchProjectMembership(
   ).run(input.projectId, input.userId, input.openedAt, input.openedAt);
 }
 
+/** owner_id が userId、または所有者なしなら管理できる。 */
+export function canManageProject(ownerId: string | null, userId: string): boolean {
+  return ownerId === null || ownerId === userId;
+}
+
+/** userId の project membership を削除する。 */
+export function removeProjectMembership(db: Db, projectId: string, userId: string): void {
+  db.prepare("DELETE FROM project_members WHERE project_id = ? AND user_id = ?").run(projectId, userId);
+}
+
 interface ProjectSummaryRow {
   id: string;
   name: string;
@@ -45,7 +55,7 @@ export function listProjectSummaries(db: Db, userId: string): ProjectSummary[] {
       lastOpenedAt: row.last_opened_at,
       versionCount: row.version_count,
       role: isOwner ? "owner" : "member",
-      canManage: row.owner_id === null || isOwner,
+      canManage: canManageProject(row.owner_id, userId),
     };
   });
 }

@@ -22,8 +22,8 @@ server の基盤。本番は `npm run build && npm run start` で起動する。
   `playback_json` を持つ。
 - `src/db/users.ts`: users の匿名行と sessions の SHA-256 token hash を登録し、hash から
   user id を検索する。
-- `src/db/project-members.ts`: project を開いた user の joined / last-opened 時刻を upsert し、user 別の project 一覧を最終閲覧時刻・作成時刻・ID順で返す。
-- `src/db/projects.ts`: projects / model_versions の登録、全版の番号順一覧と検索、コメントを含む版削除、および行の型変換。版が無い project も返す。
+- `src/db/project-members.ts`: project を開いた user の joined / last-opened 時刻を upsert し、管理権限判定、一覧からの membership 削除、user 別の project 一覧を最終閲覧時刻・作成時刻・ID順で返す。
+- `src/db/projects.ts`: projects / model_versions の登録、所有者検索、名前変更、全版の番号順一覧と検索、コメントを含む project/版削除、および行の型変換。版が無い project も返す。
 - `src/db/comments.ts`: コメントの登録、project 単位の一覧、status 更新。JSON 列と
   shared の `Comment` の相互変換を担い、playback は `playback_json` へ nullable JSON として
   保存して常に `playback` キーを返す。
@@ -42,6 +42,7 @@ server の基盤。本番は `npm run build && npm run start` で起動する。
   全件検証し、検証済みのファイル名・バイト列へ変換する。File 以外、件数超過、形式不正、
   サイズ超過を API エラーへ変換し、件数超過はファイルのバイト列を読む前に拒否する。
 - `src/routes/comments.ts`: project 配下のコメント一覧、投稿、status 更新を提供する。
+- `src/routes/project-manage.ts`: project の名前変更・削除・一覧から外す API を提供する。所有者または所有者なし project の管理権限を確認し、project 削除時は関連するモデルファイルも削除する。
   一覧は `status` 絞り込みと `created_at` 昇順に対応し、投稿・更新は保存後にそれぞれ
   `comment:created` / `comment:updated` を `publish` へ渡す。project、version、comment の
   不在は `NOT_FOUND`、不正な JSON / 入力は `VALIDATION` を返す。
@@ -152,7 +153,8 @@ server の基盤。本番は `npm run build && npm run start` で起動する。
   `owner_id TEXT REFERENCES users(id)` と comments の `playback_json TEXT` 移行を適用する。
 - `insertUser` / `insertSession` / `findUserIdBySessionHash`: 匿名ユーザーとセッションを
   登録・検索する。`touchProjectMembership` / `listProjectSummaries`: project の参加・最終閲覧を upsert し、一覧を返す。
-- `insertProject` / `insertModelVersion`: owner を任意指定できるプロジェクトと版を登録する。
+- `insertProject` / `insertModelVersion` / `findProjectOwnerId` / `renameProject` / `deleteProject`: owner を任意指定できるプロジェクトと版を登録し、project の所有者確認、名前変更、コメント・版・project のトランザクション削除を行う。
+- `canManageProject` / `removeProjectMembership`: project 管理権限を判定し、指定 user の一覧 membership を削除する。
 - `listModelVersions` / `findProject` / `findModelVersion` / `deleteModelVersion`: 全版を番号昇順で列挙し、空 project を含む shared の `Project` / `ModelVersion` へ変換して検索し、コメントと版本体をトランザクションで削除する。
 - `insertComment`: `NewComment` を status `open` として登録し、playback を nullable JSON として
   保存した `Comment` を返す。未指定・null は `playback: null` になる。
@@ -185,6 +187,7 @@ server の基盤。本番は `npm run build && npm run start` で起動する。
   project に属することを確認して 201 の `Comment` と `comment:created` を返す。PATCH は
   `UpdateCommentStatusInput` を検証して 200 の `Comment` と `comment:updated` を返す。
   いずれも対象 project が無ければ `NOT_FOUND`、入力不正なら `VALIDATION` を返す。
+- `projectManageRoutes`: `PATCH /api/projects/:projectId` の名前変更、`DELETE /api/projects/:projectId` の project と関連ファイル削除、`DELETE /api/projects/:projectId/membership` の一覧からの離脱を提供する。所有者以外の管理操作は `FORBIDDEN`、不正 JSON・名前は `VALIDATION`、成功時の削除応答は本文なしの204とする。
 - `contentTypeFor` / `resolveStaticPath` / `staticRoutes`: 静的ファイルの Content-Type 判定、
   root 配下の安全なパス解決、`index.html` を使った SPA フォールバック付き配信を提供する。
 - `RoomDisplayState` / `createRoomDisplayState` / `applyDisplayMessage` / `displayWelcomeFields` / `hiddenPartsOf` / `forgetObjectInDisplay`:

@@ -9,6 +9,7 @@ import {
   MODEL_CONTENT_TYPES,
   modelFormat,
   ProjectNameSchema,
+  RenameProjectInput,
   UpdateCommentStatusInput,
 } from "../src/api";
 import { MAX_COMMENT_STROKES } from "../src/types";
@@ -92,6 +93,9 @@ describe("REST schemas", () => {
     expect(MODEL_CONTENT_TYPES.gltf).toBe("model/gltf+json");
     expect(MODEL_CONTENT_TYPES.fbx).toBe("application/octet-stream");
     expect(MODEL_CONTENT_TYPES.obj).toBe("text/plain; charset=utf-8");
-    expect(Object.values(ErrorCode)).toHaveLength(6);
+    expect(RenameProjectInput.parse({ name: " a " })).toEqual({ name: "a" });
+    expect(RenameProjectInput.safeParse({ name: "  " }).success).toBe(false);
+    expect(Object.values(ErrorCode)).toHaveLength(7);
+    expect(ErrorCode.FORBIDDEN).toBe("FORBIDDEN");
   });
 });

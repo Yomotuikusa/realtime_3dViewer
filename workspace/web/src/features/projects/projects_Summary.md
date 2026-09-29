@@ -2,24 +2,29 @@
 
 ## 目的
 
-自分が作成または URL から参加したプロジェクトの一覧を取得して表示し、新規作成とレビュー画面への導線を提供する。
+自分が作成または URL から参加したプロジェクトの一覧を取得して表示し、新規作成とレビュー画面への導線を提供する。所有プロジェクトの名前変更・削除と、共有プロジェクトを一覧から外す操作も提供する。
 
 ## ファイル一覧と役割
 
-- ProjectListPage.tsx: 一覧 API の読み込み中・失敗・空・一覧状態を表示し、再読み込みと新規作成への遷移を担当する
-- ProjectListItem.tsx: プロジェクト名、最終オープン時刻、オブジェクト数、共有バッジを表示する一覧の1行
-- projects-labels.ts: 一覧画面の文言と日時・メタ情報の表示 helper
-- projects.css: 一覧画面のレイアウトと一覧行のスタイル
+- ProjectListPage.tsx: 一覧 API の読み込み中・失敗・空・一覧状態、操作エラーと管理ダイアログを表示する
+- ProjectListItem.tsx: プロジェクト名、最終オープン時刻、オブジェクト数、共有バッジ、管理ボタンを表示する一覧の1行
+- useProjectActions.ts: 名前変更・削除・一覧から外す操作の状態と API 呼び出しを管理する
+- RenameProjectDialog.tsx: プロジェクト名変更フォームを表示するダイアログ
+- DeleteProjectDialog.tsx: プロジェクト削除確認を表示するダイアログ
+- projects-labels.ts: 一覧画面の文言、操作エラー、日時・メタ情報の表示 helper
+- projects.css: 一覧画面、操作ボタン、固定ダイアログのレイアウトとスタイル
 
 ## 公開インターフェイス
 
 - ProjectListPage: プロジェクト一覧画面
-- ProjectListItem: `ProjectSummary` 1件の表示
-- projects-labels.ts: 一覧の文言、`formatOpenedAt`、`projectMeta`
+- ProjectListItem: `ProjectSummary` 1件の表示と管理操作 callback
+- `useProjectActions`: 一覧操作の状態、ダイアログ、更新 callback
+- RenameProjectDialog / DeleteProjectDialog: 名前変更・削除確認ダイアログ
+- projects-labels.ts: 一覧・操作の文言、エラー、`formatOpenedAt`、`projectMeta`
 
 ## 他機能との関係
 
-`api/client.ts` の `listProjects` から `@shared/project-list` の検証済み一覧を受け取り、`app/routes.ts` の SPA 遷移と `upload-labels.ts` のアプリ名を利用する。
+`api/client.ts` の project 一覧・名前変更・削除 API と `@shared/project-list` の検証済み一覧を利用し、`app/routes.ts` の SPA 遷移と `upload-labels.ts` のアプリ名を利用する。ダイアログは共通の `review.css` とコメント機能のキャンセル文言を利用する。
 
 ## テスト
 

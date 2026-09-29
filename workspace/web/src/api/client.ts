@@ -90,17 +90,21 @@ export function addModelVersion(projectId: string, file: File): Promise<ModelVer
 
 /** DELETE /api/projects/:projectId/versions/:versionId。成功時の本文は読まない。 */
 export async function deleteModelVersion(projectId: string, versionId: string): Promise<void> {
+  await requestNoContent(
+    `/api/projects/${encodeURIComponent(projectId)}/versions/${encodeURIComponent(versionId)}`,
+    { method: "DELETE" },
+  );
+}
+
+/** DELETE のように成功本文を持たない API を呼び出す。 */
+async function requestNoContent(path: string, init: RequestInit): Promise<void> {
   let response: Response;
   try {
-    response = await fetch(
-      `${API_BASE}/api/projects/${encodeURIComponent(projectId)}/versions/${encodeURIComponent(versionId)}`,
-      { method: "DELETE" },
-    );
+    response = await fetch(`${API_BASE}${path}`, init);
   } catch (error) {
     const message = error instanceof Error && error.message ? error.message : "Network request failed";
     throw new ApiClientError(0, "INTERNAL", message);
   }
-
   if (response.status >= 200 && response.status < 300) return;
 
   let body: unknown;
@@ -111,13 +115,35 @@ export async function deleteModelVersion(projectId: string, versionId: string): 
   }
   const parsedError = ApiErrorSchema.safeParse(body);
   if (parsedError.success) {
-    throw new ApiClientError(
-      response.status,
-      parsedError.data.error.code,
-      parsedError.data.error.message,
-    );
+    throw new ApiClientError(response.status, parsedError.data.error.code, parsedError.data.error.message);
   }
   throw new ApiClientError(response.status, "INTERNAL", statusErrorMessage(response.status));
+}
+
+/** PATCH /api/projects/:projectId に名前を送り、更新後の project を返す。 */
+export function renameProject(projectId: string, name: string): Promise<Project> {
+  return requestJson(
+    `/api/projects/${encodeURIComponent(projectId)}`,
+    {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name }),
+    },
+    ProjectSchema,
+  );
+}
+
+/** DELETE /api/projects/:projectId。成功本文は読まない。 */
+export function deleteProject(projectId: string): Promise<void> {
+  return requestNoContent(`/api/projects/${encodeURIComponent(projectId)}`, { method: "DELETE" });
+}
+
+/** DELETE /api/projects/:projectId/membership。成功本文は読まない。 */
+export function leaveProject(projectId: string): Promise<void> {
+  return requestNoContent(
+    `/api/projects/${encodeURIComponent(projectId)}/membership`,
+    { method: "DELETE" },
+  );
 }
 
 export function getProject(projectId: string): Promise<Project> {
