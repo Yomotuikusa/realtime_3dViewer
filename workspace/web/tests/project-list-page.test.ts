@@ -2,6 +2,7 @@ import { act, createElement } from "react";
 import { createRoot } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { listProjects } from "../src/api/client";
+import { getAccount } from "../src/api/account";
 import { CANCEL_LABEL } from "../src/features/comments/comment-labels";
 import { DeleteProjectDialog } from "../src/features/projects/DeleteProjectDialog";
 import { ProjectListItem } from "../src/features/projects/ProjectListItem";
@@ -27,6 +28,7 @@ import {
 import { ProjectListPage } from "../src/features/projects/ProjectListPage";
 
 vi.mock("../src/api/client", () => ({ listProjects: vi.fn() }));
+vi.mock("../src/api/account", () => ({ getAccount: vi.fn() }));
 Object.assign(globalThis, { IS_REACT_ACT_ENVIRONMENT: true });
 
 const projects = [
@@ -43,10 +45,13 @@ async function render(): Promise<{ root: ReturnType<typeof createRoot>; host: HT
 
 describe("ProjectListPage", () => {
   const listProjectsMock = vi.mocked(listProjects);
+  const getAccountMock = vi.mocked(getAccount);
 
   beforeEach(() => {
     window.history.replaceState({}, "", "/");
     listProjectsMock.mockReset();
+    getAccountMock.mockReset();
+    getAccountMock.mockReturnValue(new Promise(() => undefined));
   });
 
   afterEach(() => {

@@ -16,6 +16,7 @@ import { ProjectListItem } from "./ProjectListItem";
 import { DeleteProjectDialog } from "./DeleteProjectDialog";
 import { RenameProjectDialog } from "./RenameProjectDialog";
 import { useProjectActions } from "./useProjectActions";
+import { AccountMenu } from "../account/AccountMenu";
 import "./projects.css";
 
 type ListState =
@@ -61,9 +62,12 @@ export function ProjectListPage(): ReactElement {
           <h1 className="projects__title">{APP_NAME}</h1>
           <h2 className="projects__heading">{PROJECTS_HEADING}</h2>
         </div>
-        <a className="btn btn--primary" href={NEW_PROJECT_PATH} onClick={handleNewProjectClick}>
-          {NEW_PROJECT_LABEL}
-        </a>
+        <div className="projects__head-actions">
+          <AccountMenu onAccountChange={() => setReloadSeq((seq) => seq + 1)} />
+          <a className="btn btn--primary" href={NEW_PROJECT_PATH} onClick={handleNewProjectClick}>
+            {NEW_PROJECT_LABEL}
+          </a>
+        </div>
       </header>
       {state.status === "loading" && <p role="status">{PROJECTS_LOADING}</p>}
       {state.status === "error" && (

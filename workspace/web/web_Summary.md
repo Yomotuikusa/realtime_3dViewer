@@ -31,6 +31,7 @@ glTF/GLB の 3D レビュー画面を提供する。レビュー画面は表示�
 - `src/features/theme/theme_Summary.md`
 - `src/features/view-settings/view-settings_Summary.md`
 - `src/features/polygon-edges/polygon-edges_Summary.md`
+- `src/features/account/account_Summary.md`
 - `src/features/projects/projects_Summary.md`
 
 ソースの追加時は、最も近い Summary の「ファイル一覧と役割」と「公開インターフェイス」を更新し、
@@ -38,6 +39,7 @@ glTF/GLB の 3D レビュー画面を提供する。レビュー画面は表示�
 
 ## 共通ファイル
 - src/api/client.ts: REST の URL（各パスセグメントを URI エンコード）、JSON/FormData リクエスト、プロジェクトの作成・一覧取得・名前変更・削除・一覧から外す・版追加、レスポンス検証、`ApiClientError`。本文なし DELETE は共通処理で扱う
+- src/api/account.ts: アカウント取得・表示名更新・登録・ログイン・ログアウトの REST API クライアント
 - src/api/ws.ts: `WsClient`、WebSocket URL、接続状態通知、指数バックオフによる再接続
 - src/main.tsx: React アプリのエントリーポイント。tokens → base → controls の順で全体スタイルを読み込む
 - src/styles/tokens.css: 色・文字・間隔・角丸・動き・レイアウトのセマンティックトークン。既存 inline 値を引き継ぎ、`:root` にライト値を定義し、`:root[data-theme="dark"]` にダーク値の上書きブロックを持つ
@@ -48,19 +50,26 @@ glTF/GLB の 3D レビュー画面を提供する。レビュー画面は表示�
 - vitest.config.ts: Vitest の対象を `tests/**/*.test.{ts,tsx}` に限定する設定(cacheDir は .vite)
 
 ### 公開インターフェイス
-- src/api/client.ts: `ApiClientError`、`RESPONSE_INVALID_MESSAGE`、`modelUrl`、`createProject(name, files)`、`listProjects`、`renameProject`、`deleteProject`、`leaveProject`、`addModelVersion(projectId, file)`、`getProject`、`listComments`、`createComment`、`updateCommentStatus`
+- src/api/client.ts: `ApiClientError`、`RESPONSE_INVALID_MESSAGE`、`requestJson`、`requestNoContent`、`modelUrl`、`createProject(name, files)`、`listProjects`、`renameProject`、`deleteProject`、`leaveProject`、`addModelVersion(projectId, file)`、`getProject`、`listComments`、`createComment`、`updateCommentStatus`
+- src/api/account.ts: `getAccount`、`updateDisplayName`、`registerAccount`、`login`、`logout`
 - src/api/ws.ts: `WsClient`、`wsUrl`、`SocketLike`、再接続定数
 
 API クライアントは同一オリジンの `/api/...` を使い、URL の projectId / versionId / commentId を `encodeURIComponent` でエンコードする。`createProject` は FormData に name と files を順番どおり append し、`addModelVersion` は1ファイルを版追加エンドポイントへ送る。2xx 応答を共有 zod スキーマで検証し、成功本文の不一致は `ApiClientError(status, "VALIDATION", RESPONSE_INVALID_MESSAGE)` とする。API エラー本文を解析できる場合は `ApiClientError(status, code, message)`、ネットワーク断や解析不能なエラーは `INTERNAL` とする。
 
 ## 他機能フォルダとの関係
 `@shared/api` の API エラー・入力型・アップロード拡張子、`@shared/types` の Project/Comment スキーマ、`@shared/project-list` の一覧スキーマを利用する。
+アカウントメニューは `@shared/account` の Account スキーマとアカウント API クライアントを利用し、ログイン後の表示名を `app/display-name.ts` に保存する。
 
 ## テスト
 - tests/api-client.test.ts: API クライアントの URL、body、エラー、スキーマ検証テスト
 - tests/api-projects.test.ts: プロジェクト一覧 API クライアントの取得とスキーマ検証テスト
+- tests/api-account.test.ts: アカウント API の HTTP メソッド、JSON 本体、応答検証、エラー変換テスト
+- tests/account-labels.test.ts: アカウント文言、表示名、登録入力の検証テスト
+- tests/account-menu.test.ts: アカウントメニューの匿名・ログイン中・ログアウト状態テスト
+- tests/account-dialogs.test.ts: ログイン・登録・リカバリーコードのダイアログテスト
 - tests/api-project-manage.test.ts: プロジェクト名前変更・削除・membership 除去の HTTP メソッド、URI エンコード、応答検証、FORBIDDEN 変換テスト
 - tests/project-list-page.test.ts: プロジェクト一覧の状態表示、リンク遷移、管理ボタン、名前変更・削除ダイアログテスト
+- tests/project-list-account.test.ts: アカウント変更時のプロジェクト一覧再読み込みテスト
 - tests/projects-labels.test.ts: プロジェクト一覧の文言・日時・メタ情報・操作エラーテスト
 - tests/review-header-projects-link.test.ts: レビュー画面から一覧への導線テスト
 - tests/ws-client.test.ts: JSON 送受信、入力破棄、再接続バックオフ、明示 close のテスト

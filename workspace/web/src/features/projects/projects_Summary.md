@@ -12,7 +12,7 @@
 - RenameProjectDialog.tsx: プロジェクト名変更フォームを表示するダイアログ
 - DeleteProjectDialog.tsx: プロジェクト削除確認を表示するダイアログ
 - projects-labels.ts: 一覧画面の文言、操作エラー、日時・メタ情報の表示 helper
-- projects.css: 一覧画面、操作ボタン、固定ダイアログのレイアウトとスタイル
+- projects.css: 一覧画面、見出しアクション、操作ボタン、固定ダイアログのレイアウトとスタイル
 
 ## 公開インターフェイス
 
@@ -24,7 +24,7 @@
 
 ## 他機能との関係
 
-`api/client.ts` の project 一覧・名前変更・削除 API と `@shared/project-list` の検証済み一覧を利用し、`app/routes.ts` の SPA 遷移と `upload-labels.ts` のアプリ名を利用する。ダイアログは共通の `review.css` とコメント機能のキャンセル文言を利用する。
+`api/client.ts` の project 一覧・名前変更・削除 API と `@shared/project-list` の検証済み一覧を利用し、`features/account/AccountMenu` からアカウント状態を見出し右側に表示する。アカウント変更時は一覧を再読み込みする。`app/routes.ts` の SPA 遷移と `upload-labels.ts` のアプリ名も利用する。ダイアログは共通の `review.css` とコメント機能のキャンセル文言を利用する。
 
 ## テスト
 
