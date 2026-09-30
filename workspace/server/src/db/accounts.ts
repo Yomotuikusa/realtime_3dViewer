@@ -74,3 +74,11 @@ export function setAccountCredentials(
 export function setDisplayName(db: Db, userId: string, displayName: string): void {
   db.prepare("UPDATE users SET display_name = ? WHERE id = ?").run(displayName, userId);
 }
+
+export function setPasswordHash(db: Db, userId: string, passwordHash: string): void {
+  db.prepare("UPDATE users SET password_hash = ? WHERE id = ?").run(passwordHash, userId);
+}
+
+export function setRecoveryCodeHash(db: Db, userId: string, recoveryCodeHash: string): void {
+  db.prepare("UPDATE users SET recovery_code_hash = ? WHERE id = ?").run(recoveryCodeHash, userId);
+}

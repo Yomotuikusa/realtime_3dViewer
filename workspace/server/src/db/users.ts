@@ -33,3 +33,8 @@ export function findSession(db: Db, tokenHash: string): { userId: string; expire
 export function deleteSession(db: Db, tokenHash: string): void {
   db.prepare("DELETE FROM sessions WHERE token_hash = ?").run(tokenHash);
 }
+
+/** userId のセッションをすべて消す */
+export function deleteSessionsOfUser(db: Db, userId: string): void {
+  db.prepare("DELETE FROM sessions WHERE user_id = ?").run(userId);
+}
