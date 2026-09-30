@@ -46,7 +46,7 @@ server の基盤。本番は `npm run build && npm run start` で起動する。
   未知または未指定の Cookie では匿名 users / sessions をトランザクションで作成して
   HttpOnly・SameSite=Lax・Path=/・400日 Max-Age の Cookie を設定し、アカウント session の期限判定と
   ローテーションも担う。`identityDepsFrom` が HTTPS 公開時だけ `Secure` を付与する。
-- `src/identity/password.ts` / `src/identity/recovery-code.ts`: NFKC 正規化した scrypt パスワードと、ハッシュ化したリカバリーコードを生成・照合する。
+- `src/identity/password.ts` / `src/identity/recovery-code.ts`: NFKC 正規化した scrypt パスワードと、ハッシュ化したリカバリーコードを生成・照合する。既定 scrypt パラメータ、パスワード検証、リカバリーコードの生成・照合を公開する。
 - `src/routes/project-upload.ts`: multipart の file フィールド(単一または配列)を件数上限内で
   全件検証し、検証済みのファイル名・バイト列へ変換する。File 以外、件数超過、形式不正、
   サイズ超過を API エラーへ変換し、件数超過はファイルのバイト列を読む前に拒否する。
@@ -170,7 +170,7 @@ server の基盤。本番は `npm run build && npm run start` で起動する。
   匿名ユーザーと期限 (匿名は NULL) 付きセッションを登録・検索・削除する。
 - `findAccount` / `findCredentialsByLoginId` / `findCredentialsByUserId` /
   `isLoginIdTaken` / `setAccountCredentials` / `setDisplayName`: users のアカウント情報・
-  資格情報・表示名を検索・更新する。`touchProjectMembership` / `listProjectSummaries`:
+  資格情報・表示名を検索・更新する。資格情報は login ID、パスワードハッシュ、リカバリーコードハッシュを扱い、匿名行は nullable 値で表す。`touchProjectMembership` / `listProjectSummaries`:
   project の参加・最終閲覧を upsert し、一覧を返す。
 - `insertProject` / `insertModelVersion` / `findProjectOwnerId` / `renameProject` / `deleteProject`: owner を任意指定できるプロジェクトと版を登録し、project の所有者確認、名前変更、コメント・版・project のトランザクション削除を行う。
 - `canManageProject` / `removeProjectMembership`: project 管理権限を判定し、指定 user の一覧 membership を削除する。
@@ -203,6 +203,8 @@ server の基盤。本番は `npm run build && npm run start` で起動する。
   `hashSessionToken` / `ensureUser` / `resolveUserId` / `rotateSession` / `identityDepsFrom`:
   匿名・アカウントセッション Cookie の名前・有効期間、ハッシュ化、期限判定、HTTP リクエストからの
   user 解決、セッション固定化対策のローテーションを提供する。
+- `hashPassword` / `verifyPassword` / `DEFAULT_SCRYPT_PARAMS` と `generateRecoveryCode` /
+  `hashRecoveryCode` / `recoveryCodeMatches`: 非同期 scrypt の資格情報ハッシュ、リカバリーコードの一回限り応答用生成、正規化済みハッシュ照合を提供する。
 - `readUploadedModels`: multipart の file フィールドを検証済み `UploadedModel[]` へ変換する。
 - `commentRoutes`: `GET /api/projects/:projectId/comments` は `Comment[]` を返し、任意の
   `status=open|resolved` で絞り込む。POST は `CreateCommentInput` を検証し、対象 version が
