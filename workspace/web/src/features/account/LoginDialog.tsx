@@ -53,7 +53,7 @@ export function LoginDialog({
   return (
     <div className="review-backdrop account-dialog__backdrop">
       <form
-        className="review-dialog"
+        className="review-dialog account-dialog--login"
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
@@ -91,10 +91,10 @@ export function LoginDialog({
           <button className="btn btn--primary" type="submit" disabled={busy}>
             {busy ? LOGGING_IN_LABEL : LOGIN_SUBMIT_LABEL}
           </button>
-          <button className="btn btn--quiet" type="button" onClick={onCancel} disabled={busy}>
+          <button className="btn" type="button" onClick={onCancel} disabled={busy}>
             {CANCEL_LABEL}
           </button>
-          <button className="btn btn--quiet" type="button" onClick={onForgotPassword} disabled={busy}>
+          <button className="btn" type="button" onClick={onForgotPassword} disabled={busy}>
             {FORGOT_PASSWORD_LABEL}
           </button>
         </div>

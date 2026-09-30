@@ -34,8 +34,17 @@
 
 .account-dialog__actions {
   display: flex;
+  flex-wrap: wrap;
   justify-content: flex-end;
   gap: var(--space-2);
+}
+
+.account-dialog__actions .btn {
+  white-space: nowrap;
+}
+
+.review-dialog.account-dialog--login {
+  width: min(32rem, 92%);
 }
 
 .account-dialog__hint,

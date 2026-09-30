@@ -82,7 +82,7 @@ describe("ForgotPasswordDialog", () => {
       onSuccess: vi.fn(), onCancel: vi.fn(), onForgotPassword,
     })));
     const button = [...host.querySelectorAll("button")].find((item) => item.textContent === FORGOT_PASSWORD_LABEL);
-    expect(button?.className).toContain("btn--quiet");
+    expect(button?.className).toBe("btn");
     await act(async () => (button as HTMLButtonElement).click());
     expect(onForgotPassword).toHaveBeenCalledOnce();
     await act(async () => root.unmount());
