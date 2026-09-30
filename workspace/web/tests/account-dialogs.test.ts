@@ -10,8 +10,10 @@ import {
   COPIED_LABEL,
   COPY_FAILED,
   LOGIN_FAILED,
+  LOGIN_ID_TAKEN,
   LOGIN_REQUIRED,
   LOGGING_IN_LABEL,
+  TOO_MANY_ATTEMPTS,
 } from "../src/features/account/account-labels";
 
 vi.mock("../src/api/account", () => ({ login: vi.fn(), registerAccount: vi.fn() }));
@@ -72,6 +74,19 @@ describe("account dialogs", () => {
     await act(async () => root.unmount());
   });
 
+  it("shows the rate-limit message after a login is rejected", async () => {
+    loginMock.mockRejectedValue(new ApiClientError(429, "TOO_MANY_REQUESTS", "slow down"));
+    const { root, host } = await render(createElement(LoginDialog, { onSuccess: vi.fn(), onCancel: vi.fn() }));
+    const inputs = [...host.querySelectorAll("input") as NodeListOf<HTMLInputElement>];
+    await act(async () => {
+      setInput(inputs[0]!, "tanaka");
+      setInput(inputs[1]!, "password");
+      (host.querySelector("form") as HTMLFormElement).requestSubmit();
+    });
+    expect(host.querySelector('[role="alert"]')?.textContent).toBe(TOO_MANY_ATTEMPTS);
+    await act(async () => root.unmount());
+  });
+
   it("validates registration and omits a whitespace-only display name", async () => {
     const onSuccess = vi.fn();
     registerMock.mockResolvedValue({
@@ -93,6 +108,21 @@ describe("account dialogs", () => {
     await act(async () => (host.querySelector("form") as HTMLFormElement).requestSubmit());
     expect(registerMock).toHaveBeenCalledWith({ loginId: "tanaka", password: "password1" });
     expect(onSuccess).toHaveBeenCalledOnce();
+    await act(async () => root.unmount());
+  });
+
+  it("keeps registration open and shows the duplicate login ID message", async () => {
+    registerMock.mockRejectedValue(new ApiClientError(409, "CONFLICT", "taken"));
+    const { root, host } = await render(createElement(RegisterDialog, { onSuccess: vi.fn(), onCancel: vi.fn() }));
+    const inputs = [...host.querySelectorAll("input") as NodeListOf<HTMLInputElement>];
+    await act(async () => {
+      setInput(inputs[0]!, "tanaka");
+      setInput(inputs[1]!, "password1");
+      setInput(inputs[2]!, "password1");
+      (host.querySelector("form") as HTMLFormElement).requestSubmit();
+    });
+    expect(host.querySelector('[role="dialog"]')).not.toBeNull();
+    expect(host.querySelector('[role="alert"]')?.textContent).toBe(LOGIN_ID_TAKEN);
     await act(async () => root.unmount());
   });
 
@@ -119,6 +149,14 @@ describe("account dialogs", () => {
       configurable: true,
       value: { writeText: vi.fn().mockRejectedValue(new Error("blocked")) },
     });
+    const { root, host } = await render(createElement(RecoveryCodeDialog, { code: "abcd", onClose: vi.fn() }));
+    await act(async () => (host.querySelector("button.account-dialog__copy") as HTMLButtonElement).click());
+    expect(host.querySelector('[role="alert"]')?.textContent).toBe(COPY_FAILED);
+    await act(async () => root.unmount());
+  });
+
+  it("shows copy failure when the clipboard is unavailable", async () => {
+    Object.defineProperty(navigator, "clipboard", { configurable: true, value: undefined });
     const { root, host } = await render(createElement(RecoveryCodeDialog, { code: "abcd", onClose: vi.fn() }));
     await act(async () => (host.querySelector("button.account-dialog__copy") as HTMLButtonElement).click());
     expect(host.querySelector('[role="alert"]')?.textContent).toBe(COPY_FAILED);
