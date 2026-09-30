@@ -3,7 +3,7 @@ import { mkdirSync } from "node:fs";
 import type { Server } from "node:http";
 import { join } from "node:path";
 import { createApp } from "./app";
-import { loadConfig } from "./config";
+import { loadConfig, usesHttps } from "./config";
 import { openDb } from "./db/connection";
 import { findProject } from "./db/projects";
 import { createRoomDisplayStore } from "./db/room-display";
@@ -26,7 +26,11 @@ const app = createApp({
     realtime?.publish(projectId, msg);
   },
 });
-const server = serve({ fetch: app.fetch, port: config.port });
+const server = serve({
+  fetch: app.fetch,
+  port: config.port,
+  hostname: config.host ?? undefined,
+});
 realtime = attachRealtime(server as unknown as Server, hub, {
   projectExists: (projectId) => findProject(db, projectId) !== null,
   heartbeatIntervalMs: config.wsHeartbeatIntervalMs,
@@ -37,4 +41,6 @@ console.log(JSON.stringify({
   msg: "server_started",
   port: config.port,
   dataDir: config.dataDir,
+  publicOrigin: config.publicOrigin,
+  https: usesHttps(config),
 }));

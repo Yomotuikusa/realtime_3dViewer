@@ -5,6 +5,7 @@ import {
   DEFAULT_WEB_DIST_DIR,
   DEFAULT_WS_HEARTBEAT_INTERVAL_MS,
   loadConfig,
+  usesHttps,
 } from "../src/config";
 
 describe("loadConfig", () => {
@@ -16,6 +17,9 @@ describe("loadConfig", () => {
       maxUploadFiles: DEFAULT_MAX_UPLOAD_FILES,
       webDistDir: DEFAULT_WEB_DIST_DIR,
       wsHeartbeatIntervalMs: DEFAULT_WS_HEARTBEAT_INTERVAL_MS,
+      publicOrigin: null,
+      trustProxy: false,
+      host: null,
     });
   });
 
@@ -27,6 +31,9 @@ describe("loadConfig", () => {
       MAX_UPLOAD_FILES: "3",
       WEB_DIST_DIR: "/srv/dist",
       WS_HEARTBEAT_INTERVAL_MS: "1000",
+      PUBLIC_ORIGIN: "https://review.example.com/",
+      TRUST_PROXY: "1",
+      HOST: "127.0.0.1",
     })).toEqual({
       port: 8080,
       dataDir: "/x",
@@ -34,6 +41,9 @@ describe("loadConfig", () => {
       maxUploadFiles: 3,
       webDistDir: "/srv/dist",
       wsHeartbeatIntervalMs: 1000,
+      publicOrigin: "https://review.example.com",
+      trustProxy: true,
+      host: "127.0.0.1",
     });
   });
 
@@ -54,5 +64,24 @@ describe("loadConfig", () => {
 
   it("allows disabling the WebSocket heartbeat", () => {
     expect(loadConfig({ WS_HEARTBEAT_INTERVAL_MS: "0" }).wsHeartbeatIntervalMs).toBe(0);
+  });
+
+  it("validates the public origin and proxy setting", () => {
+    for (const value of ["ftp://x", "https://x/app", "https://x/?a=1", "not a url"]) {
+      expect(() => loadConfig({ PUBLIC_ORIGIN: value })).toThrow(/PUBLIC_ORIGIN/);
+    }
+    expect(() => loadConfig({ TRUST_PROXY: "yes" })).toThrow(/TRUST_PROXY/);
+    expect(loadConfig({ NODE_ENV: "production", PUBLIC_ORIGIN: "http://localhost:3000" }).publicOrigin)
+      .toBe("http://localhost:3000");
+    expect(() => loadConfig({ NODE_ENV: "production" })).toThrow(
+      /PUBLIC_ORIGIN is required when NODE_ENV=production/,
+    );
+  });
+
+  it("detects HTTPS only from the public origin", () => {
+    expect(usesHttps({ publicOrigin: "https://a" })).toBe(true);
+    expect(usesHttps({ publicOrigin: "http://a" })).toBe(false);
+    expect(usesHttps({ publicOrigin: null })).toBe(false);
+    expect(usesHttps({})).toBe(false);
   });
 });

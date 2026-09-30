@@ -7,7 +7,8 @@ projects / project_members / model_versions / comments / project_room_state の�
 server の基盤。本番は `npm run build && npm run start` で起動する。
 
 ## ファイル一覧と役割
-- `src/config.ts`: 環境変数から `Config` を読み込む。`DEFAULT_WEB_DIST_DIR` は web/dist の
+- `src/config.ts`: 環境変数から `Config` を読み込む。`PUBLIC_ORIGIN`、`TRUST_PROXY`、`HOST` を
+  検証して公開 origin・プロキシ信頼・待ち受けアドレスを設定する。`DEFAULT_WEB_DIST_DIR` は web/dist の
   既定ルート (`./web/dist`、相対パスは cwd 基準)、`DEFAULT_WS_HEARTBEAT_INTERVAL_MS` は
   WS ハートビートの既定間隔 (30秒)、`DEFAULT_MAX_UPLOAD_FILES` は multipart で
   受け付けるモデルファイル数の既定上限 (20) を定義する。`WEB_DIST_DIR`、
@@ -37,10 +38,12 @@ server の基盤。本番は `npm run build && npm run start` で起動する。
   失敗時は保存済みファイルを削除する。project 取得時は project_members の最終閲覧時刻を
   更新する。版追加・削除成功後は `object:added` / `object:removed` を publish し、
   `MODEL_CONTENT_TYPES` 由来の Content-Type と immutable キャッシュヘッダを設定する。
+- `src/http-security.ts`: HTTPS 時の HSTS と API の same-origin Origin 検査を提供する。
+- `src/identity/client-address.ts`: 信頼できる X-Forwarded-For または接続情報から接続元 IP を取得する。
 - `src/identity/session.ts`: `rv_session` Cookie の SHA-256 hash を sessions から解決し、
   未知または未指定の Cookie では匿名 users / sessions をトランザクションで作成して
-  HttpOnly・SameSite=Lax・Path=/・400日 Max-Age の Cookie を設定する。現状は LAN の HTTP
-  運用のため `Secure` を付けていない。HTTPS 化時に付与する。
+  HttpOnly・SameSite=Lax・Path=/・400日 Max-Age の Cookie を設定し、`identityDepsFrom` が
+  HTTPS 公開時だけ `Secure` を付与する。
 - `src/routes/project-upload.ts`: multipart の file フィールド(単一または配列)を件数上限内で
   全件検証し、検証済みのファイル名・バイト列へ変換する。File 以外、件数超過、形式不正、
   サイズ超過を API エラーへ変換し、件数超過はファイルのバイト列を読む前に拒否する。
@@ -150,7 +153,8 @@ server の基盤。本番は `npm run build && npm run start` で起動する。
 - `DEFAULT_WEB_DIST_DIR` / `DEFAULT_WS_HEARTBEAT_INTERVAL_MS`: static ルートと WS ハートビートの既定値。
 - `DEFAULT_MAX_UPLOAD_FILES`: multipart の 1 リクエストあたりモデルファイル数の既定上限 (20)。
 - `loadConfig`: `PORT`、`DATA_DIR`、`MAX_UPLOAD_BYTES`、`MAX_UPLOAD_FILES`、`WEB_DIST_DIR`、
-  `WS_HEARTBEAT_INTERVAL_MS` から `Config` を作る。`MAX_UPLOAD_FILES` は 1 以上に制限する。
+  `WS_HEARTBEAT_INTERVAL_MS`、`PUBLIC_ORIGIN`、`TRUST_PROXY`、`HOST` から `Config` を作る。
+  `MAX_UPLOAD_FILES` は 1 以上に制限し、本番の `PUBLIC_ORIGIN` を必須にする。
 - `HttpError` / `toErrorResponse`: API のエラーコード・HTTP ステータス・メッセージを統一する。
 - `openDb` / `migrate` / `withTransaction`: SQLite 接続とトランザクションを管理する。
 - `addColumnIfMissing`: 指定テーブルの PRAGMA 列一覧を確認し、列が無い場合だけ指定定義で
@@ -184,8 +188,9 @@ server の基盤。本番は `npm run build && npm run start` で起動する。
   閲覧は存在確認後に membership の最終閲覧を記録する。版追加・版削除・モデル配信では
   セッション Cookie を作らない。削除はコメント、版本体、ファイルを順に処理して
   `object:removed` を publish する。
-- `SESSION_COOKIE` / `SESSION_MAX_AGE_SECONDS` / `hashSessionToken` / `ensureUser`: 匿名
-  セッション Cookie の名前・有効期間、ハッシュ化、HTTP リクエストからの user 解決を提供する。
+- `SESSION_COOKIE` / `SESSION_MAX_AGE_SECONDS` / `hashSessionToken` / `ensureUser` /
+  `identityDepsFrom`: 匿名セッション Cookie の名前・有効期間、ハッシュ化、HTTP リクエストからの
+  user 解決を提供する。
 - `readUploadedModels`: multipart の file フィールドを検証済み `UploadedModel[]` へ変換する。
 - `commentRoutes`: `GET /api/projects/:projectId/comments` は `Comment[]` を返し、任意の
   `status=open|resolved` で絞り込む。POST は `CreateCommentInput` を検証し、対象 version が

@@ -17,6 +17,12 @@ export interface Config {
   webDistDir: string;
   /** WS_HEARTBEAT_INTERVAL_MS。ping の間隔(ms)。0 で無効 */
   wsHeartbeatIntervalMs: number;
+  /** PUBLIC_ORIGIN。ブラウザから見た公開 origin。未設定は null */
+  publicOrigin: string | null;
+  /** TRUST_PROXY。前段プロキシの X-Forwarded-For を信頼するか */
+  trustProxy: boolean;
+  /** HOST。待ち受けアドレス。未設定・空文字は null */
+  host: string | null;
 }
 
 function parseNonNegativeInteger(name: string, value: string): number {
@@ -39,8 +45,35 @@ function parsePort(value: string): number {
   return parsed;
 }
 
+function parsePublicOrigin(value: string | undefined): string | null {
+  if (value === undefined || value === "") return null;
+
+  try {
+    const url = new URL(value);
+    if (
+      (url.protocol !== "http:" && url.protocol !== "https:") ||
+      url.pathname !== "/" ||
+      url.search !== "" ||
+      url.hash !== "" ||
+      url.username !== "" ||
+      url.password !== ""
+    ) {
+      throw new Error("unsupported URL shape");
+    }
+    return url.origin;
+  } catch {
+    throw new Error(`Invalid PUBLIC_ORIGIN: ${value}`);
+  }
+}
+
+function parseTrustProxy(value: string | undefined): boolean {
+  if (value === undefined || value === "0") return false;
+  if (value === "1") return true;
+  throw new Error(`TRUST_PROXY must be either "0" or "1"`);
+}
+
 /** Load server settings from environment variables and their defaults. */
-export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
+export function loadConfig(env: NodeJS.ProcessEnv): Config {
   const port = parsePort(env.PORT ?? "3000");
   const dataDir = env.DATA_DIR ?? "./data";
   const maxUploadBytes = parseNonNegativeInteger(
@@ -59,6 +92,27 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
     "WS_HEARTBEAT_INTERVAL_MS",
     env.WS_HEARTBEAT_INTERVAL_MS ?? String(DEFAULT_WS_HEARTBEAT_INTERVAL_MS),
   );
+  const publicOrigin = parsePublicOrigin(env.PUBLIC_ORIGIN);
+  if (env.NODE_ENV === "production" && publicOrigin === null) {
+    throw new Error("PUBLIC_ORIGIN is required when NODE_ENV=production");
+  }
+  const trustProxy = parseTrustProxy(env.TRUST_PROXY);
+  const host = env.HOST === undefined || env.HOST === "" ? null : env.HOST;
 
-  return { port, dataDir, maxUploadBytes, maxUploadFiles, webDistDir, wsHeartbeatIntervalMs };
+  return {
+    port,
+    dataDir,
+    maxUploadBytes,
+    maxUploadFiles,
+    webDistDir,
+    wsHeartbeatIntervalMs,
+    publicOrigin,
+    trustProxy,
+    host,
+  };
+}
+
+/** publicOrigin が https origin なら Secure Cookie と HSTS を有効にする。 */
+export function usesHttps(config: { publicOrigin?: string | null }): boolean {
+  return config.publicOrigin?.startsWith("https:") === true;
 }
