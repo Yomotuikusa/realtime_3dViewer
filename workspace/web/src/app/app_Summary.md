@@ -7,7 +7,7 @@
 - App.tsx: `ThemeEffect` を全ルートの外側に配置し、`routeContent` で一覧・新規作成・レビュー・NotFound を分岐する。NotFound はパスと `/` へ戻る履歴遷移を表示する
 - routes.ts: `/` の一覧、`/new` の新規作成、`/p/<projectId>` のルート解析、遷移、popstate フック、修飾なしクリック判定
 - display-name.ts: localStorage による表示名の保存、Guest 名生成、入室名の解決
-- JoinDialog.tsx: 保存済み表示名を初期値にした、入室前にビューアを覆うモーダルフォーム。表示名の解決・保存・入室コールバックは display-name と呼び出し側へ委譲する
+- JoinDialog.tsx: 保存済み表示名を初期値にし、アカウントの表示名で未編集の入力を補完する、入室前にビューアを覆うモーダルフォーム。入室時は解決した表示名を localStorage とアカウントへ保存し、失敗しても入室を妨げない
 - realtime-dispatch.ts: `ServerMessage` を session / presence / annotation / comments / lighting / objects / display ストアへ振り分ける入口。`welcome` の共有ライト（向き・明るさ）・メッシュ表示方法・メッシュ比較設定・ジョイント表示設定・モーション軌跡表示設定・再生対象・非表示版・`hiddenObjectParts`、presence 更新（camera の焦点距離を含む）、light、`light:brightness`、stroke、`comment:created` / `comment:updated`、オブジェクト可視性・部位の `object:part-visibility`・追加・削除、`mesh:display` / `mesh:compare` / `joint:display` / `trail:display` / `playback:source`、`error` を扱い、未知の型はコンパイル時に検出する
 - object-removal.ts: 削除された versionId を objects / comments / selection / compare / playback の各ストアへ冪等に反映し、最後の版ならコメント投稿アンカーも解除する
 - useRealtime.ts: 名前決定後の `WsClient` 接続と、open ごとの `join` 送信。`onRealtimeStatus` は session の接続状態を更新し、open 時に lastError を解除する
@@ -36,7 +36,7 @@
 - review-icons.tsx: `CHEVRON_ICON_VIEW_BOX`、`CHEVRON_LEFT_PATH`、`CHEVRON_RIGHT_PATH`、`ChevronDirection`、`ChevronIcon`
 - review-labels.ts: `connectionLabel`、`connectionTone`、`copyLabel`、`copyText`、`PROJECTS_LINK_LABEL`、ドックタイトルと開閉用の `OUTLINER_TOGGLE_LABEL` / `PANEL_TOGGLE_LABEL` / `PANEL_DOCK_TITLE` / `dockRegionLabel`、`SETTINGS_OPEN_LABEL`、`CLOSE_LABEL`、`SETTINGS_DIALOG_TITLE`、`SETTINGS_TABS_LABEL`、`SettingsTab`、`SETTINGS_TAB_ORDER`、`PANEL_RESIZE_LABEL`、ロード/エラー文言定数
 - display-name.ts: `loadStoredName`、`saveName`、`guestName`、`resolveDisplayName`
-- JoinDialog.tsx: `JoinDialog({ onJoin })`
+- JoinDialog.tsx: `JoinDialog({ onJoin })`。マウント時に `getAccount` で表示名を取得し、入力変更前だけ反映する。送信時は `saveName` と `onJoin` の後に `updateDisplayName` を待たずに呼ぶ
 - SettingsDialog.tsx: `SettingsDialog({ onClose })`
 - useRealtime.ts: `useRealtime(projectId, name)`、`onRealtimeStatus`、`Realtime`
 - review-stores.ts: `resetReviewStores()`
@@ -59,6 +59,7 @@
 ## テスト
 - tests/api-delete-version.test.ts: 版削除 API の204成功、エンコード、構造化エラー、非JSONエラー、通信失敗のテスト
 - tests/display-name.test.ts: 表示名の trim、保存、Guest 名、localStorage 例外のテスト
+- tests/join-dialog-account.test.ts: アカウント表示名の初期値反映、入力変更・取得失敗・アンマウント後の安全性、入室時の保存と非同期アカウント更新のテスト
 - tests/realtime-dispatch.test.ts: welcome の session / presence / annotation / light（向き・明るさ）/ objects / display 反映、`light:brightness`、`welcome.hiddenObjectParts` と welcome の `jointDisplay` / `motionTrail`、焦点距離を含む presence/stroke/comment イベント、object 追加・可視性・`object:part-visibility`、mesh:display / mesh:compare / `joint:display` / `trail:display`、error、未対応イベント、reset のテスト
 - tests/realtime-dispatch-playback.test.ts: `playback:source` の welcome/event 反映と、display ストアの再生対象初期値・null・同値更新抑止・reset のテスト
 - tests/realtime-dispatch-object-removal.test.ts: `object:removed` の受信を全ストア削除反映へ結線するテスト
