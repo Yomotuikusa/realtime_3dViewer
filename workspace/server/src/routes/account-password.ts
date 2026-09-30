@@ -108,11 +108,20 @@ export function accountPasswordRoutes(deps: Required<AppDeps>, limiters: AuthLim
 
     const passwordHash = await hashPassword(input.newPassword, deps.passwordParams);
     const recoveryCode = deps.newRecoveryCode();
-    withTransaction(deps.db, () => {
-      setPasswordHash(deps.db, credentials.userId, passwordHash);
-      setRecoveryCodeHash(deps.db, credentials.userId, hashRecoveryCode(recoveryCode));
-      deleteSessionsOfUser(deps.db, credentials.userId);
+    const updated = withTransaction(deps.db, () => {
+      const current = findCredentialsByLoginId(deps.db, input.loginId);
+      if (current === null || !recoveryCodeMatches(input.recoveryCode, current.recoveryCodeHash)) {
+        return false;
+      }
+      setPasswordHash(deps.db, current.userId, passwordHash);
+      setRecoveryCodeHash(deps.db, current.userId, hashRecoveryCode(recoveryCode));
+      deleteSessionsOfUser(deps.db, current.userId);
+      return true;
     });
+    if (!updated) {
+      recordFailure(limiters, idKey, ip);
+      throw new HttpError(401, "UNAUTHORIZED", "Invalid login ID or recovery code");
+    }
     limiters.byIdAndIp.reset(idKey);
     signIn(c, identityDepsFrom(deps), credentials.userId);
     return c.json({ account: accountOrFail(deps, credentials.userId), recoveryCode });

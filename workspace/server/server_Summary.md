@@ -24,7 +24,7 @@ server の基盤。本番は `npm run build && npm run start` で起動する。
   project と user の参加記録を保持する。comments は `strokes_json` の後に nullable な
   `playback_json` と nullable な `author_id` を持ち、project_room_state は project ごとの共有表示状態 JSON と更新時刻を
   `projects` の削除に追従して保持する。
-- `src/db/users.ts` / `src/db/accounts.ts` / `src/db/account-merge.ts` / `src/identity/password.ts` / `src/identity/recovery-code.ts`: users と sessions の匿名識別、Account 資格情報、匿名データ統合、scrypt パスワード、リカバリーコードを扱う。
+- `src/db/users.ts` / `src/db/accounts.ts` / `src/db/account-merge.ts` / `src/identity/password.ts` / `src/identity/recovery-code.ts`: users と sessions の匿名識別、Account 資格情報、匿名データ統合、scrypt パスワード、リカバリーコードを扱う。`setPasswordHash` / `setRecoveryCodeHash` / `deleteSessionsOfUser` は資格情報更新と全セッション無効化を担う。
 - `src/db/project-members.ts`: project を開いた user の joined / last-opened 時刻を upsert し、管理権限判定、一覧からの membership 削除、user 別の project 一覧を最終閲覧時刻・作成時刻・ID順で返す。
 - `src/db/projects.ts`: projects / model_versions の登録、所有者検索、名前変更、全版の番号順一覧と検索、コメントを含む project/版削除、および行の型変換。版が無い project も返す。
 - `src/db/comments.ts`: コメントの登録(author_id を含む)、project 単位の一覧、status 更新。JSON 列と
@@ -98,6 +98,7 @@ server の基盤。本番は `npm run build && npm run start` で起動する。
 - `tests/db-project-manage.test.ts`: 所有者検索・名前変更、一覧の管理権限、membership 除去、project とコメント・版の cascade 前提削除をテストする。
 - `tests/db-identity.test.ts`: users / sessions の登録検索、project_members の upsert・外部キー・
   cascade、projects owner、および旧 projects 定義からの identity テーブル移行と再移行の冪等性をテストする。
+- `tests/routes-account-password.test.ts` / `tests/routes-account-reset.test.ts`: パスワード変更、リカバリーコード再発行・リセット、セッション無効化、制限、匿名統合、競合時のコード消費をテストする。
 - `tests/routes-project-identity.test.ts`: 匿名 Cookie の発行・再利用、owner / membership 記録、
   入力検証・存在確認の前後関係、識別対象外ルートのテスト。
 - `tests/routes-project-list.test.ts`: Cookie と membership に基づく project 一覧 API の役割・件数・時刻を検証する。
@@ -162,10 +163,10 @@ server の基盤。本番は `npm run build && npm run start` で起動する。
   `owner_id`、comments の `playback_json` / `author_id`、users の `login_id` /
   `password_hash` / `display_name` / `recovery_code_hash`、sessions の `expires_at` を移行し、
   `idx_users_login_id` UNIQUE INDEX を作成する。
-- `insertUser` / `insertSession` / `findUserIdBySessionHash` / `findSession` / `deleteSession`: 匿名ユーザーと
-  セッションを登録・検索・削除する。`findSession` は期限を判定せず期限値を返す。
+- `insertUser` / `insertSession` / `findUserIdBySessionHash` / `findSession` / `deleteSession` / `deleteSessionsOfUser`:
+  匿名ユーザーとセッションを登録・検索・削除する。`findSession` は期限を判定せず期限値を返す。
 - `findAccount` / `findCredentialsByLoginId` / `findCredentialsByUserId` / `isLoginIdTaken` /
-  `setAccountCredentials` / `setDisplayName`: Account と資格情報を検索・登録・更新する。
+  `setAccountCredentials` / `setDisplayName` / `setPasswordHash` / `setRecoveryCodeHash`: Account と資格情報を検索・登録・更新する。
 - `insertProject` / `insertModelVersion` / `findProjectOwnerId` / `renameProject` / `deleteProject`: owner を任意指定できるプロジェクトと版を登録し、project の所有者確認、名前変更、コメント・版・project のトランザクション削除を行う。
 - `canManageProject` / `removeProjectMembership`: project 管理権限を判定し、指定 user の一覧 membership を削除する。
 - `listModelVersions` / `findProject` / `findModelVersion` / `deleteModelVersion`: 全版を番号昇順で列挙し、空 project を含む shared の `Project` / `ModelVersion` へ変換して検索し、コメントと版本体をトランザクションで削除する。

@@ -85,6 +85,18 @@ describe("account password routes", () => {
     expect(unauthenticated.status).toBe(401);
     expect((await unauthenticated.json()).error).toEqual({ code: "UNAUTHORIZED", message: "Sign in required" });
 
+    t.ids.push("p1", "v1");
+    const form = new FormData();
+    form.append("name", "Anonymous project");
+    form.append("file", new File(["glTF12345678"], "model.glb"));
+    const project = await t.app.request("/api/projects", { method: "POST", body: form });
+    const anonymousCookie = cookieFrom(project);
+    const anonymous = await post(t, "/api/account/password", {
+      currentPassword: "correct horse", newPassword: "new password 1",
+    }, anonymousCookie);
+    expect(anonymous.status).toBe(401);
+    expect((await anonymous.json()).error).toEqual({ code: "UNAUTHORIZED", message: "Sign in required" });
+
     const registered = await register(t);
     const wrong = await post(t, "/api/account/password", {
       currentPassword: "wrong password", newPassword: "new password 1",
@@ -125,6 +137,7 @@ describe("account password routes", () => {
     const registered = await register(t);
     const regenerated = await post(t, "/api/account/recovery-code", { password: "correct horse" }, registered.cookie);
     expect(regenerated.status).toBe(200);
+    expect(regenerated.headers.get("cache-control")).toBe("no-store");
     expect(regenerated.headers.get("set-cookie")).toBeNull();
     const body = await regenerated.json() as { account: { loginId: string }; recoveryCode: string };
     expect(body.account.loginId).toBe("tanaka");
@@ -133,5 +146,16 @@ describe("account password routes", () => {
     expect(JSON.stringify(t.db.prepare("SELECT * FROM users").get())).not.toContain(body.recoveryCode);
     expect((await post(t, "/api/account/recovery-code", { password: "wrong password" }, registered.cookie)).status)
       .toBe(403);
+    expect((await post(t, "/api/account/password-reset", {
+      loginId: "tanaka", recoveryCode: registered.recoveryCode, newPassword: "reset password 1",
+    })).status).toBe(401);
+    expect((await post(t, "/api/account/password-reset", {
+      loginId: "tanaka", recoveryCode: body.recoveryCode, newPassword: "reset password 1",
+    })).status).toBe(200);
+
+    const unauthenticated = await post(t, "/api/account/recovery-code", { password: "correct horse" });
+    expect(unauthenticated.status).toBe(401);
+    expect(unauthenticated.headers.get("cache-control")).toBe("no-store");
+    expect((await unauthenticated.json()).error).toEqual({ code: "UNAUTHORIZED", message: "Sign in required" });
   });
 });

@@ -74,10 +74,21 @@ describe("account password reset routes", () => {
     expect(await reused.json()).toEqual({
       error: { code: "UNAUTHORIZED", message: "Invalid login ID or recovery code" },
     });
+
+    const nextReset = await post(t, "/api/account/password-reset", {
+      loginId: "tanaka", recoveryCode: body.recoveryCode, newPassword: "reset password 2",
+    });
+    expect(nextReset.status).toBe(200);
   });
 
   it("uses the same unauthorized response and dummy verification for unknown IDs", async () => {
     const t = testApp();
+    const registered = await register(t);
+    const before = t.db.prepare("SELECT password_hash, recovery_code_hash FROM users WHERE id = ?")
+      .get(registered.account.userId);
+    const knownIdWrongCode = await post(t, "/api/account/password-reset", {
+      loginId: "tanaka", recoveryCode: "0".repeat(32), newPassword: "new password 1",
+    });
     const code = "0".repeat(32);
     const wrong = await post(t, "/api/account/password-reset", {
       loginId: "missing", recoveryCode: code, newPassword: "new password 1",
@@ -85,10 +96,15 @@ describe("account password reset routes", () => {
     const invalidCode = await post(t, "/api/account/password-reset", {
       loginId: "missing", recoveryCode: "1".repeat(32), newPassword: "new password 1",
     }, undefined, "192.0.2.2");
+    expect(knownIdWrongCode.status).toBe(401);
     expect(wrong.status).toBe(401);
     expect(invalidCode.status).toBe(401);
-    expect(await wrong.json()).toEqual(await invalidCode.json());
-    expect(t.db.prepare("SELECT COUNT(*) AS count FROM users").get()).toEqual({ count: 0 });
+    const knownError = await knownIdWrongCode.json();
+    const missingError = await wrong.json();
+    expect(knownError).toEqual(missingError);
+    expect(missingError).toEqual(await invalidCode.json());
+    expect(t.db.prepare("SELECT password_hash, recovery_code_hash FROM users WHERE id = ?")
+      .get(registered.account.userId)).toEqual(before);
 
     for (let i = 0; i < 10; i += 1) {
       expect((await post(t, "/api/account/password-reset", {
@@ -130,5 +146,19 @@ describe("account password reset routes", () => {
     });
     expect(invalid.status).toBe(400);
     expect((await invalid.json()).error.code).toBe("VALIDATION");
+  });
+
+  it("consumes a recovery code atomically when reset requests race", async () => {
+    const t = testApp();
+    const registered = await register(t);
+    const responses = await Promise.all([
+      post(t, "/api/account/password-reset", {
+        loginId: "tanaka", recoveryCode: registered.recoveryCode, newPassword: "reset password 1",
+      }, undefined, "192.0.2.4"),
+      post(t, "/api/account/password-reset", {
+        loginId: "tanaka", recoveryCode: registered.recoveryCode, newPassword: "reset password 2",
+      }, undefined, "192.0.2.4"),
+    ]);
+    expect(responses.map((response) => response.status).sort()).toEqual([200, 401]);
   });
 });
