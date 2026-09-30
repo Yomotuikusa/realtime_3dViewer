@@ -1,12 +1,15 @@
 import { useEffect, useRef, useState, type ReactElement } from "react";
-import type { Account } from "@shared/account";
+import type { Account, AccountWithRecoveryCode } from "@shared/account";
 import { getAccount, logout } from "../../api/account";
 import { saveName } from "../../app/display-name";
+import { AccountSettingsDialog } from "./AccountSettingsDialog";
+import { ForgotPasswordDialog } from "./ForgotPasswordDialog";
 import { LoginDialog } from "./LoginDialog";
 import { RecoveryCodeDialog } from "./RecoveryCodeDialog";
 import { RegisterDialog } from "./RegisterDialog";
 import {
   LOGIN_LABEL,
+  ACCOUNT_SETTINGS_LABEL,
   LOGOUT_FAILED,
   LOGOUT_LABEL,
   REGISTER_LABEL,
@@ -18,7 +21,7 @@ type AccountLoadState =
   | { status: "pending" }
   | { status: "ready"; account: Account }
   | { status: "failed" };
-type Dialog = "login" | "register" | null;
+type Dialog = "login" | "register" | "settings" | "forgot" | null;
 
 export function AccountMenu({ onAccountChange }: { onAccountChange: () => void }): ReactElement | null {
   const [state, setState] = useState<AccountLoadState>({ status: "pending" });
@@ -63,6 +66,19 @@ export function AccountMenu({ onAccountChange }: { onAccountChange: () => void }
     onAccountChange();
   };
 
+  const handleResetSuccess = (result: AccountWithRecoveryCode): void => {
+    setState({ status: "ready", account: result.account });
+    if (result.account.displayName) saveName(result.account.displayName);
+    setDialog(null);
+    setRecoveryCode(result.recoveryCode);
+    onAccountChange();
+  };
+
+  const handleRecoveryCode = (code: string): void => {
+    setDialog(null);
+    setRecoveryCode(code);
+  };
+
   const handleLogout = (): void => {
     setLogoutBusy(true);
     setLogoutError(false);
@@ -100,6 +116,9 @@ export function AccountMenu({ onAccountChange }: { onAccountChange: () => void }
               displayName: account.displayName,
             })}</span>
             <span className="account-menu__id">@{account.loginId}</span>
+            <button className="btn" type="button" onClick={() => setDialog("settings")}>
+              {ACCOUNT_SETTINGS_LABEL}
+            </button>
             <button className="btn" type="button" onClick={handleLogout} disabled={logoutBusy}>
               {LOGOUT_LABEL}
             </button>
@@ -107,10 +126,24 @@ export function AccountMenu({ onAccountChange }: { onAccountChange: () => void }
         )}
         {logoutError && <p className="alert account-menu__error" role="alert">{LOGOUT_FAILED}</p>}
       </div>
-      {dialog === "login" && <LoginDialog onSuccess={handleLoginSuccess} onCancel={() => setDialog(null)} />}
+      {dialog === "login" && (
+        <LoginDialog
+          onSuccess={handleLoginSuccess}
+          onCancel={() => setDialog(null)}
+          onForgotPassword={() => setDialog("forgot")}
+        />
+      )}
       {dialog === "register" && (
         <RegisterDialog onSuccess={handleRegisterSuccess} onCancel={() => setDialog(null)} />
       )}
+      {dialog === "settings" && account.loginId !== null && (
+        <AccountSettingsDialog
+          account={{ loginId: account.loginId, displayName: account.displayName }}
+          onRecoveryCode={handleRecoveryCode}
+          onClose={() => setDialog(null)}
+        />
+      )}
+      {dialog === "forgot" && <ForgotPasswordDialog onSuccess={handleResetSuccess} onCancel={() => setDialog(null)} />}
       {recoveryCode !== null && (
         <RecoveryCodeDialog code={recoveryCode} onClose={() => setRecoveryCode(null)} />
       )}
