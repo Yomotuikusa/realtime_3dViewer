@@ -10,6 +10,7 @@ import { hashPassword } from "../identity/password";
 import { hashRecoveryCode } from "../identity/recovery-code";
 import { ensureUser, identityDepsFrom, resolveUserId, rotateSession } from "../identity/session";
 import { accountLoginRoutes } from "./account-login";
+import { accountPasswordRoutes } from "./account-password";
 import { createAuthLimiters, tooManyRequests } from "../identity/rate-limit";
 
 async function parseJson(c: Context): Promise<unknown> {
@@ -93,6 +94,7 @@ export function accountRoutes(deps: Required<AppDeps>): Hono {
   });
 
   routes.route("/", accountLoginRoutes(deps, limiters));
+  routes.route("/", accountPasswordRoutes(deps, limiters));
 
   return routes;
 }

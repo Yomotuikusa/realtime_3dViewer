@@ -203,7 +203,7 @@ server の基盤。本番は `npm run build && npm run start` で起動する。
   project に属することを確認して 201 の `Comment` と `comment:created` を返す。PATCH は
   `UpdateCommentStatusInput` を検証して 200 の `Comment` と `comment:updated` を返す。
   いずれも対象 project が無ければ `NOT_FOUND`、入力不正なら `VALIDATION` を返す。
-- `commentRoutes` / `accountRoutes` / `accountLoginRoutes`: コメント API と、`/api/account` の Account 取得・表示名更新・登録・ログイン・ログアウトを提供する。登録・ログインの IP／ID 試行制限、匿名 user の統合、Cookie ローテーション、全応答の `Cache-Control: no-store` を担う。
+- `commentRoutes` / `accountRoutes` / `accountLoginRoutes` / `accountPasswordRoutes`: コメント API と、`/api/account` の Account 取得・表示名更新・登録・ログイン・ログアウト、パスワード変更・リカバリーコードによるパスワードリセット・コード再発行を提供する。認証 API は IP／ID 試行制限、匿名 user の統合、Cookie ローテーション、全応答の `Cache-Control: no-store` を担う。パスワードリセットの本人確認部分は、将来メール認証を追加するときに差し替える。
 - `projectManageRoutes`: `PATCH /api/projects/:projectId` の名前変更、`DELETE /api/projects/:projectId` の project と関連ファイル削除、`DELETE /api/projects/:projectId/membership` の一覧からの離脱を提供する。所有者以外の管理操作は `FORBIDDEN`、不正 JSON・名前は `VALIDATION`、成功時の削除応答は本文なしの204とする。
 - `contentTypeFor` / `resolveStaticPath` / `staticRoutes`: 静的ファイルの Content-Type 判定、
   root 配下の安全なパス解決、`index.html` を使った SPA フォールバック付き配信を提供する。
