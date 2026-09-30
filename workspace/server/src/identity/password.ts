@@ -42,7 +42,12 @@ function parseStored(stored: string): { params: ScryptParams; salt: Buffer; hash
   try {
     const salt = Buffer.from(parts[4]!, "base64url");
     const hash = Buffer.from(parts[5]!, "base64url");
-    if (salt.length !== SALT_BYTES || hash.length !== KEY_BYTES) return null;
+    if (
+      salt.length !== SALT_BYTES ||
+      hash.length !== KEY_BYTES ||
+      salt.toString("base64url") !== parts[4] ||
+      hash.toString("base64url") !== parts[5]
+    ) return null;
     return { params: { logN, r, p }, salt, hash };
   } catch {
     return null;
