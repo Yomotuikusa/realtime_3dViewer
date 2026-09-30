@@ -1,5 +1,5 @@
 import { createHash } from "node:crypto";
-import { getCookie, setCookie } from "hono/cookie";
+import { deleteCookie, getCookie, setCookie } from "hono/cookie";
 import type { Context } from "hono";
 import type { AppDeps } from "../app";
 import { usesHttps } from "../config";
@@ -109,6 +109,17 @@ export function rotateSession(
     sameSite: "Lax",
     path: "/",
     maxAge: kind === "account" ? ACCOUNT_SESSION_MAX_AGE_SECONDS : SESSION_MAX_AGE_SECONDS,
+    secure: deps.secureCookie === true,
+  });
+}
+
+export function endSession(c: Context, deps: IdentityDeps): void {
+  const token = getCookie(c, SESSION_COOKIE);
+  if (token !== undefined) deleteSession(deps.db, hashSessionToken(token));
+  deleteCookie(c, SESSION_COOKIE, {
+    httpOnly: true,
+    sameSite: "Lax",
+    path: "/",
     secure: deps.secureCookie === true,
   });
 }
