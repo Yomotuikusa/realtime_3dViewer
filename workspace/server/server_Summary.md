@@ -22,7 +22,7 @@ server の基盤。本番は `npm run build && npm run start` で起動する。
   project と user の参加記録を保持する。comments は `strokes_json` の後に nullable な
   `playback_json` と nullable な `author_id` を持ち、project_room_state は project ごとの共有表示状態 JSON と更新時刻を
   `projects` の削除に追従して保持する。
-- `src/db/users.ts` / `src/db/accounts.ts`: users の匿名行と sessions の SHA-256 token hash を登録し、hash から user id を検索する。期限付き session の検索・削除、users 行の Account 表示・資格情報検索・表示名更新も提供する。
+- `src/db/users.ts` / `src/db/accounts.ts` / `src/identity/password.ts` / `src/identity/recovery-code.ts`: users と sessions の匿名識別、Account 資格情報、scrypt パスワード、リカバリーコードを扱う。
 - `src/db/project-members.ts`: project を開いた user の joined / last-opened 時刻を upsert し、管理権限判定、一覧からの membership 削除、user 別の project 一覧を最終閲覧時刻・作成時刻・ID順で返す。
 - `src/db/projects.ts`: projects / model_versions の登録、所有者検索、名前変更、全版の番号順一覧と検索、コメントを含む project/版削除、および行の型変換。版が無い project も返す。
 - `src/db/comments.ts`: コメントの登録(author_id を含む)、project 単位の一覧、status 更新。JSON 列と
@@ -45,7 +45,7 @@ server の基盤。本番は `npm run build && npm run start` で起動する。
 - `src/routes/project-upload.ts`: multipart の file フィールド(単一または配列)を件数上限内で
   全件検証し、検証済みのファイル名・バイト列へ変換する。File 以外、件数超過、形式不正、
   サイズ超過を API エラーへ変換し、件数超過はファイルのバイト列を読む前に拒否する。
-- `src/routes/comments.ts` / `src/routes/account.ts`: project 配下のコメント一覧、投稿、status 更新を提供する。`/api/account` の Account 取得・表示名更新・login_id 登録と Cookie ローテーションも提供する。
+- `src/routes/comments.ts`: project 配下のコメント一覧、投稿、status 更新を提供する。
 - `src/routes/project-manage.ts`: project の名前変更・削除・一覧から外す API を提供する。所有者または所有者なし project の管理権限を確認し、project 削除時は関連するモデルファイルも削除する。
   一覧は `status` 絞り込みと `created_at` 昇順に対応し、投稿・更新は保存後にそれぞれ
   `comment:created` / `comment:updated` を `publish` へ渡す。project、version、comment の
@@ -75,7 +75,7 @@ server の基盤。本番は `npm run build && npm run start` で起動する。
   `MAX_WS_PAYLOAD_BYTES = 256 KiB` とし、スキーマ違反は `VALIDATION` を返して同一接続で
   20回連続すると close `1008` する。接続ごとに ping/pong の応答状態を管理し、設定した間隔で
   応答の無い接続を terminate して既存の退室通知・接続枠解放へ渡す。タイマーは unref される。
-- `src/app.ts`: `createApp(deps)`。アカウント API の本体上限・no-store 応答も含む、厳密な `Content-Length` 検証を含むリクエスト本体の
+- `src/app.ts`: `createApp(deps)`。厳密な `Content-Length` 検証を含むリクエスト本体の
   bodyLimit、共通の `nosniff` ヘッダ、500 時の `request_failed` ログ、JSON 404、
   `/api/projects` と
   `/api/projects/:projectId/versions` と `/api/projects/:projectId/comments` のマウント、および
@@ -156,9 +156,10 @@ server の基盤。本番は `npm run build && npm run start` で起動する。
 - `HttpError` / `toErrorResponse`: API のエラーコード・HTTP ステータス・メッセージを統一する。
 - `openDb` / `migrate` / `withTransaction`: SQLite 接続とトランザクションを管理する。
 - `addColumnIfMissing`: 指定テーブルの PRAGMA 列一覧を確認し、列が無い場合だけ指定定義で
-  `ALTER TABLE ... ADD COLUMN` を実行する。`migrate` は schema.sql の後に projects の `owner_id`、comments の `playback_json` / `author_id`、users の login_id / password_hash / display_name / recovery_code_hash、sessions の expires_at を移行し、`idx_users_login_id` UNIQUE index を作る。
-- `insertUser` / `insertSession` / `findUserIdBySessionHash` / `findSession` / `deleteSession`:
-  匿名ユーザーと期限 (匿名は NULL) 付きセッションを登録・検索・削除し、`findAccount` / `findCredentialsByLoginId` / `findCredentialsByUserId` / `isLoginIdTaken` / `setAccountCredentials` / `setDisplayName` でアカウント資格情報・表示名を検索・更新する。`touchProjectMembership` / `listProjectSummaries` は project の参加・最終閲覧を upsert し、一覧を返す。
+  `ALTER TABLE ... ADD COLUMN` を実行する。`migrate` は schema.sql の後に projects の
+  `owner_id TEXT REFERENCES users(id)` と comments の `playback_json TEXT` 移行を適用する。
+- `insertUser` / `insertSession` / `findUserIdBySessionHash`: 匿名ユーザーとセッションを
+  登録・検索する。`touchProjectMembership` / `listProjectSummaries`: project の参加・最終閲覧を upsert し、一覧を返す。
 - `insertProject` / `insertModelVersion` / `findProjectOwnerId` / `renameProject` / `deleteProject`: owner を任意指定できるプロジェクトと版を登録し、project の所有者確認、名前変更、コメント・版・project のトランザクション削除を行う。
 - `canManageProject` / `removeProjectMembership`: project 管理権限を判定し、指定 user の一覧 membership を削除する。
 - `listModelVersions` / `findProject` / `findModelVersion` / `deleteModelVersion`: 全版を番号昇順で列挙し、空 project を含む shared の `Project` / `ModelVersion` へ変換して検索し、コメントと版本体をトランザクションで削除する。
@@ -167,11 +168,11 @@ server の基盤。本番は `npm run build && npm run start` で起動する。
 - `listComments`: project 単位でコメントを順序付き一覧する。
 - `updateCommentStatus`: project と comment を指定して status と更新時刻を変更する。
 - `Storage` / `createFileStorage`: モデルファイルを atomic rename で保存し、保存先を返す。
-- `AppDeps` / `createApp`: DB、Storage、Config、publish、時刻、ID 生成、scrypt パラメータ (`passwordParams`)、リカバリーコード生成 (`newRecoveryCode`) を注入して Hono を構築する。
-  multipart・コメント JSON・アカウント JSON の本体上限を強制し、project 作成・閲覧用の
-  `newUserId` と `newSessionToken` は `newId` と独立して注入できる。全レスポンスに
+- `AppDeps` / `createApp`: DB、Storage、Config、publish、時刻、ID 生成を注入して Hono を構築する。
+  multipart とコメント JSON の本体上限を強制し、project 作成・閲覧用の `newUserId` と
+  `newSessionToken` は `newId` と独立して注入できる。全レスポンスに
   `X-Content-Type-Options: nosniff` を付け、未知の 500 は `request_failed` の JSON 1 行を記録する。
-- `MAX_JSON_BODY_BYTES` / `MULTIPART_OVERHEAD_BYTES`: コメント・アカウント JSON の 1 MiB 上限と、
+- `MAX_JSON_BODY_BYTES` / `MULTIPART_OVERHEAD_BYTES`: コメント JSON の 1 MiB 上限と、
   multipart 本体上限へ加える 64 KiB の余裕を公開する。
 - `projectRoutes`: `GET /api/projects`、`GET /api/projects/:projectId` と
   `GET /api/projects/:projectId/versions/:versionId/model`、`POST /api/projects`、
@@ -185,8 +186,9 @@ server の基盤。本番は `npm run build && npm run start` で起動する。
   閲覧は存在確認後に membership の最終閲覧を記録する。版追加・版削除・モデル配信では
   セッション Cookie を作らない。削除はコメント、版本体、ファイルを順に処理して
   `object:removed` を publish する。
-- `SESSION_COOKIE` / `SESSION_MAX_AGE_SECONDS` / `ACCOUNT_SESSION_MAX_AGE_SECONDS` / `hashSessionToken` / `ensureUser` / `resolveUserId` / `rotateSession` / `identityDepsFrom`:
-  匿名・アカウントセッション Cookie の名前・有効期間、ハッシュ化、期限判定、HTTP リクエストからの user 解決、セッション固定化対策のローテーションを提供する。`hashPassword` / `verifyPassword` / `DEFAULT_SCRYPT_PARAMS` と recovery-code 関数は非同期 scrypt 資格情報ハッシュ、コード生成・照合を提供する。
+- `SESSION_COOKIE` / `SESSION_MAX_AGE_SECONDS` / `hashSessionToken` / `ensureUser` /
+  `identityDepsFrom`: 匿名セッション Cookie の名前・有効期間、ハッシュ化、HTTP リクエストからの
+  user 解決を提供する。
 - `readUploadedModels`: multipart の file フィールドを検証済み `UploadedModel[]` へ変換する。
 - `commentRoutes`: `GET /api/projects/:projectId/comments` は `Comment[]` を返し、任意の
   `status=open|resolved` で絞り込む。POST は `CreateCommentInput` を検証し、対象 version が
