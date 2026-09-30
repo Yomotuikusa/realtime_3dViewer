@@ -15,8 +15,9 @@ server の基盤。本番は `npm run build && npm run start` で起動する。
   `WS_HEARTBEAT_INTERVAL_MS` (0で無効)、`MAX_UPLOAD_FILES` (1以上) を設定できる。
 - `src/errors.ts`: `HttpError` と未知エラーを API エラー応答へ変換する。
 - `src/db/connection.ts`: `node:sqlite` の接続、PRAGMA、スキーマ適用、既存 DB への
-  `owner_id` / `playback_json` / `author_id` 列追加移行、トランザクション。`migrate` は schema.sql を
-  適用した後に `addColumnIfMissing` で不足列だけを `ALTER TABLE` する。
+  `owner_id` / `playback_json` / `author_id` / アカウント資格情報 / `expires_at` 列追加移行、
+  `login_id` の UNIQUE INDEX、トランザクション。`migrate` は schema.sql を適用した後に
+  `addColumnIfMissing` で不足列だけを `ALTER TABLE` する。
 - `src/db/schema.sql`: users、sessions、projects、project_members、model_versions、comments、
   project_room_state と検索用 index の DDL。users は nullable なアカウント資格情報、sessions は nullable な期限、projects は nullable な `owner_id` を持ち、project_members は
   project と user の参加記録を保持する。comments は `strokes_json` の後に nullable な
@@ -157,9 +158,13 @@ server の基盤。本番は `npm run build && npm run start` で起動する。
 - `openDb` / `migrate` / `withTransaction`: SQLite 接続とトランザクションを管理する。
 - `addColumnIfMissing`: 指定テーブルの PRAGMA 列一覧を確認し、列が無い場合だけ指定定義で
   `ALTER TABLE ... ADD COLUMN` を実行する。`migrate` は schema.sql の後に projects の
-  `owner_id TEXT REFERENCES users(id)` と comments の `playback_json TEXT` 移行を適用する。
-- `insertUser` / `insertSession` / `findUserIdBySessionHash`: 匿名ユーザーとセッションを
-  登録・検索する。`touchProjectMembership` / `listProjectSummaries`: project の参加・最終閲覧を upsert し、一覧を返す。
+  `owner_id`、comments の `playback_json` / `author_id`、users の `login_id` /
+  `password_hash` / `display_name` / `recovery_code_hash`、sessions の `expires_at` を移行し、
+  `idx_users_login_id` UNIQUE INDEX を作成する。
+- `insertUser` / `insertSession` / `findUserIdBySessionHash` / `findSession` / `deleteSession`: 匿名ユーザーと
+  セッションを登録・検索・削除する。`findSession` は期限を判定せず期限値を返す。
+- `findAccount` / `findCredentialsByLoginId` / `findCredentialsByUserId` / `isLoginIdTaken` /
+  `setAccountCredentials` / `setDisplayName`: Account と資格情報を検索・登録・更新する。
 - `insertProject` / `insertModelVersion` / `findProjectOwnerId` / `renameProject` / `deleteProject`: owner を任意指定できるプロジェクトと版を登録し、project の所有者確認、名前変更、コメント・版・project のトランザクション削除を行う。
 - `canManageProject` / `removeProjectMembership`: project 管理権限を判定し、指定 user の一覧 membership を削除する。
 - `listModelVersions` / `findProject` / `findModelVersion` / `deleteModelVersion`: 全版を番号昇順で列挙し、空 project を含む shared の `Project` / `ModelVersion` へ変換して検索し、コメントと版本体をトランザクションで削除する。
@@ -170,7 +175,8 @@ server の基盤。本番は `npm run build && npm run start` で起動する。
 - `Storage` / `createFileStorage`: モデルファイルを atomic rename で保存し、保存先を返す。
 - `AppDeps` / `createApp`: DB、Storage、Config、publish、時刻、ID 生成を注入して Hono を構築する。
   multipart とコメント JSON の本体上限を強制し、project 作成・閲覧用の `newUserId` と
-  `newSessionToken` は `newId` と独立して注入できる。全レスポンスに
+  `newSessionToken` は `newId` と独立して注入できる。`passwordParams` と
+  `newRecoveryCode` も注入できる。全レスポンスに
   `X-Content-Type-Options: nosniff` を付け、未知の 500 は `request_failed` の JSON 1 行を記録する。
 - `MAX_JSON_BODY_BYTES` / `MULTIPART_OVERHEAD_BYTES`: コメント JSON の 1 MiB 上限と、
   multipart 本体上限へ加える 64 KiB の余裕を公開する。
@@ -186,9 +192,10 @@ server の基盤。本番は `npm run build && npm run start` で起動する。
   閲覧は存在確認後に membership の最終閲覧を記録する。版追加・版削除・モデル配信では
   セッション Cookie を作らない。削除はコメント、版本体、ファイルを順に処理して
   `object:removed` を publish する。
-- `SESSION_COOKIE` / `SESSION_MAX_AGE_SECONDS` / `hashSessionToken` / `ensureUser` /
-  `identityDepsFrom`: 匿名セッション Cookie の名前・有効期間、ハッシュ化、HTTP リクエストからの
-  user 解決を提供する。
+- `SESSION_COOKIE` / `SESSION_MAX_AGE_SECONDS` / `ACCOUNT_SESSION_MAX_AGE_SECONDS` /
+  `hashSessionToken` / `ensureUser` / `resolveUserId` / `rotateSession` / `identityDepsFrom`:
+  匿名・アカウントセッション Cookie の名前・有効期間、ハッシュ化、期限判定、HTTP リクエストからの
+  user 解決、セッションローテーションを提供する。
 - `readUploadedModels`: multipart の file フィールドを検証済み `UploadedModel[]` へ変換する。
 - `commentRoutes`: `GET /api/projects/:projectId/comments` は `Comment[]` を返し、任意の
   `status=open|resolved` で絞り込む。POST は `CreateCommentInput` を検証し、対象 version が
