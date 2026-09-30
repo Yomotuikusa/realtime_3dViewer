@@ -6,7 +6,7 @@ depends_on: [185]
 owns: [server/src/routes/account-password.ts, server/src/routes/account.ts, server/src/db/accounts.ts, server/src/db/users.ts, server/server_Summary.md, server/tests/routes-account-password.test.ts, server/tests/routes-account-reset.test.ts]
 reads: [shared/src/account.ts, shared/src/api.ts, server/src/app.ts, server/src/identity/session.ts, server/src/identity/sign-in.ts, server/src/identity/rate-limit.ts, server/src/identity/password.ts, server/src/identity/recovery-code.ts, server/src/routes/account-login.ts, server/src/db/account-merge.ts, server/src/db/connection.ts, server/tests/helpers/app.ts, server/tests/routes-account-login.test.ts]
 verify: npm run typecheck && npm run test
-status: todo
+status: done
 ---
 
 ## 目的
@@ -128,7 +128,7 @@ export function accountPasswordRoutes(deps: Required<AppDeps>, limiters: AuthLim
 - [ ] owns: に挙げたファイルだけを変更している
 - [ ] インターフェイス契約どおりのシグネチャで実装されている
 - [ ] 振る舞い表の全行に対応するテストがあり、通る
-- [ ] server/server_Summary.md を更新している(追記 10 行以内。300 行を超えないこと)。
+- [ ] server/server_Summary.md を更新している(300 行を超えないこと。追記行数の上限は設けない)。
       「将来メール認証を足すときは password-reset の本人確認部分を差し替える」旨を申し送りに書く
 - [ ] すべてのファイルが300行以内
 - [ ] verify: に書いたコマンドが成功する

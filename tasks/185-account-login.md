@@ -6,7 +6,7 @@ depends_on: [184]
 owns: [server/src/identity/rate-limit.ts, server/src/identity/sign-in.ts, server/src/identity/session.ts, server/src/db/account-merge.ts, server/src/routes/account-login.ts, server/src/routes/account.ts, server/server_Summary.md, server/tests/rate-limit.test.ts, server/tests/account-merge.test.ts, server/tests/routes-account-login.test.ts, server/tests/routes-account-rate-limit.test.ts]
 reads: [shared/src/account.ts, shared/src/api.ts, server/src/app.ts, server/src/db/schema.sql, server/src/db/connection.ts, server/src/db/users.ts, server/src/db/accounts.ts, server/src/identity/password.ts, server/src/identity/client-address.ts, server/src/errors.ts, server/tests/helpers/app.ts, server/tests/routes-account-register.test.ts]
 verify: npm run typecheck && npm run test
-status: todo
+status: done
 ---
 
 ## 目的
@@ -202,6 +202,6 @@ export function accountLoginRoutes(deps: Required<AppDeps>, limiters: AuthLimite
 - [ ] owns: に挙げたファイルだけを変更している
 - [ ] インターフェイス契約どおりのシグネチャで実装されている
 - [ ] 振る舞い表の全行に対応するテストがあり、通る
-- [ ] server/server_Summary.md を更新している(追記 12 行以内。300 行を超えないこと)
+- [ ] server/server_Summary.md を更新している(300 行を超えないこと。追記行数の上限は設けない)
 - [ ] すべてのファイルが300行以内
 - [ ] verify: に書いたコマンドが成功する

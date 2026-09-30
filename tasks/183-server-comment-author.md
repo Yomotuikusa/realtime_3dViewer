@@ -6,7 +6,7 @@ depends_on: [182]
 owns: [server/src/db/schema.sql, server/src/db/connection.ts, server/src/db/comments.ts, server/src/routes/comments.ts, server/server_Summary.md, server/tests/comment-author.test.ts]
 reads: [server/src/identity/session.ts, server/src/app.ts, server/tests/helpers/app.ts, server/tests/db-migrate.test.ts, server/tests/db-comments.test.ts, server/tests/routes-comments.test.ts, server/tests/routes-project-identity.test.ts, shared/src/types.ts, shared/src/api.ts]
 verify: npm run typecheck && npm run test
-status: todo
+status: done
 ---
 
 ## 目的

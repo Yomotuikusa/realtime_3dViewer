@@ -6,7 +6,7 @@ depends_on: [187]
 owns: [web/src/app/JoinDialog.tsx, web/src/app/app_Summary.md, web/tests/join-dialog-account.test.ts]
 reads: [web/src/api/account.ts, web/src/app/display-name.ts, web/src/app/ReviewPage.tsx, shared/src/account.ts, shared/src/protocol.ts, web/tests/display-name.test.ts, web/tests/timeline-styles.test.ts, web/tests/project-list-page.test.ts]
 verify: npm run typecheck && npm run test
-status: todo
+status: done
 ---
 
 ## 目的

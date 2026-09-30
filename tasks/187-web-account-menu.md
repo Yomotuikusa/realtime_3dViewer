@@ -6,7 +6,7 @@ depends_on: [184]
 owns: [web/src/api/account.ts, web/src/api/client.ts, web/web_Summary.md, web/tests/api-account.test.ts, web/src/features/account/AccountMenu.tsx, web/src/features/account/LoginDialog.tsx, web/src/features/account/RegisterDialog.tsx, web/src/features/account/RecoveryCodeDialog.tsx, web/src/features/account/account-labels.ts, web/src/features/account/account.css, web/src/features/account/account_Summary.md, web/tests/account-labels.test.ts, web/tests/account-menu.test.ts, web/tests/account-dialogs.test.ts, web/src/features/projects/ProjectListPage.tsx, web/src/features/projects/projects.css, web/src/features/projects/projects_Summary.md, web/tests/project-list-page.test.ts, web/tests/project-list-account.test.ts]
 reads: [shared/src/account.ts, shared/src/api.ts, shared/src/protocol.ts, web/src/app/display-name.ts, web/src/app/review.css, web/src/features/projects/RenameProjectDialog.tsx, web/src/features/projects/projects-labels.ts, web/src/features/comments/comment-labels.ts, web/src/styles/tokens.css, web/src/styles/controls.css, web/tests/api-projects.test.ts, web/tests/api-client.test.ts, web/tests/theme-effect.test.ts, web/tests/ui-layers.test.ts, docs/DESIGN_SKILL.md]
 verify: npm run typecheck && npm run test
-status: todo
+status: done
 ---
 
 ## 目的

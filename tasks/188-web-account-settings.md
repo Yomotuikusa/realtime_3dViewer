@@ -6,7 +6,7 @@ depends_on: [186, 187]
 owns: [web/src/api/account.ts, web/web_Summary.md, web/tests/api-account-password.test.ts, web/src/features/account/AccountMenu.tsx, web/src/features/account/LoginDialog.tsx, web/src/features/account/AccountSettingsDialog.tsx, web/src/features/account/ForgotPasswordDialog.tsx, web/src/features/account/account-labels.ts, web/src/features/account/account.css, web/src/features/account/account_Summary.md, web/tests/account-labels.test.ts, web/tests/account-menu.test.ts, web/tests/account-dialogs.test.ts, web/tests/account-settings.test.ts, web/tests/forgot-password.test.ts]
 reads: [shared/src/account.ts, shared/src/api.ts, web/src/api/client.ts, web/src/app/display-name.ts, web/src/features/account/RegisterDialog.tsx, web/src/features/account/RecoveryCodeDialog.tsx, web/src/features/projects/ProjectListPage.tsx, web/tests/project-list-page.test.ts, web/tests/project-list-account.test.ts, web/tests/api-account.test.ts]
 verify: npm run typecheck && npm run test
-status: todo
+status: done
 ---
 
 ## 目的

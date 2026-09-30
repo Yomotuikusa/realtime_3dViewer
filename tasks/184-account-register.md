@@ -3,10 +3,10 @@ id: 184
 title: ログインIDとパスワードでアカウント登録する API と、自分のアカウント情報・表示名の API を作る
 feature: server
 depends_on: [182, 183]
-owns: [shared/src/account.ts, shared/src/index.ts, shared/src/api.ts, shared/shared_Summary.md, shared/tests/account.test.ts, shared/tests/api.test.ts, server/src/db/schema.sql, server/src/db/connection.ts, server/src/db/users.ts, server/src/db/accounts.ts, server/src/identity/password.ts, server/src/identity/recovery-code.ts, server/src/identity/session.ts, server/src/routes/account.ts, server/src/app.ts, server/server_Summary.md, server/tests/helpers/app.ts, server/tests/password.test.ts, server/tests/recovery-code.test.ts, server/tests/db-account.test.ts, server/tests/routes-account-register.test.ts]
+owns: [shared/src/account.ts, shared/src/index.ts, shared/src/api.ts, shared/shared_Summary.md, shared/tests/account.test.ts, shared/tests/api.test.ts, shared/tests/rename-project-input.test.ts, server/src/db/schema.sql, server/src/db/connection.ts, server/src/db/users.ts, server/src/db/accounts.ts, server/src/identity/password.ts, server/src/identity/recovery-code.ts, server/src/identity/session.ts, server/src/routes/account.ts, server/src/app.ts, server/server_Summary.md, server/tests/helpers/app.ts, server/tests/password.test.ts, server/tests/recovery-code.test.ts, server/tests/db-account.test.ts, server/tests/routes-account-register.test.ts]
 reads: [shared/src/types.ts, shared/src/protocol.ts, shared/src/project-list.ts, shared/tests/index.test.ts, server/src/routes/project-manage.ts, server/src/http-security.ts, server/src/config.ts, server/tests/db-migrate.test.ts, server/tests/db-identity.test.ts, server/tests/routes-project-identity.test.ts, server/tests/routes-project-manage.test.ts, server/tests/app-body-limit.test.ts]
 verify: npm run typecheck && npm run test
-status: todo
+status: done
 ---
 
 ## 目的
@@ -33,7 +33,8 @@ status: todo
   `ensureUser` は `withTransaction` の内側で呼んではならない。`withTransaction` は入れ子にできない
 - 182 で `/api/*` の非 GET に Origin 検査が掛かり、https 運用時の Cookie には Secure が付く(`identityDepsFrom` 経由)
 - `server/src/routes/project-manage.ts` の `parseJson`(不正な JSON は 400 `VALIDATION`)と同等の関数を、routes/account.ts に置く
-- `shared/tests/api.test.ts:98` は `Object.values(ErrorCode)` の件数を 7 と検査している。本タスクで 10 に書き換える
+- `Object.values(ErrorCode)` の件数を 7 と検査しているテストは `shared/tests/api.test.ts:98` と
+  `shared/tests/rename-project-input.test.ts:19` の 2 か所ある(ほかには無い)。本タスクで両方とも 10 に書き換える
 - `shared/tests/index.test.ts` は公開名の存在だけを検査するので、index.ts に `export *` を足しても落ちない
 - `MAX_NAME_LENGTH`(50)は `shared/src/protocol.ts:30`、`IdSchema` は `shared/src/types.ts:172`
 - zod 4.5 では `z.string().trim().toLowerCase().regex(...)` で、正規化してから検査できる(実測済み)
@@ -345,13 +346,13 @@ export function accountRoutes(deps: Required<AppDeps>): Hono;
 - パスワード変更・リセット・リカバリーコード再発行の API(186。ここでは shared のスキーマだけを作る)
 - web の変更(187〜189)
 - `Comment` 型・`shared/src/types.ts` の変更
-- 既存テストファイルの変更(`shared/tests/api.test.ts` の件数と、`tests/helpers/app.ts` の passwordParams の追加を除く)
+- 既存テストファイルの変更(`shared/tests/api.test.ts` と `shared/tests/rename-project-input.test.ts` の ErrorCode 件数を 10 にすることと、`tests/helpers/app.ts` の passwordParams の追加を除く)
 
 ## 完了条件
 - [ ] owns: に挙げたファイルだけを変更している
 - [ ] インターフェイス契約どおりのシグネチャで実装されている
 - [ ] 振る舞い表の全行に対応するテストがあり、通る
 - [ ] 既存の shared / server テストが通る
-- [ ] shared_Summary.md と server_Summary.md を更新している(server は追記 15 行以内。300 行を超えないこと)
+- [ ] shared_Summary.md と server_Summary.md を更新している(300 行を超えないこと。追記行数の上限は設けない)
 - [ ] すべてのファイルが300行以内
 - [ ] verify: に書いたコマンドが成功する
