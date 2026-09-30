@@ -9,6 +9,8 @@ import { HttpError } from "../errors";
 import { hashPassword } from "../identity/password";
 import { hashRecoveryCode } from "../identity/recovery-code";
 import { ensureUser, identityDepsFrom, resolveUserId, rotateSession } from "../identity/session";
+import { accountLoginRoutes } from "./account-login";
+import { createAuthLimiters, tooManyRequests } from "../identity/rate-limit";
 
 async function parseJson(c: Context): Promise<unknown> {
   try {
@@ -30,6 +32,7 @@ function isLoginIdConflict(error: unknown): boolean {
 
 export function accountRoutes(deps: Required<AppDeps>): Hono {
   const routes = new HonoApp();
+  const limiters = createAuthLimiters(deps.now);
   routes.use("*", async (c, next) => {
     await next();
     c.header("Cache-Control", "no-store");
@@ -48,6 +51,10 @@ export function accountRoutes(deps: Required<AppDeps>): Hono {
   });
 
   routes.post("/register", async (c) => {
+    const ip = deps.clientAddress(c);
+    const retryAfter = limiters.registerByIp.retryAfterSeconds(ip);
+    if (retryAfter !== null) return tooManyRequests(c, retryAfter);
+    limiters.registerByIp.record(ip);
     const input = RegisterAccountInput.parse(await parseJson(c));
     const passwordHash = await hashPassword(input.password, deps.passwordParams);
     const recoveryCode = deps.newRecoveryCode();
@@ -84,6 +91,8 @@ export function accountRoutes(deps: Required<AppDeps>): Hono {
     rotateSession(c, identityDepsFrom(deps), userId!, "account");
     return c.json({ account: accountOrFail(deps, userId!), recoveryCode }, 201);
   });
+
+  routes.route("/", accountLoginRoutes(deps, limiters));
 
   return routes;
 }
