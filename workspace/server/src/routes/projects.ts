@@ -15,7 +15,7 @@ import {
 import { withTransaction } from "../db/connection";
 import { listProjectSummaries, touchProjectMembership } from "../db/project-members";
 import { HttpError } from "../errors";
-import { ensureUser } from "../identity/session";
+import { ensureUser, identityDepsFrom } from "../identity/session";
 import { readUploadedModels } from "./project-upload";
 
 function notFound(message: string): never {
@@ -37,12 +37,7 @@ export function projectRoutes(deps: Required<AppDeps>): Hono {
   const routes = new HonoApp();
 
   routes.get("/", (c) => {
-    const userId = ensureUser(c, {
-      db: deps.db,
-      now: deps.now,
-      newUserId: deps.newUserId,
-      newSessionToken: deps.newSessionToken,
-    });
+    const userId = ensureUser(c, identityDepsFrom(deps));
     return c.json(listProjectSummaries(deps.db, userId));
   });
 
@@ -54,12 +49,7 @@ export function projectRoutes(deps: Required<AppDeps>): Hono {
       deps.config.maxUploadBytes,
       deps.config.maxUploadFiles ?? DEFAULT_MAX_UPLOAD_FILES,
     );
-    const userId = ensureUser(c, {
-      db: deps.db,
-      now: deps.now,
-      newUserId: deps.newUserId,
-      newSessionToken: deps.newSessionToken,
-    });
+    const userId = ensureUser(c, identityDepsFrom(deps));
 
     const projectId = deps.newId();
     const createdAt = deps.now();
@@ -160,12 +150,7 @@ export function projectRoutes(deps: Required<AppDeps>): Hono {
     if (!project) {
       notFound("Project not found");
     }
-    const userId = ensureUser(c, {
-      db: deps.db,
-      now: deps.now,
-      newUserId: deps.newUserId,
-      newSessionToken: deps.newSessionToken,
-    });
+    const userId = ensureUser(c, identityDepsFrom(deps));
     touchProjectMembership(deps.db, {
       projectId: c.req.param("projectId"),
       userId,

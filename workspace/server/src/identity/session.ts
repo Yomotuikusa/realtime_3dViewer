@@ -1,6 +1,8 @@
 import { createHash } from "node:crypto";
 import { getCookie, setCookie } from "hono/cookie";
 import type { Context } from "hono";
+import type { AppDeps } from "../app";
+import { usesHttps } from "../config";
 import { findUserIdBySessionHash, insertSession, insertUser } from "../db/users";
 import { withTransaction, type Db } from "../db/connection";
 
@@ -16,6 +18,21 @@ export interface IdentityDeps {
   newUserId: () => string;
   /** 生のセッショントークンの生成 */
   newSessionToken: () => string;
+  /** true なら Set-Cookie に Secure を付ける */
+  secureCookie?: boolean;
+}
+
+/** AppDeps の共通依存関係から匿名セッション用の依存関係を作る。 */
+export function identityDepsFrom(
+  deps: Pick<Required<AppDeps>, "db" | "now" | "newUserId" | "newSessionToken" | "config">,
+): IdentityDeps {
+  return {
+    db: deps.db,
+    now: deps.now,
+    newUserId: deps.newUserId,
+    newSessionToken: deps.newSessionToken,
+    secureCookie: usesHttps(deps.config),
+  };
 }
 
 /** 生トークンの SHA-256 を 16 進小文字で返す(node:crypto の createHash) */
@@ -47,6 +64,7 @@ export function ensureUser(c: Context, deps: IdentityDeps): string {
     sameSite: "Lax",
     path: "/",
     maxAge: SESSION_MAX_AGE_SECONDS,
+    secure: deps.secureCookie === true,
   });
   return userId;
 }

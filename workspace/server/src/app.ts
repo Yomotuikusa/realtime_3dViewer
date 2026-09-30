@@ -1,11 +1,13 @@
 import { nanoid } from "nanoid";
 import { Hono } from "hono";
 import { bodyLimit } from "hono/body-limit";
-import type { Hono as HonoType, MiddlewareHandler } from "hono";
+import type { Context, Hono as HonoType, MiddlewareHandler } from "hono";
 import type { ServerMessage } from "@shared/protocol";
-import { DEFAULT_WEB_DIST_DIR, type Config } from "./config";
+import { DEFAULT_WEB_DIST_DIR, type Config, usesHttps } from "./config";
 import type { Db } from "./db/connection";
 import { HttpError, toErrorResponse } from "./errors";
+import { clientAddressFrom } from "./identity/client-address";
+import { hsts, sameOriginGuard } from "./http-security";
 import { commentRoutes } from "./routes/comments";
 import { projectRoutes } from "./routes/projects";
 import { projectManageRoutes } from "./routes/project-manage";
@@ -22,8 +24,12 @@ export interface AppDeps {
   db: Db;
   storage: Storage;
   // Keep dependency injection compatible with fixtures created before these config values existed.
-  config: Omit<Config, "webDistDir" | "wsHeartbeatIntervalMs" | "maxUploadFiles">
-    & Partial<Pick<Config, "webDistDir" | "wsHeartbeatIntervalMs" | "maxUploadFiles">>;
+  config: Omit<
+    Config,
+    "webDistDir" | "wsHeartbeatIntervalMs" | "maxUploadFiles" | "publicOrigin" | "trustProxy" | "host"
+  > & Partial<
+    Pick<Config, "webDistDir" | "wsHeartbeatIntervalMs" | "maxUploadFiles" | "publicOrigin" | "trustProxy" | "host">
+  >;
   publish: (projectId: string, msg: ServerMessage) => void;
   now?: () => number;
   newId?: () => string;
@@ -31,6 +37,8 @@ export interface AppDeps {
   newUserId?: () => string;
   /** セッショントークンの生成。newId とは独立 */
   newSessionToken?: () => string;
+  /** 後続の認証制限で使う接続元 IP の取得口 */
+  clientAddress?: (c: Context) => string;
 }
 
 export function createApp(deps: AppDeps): HonoType {
@@ -40,6 +48,7 @@ export function createApp(deps: AppDeps): HonoType {
     newId: deps.newId ?? (() => nanoid(12)),
     newUserId: deps.newUserId ?? (() => nanoid(12)),
     newSessionToken: deps.newSessionToken ?? (() => nanoid(32)),
+    clientAddress: deps.clientAddress ?? ((c) => clientAddressFrom(c, deps.config.trustProxy ?? false)),
   };
   const app = new Hono();
   const config = resolved.config;
@@ -58,6 +67,8 @@ export function createApp(deps: AppDeps): HonoType {
     await next();
     c.header("X-Content-Type-Options", "nosniff");
   });
+  if (usesHttps(config)) app.use("*", hsts());
+  app.use("/api/*", sameOriginGuard(config.publicOrigin ?? null));
   app.use("/api/projects", validateContentLength);
   app.use(
     "/api/projects",

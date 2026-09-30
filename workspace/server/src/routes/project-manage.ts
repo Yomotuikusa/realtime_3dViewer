@@ -5,7 +5,7 @@ import type { AppDeps } from "../app";
 import { findProjectOwnerId, findProject, renameProject, deleteProject } from "../db/projects";
 import { canManageProject, removeProjectMembership } from "../db/project-members";
 import { HttpError } from "../errors";
-import { ensureUser } from "../identity/session";
+import { ensureUser, identityDepsFrom } from "../identity/session";
 
 function notFound(message: string): never {
   throw new HttpError(404, "NOT_FOUND", message);
@@ -24,12 +24,7 @@ async function parseJson(c: Context): Promise<unknown> {
 }
 
 function identity(deps: Required<AppDeps>, c: Context): string {
-  return ensureUser(c, {
-    db: deps.db,
-    now: deps.now,
-    newUserId: deps.newUserId,
-    newSessionToken: deps.newSessionToken,
-  });
+  return ensureUser(c, identityDepsFrom(deps));
 }
 
 export function projectManageRoutes(deps: Required<AppDeps>): Hono {
