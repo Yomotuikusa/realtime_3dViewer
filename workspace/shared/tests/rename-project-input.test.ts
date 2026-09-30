@@ -16,6 +16,6 @@ describe("RenameProjectInput", () => {
 
   it("includes the forbidden API error code", () => {
     expect(ErrorCode.FORBIDDEN).toBe("FORBIDDEN");
-    expect(Object.values(ErrorCode)).toHaveLength(10);
+    expect(Object.values(ErrorCode)).toHaveLength(7);
   });
 });

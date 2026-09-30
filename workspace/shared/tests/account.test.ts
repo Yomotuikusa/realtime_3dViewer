@@ -1,12 +1,18 @@
 import { describe, expect, it } from "vitest";
 import {
   AccountSchema,
+  AccountWithRecoveryCodeSchema,
+  ChangePasswordInput,
   LoginIdSchema,
+  LoginInput,
   NewPasswordSchema,
+  PasswordInputSchema,
   RECOVERY_CODE_PATTERN,
+  RegenerateRecoveryCodeInput,
   RecoveryCodeInputSchema,
   RegisterAccountInput,
   ResetPasswordInput,
+  UpdateAccountInput,
   passwordEqualsLoginId,
 } from "../src/account";
 
@@ -41,5 +47,19 @@ describe("account schemas", () => {
     if (!result.success) expect(result.error.issues[0]?.path).toEqual(["newPassword"]);
     expect(AccountSchema.safeParse({ userId: "u1", loginId: null, displayName: null }).success).toBe(true);
     expect(RECOVERY_CODE_PATTERN.test("abcd-ef01-2345-6789-abcd-ef01-2345-6789")).toBe(true);
+  });
+
+  it("keeps login and future password schemas aligned", () => {
+    expect(LoginInput.parse({ loginId: " Tanaka ", password: "x" })).toEqual({
+      loginId: "tanaka", password: "x",
+    });
+    expect(PasswordInputSchema.safeParse("").success).toBe(false);
+    expect(UpdateAccountInput.parse({ displayName: " Taro " })).toEqual({ displayName: "Taro" });
+    expect(ChangePasswordInput.safeParse({ currentPassword: "", newPassword: "password1" }).success).toBe(false);
+    expect(RegenerateRecoveryCodeInput.safeParse({ password: "password1" }).success).toBe(true);
+    expect(AccountWithRecoveryCodeSchema.safeParse({
+      account: { userId: "u1", loginId: "tanaka", displayName: null },
+      recoveryCode: "abcd-ef01-2345-6789-abcd-ef01-2345-6789",
+    }).success).toBe(true);
   });
 });

@@ -41,8 +41,19 @@ describe("account database layer", () => {
     databases.push(db);
     db.exec("CREATE TABLE users (id TEXT PRIMARY KEY, created_at INTEGER NOT NULL); " +
       "CREATE TABLE sessions (token_hash TEXT PRIMARY KEY, user_id TEXT NOT NULL, created_at INTEGER NOT NULL);");
+    db.exec("INSERT INTO users (id, created_at) VALUES ('legacy-user', 1); " +
+      "INSERT INTO sessions (token_hash, user_id, created_at) VALUES ('legacy-token', 'legacy-user', 2);");
     migrate(db);
     migrate(db);
+    expect(db.prepare("SELECT login_id, password_hash, display_name, recovery_code_hash FROM users").get()).toEqual({
+      login_id: null,
+      password_hash: null,
+      display_name: null,
+      recovery_code_hash: null,
+    });
+    expect(db.prepare("SELECT expires_at FROM sessions WHERE token_hash = 'legacy-token'").get()).toEqual({
+      expires_at: null,
+    });
     insertUser(db, { id: "u1", createdAt: 1 });
     insertSession(db, { tokenHash: "h1", userId: "u1", createdAt: 2, expiresAt: 3 });
     expect(findSession(db, "h1")).toEqual({ userId: "u1", expiresAt: 3 });

@@ -74,6 +74,24 @@ describe("account routes", () => {
     expect(foreign.status).toBe(403);
     expect((await foreign.json()).error.code).toBe("FORBIDDEN");
     expect(t.db.prepare("SELECT COUNT(*) AS count FROM users").get()).toEqual({ count: 0 });
+
+    for (const body of [
+      { loginId: "tanaka", password: "short" },
+      { loginId: "tanaka12", password: "tanaka12" },
+    ]) {
+      const invalid = await jsonRequest(t, "/api/account/register", body);
+      expect(invalid.status).toBe(400);
+      expect((await invalid.json()).error.code).toBe("VALIDATION");
+      expect(invalid.headers.get("cache-control")).toBe("no-store");
+    }
+    const malformedRegister = await t.app.request("/api/account/register", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: "{",
+    });
+    expect(malformedRegister.status).toBe(400);
+    expect((await malformedRegister.json()).error.code).toBe("VALIDATION");
+    expect(t.db.prepare("SELECT COUNT(*) AS count FROM users").get()).toEqual({ count: 0 });
   });
 
   it("registers an account, stores only hashes, and rotates the session", async () => {
@@ -83,6 +101,9 @@ describe("account routes", () => {
     });
     expect(response.status).toBe(201);
     expect(response.headers.get("cache-control")).toBe("no-store");
+    const setCookie = response.headers.get("set-cookie");
+    expect(setCookie?.split(",")).toHaveLength(1);
+    expect(setCookie).toMatch(/; Max-Age=2592000; Path=\/; HttpOnly; SameSite=Lax/);
     const cookie = cookieFrom(response);
     expect(cookie).toMatch(/^rv_session=.+$/);
     expect(response.headers.get("set-cookie")).toContain("Max-Age=2592000");
@@ -112,11 +133,14 @@ describe("account routes", () => {
     const projectResponse = await t.app.request("/api/projects", { method: "POST", body: form });
     const cookie = cookieFrom(projectResponse);
     const owner = (t.db.prepare("SELECT owner_id FROM projects WHERE id = 'p1'").get() as { owner_id: string }).owner_id;
+    const membersBefore = t.db.prepare("SELECT * FROM project_members").all();
     const registered = await jsonRequest(t, "/api/account/register", {
       loginId: "tanaka", password: "correct horse",
     }, { cookie });
     expect(registered.status).toBe(201);
     expect((await registered.json()).account.userId).toBe(owner);
+    expect(t.db.prepare("SELECT owner_id FROM projects WHERE id = 'p1'").get()).toEqual({ owner_id: owner });
+    expect(t.db.prepare("SELECT * FROM project_members").all()).toEqual(membersBefore);
     expect(t.db.prepare("SELECT COUNT(*) AS count FROM users").get()).toEqual({ count: 1 });
     const rotatedCookie = cookieFrom(registered);
     expect(rotatedCookie).not.toBe(cookie);
@@ -133,14 +157,62 @@ describe("account routes", () => {
     const t = testApp();
     const registered = await jsonRequest(t, "/api/account/register", { loginId: "tanaka", password: "correct horse" });
     const cookie = cookieFrom(registered);
+    const usersBefore = t.db.prepare("SELECT * FROM users").all();
+    const sessionsBefore = t.db.prepare("SELECT * FROM sessions").all();
+    const foreignDuplicate = await jsonRequest(t, "/api/account/register", {
+      loginId: "TANAKA", password: "correct horse 2",
+    });
+    expect(foreignDuplicate.status).toBe(409);
+    expect((await foreignDuplicate.json()).error.code).toBe("CONFLICT");
+    expect(t.db.prepare("SELECT * FROM users").all()).toEqual(usersBefore);
+    expect(t.db.prepare("SELECT * FROM sessions").all()).toEqual(sessionsBefore);
     const duplicate = await jsonRequest(t, "/api/account/register", { loginId: "TANAKA", password: "correct horse 2" }, { cookie });
     expect(duplicate.status).toBe(409);
     expect((await duplicate.json()).error.code).toBe("CONFLICT");
+    expect(duplicate.headers.get("cache-control")).toBe("no-store");
     const token = cookie.split("=", 2)[1]!;
     t.db.prepare("UPDATE sessions SET expires_at = ? WHERE token_hash = ?").run(1700000000000, hashSessionToken(token));
     const expired = await t.app.request("/api/account", { headers: { cookie } });
     expect(expired.status).toBe(200);
     expect((await expired.json()).loginId).toBeNull();
     expect(t.db.prepare("SELECT COUNT(*) AS count FROM users").get()).toEqual({ count: 2 });
+  });
+
+  it("keeps a display name when registration omits it", async () => {
+    const t = testApp();
+    const account = await t.app.request("/api/account");
+    const cookie = cookieFrom(account);
+    const updated = await t.app.request("/api/account", {
+      method: "PATCH",
+      headers: { cookie, "content-type": "application/json" },
+      body: JSON.stringify({ displayName: "Taro" }),
+    });
+    expect(updated.status).toBe(200);
+    const registered = await jsonRequest(t, "/api/account/register", {
+      loginId: "tanaka", password: "correct horse",
+    }, { cookie });
+    expect(registered.status).toBe(201);
+    expect((await registered.json()).account.displayName).toBe("Taro");
+  });
+
+  it("registers as a new user when an account session has expired", async () => {
+    const t = testApp();
+    const first = await jsonRequest(t, "/api/account/register", { loginId: "tanaka", password: "correct horse" });
+    const oldCookie = cookieFrom(first);
+    const oldAccount = await first.clone().json() as { account: { userId: string } };
+    t.db.prepare("UPDATE sessions SET expires_at = ?").run(1700000000000);
+
+    const second = await jsonRequest(t, "/api/account/register", {
+      loginId: "suzuki", password: "correct horse 2",
+    }, { cookie: oldCookie });
+    expect(second.status).toBe(201);
+    const body = await second.json();
+    expect(body.account.userId).not.toBe(oldAccount.account.userId);
+    expect(t.db.prepare("SELECT login_id FROM users WHERE id = ?").get(oldAccount.account.userId)).toEqual({
+      login_id: "tanaka",
+    });
+    expect(t.db.prepare("SELECT login_id FROM users WHERE id = ?").get(body.account.userId)).toEqual({
+      login_id: "suzuki",
+    });
   });
 });
