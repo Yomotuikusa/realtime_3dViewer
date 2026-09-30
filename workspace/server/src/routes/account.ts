@@ -52,8 +52,9 @@ export function accountRoutes(deps: Required<AppDeps>): Hono {
     const passwordHash = await hashPassword(input.password, deps.passwordParams);
     const recoveryCode = deps.newRecoveryCode();
     const current = resolveUserId(c, deps);
+    const currentAccount = current === null ? null : findAccount(deps.db, current);
 
-    if (current !== null && findAccount(deps.db, current)?.loginId !== null) {
+    if (currentAccount !== null && currentAccount.loginId !== null) {
       throw new HttpError(409, "CONFLICT", "Already registered");
     }
     if (isLoginIdTaken(deps.db, input.loginId)) {
