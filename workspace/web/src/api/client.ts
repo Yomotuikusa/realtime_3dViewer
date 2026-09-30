@@ -20,7 +20,7 @@ function statusErrorMessage(status: number): string {
   return `API request failed with status ${status}`;
 }
 
-async function requestJson<T>(
+export async function requestJson<T>(
   path: string,
   init: RequestInit,
   schema: z.ZodType<T>,
@@ -97,7 +97,7 @@ export async function deleteModelVersion(projectId: string, versionId: string): 
 }
 
 /** DELETE のように成功本文を持たない API を呼び出す。 */
-async function requestNoContent(path: string, init: RequestInit): Promise<void> {
+export async function requestNoContent(path: string, init: RequestInit): Promise<void> {
   let response: Response;
   try {
     response = await fetch(`${API_BASE}${path}`, init);
