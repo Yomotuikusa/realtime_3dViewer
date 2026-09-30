@@ -85,6 +85,8 @@ describe("AccountSettingsDialog", () => {
     changeMock.mockRejectedValue(new ApiClientError(429, "TOO_MANY_REQUESTS", "slow"));
     await act(async () => form.requestSubmit());
     expect(host.querySelector('[role="alert"]')?.textContent).toBe(TOO_MANY_ATTEMPTS);
+    expect(changeMock).toHaveBeenCalledTimes(2);
+    expect(host.querySelector('[role="dialog"]')).not.toBeNull();
     await act(async () => root.unmount());
   });
 
@@ -118,6 +120,8 @@ describe("AccountSettingsDialog", () => {
     regenerateMock.mockRejectedValue(new ApiClientError(403, "FORBIDDEN", "wrong"));
     await act(async () => form.requestSubmit());
     expect(host.querySelector('[role="alert"]')?.textContent).toBe(CURRENT_PASSWORD_INCORRECT);
+    expect(regenerateMock).toHaveBeenCalledWith({ password: "wrong" });
+    expect(host.querySelector('[role="dialog"]')).not.toBeNull();
     await act(async () => root.unmount());
   });
 

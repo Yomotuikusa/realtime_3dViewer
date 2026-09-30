@@ -2,6 +2,7 @@ import { act, createElement } from "react";
 import { createRoot } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
+  changePassword,
   getAccount,
   login,
   logout,
@@ -20,6 +21,7 @@ import {
 } from "../src/features/account/account-labels";
 
 vi.mock("../src/api/account", () => ({
+  changePassword: vi.fn(),
   getAccount: vi.fn(),
   login: vi.fn(),
   logout: vi.fn(),
@@ -51,6 +53,7 @@ function setInput(input: HTMLInputElement, value: string): void {
 
 describe("AccountMenu", () => {
   const getAccountMock = vi.mocked(getAccount);
+  const changeMock = vi.mocked(changePassword);
   const loginMock = vi.mocked(login);
   const logoutMock = vi.mocked(logout);
   const regenerateMock = vi.mocked(regenerateRecoveryCode);
@@ -59,6 +62,7 @@ describe("AccountMenu", () => {
 
   beforeEach(() => {
     getAccountMock.mockReset();
+    changeMock.mockReset();
     loginMock.mockReset();
     logoutMock.mockReset();
     regenerateMock.mockReset();
@@ -179,7 +183,24 @@ describe("AccountMenu", () => {
     const forms = host.querySelectorAll("[role=dialog] form");
     setInput(forms[1]!.querySelector("input") as HTMLInputElement, "password");
     await act(async () => (forms[1] as HTMLFormElement).requestSubmit());
+    expect(host.querySelector('[role="dialog"] form')).toBeNull();
     expect(host.querySelector("code")?.textContent).toBe("0123-4567-89ab-cdef-0123-4567-89ab-cdef");
+    await act(async () => root.unmount());
+  });
+
+  it("keeps settings open and does not refresh the list after changing a password", async () => {
+    getAccountMock.mockResolvedValue(loggedIn);
+    changeMock.mockResolvedValue(loggedIn);
+    const onAccountChange = vi.fn();
+    const { root, host } = await render(onAccountChange);
+    await act(async () => (host.querySelectorAll(".account-menu button")[0] as HTMLButtonElement).click());
+    const form = host.querySelector("[role=dialog] form") as HTMLFormElement;
+    const inputs = [...form.querySelectorAll("input") as NodeListOf<HTMLInputElement>];
+    ["password", "newpassword", "newpassword"].forEach((value, index) => setInput(inputs[index]!, value));
+    await act(async () => form.requestSubmit());
+    expect(changeMock).toHaveBeenCalledWith({ currentPassword: "password", newPassword: "newpassword" });
+    expect(host.querySelector('[role="dialog"]')).not.toBeNull();
+    expect(onAccountChange).not.toHaveBeenCalled();
     await act(async () => root.unmount());
   });
 

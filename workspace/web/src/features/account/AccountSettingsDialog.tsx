@@ -1,4 +1,4 @@
-import { useId, useState, type FormEvent, type ReactElement } from "react";
+import { useEffect, useId, useRef, useState, type FormEvent, type ReactElement } from "react";
 import { MAX_PASSWORD_LENGTH } from "@shared/account";
 import { changePassword, regenerateRecoveryCode } from "../../api/account";
 import {
@@ -44,6 +44,11 @@ export function AccountSettingsDialog({
   const [changeError, setChangeError] = useState<string | null>(null);
   const [regenerateError, setRegenerateError] = useState<string | null>(null);
   const [changed, setChanged] = useState(false);
+  const mountedRef = useRef(true);
+
+  useEffect(() => () => {
+    mountedRef.current = false;
+  }, []);
 
   const submitChange = (event: FormEvent<HTMLFormElement>): void => {
     event.preventDefault();
@@ -89,7 +94,9 @@ export function AccountSettingsDialog({
       .catch((reason: unknown) => setRegenerateError(accountErrorMessage(reason, {
         FORBIDDEN: CURRENT_PASSWORD_INCORRECT,
       })))
-      .finally(() => setRegenerateBusy(false));
+      .finally(() => {
+        if (mountedRef.current) setRegenerateBusy(false);
+      });
   };
 
   return (
