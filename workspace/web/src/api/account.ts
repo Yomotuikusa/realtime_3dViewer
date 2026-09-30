@@ -54,3 +54,46 @@ export function login(input: { loginId: string; password: string }): Promise<Acc
 export function logout(): Promise<void> {
   return requestNoContent("/api/account/logout", { method: "POST" });
 }
+
+/** POST /api/account/password。AccountSchema で検証 */
+export function changePassword(input: { currentPassword: string; newPassword: string }): Promise<Account> {
+  return requestJson(
+    "/api/account/password",
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(input),
+    },
+    AccountSchema,
+  );
+}
+
+/** POST /api/account/password-reset。AccountWithRecoveryCodeSchema で検証 */
+export function resetPassword(input: {
+  loginId: string;
+  recoveryCode: string;
+  newPassword: string;
+}): Promise<AccountWithRecoveryCode> {
+  return requestJson(
+    "/api/account/password-reset",
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(input),
+    },
+    AccountWithRecoveryCodeSchema,
+  );
+}
+
+/** POST /api/account/recovery-code。AccountWithRecoveryCodeSchema で検証 */
+export function regenerateRecoveryCode(input: { password: string }): Promise<AccountWithRecoveryCode> {
+  return requestJson(
+    "/api/account/recovery-code",
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(input),
+    },
+    AccountWithRecoveryCodeSchema,
+  );
+}

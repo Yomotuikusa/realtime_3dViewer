@@ -1,16 +1,30 @@
 import { act, createElement } from "react";
 import { createRoot } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { getAccount, login, logout, registerAccount } from "../src/api/account";
+import {
+  getAccount,
+  login,
+  logout,
+  regenerateRecoveryCode,
+  registerAccount,
+  resetPassword,
+} from "../src/api/account";
 import { NAME_STORAGE_KEY } from "../src/app/display-name";
 import { AccountMenu } from "../src/features/account/AccountMenu";
-import { LOGIN_LABEL, LOGOUT_LABEL, REGISTER_LABEL } from "../src/features/account/account-labels";
+import {
+  ACCOUNT_SETTINGS_LABEL,
+  LOGIN_LABEL,
+  LOGOUT_LABEL,
+  REGISTER_LABEL,
+} from "../src/features/account/account-labels";
 
 vi.mock("../src/api/account", () => ({
   getAccount: vi.fn(),
   login: vi.fn(),
   logout: vi.fn(),
+  regenerateRecoveryCode: vi.fn(),
   registerAccount: vi.fn(),
+  resetPassword: vi.fn(),
 }));
 Object.assign(globalThis, { IS_REACT_ACT_ENVIRONMENT: true });
 
@@ -38,13 +52,17 @@ describe("AccountMenu", () => {
   const getAccountMock = vi.mocked(getAccount);
   const loginMock = vi.mocked(login);
   const logoutMock = vi.mocked(logout);
+  const regenerateMock = vi.mocked(regenerateRecoveryCode);
   const registerMock = vi.mocked(registerAccount);
+  const resetMock = vi.mocked(resetPassword);
 
   beforeEach(() => {
     getAccountMock.mockReset();
     loginMock.mockReset();
     logoutMock.mockReset();
+    regenerateMock.mockReset();
     registerMock.mockReset();
+    resetMock.mockReset();
     localStorage.clear();
   });
 
@@ -66,7 +84,10 @@ describe("AccountMenu", () => {
     const { root, host } = await render(onAccountChange);
     expect(host.textContent).toContain("田中");
     expect(host.textContent).toContain("@tanaka");
-    await act(async () => (host.querySelector(".account-menu button") as HTMLButtonElement).click());
+    expect([...host.querySelectorAll(".account-menu button")].map((button) => button.textContent)).toEqual([
+      ACCOUNT_SETTINGS_LABEL, LOGOUT_LABEL,
+    ]);
+    await act(async () => (host.querySelectorAll(".account-menu button")[1] as HTMLButtonElement).click());
     expect(getAccountMock).toHaveBeenCalledTimes(2);
     expect(host.querySelector(".account-menu")?.textContent).toContain(LOGIN_LABEL);
     expect(onAccountChange).toHaveBeenCalledOnce();
@@ -139,9 +160,50 @@ describe("AccountMenu", () => {
     getAccountMock.mockResolvedValue(loggedIn);
     logoutMock.mockRejectedValue(new Error("offline"));
     const { root, host } = await render();
-    await act(async () => (host.querySelector(".account-menu button") as HTMLButtonElement).click());
+    await act(async () => (host.querySelectorAll(".account-menu button")[1] as HTMLButtonElement).click());
     expect(host.textContent).toContain("@tanaka");
     expect(host.querySelector('[role="alert"]')?.textContent).toBe("ログアウトできませんでした。");
+    await act(async () => root.unmount());
+  });
+
+  it("opens settings and shows a regenerated recovery code", async () => {
+    getAccountMock.mockResolvedValue(loggedIn);
+    regenerateMock.mockResolvedValue({
+      account: loggedIn,
+      recoveryCode: "0123-4567-89ab-cdef-0123-4567-89ab-cdef",
+    });
+    const { root, host } = await render();
+    await act(async () => (host.querySelectorAll(".account-menu button")[0] as HTMLButtonElement).click());
+    expect(host.textContent).toContain("アカウント設定");
+    const forms = host.querySelectorAll("[role=dialog] form");
+    setInput(forms[1]!.querySelector("input") as HTMLInputElement, "password");
+    await act(async () => (forms[1] as HTMLFormElement).requestSubmit());
+    expect(host.querySelector("code")?.textContent).toBe("0123-4567-89ab-cdef-0123-4567-89ab-cdef");
+    await act(async () => root.unmount());
+  });
+
+  it("opens forgot-password from login and updates the account after reset", async () => {
+    getAccountMock.mockResolvedValue(anonymous);
+    resetMock.mockResolvedValue({
+      account: { userId: "u1", loginId: "tanaka", displayName: "田中" },
+      recoveryCode: "0123-4567-89ab-cdef-0123-4567-89ab-cdef",
+    });
+    const onAccountChange = vi.fn();
+    const { root, host } = await render(onAccountChange);
+    await act(async () => (host.querySelector(".account-menu button") as HTMLButtonElement).click());
+    const forgot = [...host.querySelectorAll("button")]
+      .find((button) => button.textContent === "パスワードを忘れた場合") as HTMLButtonElement;
+    await act(async () => forgot.click());
+    const inputs = [...host.querySelectorAll("[role=dialog] input") as NodeListOf<HTMLInputElement>];
+    await act(async () => {
+      ["tanaka", "0123-4567-89ab-cdef-0123-4567-89ab-cdef", "newpassword", "newpassword"]
+        .forEach((value, index) => setInput(inputs[index]!, value));
+      (host.querySelector("[role=dialog]") as HTMLFormElement).requestSubmit();
+    });
+    expect(host.textContent).toContain("@tanaka");
+    expect(host.textContent).toContain("田中");
+    expect(onAccountChange).toHaveBeenCalledOnce();
+    expect(host.querySelector("code")?.textContent).toBe("0123-4567-89ab-cdef-0123-4567-89ab-cdef");
     await act(async () => root.unmount());
   });
 
@@ -154,7 +216,7 @@ describe("AccountMenu", () => {
       .mockReturnValueOnce(new Promise((resolve) => { resolveAccount = resolve; }));
     const onAccountChange = vi.fn();
     const { root, host } = await render(onAccountChange);
-    await act(async () => (host.querySelector(".account-menu button") as HTMLButtonElement).click());
+    await act(async () => (host.querySelectorAll(".account-menu button")[1] as HTMLButtonElement).click());
     await act(async () => root.unmount());
     await act(async () => {
       resolveLogout();

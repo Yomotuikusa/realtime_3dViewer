@@ -39,7 +39,7 @@ glTF/GLB の 3D レビュー画面を提供する。レビュー画面は表示�
 
 ## 共通ファイル
 - src/api/client.ts: REST の URL（各パスセグメントを URI エンコード）、JSON/FormData リクエスト、プロジェクトの作成・一覧取得・名前変更・削除・一覧から外す・版追加、レスポンス検証、`ApiClientError`。本文なし DELETE は共通処理で扱う
-- src/api/account.ts: アカウント取得・表示名更新・登録・ログイン・ログアウトの REST API クライアント
+- src/api/account.ts: アカウント取得・表示名更新・登録・ログイン・ログアウト・パスワード変更・再設定・リカバリーコード再発行の REST API クライアント
 - src/api/ws.ts: `WsClient`、WebSocket URL、接続状態通知、指数バックオフによる再接続
 - src/main.tsx: React アプリのエントリーポイント。tokens → base → controls の順で全体スタイルを読み込む
 - src/styles/tokens.css: 色・文字・間隔・角丸・動き・レイアウトのセマンティックトークン。既存 inline 値を引き継ぎ、`:root` にライト値を定義し、`:root[data-theme="dark"]` にダーク値の上書きブロックを持つ
@@ -51,7 +51,7 @@ glTF/GLB の 3D レビュー画面を提供する。レビュー画面は表示�
 
 ### 公開インターフェイス
 - src/api/client.ts: `ApiClientError`、`RESPONSE_INVALID_MESSAGE`、`requestJson`、`requestNoContent`、`modelUrl`、`createProject(name, files)`、`listProjects`、`renameProject`、`deleteProject`、`leaveProject`、`addModelVersion(projectId, file)`、`getProject`、`listComments`、`createComment`、`updateCommentStatus`
-- src/api/account.ts: `getAccount`、`updateDisplayName`、`registerAccount`、`login`、`logout`
+- src/api/account.ts: `getAccount`、`updateDisplayName`、`registerAccount`、`login`、`logout`、`changePassword`、`resetPassword`、`regenerateRecoveryCode`
 - src/api/ws.ts: `WsClient`、`wsUrl`、`SocketLike`、再接続定数
 
 API クライアントは同一オリジンの `/api/...` を使い、URL の projectId / versionId / commentId を `encodeURIComponent` でエンコードする。`createProject` は FormData に name と files を順番どおり append し、`addModelVersion` は1ファイルを版追加エンドポイントへ送る。2xx 応答を共有 zod スキーマで検証し、成功本文の不一致は `ApiClientError(status, "VALIDATION", RESPONSE_INVALID_MESSAGE)` とする。API エラー本文を解析できる場合は `ApiClientError(status, code, message)`、ネットワーク断や解析不能なエラーは `INTERNAL` とする。
@@ -67,6 +67,9 @@ API クライアントは同一オリジンの `/api/...` を使い、URL の pr
 - tests/account-labels.test.ts: アカウント文言、表示名、登録入力の検証テスト
 - tests/account-menu.test.ts: アカウントメニューの匿名・ログイン中・ログアウト状態テスト
 - tests/account-dialogs.test.ts: ログイン・登録・リカバリーコードのダイアログテスト
+- tests/account-settings.test.ts: アカウント設定のパスワード変更・リカバリーコード再発行テスト
+- tests/forgot-password.test.ts: パスワード再設定とログイン画面からの導線テスト
+- tests/api-account-password.test.ts: パスワード変更・再設定・リカバリーコード再発行 API テスト
 - tests/api-project-manage.test.ts: プロジェクト名前変更・削除・membership 除去の HTTP メソッド、URI エンコード、応答検証、FORBIDDEN 変換テスト
 - tests/project-list-page.test.ts: プロジェクト一覧の状態表示、リンク遷移、管理ボタン、名前変更・削除ダイアログテスト
 - tests/project-list-account.test.ts: アカウント変更時のプロジェクト一覧再読み込みテスト

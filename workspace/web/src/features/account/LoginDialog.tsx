@@ -9,6 +9,7 @@ import {
   LOGIN_ID_HINT,
   LOGIN_ID_LABEL,
   LOGIN_REQUIRED,
+  FORGOT_PASSWORD_LABEL,
   LOGIN_SUBMIT_LABEL,
   LOGGING_IN_LABEL,
   PASSWORD_LABEL,
@@ -19,9 +20,11 @@ import "../../app/review.css";
 export function LoginDialog({
   onSuccess,
   onCancel,
+  onForgotPassword,
 }: {
   onSuccess: (account: Account) => void;
   onCancel: () => void;
+  onForgotPassword: () => void;
 }): ReactElement {
   const titleId = useId();
   const errorId = useId();
@@ -90,6 +93,9 @@ export function LoginDialog({
           </button>
           <button className="btn btn--quiet" type="button" onClick={onCancel} disabled={busy}>
             {CANCEL_LABEL}
+          </button>
+          <button className="btn btn--quiet" type="button" onClick={onForgotPassword} disabled={busy}>
+            {FORGOT_PASSWORD_LABEL}
           </button>
         </div>
       </form>

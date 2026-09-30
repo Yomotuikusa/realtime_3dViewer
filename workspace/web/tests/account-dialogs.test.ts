@@ -47,7 +47,9 @@ describe("account dialogs", () => {
   });
 
   it("rejects an empty login without calling the API", async () => {
-    const { root, host } = await render(createElement(LoginDialog, { onSuccess: vi.fn(), onCancel: vi.fn() }));
+    const { root, host } = await render(createElement(LoginDialog, {
+      onSuccess: vi.fn(), onCancel: vi.fn(), onForgotPassword: vi.fn(),
+    }));
     await act(async () => (host.querySelector("form") as HTMLFormElement).requestSubmit());
     expect(loginMock).not.toHaveBeenCalled();
     expect(host.querySelector('[role="alert"]')?.textContent).toBe(LOGIN_REQUIRED);
@@ -57,7 +59,9 @@ describe("account dialogs", () => {
   it("clears only the password after a failed login and keeps busy controls disabled", async () => {
     let reject: (error: Error) => void = () => undefined;
     loginMock.mockReturnValue(new Promise((_, next) => { reject = next; }));
-    const { root, host } = await render(createElement(LoginDialog, { onSuccess: vi.fn(), onCancel: vi.fn() }));
+    const { root, host } = await render(createElement(LoginDialog, {
+      onSuccess: vi.fn(), onCancel: vi.fn(), onForgotPassword: vi.fn(),
+    }));
     const inputs = [...host.querySelectorAll("input") as NodeListOf<HTMLInputElement>];
     await act(async () => {
       setInput(inputs[0]!, "tanaka");
@@ -76,7 +80,9 @@ describe("account dialogs", () => {
 
   it("shows the rate-limit message after a login is rejected", async () => {
     loginMock.mockRejectedValue(new ApiClientError(429, "TOO_MANY_REQUESTS", "slow down"));
-    const { root, host } = await render(createElement(LoginDialog, { onSuccess: vi.fn(), onCancel: vi.fn() }));
+    const { root, host } = await render(createElement(LoginDialog, {
+      onSuccess: vi.fn(), onCancel: vi.fn(), onForgotPassword: vi.fn(),
+    }));
     const inputs = [...host.querySelectorAll("input") as NodeListOf<HTMLInputElement>];
     await act(async () => {
       setInput(inputs[0]!, "tanaka");
