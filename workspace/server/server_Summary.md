@@ -15,18 +15,18 @@ server の基盤。本番は `npm run build && npm run start` で起動する。
   `WS_HEARTBEAT_INTERVAL_MS` (0で無効)、`MAX_UPLOAD_FILES` (1以上) を設定できる。
 - `src/errors.ts`: `HttpError` と未知エラーを API エラー応答へ変換する。
 - `src/db/connection.ts`: `node:sqlite` の接続、PRAGMA、スキーマ適用、既存 DB への
-  `owner_id` / `playback_json` 列追加移行、トランザクション。`migrate` は schema.sql を
+  `owner_id` / `playback_json` / `author_id` 列追加移行、トランザクション。`migrate` は schema.sql を
   適用した後に `addColumnIfMissing` で不足列だけを `ALTER TABLE` する。
 - `src/db/schema.sql`: users、sessions、projects、project_members、model_versions、comments、
   project_room_state と検索用 index の DDL。projects は nullable な `owner_id` を持ち、project_members は
   project と user の参加記録を保持する。comments は `strokes_json` の後に nullable な
-  `playback_json` を持ち、project_room_state は project ごとの共有表示状態 JSON と更新時刻を
+  `playback_json` と nullable な `author_id` を持ち、project_room_state は project ごとの共有表示状態 JSON と更新時刻を
   `projects` の削除に追従して保持する。
 - `src/db/users.ts`: users の匿名行と sessions の SHA-256 token hash を登録し、hash から
   user id を検索する。
 - `src/db/project-members.ts`: project を開いた user の joined / last-opened 時刻を upsert し、管理権限判定、一覧からの membership 削除、user 別の project 一覧を最終閲覧時刻・作成時刻・ID順で返す。
 - `src/db/projects.ts`: projects / model_versions の登録、所有者検索、名前変更、全版の番号順一覧と検索、コメントを含む project/版削除、および行の型変換。版が無い project も返す。
-- `src/db/comments.ts`: コメントの登録、project 単位の一覧、status 更新。JSON 列と
+- `src/db/comments.ts`: コメントの登録(author_id を含む)、project 単位の一覧、status 更新。JSON 列と
   shared の `Comment` の相互変換を担い、playback は `playback_json` へ nullable JSON として
   保存して常に `playback` キーを返す。
 - `src/db/room-display.ts`: `project_room_state` の表示状態 JSON を共有スキーマで検証して

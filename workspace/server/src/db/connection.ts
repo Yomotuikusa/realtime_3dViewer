@@ -32,6 +32,7 @@ export function migrate(db: Db): void {
   db.exec(schema);
   addColumnIfMissing(db, "projects", "owner_id", "TEXT REFERENCES users(id)");
   addColumnIfMissing(db, "comments", "playback_json", "TEXT");
+  addColumnIfMissing(db, "comments", "author_id", "TEXT REFERENCES users(id)");
 }
 
 /** Run a callback in a SQLite transaction, rolling back failures. */

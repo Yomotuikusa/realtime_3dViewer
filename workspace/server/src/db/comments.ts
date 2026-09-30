@@ -19,6 +19,8 @@ export interface NewComment {
   strokes: Stroke[];
   /** 未指定・null は NULL として保存する */
   playback?: CommentPlayback | null;
+  /** 投稿者の users.id。省略・null は NULL として保存する */
+  authorId?: string | null;
   createdAt: number;
 }
 
@@ -73,8 +75,8 @@ export function insertComment(db: Db, input: NewComment): Comment {
   db.prepare(
     `INSERT INTO comments
       (id, project_id, version_id, author_name, body, anchor_json, camera_json,
-       strokes_json, playback_json, status, created_at, updated_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'open', ?, ?)`,
+       strokes_json, playback_json, status, created_at, updated_at, author_id)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'open', ?, ?, ?)`,
   ).run(
     input.id,
     input.projectId,
@@ -87,6 +89,7 @@ export function insertComment(db: Db, input: NewComment): Comment {
     input.playback == null ? null : JSON.stringify(input.playback),
     input.createdAt,
     input.createdAt,
+    input.authorId ?? null,
   );
 
   return selectComment(db, input.projectId, input.id) as Comment;
