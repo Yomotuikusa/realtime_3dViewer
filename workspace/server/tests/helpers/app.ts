@@ -59,6 +59,7 @@ export function makeTestApp(overrides: Partial<Config> = {}): TestApp {
     publish: (projectId, msg) => published.push({ projectId, msg }),
     now: () => 1700000000000,
     newId: () => testApp.ids.shift() ?? `id-${fallbackId++}`,
+    passwordParams: { logN: 10, r: 8, p: 1 },
   };
   testApp.app = createApp(deps);
   return testApp;

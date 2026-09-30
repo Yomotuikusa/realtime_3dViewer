@@ -17,7 +17,8 @@
 - src/joint.ts: `JointDisplay` の全フィールド比較と浅い複製を行う three.js 非依存の純粋関数
 - src/trail.ts: `MotionTrail` の型・既定値・ObjectPartRef を含む zod スキーマ・比較・複製を提供する
 - src/project-list.ts: プロジェクト一覧の `ProjectRole` / `ProjectSummary` 型と zod スキーマを提供する
-- src/index.ts: shared の全公開面を再エクスポート(types / api / protocol / camera / stroke / compare / object-part / joint / trail / project-list)
+- src/account.ts: ログインID、パスワード、表示名、リカバリーコードの共有スキーマとアカウント型
+- src/index.ts: shared の全公開面を再エクスポート(types / api / protocol / camera / stroke / compare / object-part / joint / trail / project-list / account)
 - tests/index.test.ts: shared の公開面とプレースホルダ除去を検証
 - tests/types.test.ts: 各ドメインスキーマの safeParse の受理・拒否テスト
 - tests/lighting.test.ts: 共有ライト角度の有限数検証、範囲外値の受理、余分なキー除去のテスト
@@ -38,11 +39,13 @@
 - tests/protocol-light-brightness.test.ts: ライト明るさ倍率の定数・範囲、Client/Server variant、welcome optional、JSON parse の検証テスト
 - tests/protocol-playback.test.ts: `playback:source` の Client/Server variant、welcome optional、必須 ID の検証テスト
 - tests/project-list.test.ts: プロジェクト一覧の型スキーマの受理・拒否テスト
+- tests/account.test.ts: アカウント入力・リカバリーコード・パスワード境界のテスト
 
 ## 公開インターフェイス
 - 型: `Vec3`, `CameraState`, `Stroke`, `CommentStatus`, `CommentPlayback`, `Comment`(`playback` は任意・null 許容), `ModelVersion`, `Project`(`versions` と `latestVersion` を含む), `ProjectRole`, `ProjectSummary`, `LightAngles`, ライト明るさ倍率(`MIN_LIGHT_BRIGHTNESS` / `MAX_LIGHT_BRIGHTNESS` / `DEFAULT_LIGHT_BRIGHTNESS`), `MeshDisplayMode`, `MeshCompare`, `JointDisplay`, `MotionTrail`, `ActiveMeshCompare`, `PresenceUser`(`focalLength` は任意), `ObjectPath`, `ObjectPartRef`, `DisplayStateFields`
 - スキーマ: `Vec3Schema`, `ColorSchema`, `CameraStateSchema`, `FocalLengthSchema`, `LightAnglesSchema`, `LightBrightnessSchema`, `MeshDisplayModeSchema`, `MeshCompareSchema`, `JointDisplaySchema`, `MotionTrailSchema`, `StrokeSchema`, `CommentStatusSchema`, `CommentPlaybackSchema`, `CommentSchema`, `ModelVersionSchema`, `ProjectSchema`, `ProjectRoleSchema`, `ProjectSummarySchema`, `PresenceUserSchema`, `ObjectPathSchema`, `ObjectPartRefSchema`, `DisplayStateFieldsSchema`
-- api: `ErrorCode`(`FORBIDDEN`を含む), `ApiError`, `ApiErrorSchema`, `MAX_UPLOAD_BYTES_DEFAULT`, `ALLOWED_MODEL_EXTENSIONS`, `ModelFormat`, `modelFormat`, `MODEL_CONTENT_TYPES`, `ProjectNameSchema`, `RenameProjectInput`, `CreateCommentInput`, `UpdateCommentStatusInput`, `ListCommentsQuery`
+- api: `ErrorCode`(`FORBIDDEN` / `CONFLICT` / `UNAUTHORIZED` / `TOO_MANY_REQUESTS`を含む), `ApiError`, `ApiErrorSchema`, `MAX_UPLOAD_BYTES_DEFAULT`, `ALLOWED_MODEL_EXTENSIONS`, `ModelFormat`, `modelFormat`, `MODEL_CONTENT_TYPES`, `ProjectNameSchema`, `RenameProjectInput`, `CreateCommentInput`, `UpdateCommentStatusInput`, `ListCommentsQuery`
+- account: `Account` / `AccountWithRecoveryCode`、ログイン・登録・表示名・パスワード変更・リセット・リカバリーコード再発行の入力スキーマ、`LoginIdSchema`、`RecoveryCodeInputSchema`、`passwordEqualsLoginId`
 - protocol: `ClientMessage`, `ServerMessage`, `DisplayStateFields`, `ClientMessageSchema`, `ServerMessageSchema`, `DisplayStateFieldsSchema`, `ParseResult`, `parseClientMessage`, `parseServerMessage`, `MAX_NAME_LENGTH`, `CAMERA_SEND_INTERVAL_MS`, `LIGHT_SEND_INTERVAL_MS`; Client の表示操作、Server の `welcome` 表示状態、`light:brightness`、`object:added` / `object:removed` を含む各イベントを提供する
 - types の定数: `MAX_ID_LENGTH`, `MAX_FILE_NAME_LENGTH`, `MAX_PROJECT_NAME_LENGTH`, `MAX_AUTHOR_NAME_LENGTH`, `MAX_COMMENT_BODY_LENGTH`, `MIN_STROKE_POINTS`, `MAX_STROKE_POINTS`, `MAX_COMMENT_STROKES`, `MAX_OBJECT_PATH_LENGTH`, `MIN_FOCAL_LENGTH_MM`, `MAX_FOCAL_LENGTH_MM`, `DEFAULT_FOCAL_LENGTH_MM`, `MIN_LIGHT_BRIGHTNESS`, `MAX_LIGHT_BRIGHTNESS`, `DEFAULT_LIGHT_BRIGHTNESS`, `DEFAULT_MESH_DISPLAY`, `MIN_COMPARE_THRESHOLD_PERMILLE`, `MAX_COMPARE_THRESHOLD_PERMILLE`, `DEFAULT_COMPARE_THRESHOLD_PERMILLE`, `COMPARE_THRESHOLD_STEP_PERMILLE`, `isCompareThresholdPermille`, `DEFAULT_MESH_COMPARE`, `DEFAULT_JOINT_DISPLAY`
 - types の入力スキーマ: `IdSchema`, `FileNameSchema`

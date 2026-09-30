@@ -18,12 +18,14 @@ server の基盤。本番は `npm run build && npm run start` で起動する。
   `owner_id` / `playback_json` / `author_id` 列追加移行、トランザクション。`migrate` は schema.sql を
   適用した後に `addColumnIfMissing` で不足列だけを `ALTER TABLE` する。
 - `src/db/schema.sql`: users、sessions、projects、project_members、model_versions、comments、
-  project_room_state と検索用 index の DDL。projects は nullable な `owner_id` を持ち、project_members は
+  project_room_state と検索用 index の DDL。users は nullable なアカウント資格情報、sessions は nullable な期限を持ち、
+  projects は nullable な `owner_id` を持ち、project_members は
   project と user の参加記録を保持する。comments は `strokes_json` の後に nullable な
   `playback_json` と nullable な `author_id` を持ち、project_room_state は project ごとの共有表示状態 JSON と更新時刻を
   `projects` の削除に追従して保持する。
 - `src/db/users.ts`: users の匿名行と sessions の SHA-256 token hash を登録し、hash から
-  user id を検索する。
+  user id を検索する。期限付き session の検索・削除も提供する。
+- `src/db/accounts.ts`: users 行の Account 表示、資格情報検索、login_id の重複確認、表示名・資格情報更新を担う。
 - `src/db/project-members.ts`: project を開いた user の joined / last-opened 時刻を upsert し、管理権限判定、一覧からの membership 削除、user 別の project 一覧を最終閲覧時刻・作成時刻・ID順で返す。
 - `src/db/projects.ts`: projects / model_versions の登録、所有者検索、名前変更、全版の番号順一覧と検索、コメントを含む project/版削除、および行の型変換。版が無い project も返す。
 - `src/db/comments.ts`: コメントの登録(author_id を含む)、project 単位の一覧、status 更新。JSON 列と
@@ -42,12 +44,14 @@ server の基盤。本番は `npm run build && npm run start` で起動する。
 - `src/identity/client-address.ts`: 信頼できる X-Forwarded-For または接続情報から接続元 IP を取得する。
 - `src/identity/session.ts`: `rv_session` Cookie の SHA-256 hash を sessions から解決し、
   未知または未指定の Cookie では匿名 users / sessions をトランザクションで作成して
-  HttpOnly・SameSite=Lax・Path=/・400日 Max-Age の Cookie を設定し、`identityDepsFrom` が
-  HTTPS 公開時だけ `Secure` を付与する。
+  HttpOnly・SameSite=Lax・Path=/・400日 Max-Age の Cookie を設定し、アカウント session の期限判定と
+  ローテーションも担う。`identityDepsFrom` が HTTPS 公開時だけ `Secure` を付与する。
+- `src/identity/password.ts` / `src/identity/recovery-code.ts`: NFKC 正規化した scrypt パスワードと、ハッシュ化したリカバリーコードを生成・照合する。
 - `src/routes/project-upload.ts`: multipart の file フィールド(単一または配列)を件数上限内で
   全件検証し、検証済みのファイル名・バイト列へ変換する。File 以外、件数超過、形式不正、
   サイズ超過を API エラーへ変換し、件数超過はファイルのバイト列を読む前に拒否する。
 - `src/routes/comments.ts`: project 配下のコメント一覧、投稿、status 更新を提供する。
+- `src/routes/account.ts`: `/api/account` の匿名アカウント取得、表示名更新、login_id 登録と Cookie ローテーションを提供する。
 - `src/routes/project-manage.ts`: project の名前変更・削除・一覧から外す API を提供する。所有者または所有者なし project の管理権限を確認し、project 削除時は関連するモデルファイルも削除する。
   一覧は `status` 絞り込みと `created_at` 昇順に対応し、投稿・更新は保存後にそれぞれ
   `comment:created` / `comment:updated` を `publish` へ渡す。project、version、comment の
@@ -77,7 +81,7 @@ server の基盤。本番は `npm run build && npm run start` で起動する。
   `MAX_WS_PAYLOAD_BYTES = 256 KiB` とし、スキーマ違反は `VALIDATION` を返して同一接続で
   20回連続すると close `1008` する。接続ごとに ping/pong の応答状態を管理し、設定した間隔で
   応答の無い接続を terminate して既存の退室通知・接続枠解放へ渡す。タイマーは unref される。
-- `src/app.ts`: `createApp(deps)`。厳密な `Content-Length` 検証を含むリクエスト本体の
+- `src/app.ts`: `createApp(deps)`。アカウント API の本体上限・no-store 応答も含む、厳密な `Content-Length` 検証を含むリクエスト本体の
   bodyLimit、共通の `nosniff` ヘッダ、500 時の `request_failed` ログ、JSON 404、
   `/api/projects` と
   `/api/projects/:projectId/versions` と `/api/projects/:projectId/comments` のマウント、および

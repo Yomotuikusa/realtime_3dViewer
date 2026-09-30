@@ -95,7 +95,7 @@ describe("REST schemas", () => {
     expect(MODEL_CONTENT_TYPES.obj).toBe("text/plain; charset=utf-8");
     expect(RenameProjectInput.parse({ name: " a " })).toEqual({ name: "a" });
     expect(RenameProjectInput.safeParse({ name: "  " }).success).toBe(false);
-    expect(Object.values(ErrorCode)).toHaveLength(7);
+    expect(Object.values(ErrorCode)).toHaveLength(10);
     expect(ErrorCode.FORBIDDEN).toBe("FORBIDDEN");
   });
 });
