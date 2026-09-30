@@ -55,7 +55,7 @@
 - joint: `jointDisplayEquals`, `cloneJointDisplay`
 - trail: `DEFAULT_MOTION_TRAIL`, `motionTrailEquals`, `cloneMotionTrail`
 - object-part: `objectPathIndices`, `joinObjectPath`, `objectPartKey`, `isSameObjectPart`
-- `shared/src/index.ts` は types.ts/api.ts/protocol.ts/camera.ts/stroke.ts/compare.ts/object-part.ts/joint.ts/trail.ts/project-list.ts の公開インターフェイスだけを再エクスポートする。
+- `shared/src/index.ts` は types.ts/api.ts/protocol.ts/camera.ts/stroke.ts/compare.ts/object-part.ts/joint.ts/trail.ts/project-list.ts/account.ts の公開インターフェイスだけを再エクスポートする。
 
 ## 他機能との関係
 コメントの `CommentPlayback.versionId` は投稿時の再生対象を指し、古いコメントでは省略される。server は playback を JSON のまま保存・返却し、web がこの値を使って再生対象を切り替える。Project は版が無い場合も `latestVersion: null` と `versions: []` で表す。
