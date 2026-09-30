@@ -12,7 +12,7 @@
 - ForgotPasswordDialog.tsx: ログイン ID・リカバリーコード・新パスワードによる再設定の入力、検証、API 状態を管理する
 - RegisterDialog.tsx: 登録入力、登録フォーム検証、登録 API の busy・エラー表示を管理する
 - RecoveryCodeDialog.tsx: リカバリーコードのコピーと保存確認を表示する
-- account-labels.ts: アカウント機能の文言、API エラー変換、登録・パスワード再設定フォーム検証を提供する
+- account-labels.ts: アカウント機能の文言、API エラー変換、登録・新規パスワード・パスワード再設定フォームの検証を提供する
 - account.css: アカウントメニューと固定ダイアログのレイアウトを定義する
 
 ## 公開インターフェイス
@@ -23,7 +23,7 @@
 - ForgotPasswordDialog: `onSuccess(result)` / `onCancel` を受け取るパスワード再設定ダイアログ
 - RegisterDialog: `onSuccess(result)` / `onCancel` を受け取る登録ダイアログ
 - RecoveryCodeDialog: `code` と `onClose` を受け取るリカバリーコードダイアログ
-- account-labels.ts: アカウント文言、`accountErrorMessage`、`accountDisplayLabel`、`validateRegisterForm`
+- account-labels.ts: アカウント文言、`accountErrorMessage`、`accountDisplayLabel`、`validateRegisterForm`、`validateNewPassword`、`validateResetForm`
 
 ## 他機能との関係
 

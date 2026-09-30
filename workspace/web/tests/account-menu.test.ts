@@ -13,6 +13,7 @@ import { NAME_STORAGE_KEY } from "../src/app/display-name";
 import { AccountMenu } from "../src/features/account/AccountMenu";
 import {
   ACCOUNT_SETTINGS_LABEL,
+  FORGOT_PASSWORD_LABEL,
   LOGIN_LABEL,
   LOGOUT_LABEL,
   REGISTER_LABEL,
@@ -192,7 +193,7 @@ describe("AccountMenu", () => {
     const { root, host } = await render(onAccountChange);
     await act(async () => (host.querySelector(".account-menu button") as HTMLButtonElement).click());
     const forgot = [...host.querySelectorAll("button")]
-      .find((button) => button.textContent === "パスワードを忘れた場合") as HTMLButtonElement;
+      .find((button) => button.textContent === FORGOT_PASSWORD_LABEL) as HTMLButtonElement;
     await act(async () => forgot.click());
     const inputs = [...host.querySelectorAll("[role=dialog] input") as NodeListOf<HTMLInputElement>];
     await act(async () => {
@@ -204,6 +205,23 @@ describe("AccountMenu", () => {
     expect(host.textContent).toContain("田中");
     expect(onAccountChange).toHaveBeenCalledOnce();
     expect(host.querySelector("code")?.textContent).toBe("0123-4567-89ab-cdef-0123-4567-89ab-cdef");
+    await act(async () => root.unmount());
+  });
+
+  it("cancels forgot-password without changing the anonymous menu", async () => {
+    getAccountMock.mockResolvedValue(anonymous);
+    const { root, host } = await render();
+    await act(async () => (host.querySelector(".account-menu button") as HTMLButtonElement).click());
+    const forgot = [...host.querySelectorAll("button")]
+      .find((button) => button.textContent === "パスワードを忘れた場合") as HTMLButtonElement;
+    await act(async () => forgot.click());
+    const dialog = host.querySelector('[role="dialog"]') as HTMLFormElement;
+    expect(dialog).not.toBeNull();
+    await act(async () => (dialog.querySelectorAll("button")[1] as HTMLButtonElement).click());
+    expect(host.querySelector('[role="dialog"]')).toBeNull();
+    expect([...host.querySelectorAll(".account-menu button")].map((button) => button.textContent)).toEqual([
+      LOGIN_LABEL, REGISTER_LABEL,
+    ]);
     await act(async () => root.unmount());
   });
 

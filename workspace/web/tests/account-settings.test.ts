@@ -9,19 +9,23 @@ import {
   CHANGING_PASSWORD_LABEL,
   CURRENT_PASSWORD_INCORRECT,
   CURRENT_PASSWORD_REQUIRED,
+  PASSWORD_MISMATCH,
+  PASSWORD_SAME_AS_LOGIN_ID,
   PASSWORD_CHANGED,
+  PASSWORD_TOO_SHORT,
   REGENERATE_SUBMIT_LABEL,
   SIGN_IN_REQUIRED,
+  TOO_MANY_ATTEMPTS,
 } from "../src/features/account/account-labels";
 
 vi.mock("../src/api/account", () => ({ changePassword: vi.fn(), regenerateRecoveryCode: vi.fn() }));
 Object.assign(globalThis, { IS_REACT_ACT_ENVIRONMENT: true });
 
-async function render(): Promise<{ root: ReturnType<typeof createRoot>; host: HTMLDivElement }> {
+async function render(loginId = "tanaka"): Promise<{ root: ReturnType<typeof createRoot>; host: HTMLDivElement }> {
   const host = document.createElement("div");
   const root = createRoot(host);
   await act(async () => root.render(createElement(AccountSettingsDialog, {
-    account: { loginId: "tanaka", displayName: "田中" }, onRecoveryCode: vi.fn(), onClose: vi.fn(),
+    account: { loginId, displayName: "田中" }, onRecoveryCode: vi.fn(), onClose: vi.fn(),
   })));
   return { root, host };
 }
@@ -77,6 +81,42 @@ describe("AccountSettingsDialog", () => {
     expect(host.textContent).toContain(CHANGING_PASSWORD_LABEL);
     expect(form.querySelector("button[type=submit]")).toHaveProperty("disabled", true);
     await act(async () => reject(new ApiClientError(403, "FORBIDDEN", "wrong")));
+    expect(host.querySelector('[role="alert"]')?.textContent).toBe(CURRENT_PASSWORD_INCORRECT);
+    changeMock.mockRejectedValue(new ApiClientError(429, "TOO_MANY_REQUESTS", "slow"));
+    await act(async () => form.requestSubmit());
+    expect(host.querySelector('[role="alert"]')?.textContent).toBe(TOO_MANY_ATTEMPTS);
+    await act(async () => root.unmount());
+  });
+
+  it("validates new passwords through the form before calling the API", async () => {
+    const { root, host } = await render("tanaka123");
+    const form = host.querySelector("form") as HTMLFormElement;
+    const inputs = [...form.querySelectorAll("input") as NodeListOf<HTMLInputElement>];
+    setInput(inputs[0]!, "old");
+    const cases = [
+      ["short", "short", PASSWORD_TOO_SHORT],
+      ["tanaka123", "tanaka123", PASSWORD_SAME_AS_LOGIN_ID],
+      ["password1", "password2", PASSWORD_MISMATCH],
+    ] as const;
+    for (const [password, confirmation, expected] of cases) {
+      setInput(inputs[1]!, password);
+      setInput(inputs[2]!, confirmation);
+      await act(async () => form.requestSubmit());
+      expect(host.querySelector('[role="alert"]')?.textContent).toBe(expected);
+    }
+    expect(changeMock).not.toHaveBeenCalled();
+    await act(async () => root.unmount());
+  });
+
+  it("validates the regeneration password and maps incorrect passwords", async () => {
+    const { root, host } = await render();
+    const form = host.querySelectorAll("form")[1] as HTMLFormElement;
+    await act(async () => form.requestSubmit());
+    expect(regenerateMock).not.toHaveBeenCalled();
+    expect(host.querySelector('[role="alert"]')?.textContent).toBe(CURRENT_PASSWORD_REQUIRED);
+    setInput(form.querySelector("input") as HTMLInputElement, "wrong");
+    regenerateMock.mockRejectedValue(new ApiClientError(403, "FORBIDDEN", "wrong"));
+    await act(async () => form.requestSubmit());
     expect(host.querySelector('[role="alert"]')?.textContent).toBe(CURRENT_PASSWORD_INCORRECT);
     await act(async () => root.unmount());
   });
