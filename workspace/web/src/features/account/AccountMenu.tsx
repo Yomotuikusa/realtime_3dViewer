@@ -1,4 +1,4 @@
-import { useEffect, useState, type ReactElement } from "react";
+import { useEffect, useRef, useState, type ReactElement } from "react";
 import type { Account } from "@shared/account";
 import { getAccount, logout } from "../../api/account";
 import { saveName } from "../../app/display-name";
@@ -26,9 +26,11 @@ export function AccountMenu({ onAccountChange }: { onAccountChange: () => void }
   const [recoveryCode, setRecoveryCode] = useState<string | null>(null);
   const [logoutBusy, setLogoutBusy] = useState(false);
   const [logoutError, setLogoutError] = useState(false);
+  const mountedRef = useRef(true);
 
   useEffect(() => {
     let active = true;
+    mountedRef.current = true;
     void getAccount()
       .then((account) => {
         if (active) setState({ status: "ready", account });
@@ -39,8 +41,9 @@ export function AccountMenu({ onAccountChange }: { onAccountChange: () => void }
       });
     return () => {
       active = false;
+      mountedRef.current = false;
     };
-  }, []);
+  }, [mountedRef]);
 
   if (state.status !== "ready") return null;
 
@@ -66,11 +69,13 @@ export function AccountMenu({ onAccountChange }: { onAccountChange: () => void }
     void logout()
       .then(() => getAccount())
       .then((nextAccount) => {
+        if (!mountedRef.current) return;
         setState({ status: "ready", account: nextAccount });
         setLogoutBusy(false);
         onAccountChange();
       })
       .catch(() => {
+        if (!mountedRef.current) return;
         setLogoutBusy(false);
         setLogoutError(true);
       });

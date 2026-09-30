@@ -6,7 +6,7 @@
 
 ## ファイル一覧と役割
 
-- AccountMenu.tsx: アカウント取得、匿名・ログイン中のメニュー表示、ログイン・登録・ログアウト後の状態変更を管理する
+- AccountMenu.tsx: アカウント取得、匿名・ログイン中のメニュー表示、ログイン・登録・ログアウト後の状態変更を管理する。非同期処理の完了後にアンマウント済みなら state を更新しない
 - LoginDialog.tsx: ログイン入力、入力必須チェック、ログイン API の busy・エラー表示を管理する
 - RegisterDialog.tsx: 登録入力、登録フォーム検証、登録 API の busy・エラー表示を管理する
 - RecoveryCodeDialog.tsx: リカバリーコードのコピーと保存確認を表示する
@@ -28,5 +28,5 @@
 ## テスト
 
 - tests/account-labels.test.ts: アカウント文言、表示名、登録入力の検証
-- tests/account-menu.test.ts: メニューの取得、匿名・ログイン中・ログアウト状態
+- tests/account-menu.test.ts: メニューの取得、匿名・ログイン中・ログアウト状態、ログアウト中のアンマウント
 - tests/account-dialogs.test.ts: ログイン・登録・リカバリーコードの入力と API 状態

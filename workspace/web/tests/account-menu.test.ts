@@ -145,6 +145,24 @@ describe("AccountMenu", () => {
     await act(async () => root.unmount());
   });
 
+  it("does not update after logout resolves after unmount", async () => {
+    let resolveLogout: () => void = () => undefined;
+    let resolveAccount: (account: typeof anonymous) => void = () => undefined;
+    logoutMock.mockReturnValue(new Promise((resolve) => { resolveLogout = resolve; }));
+    getAccountMock
+      .mockResolvedValueOnce(loggedIn)
+      .mockReturnValueOnce(new Promise((resolve) => { resolveAccount = resolve; }));
+    const onAccountChange = vi.fn();
+    const { root, host } = await render(onAccountChange);
+    await act(async () => (host.querySelector(".account-menu button") as HTMLButtonElement).click());
+    await act(async () => root.unmount());
+    await act(async () => {
+      resolveLogout();
+      resolveAccount(anonymous);
+    });
+    expect(onAccountChange).not.toHaveBeenCalled();
+  });
+
   it("logs and renders nothing after an account request fails", async () => {
     const error = new Error("offline");
     getAccountMock.mockRejectedValue(error);
