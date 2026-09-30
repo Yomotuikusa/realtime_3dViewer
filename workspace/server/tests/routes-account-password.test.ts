@@ -52,9 +52,11 @@ describe("account password routes", () => {
       currentPassword: "correct horse", newPassword: "new password 1",
     }, registered.cookie);
     expect(changed.status).toBe(200);
-    expect(await changed.json()).toEqual({
+    const changedBody = await changed.json() as { userId: string; loginId: string; displayName: null };
+    expect(changedBody).toEqual({
       userId: registered.account.userId, loginId: "tanaka", displayName: null,
     });
+    expect(JSON.stringify(changedBody)).not.toContain("new password 1");
     const newCookie = cookieFrom(changed);
     expect(newCookie).not.toBe(registered.cookie);
     expect(changed.headers.get("set-cookie")).toContain("Max-Age=2592000");
@@ -107,7 +109,7 @@ describe("account password routes", () => {
       loginId: "tanaka", password: "correct horse",
     })).status).toBe(200);
 
-    for (const newPassword of ["tanaka", "TANAKA", "short"]) {
+    for (const newPassword of ["tanaka", "TANAKA", "1234567"]) {
       const invalid = await post(t, "/api/account/password", {
         currentPassword: "correct horse", newPassword,
       }, registered.cookie, "192.0.2.2");
@@ -143,7 +145,11 @@ describe("account password routes", () => {
     expect(body.account.loginId).toBe("tanaka");
     expect(body.recoveryCode).not.toBe(registered.recoveryCode);
     expect(body.recoveryCode).toMatch(/^[0-9a-f]{4}(-[0-9a-f]{4}){7}$/);
+    expect(JSON.stringify(body)).not.toContain("correct horse");
     expect(JSON.stringify(t.db.prepare("SELECT * FROM users").get())).not.toContain(body.recoveryCode);
+    expect(JSON.stringify(t.db.prepare("SELECT * FROM users").get())).not.toContain("correct horse");
+    const current = await t.app.request("/api/account", { headers: { cookie: registered.cookie } });
+    expect(await current.json()).toMatchObject({ loginId: "tanaka" });
     expect((await post(t, "/api/account/recovery-code", { password: "wrong password" }, registered.cookie)).status)
       .toBe(403);
     expect((await post(t, "/api/account/password-reset", {

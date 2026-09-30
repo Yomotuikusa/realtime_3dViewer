@@ -56,7 +56,9 @@ describe("account password reset routes", () => {
     const body = await reset.json() as { account: { loginId: string }; recoveryCode: string };
     expect(body.account.loginId).toBe("tanaka");
     expect(body.recoveryCode).not.toBe(registered.recoveryCode);
+    expect(JSON.stringify(body)).not.toContain("reset password 1");
     expect(JSON.stringify(t.db.prepare("SELECT * FROM users").get())).not.toContain("reset password 1");
+    expect(JSON.stringify(t.db.prepare("SELECT * FROM users").get())).not.toContain(body.recoveryCode);
 
     const staleOther = await t.app.request("/api/account", { headers: { cookie: otherCookie } });
     expect(await staleOther.json()).toMatchObject({ loginId: null });
