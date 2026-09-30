@@ -54,7 +54,8 @@ CREATE TABLE IF NOT EXISTS comments (
   playback_json TEXT,
   status TEXT NOT NULL CHECK(status IN ('open','resolved')),
   created_at INTEGER NOT NULL,
-  updated_at INTEGER NOT NULL
+  updated_at INTEGER NOT NULL,
+  author_id TEXT REFERENCES users(id)
 );
 
 CREATE INDEX IF NOT EXISTS idx_comments_project ON comments(project_id, created_at);

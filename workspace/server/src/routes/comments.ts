@@ -10,6 +10,7 @@ import type { AppDeps } from "../app";
 import { insertComment, listComments, updateCommentStatus } from "../db/comments";
 import { findModelVersion, findProject } from "../db/projects";
 import { HttpError } from "../errors";
+import { ensureUser, identityDepsFrom } from "../identity/session";
 
 function notFound(message: string): never {
   throw new HttpError(404, "NOT_FOUND", message);
@@ -44,11 +45,13 @@ export function commentRoutes(deps: Required<AppDeps>): Hono {
     if (!findModelVersion(deps.db, projectId, input.versionId)) {
       notFound("Model version not found");
     }
+    const userId = ensureUser(c, identityDepsFrom(deps));
 
     const comment = insertComment(deps.db, {
       id: deps.newId(),
       projectId,
       ...input,
+      authorId: userId,
       createdAt: deps.now(),
     });
     deps.publish(projectId, { type: "comment:created", comment });
