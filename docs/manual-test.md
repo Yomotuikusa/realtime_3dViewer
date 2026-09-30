@@ -45,7 +45,8 @@ vite が `/api` と `/ws` を :3000 へプロキシするので、**ブラウザ
 ```bash
 cd workspace
 npm run build     # web/dist を生成
-npm start         # :3000 がフロントも配信する。ブラウザは http://localhost:3000
+PUBLIC_ORIGIN=http://localhost:3000 npm start   # :3000 がフロントも配信する。ブラウザは http://localhost:3000
+                  # (182 以降、本番起動では PUBLIC_ORIGIN が必須。VPS での設定は docs/release-deploy.md)
 ```
 
 ### WSL から Windows のブラウザで開けないとき
