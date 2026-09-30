@@ -24,4 +24,13 @@ describe("clientAddressFrom", () => {
     expect(await missing.text()).toBe("unknown");
     expect(await empty.text()).toBe("unknown");
   });
+
+  it("returns unknown when the trusted proxy has no usable forwarded address", async () => {
+    const app = new Hono();
+    app.get("/", (c) => c.text(clientAddressFrom(c, true)));
+    const missing = await app.request("/");
+    const empty = await app.request("/", { headers: { "X-Forwarded-For": " , " } });
+    expect(await missing.text()).toBe("unknown");
+    expect(await empty.text()).toBe("unknown");
+  });
 });
