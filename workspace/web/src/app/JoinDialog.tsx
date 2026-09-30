@@ -1,16 +1,37 @@
-import { useId, useState, type FormEvent, type ReactElement } from "react";
+import { useEffect, useId, useRef, useState, type FormEvent, type ReactElement } from "react";
 import { MAX_NAME_LENGTH } from "@shared/protocol";
+import { getAccount, updateDisplayName } from "../api/account";
 import { loadStoredName, resolveDisplayName, saveName } from "./display-name";
 
 export function JoinDialog({ onJoin }: { onJoin: (name: string) => void }): ReactElement {
   const titleId = useId();
   const [input, setInput] = useState(() => loadStoredName());
+  const inputChangedRef = useRef(false);
+
+  useEffect(() => {
+    let active = true;
+    void getAccount()
+      .then((account) => {
+        if (active && !inputChangedRef.current && account.displayName !== null) {
+          setInput(account.displayName);
+        }
+      })
+      .catch((error: unknown) => {
+        console.error(error);
+      });
+    return () => {
+      active = false;
+    };
+  }, []);
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const name = resolveDisplayName(input);
     saveName(name);
     onJoin(name);
+    void updateDisplayName(name).catch((error: unknown) => {
+      console.error(error);
+    });
   };
 
   return (
@@ -31,7 +52,10 @@ export function JoinDialog({ onJoin }: { onJoin: (name: string) => void }): Reac
             type="text"
             maxLength={MAX_NAME_LENGTH}
             value={input}
-            onChange={(event) => setInput(event.target.value)}
+            onChange={(event) => {
+              inputChangedRef.current = true;
+              setInput(event.target.value);
+            }}
             autoComplete="name"
             autoFocus
           />
