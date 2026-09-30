@@ -3,6 +3,9 @@ import { Hono } from "hono";
 import { bodyLimit } from "hono/body-limit";
 import type { Context, Hono as HonoType, MiddlewareHandler } from "hono";
 import type { ServerMessage } from "@shared/protocol";
+import type { ScryptParams } from "./identity/password";
+import { DEFAULT_SCRYPT_PARAMS } from "./identity/password";
+import { generateRecoveryCode } from "./identity/recovery-code";
 import { DEFAULT_WEB_DIST_DIR, type Config, usesHttps } from "./config";
 import type { Db } from "./db/connection";
 import { HttpError, toErrorResponse } from "./errors";
@@ -11,6 +14,7 @@ import { hsts, sameOriginGuard } from "./http-security";
 import { commentRoutes } from "./routes/comments";
 import { projectRoutes } from "./routes/projects";
 import { projectManageRoutes } from "./routes/project-manage";
+import { accountRoutes } from "./routes/account";
 import { staticRoutes } from "./routes/static";
 import type { Storage } from "./storage/files";
 
@@ -39,6 +43,8 @@ export interface AppDeps {
   newSessionToken?: () => string;
   /** 後続の認証制限で使う接続元 IP の取得口 */
   clientAddress?: (c: Context) => string;
+  passwordParams?: ScryptParams;
+  newRecoveryCode?: () => string;
 }
 
 export function createApp(deps: AppDeps): HonoType {
@@ -49,6 +55,8 @@ export function createApp(deps: AppDeps): HonoType {
     newUserId: deps.newUserId ?? (() => nanoid(12)),
     newSessionToken: deps.newSessionToken ?? (() => nanoid(32)),
     clientAddress: deps.clientAddress ?? ((c) => clientAddressFrom(c, deps.config.trustProxy ?? false)),
+    passwordParams: deps.passwordParams ?? DEFAULT_SCRYPT_PARAMS,
+    newRecoveryCode: deps.newRecoveryCode ?? generateRecoveryCode,
   };
   const app = new Hono();
   const config = resolved.config;
@@ -67,6 +75,12 @@ export function createApp(deps: AppDeps): HonoType {
     await next();
     c.header("X-Content-Type-Options", "nosniff");
   });
+  const accountNoStore: MiddlewareHandler = async (c, next) => {
+    await next();
+    c.header("Cache-Control", "no-store");
+  };
+  app.use("/api/account", accountNoStore);
+  app.use("/api/account/*", accountNoStore);
   if (usesHttps(config)) app.use("*", hsts());
   app.use("/api/*", sameOriginGuard(config.publicOrigin ?? null));
   app.use("/api/projects", validateContentLength);
@@ -100,6 +114,16 @@ export function createApp(deps: AppDeps): HonoType {
     "/api/projects/:projectId",
     bodyLimit({ maxSize: MAX_JSON_BODY_BYTES, onError: tooLarge }),
   );
+  app.use("/api/account", validateContentLength);
+  app.use(
+    "/api/account",
+    bodyLimit({ maxSize: MAX_JSON_BODY_BYTES, onError: tooLarge }),
+  );
+  app.use("/api/account/*", validateContentLength);
+  app.use(
+    "/api/account/*",
+    bodyLimit({ maxSize: MAX_JSON_BODY_BYTES, onError: tooLarge }),
+  );
 
   app.onError((error, c) => {
     const response = toErrorResponse(error);
@@ -123,6 +147,7 @@ export function createApp(deps: AppDeps): HonoType {
   app.route("/api/projects", projectRoutes(resolved));
   app.route("/api/projects", projectManageRoutes(resolved));
   app.route("/api/projects/:projectId/comments", commentRoutes(resolved));
+  app.route("/api/account", accountRoutes(resolved));
   app.route("/", staticRoutes(config.webDistDir ?? DEFAULT_WEB_DIST_DIR));
 
   return app;

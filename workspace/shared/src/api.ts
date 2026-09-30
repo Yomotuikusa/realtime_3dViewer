@@ -20,6 +20,9 @@ export const ErrorCode = {
   BAD_REQUEST: "BAD_REQUEST",
   INTERNAL: "INTERNAL",
   FORBIDDEN: "FORBIDDEN",
+  CONFLICT: "CONFLICT",
+  UNAUTHORIZED: "UNAUTHORIZED",
+  TOO_MANY_REQUESTS: "TOO_MANY_REQUESTS",
 } as const;
 export type ErrorCode = (typeof ErrorCode)[keyof typeof ErrorCode];
 

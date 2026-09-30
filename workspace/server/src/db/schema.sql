@@ -1,12 +1,17 @@
 CREATE TABLE IF NOT EXISTS users (
   id TEXT PRIMARY KEY,
-  created_at INTEGER NOT NULL
+  created_at INTEGER NOT NULL,
+  login_id TEXT,
+  password_hash TEXT,
+  display_name TEXT,
+  recovery_code_hash TEXT
 );
 
 CREATE TABLE IF NOT EXISTS sessions (
   token_hash TEXT PRIMARY KEY,
   user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-  created_at INTEGER NOT NULL
+  created_at INTEGER NOT NULL,
+  expires_at INTEGER
 );
 
 CREATE TABLE IF NOT EXISTS projects (

@@ -33,6 +33,12 @@ export function migrate(db: Db): void {
   addColumnIfMissing(db, "projects", "owner_id", "TEXT REFERENCES users(id)");
   addColumnIfMissing(db, "comments", "playback_json", "TEXT");
   addColumnIfMissing(db, "comments", "author_id", "TEXT REFERENCES users(id)");
+  addColumnIfMissing(db, "users", "login_id", "TEXT");
+  addColumnIfMissing(db, "users", "password_hash", "TEXT");
+  addColumnIfMissing(db, "users", "display_name", "TEXT");
+  addColumnIfMissing(db, "users", "recovery_code_hash", "TEXT");
+  addColumnIfMissing(db, "sessions", "expires_at", "INTEGER");
+  db.exec("CREATE UNIQUE INDEX IF NOT EXISTS idx_users_login_id ON users(login_id)");
 }
 
 /** Run a callback in a SQLite transaction, rolling back failures. */
