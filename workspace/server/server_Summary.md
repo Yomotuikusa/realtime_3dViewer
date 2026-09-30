@@ -3,6 +3,7 @@
 ## 目的
 環境設定、HTTP エラー応答、SQLite のスキーマ適用と users / sessions /
 projects / project_members / model_versions / comments / project_room_state の永続化、匿名セッション識別、
+アカウントのログイン／ログアウト、試行回数制限、匿名データ統合、
 ファイル保存、プロジェクト取得 API、web/dist の静的配信を提供する
 server の基盤。本番は `npm run build && npm run start` で起動する。
 
@@ -23,7 +24,7 @@ server の基盤。本番は `npm run build && npm run start` で起動する。
   project と user の参加記録を保持する。comments は `strokes_json` の後に nullable な
   `playback_json` と nullable な `author_id` を持ち、project_room_state は project ごとの共有表示状態 JSON と更新時刻を
   `projects` の削除に追従して保持する。
-- `src/db/users.ts` / `src/db/accounts.ts` / `src/identity/password.ts` / `src/identity/recovery-code.ts`: users と sessions の匿名識別、Account 資格情報、scrypt パスワード、リカバリーコードを扱う。
+- `src/db/users.ts` / `src/db/accounts.ts` / `src/db/account-merge.ts` / `src/identity/password.ts` / `src/identity/recovery-code.ts`: users と sessions の匿名識別、Account 資格情報、匿名データ統合、scrypt パスワード、リカバリーコードを扱う。
 - `src/db/project-members.ts`: project を開いた user の joined / last-opened 時刻を upsert し、管理権限判定、一覧からの membership 削除、user 別の project 一覧を最終閲覧時刻・作成時刻・ID順で返す。
 - `src/db/projects.ts`: projects / model_versions の登録、所有者検索、名前変更、全版の番号順一覧と検索、コメントを含む project/版削除、および行の型変換。版が無い project も返す。
 - `src/db/comments.ts`: コメントの登録(author_id を含む)、project 単位の一覧、status 更新。JSON 列と
@@ -40,7 +41,7 @@ server の基盤。本番は `npm run build && npm run start` で起動する。
   `MODEL_CONTENT_TYPES` 由来の Content-Type と immutable キャッシュヘッダを設定する。
 - `src/http-security.ts`: HTTPS 時の HSTS と API の same-origin Origin 検査を提供する。
 - `src/identity/client-address.ts`: 信頼できる X-Forwarded-For または接続情報から接続元 IP を取得する。
-- `src/identity/session.ts`: `rv_session` Cookie の SHA-256 hash を sessions から解決し、
+- `src/identity/session.ts` / `src/identity/sign-in.ts` / `src/identity/rate-limit.ts`: `rv_session` Cookie の SHA-256 hash を sessions から解決し、
   未知または未指定の Cookie では匿名 users / sessions をトランザクションで作成して
   HttpOnly・SameSite=Lax・Path=/・400日 Max-Age の Cookie を設定し、アカウント session の期限判定とローテーションも担う。`src/identity/password.ts` / `recovery-code.ts` はパスワードを NFKC 正規化 scrypt、リカバリーコードをハッシュ化して扱い、`identityDepsFrom` が HTTPS 公開時だけ `Secure` を付与する。
 - `src/routes/project-upload.ts`: multipart の file フィールド(単一または配列)を件数上限内で
@@ -202,7 +203,7 @@ server の基盤。本番は `npm run build && npm run start` で起動する。
   project に属することを確認して 201 の `Comment` と `comment:created` を返す。PATCH は
   `UpdateCommentStatusInput` を検証して 200 の `Comment` と `comment:updated` を返す。
   いずれも対象 project が無ければ `NOT_FOUND`、入力不正なら `VALIDATION` を返す。
-- `commentRoutes` / `accountRoutes`: コメント API と、`/api/account` の `GET` Account 取得、`PATCH` 表示名更新、`/register` の login ID・scrypt パスワード・リカバリーコード登録を提供する。登録時は匿名 user を昇格し Cookie をローテーション、全応答は `Cache-Control: no-store`、不正入力は `VALIDATION`、登録済み・重複 login ID は `CONFLICT` とする。
+- `commentRoutes` / `accountRoutes` / `accountLoginRoutes`: コメント API と、`/api/account` の Account 取得・表示名更新・登録・ログイン・ログアウトを提供する。登録・ログインの IP／ID 試行制限、匿名 user の統合、Cookie ローテーション、全応答の `Cache-Control: no-store` を担う。
 - `projectManageRoutes`: `PATCH /api/projects/:projectId` の名前変更、`DELETE /api/projects/:projectId` の project と関連ファイル削除、`DELETE /api/projects/:projectId/membership` の一覧からの離脱を提供する。所有者以外の管理操作は `FORBIDDEN`、不正 JSON・名前は `VALIDATION`、成功時の削除応答は本文なしの204とする。
 - `contentTypeFor` / `resolveStaticPath` / `staticRoutes`: 静的ファイルの Content-Type 判定、
   root 配下の安全なパス解決、`index.html` を使った SPA フォールバック付き配信を提供する。
